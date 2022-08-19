@@ -1,6 +1,6 @@
 <template>
   <q-tabs
-    v-model="infoTab"
+    v-model="infoPaneTab"
     dense
   >
     <q-tab
@@ -16,28 +16,65 @@
       Notes
     </q-tab>
   </q-tabs>
-  <q-input
-    filled
-    type="textarea"
-  />
-  <q-input
-    filled
-    type="textarea"
-  />
-  <q-input
-    filled
-    type="textarea"
-  />
+  <q-tab-panels v-model="infoPaneTab">
+    <q-tab-panel
+      name="metaInfoTab"
+      v-if="stateStore.selectedProject"
+    >
+      <q-input
+        filled
+        type="textarea"
+        label="Title"
+        v-model="stateStore.selectedProject.title"
+        @blur="modifyInfo"
+      />
+      <q-input
+        filled
+        type="textarea"
+        label="Author(s)"
+        v-model="stateStore.selectedProject.author"
+        @blur="modifyInfo"
+      />
+      <q-input
+        filled
+        type="textarea"
+        label="Abstract"
+        v-model="stateStore.selectedProject.abstract"
+        @blur="modifyInfo"
+      />
+    </q-tab-panel>
+  </q-tab-panels>
 </template>
 
 <script>
-import { ref } from "vue";
-
+import { useStateStore } from "src/stores/appState";
 export default {
+  setup() {
+    const stateStore = useStateStore();
+    return { stateStore };
+  },
+
   data() {
     return {
-      infoTab: 0,
+      infoPaneTab: "metaInfoTab",
     };
+  },
+
+  methods: {
+    modifyInfo() {
+      fetch(
+        "http://localhost:5000/project/" +
+          this.stateStore.selectedProject.projectId,
+        {
+          mode: "cors",
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(this.stateStore.selectedProject),
+        }
+      ).then((response) => {
+        console.log(response);
+      });
+    },
   },
 };
 </script>

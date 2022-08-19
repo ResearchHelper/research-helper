@@ -1,1 +1,1 @@
-{"id": 0, "isLeaf": false, "name": "root", "children": []}
+[{"id": "library", "icon": "home", "label": "Library", "projectIds": ["46ebb9f2-d35b-4350-823f-2a180800c8ec"], "children": [{"icon": "star", "label": "Favorites", "id": "favorites", "projectIds": [], "children": []}]}]

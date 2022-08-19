@@ -11,27 +11,30 @@
           v-model="tab"
           vertical
         >
-          <q-tab
-            name="library"
-            icon="library_books"
-            :ripple="false"
-          />
-          <q-tab
-            name="reader"
-            icon="auto_stories"
-            :ripple="false"
-          />
-          <q-space />
-          <q-tab
-            name="user"
-            icon="account_circle"
-            :ripple="false"
-          />
-          <q-tab
-            name="settings"
-            icon="settings"
-            :ripple="false"
-          />
+          <div>
+            <q-tab
+              name="library"
+              icon="library_books"
+              :ripple="false"
+            />
+            <q-tab
+              name="reader"
+              icon="auto_stories"
+              :ripple="false"
+            />
+          </div>
+          <div>
+            <q-tab
+              name="user"
+              icon="account_circle"
+              :ripple="false"
+            />
+            <q-tab
+              name="settings"
+              icon="settings"
+              :ripple="false"
+            />
+          </div>
         </q-tabs>
       </template>
       <template v-slot:after>

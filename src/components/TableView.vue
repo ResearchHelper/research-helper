@@ -1,62 +1,46 @@
 <template>
   <q-table
+    @row-click="clickRow"
+    @row-dblclick="dblclickRow"
+    @row-contextmenu="toggleContextMenu"
     :columns="headers"
     :rows="projects"
     row-key="title"
     hide-bottom
-    :virtual-scroll="true"
     :wrap-cells="true"
     dense
-    @row-click="clickRow"
-    @row-dbclick="dbclickRow"
+    :filter="stateStore.searchString"
   >
-    <template v-slot:header="props">
-      <q-tr :props="props">
-        <q-th auto-width />
-        <q-th
-          v-for="col in props.cols"
-          :key="col.name"
-          :props="props"
-        >
-          {{ col.label }}
-        </q-th>
-      </q-tr>
-    </template>
-
-    <template v-slot:body="props">
-      <q-tr :props="props">
-        <q-td auto-width>
-          <q-btn
-            size="sm"
-            color="accent"
-            round
-            dense
-            @click="props.expand = !props.expand"
-            :icon="props.expand ? 'remove' : 'add'"
-          />
-        </q-td>
-        <q-td
-          v-for="col in props.cols"
-          :key="col.name"
-          :props="props"
-        >
-          {{ col.value }}
-        </q-td>
-      </q-tr>
-      <q-tr
-        v-show="props.expand"
-        :props="props"
-      >
-        <q-td colspan="100%">
-          <div class="text-left">
-            This is expand slot for row above: {{ props.row.name }}.
-          </div>
-        </q-td>
-      </q-tr>
-    </template>
   </q-table>
-
-  {{ stateStore.selectedProject }}
+  <q-menu
+    touch-position
+    context-menu
+  >
+    <q-list dense>
+      <q-item
+        clickable
+        v-close-popup
+        @click="dblclickRow"
+      >
+        <q-item-section>Open</q-item-section>
+      </q-item>
+      <q-separator />
+      <q-item
+        clickable
+        v-close-popup
+        @click="stateStore.deleteProject(false)"
+      >
+        <q-item-section>Delete From Table</q-item-section>
+      </q-item>
+      <q-item
+        clickable
+        v-close-popup
+        @click="stateStore.deleteProject(true)"
+      >
+        <q-item-section>Delete From DataBase</q-item-section>
+      </q-item>
+    </q-list>
+  </q-menu>
 </template>
 
 <script>
@@ -92,16 +76,18 @@ export default {
       ],
 
       projects: [],
+
+      prvSelectedIndex: 0,
     };
   },
 
-  mounted() {
-    let projectIds = [
-      "23da48b7-6792-4132-957b-bc0f8715950c",
-      "a0e33bf4-5843-4137-a06d-4e1af823a00f",
-    ];
-
-    this.getProjects(projectIds);
+  watch: {
+    "stateStore.projectIds": {
+      handler: function (projectIds) {
+        this.getProjects(projectIds);
+      },
+      deep: true,
+    },
   },
 
   methods: {
@@ -124,41 +110,35 @@ export default {
       }
     },
 
-    clickRow(project) {
-      this.stateStore.selectedProject = project;
-
-      // // remove background colors for other projects
-      // let allElements = document.querySelectorAll("tr");
-      // for (let element of allElements) {
-      //   element.classList.remove("table-item-clicked");
-      // }
-      // // color the selected project
-      // let selectedElement = document.querySelector("tr:hover");
-      // selectedElement.classList.add("table-item-clicked");
+    clickRow(event, row, index) {
+      this.stateStore.selectedProject = row;
+      let rowEls = document.querySelectorAll("tr.cursor-pointer");
+      // check if the previous row is deleted
+      if (rowEls[this.prvSelectedIndex])
+        rowEls[this.prvSelectedIndex].classList.remove("bg-primary");
+      rowEls[index].classList.add("bg-primary");
+      this.prvSelectedIndex = index;
     },
 
-    dbclickRow(project) {
-      console.log(project);
-      this.$root.$emit("openProject", project);
-      this.stateStore.openedProjects.push(project);
-      this.stateStore.workingProject = project;
-    },
-
-    contextMenu(e, project) {
-      console.log(project);
-      e.srcElement.click();
-
-      this.$nextTick(() => {
-        // show context menu if we are selecting a node
-        if (this.selectedProject) {
-          this.x = e.clientX;
-          this.y = e.clientY;
-          this.showContextMenu = true;
+    dblclickRow(event, row, index) {
+      this.stateStore.workingProject = row;
+      for (let i = 0; i < this.stateStore.openedProjects.length; i++) {
+        if (row.projectId === this.stateStore.openedProjects[i].projectId) {
+          return;
         }
-      });
+      }
+      this.stateStore.openedProjects.push(row);
+    },
+
+    toggleContextMenu(event, row, index) {
+      this.showContextMenu = true;
+      this.clickRow(null, row, index);
+    },
+
+    searchProject(rows, terms, cols, getCellValue) {
+      // TODO: implement a filter-method to search abstract and other things
+      // see https://quasar.dev/vue-components/table#introduction filter-method
     },
   },
 };
 </script>
-
-<style></style>

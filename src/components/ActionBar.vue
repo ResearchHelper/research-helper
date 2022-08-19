@@ -3,13 +3,24 @@
     <q-btn
       flat
       dense
-      icon="add"
+      icon="account_tree"
+      @click="stateStore.toggleLeftMenu"
     >
     </q-btn>
+
+    <q-file
+      :multiple="true"
+      :append="false"
+      :accept="'.pdf'"
+      style="display: none"
+      @update:model-value="(files) => stateStore.addProject(files)"
+      ref="filePicker"
+    />
     <q-btn
       flat
       dense
-      icon="delete"
+      icon="add"
+      @click="$refs.filePicker.$el.click()"
     >
     </q-btn>
 
@@ -18,7 +29,7 @@
     <q-input
       outlined
       dense
-      v-model="search"
+      v-model="stateStore.searchString"
       placeholder="Search"
     >
       <template v-slot:append>
@@ -35,17 +46,19 @@
       flat
       dense
       icon="list"
+      @click="stateStore.toggleInfoPane"
     >
     </q-btn>
   </q-toolbar>
 </template>
 
 <script>
+import { useStateStore } from "src/stores/appState";
+
 export default {
-  data() {
-    return {
-      search: "",
-    };
+  setup() {
+    const stateStore = useStateStore();
+    return { stateStore };
   },
 };
 </script>

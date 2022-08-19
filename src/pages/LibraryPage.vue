@@ -3,8 +3,9 @@
     <ActionBar />
     <!-- window-height class is not suitable here since we have a bar -->
     <q-splitter
-      class="window-height"
-      v-model="leftMenuSize"
+      :style="'height:' + height + 'px; overflow: auto;'"
+      :limits="[0, 30]"
+      v-model="stateStore.leftMenuSize"
     >
       <template v-slot:before>
         <TreeView />
@@ -12,7 +13,8 @@
       <template v-slot:after>
         <q-splitter
           reverse
-          v-model="infoPaneSize"
+          :limits="[0, 60]"
+          v-model="stateStore.infoPaneSize"
         >
           <template v-slot:before>
             <TableView />
@@ -23,16 +25,23 @@
         </q-splitter>
       </template>
     </q-splitter>
+    {{ $refs.actionBar }}
   </div>
 </template>
 
 <script>
+import { useStateStore } from "src/stores/appState";
 import ActionBar from "../components/ActionBar.vue";
 import TableView from "../components/TableView.vue";
 import TreeView from "../components/TreeView.vue";
 import InfoPane from "../components/InfoPane.vue";
 
 export default {
+  setup() {
+    const stateStore = useStateStore();
+    return { stateStore };
+  },
+
   components: {
     ActionBar,
     TableView,
@@ -44,7 +53,20 @@ export default {
     return {
       leftMenuSize: 20,
       infoPaneSize: 25,
+
+      height: window.innerHeight - 50,
     };
+  },
+
+  mounted() {
+    this.computeHeight();
+    window.addEventListener("resize", this.computeHeight);
+  },
+
+  methods: {
+    computeHeight() {
+      this.height = window.innerHeight - 50;
+    },
   },
 };
 </script>
