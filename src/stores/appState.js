@@ -25,14 +25,8 @@ export const useStateStore = defineStore("stateStore", {
     workingProject: null, // this is in the openedProjects list
 
     // pdf states
-    _pdfState: {},
+    pdfStates: {},
   }),
-
-  getters: {
-    // have to calculate content size because splitpanes does not stretch the middle pane for me
-    contentSize: (state) => 100 - state.leftMenuSize - state.infoPaneSize,
-    // pdfState: (state) => state._pdfState[state.workingProject.projectId]
-  },
 
   actions: {
     toggleLeftMenu() {
@@ -120,16 +114,17 @@ export const useStateStore = defineStore("stateStore", {
       this.projectIds = node.projectIds;
     },
 
-    savePDFState(pdfViewer) {
+    setPDFState(state) {
       let id = this.workingProject.projectId;
-      console.log(pdfViewer.pagesCount);
-      this._pdfState[id] = {
-        pagesCount: pdfViewer.pagesCount,
-        currentPageNumber: pdfViewer.currentPageNumber,
-        currentScale: pdfViewer.currentScale,
-        currentScaleValue: pdfViewer.currentScaleValue,
-        spreadMode: pdfViewer.spreadMode,
-      };
+      if (!(id in this.pdfStates)) this.pdfStates[id] = {};
+
+      for (let k in state) {
+        this.pdfStates[id][k] = state[k];
+      }
+    },
+
+    savePDFStates() {
+      console.log("save:", this.pdfStates);
     },
   },
 });

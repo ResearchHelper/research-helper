@@ -51,19 +51,7 @@
           </q-tab-panel>
 
           <q-tab-panel name="reader">
-            <div class="text-h4 q-mb-md">Alarms</div>
-            <p>
-              Lorem ipsum dolor sit, amet consectetur adipisicing elit. Quis
-              praesentium cumque magnam odio iure quidem, quod illum numquam
-              possimus obcaecati commodi minima assumenda consectetur culpa fuga
-              nulla ullam. In, libero.
-            </p>
-            <p>
-              Lorem ipsum dolor sit, amet consectetur adipisicing elit. Quis
-              praesentium cumque magnam odio iure quidem, quod illum numquam
-              possimus obcaecati commodi minima assumenda consectetur culpa fuga
-              nulla ullam. In, libero.
-            </p>
+            <ReaderPage />
           </q-tab-panel>
 
           <q-tab-panel name="user">
@@ -102,6 +90,7 @@ import { defineComponent, ref } from "vue";
 import { useQuasar } from "quasar";
 import SystemBar from "../components/SystemBar.vue";
 import LibraryPage from "./LibraryPage.vue";
+import ReaderPage from "./ReaderPage.vue";
 
 export default defineComponent({
   name: "IndexPage",
@@ -115,6 +104,7 @@ export default defineComponent({
   components: {
     SystemBar,
     LibraryPage,
+    ReaderPage,
   },
 
   data() {

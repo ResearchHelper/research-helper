@@ -25,7 +25,6 @@
         </q-splitter>
       </template>
     </q-splitter>
-    {{ $refs.actionBar }}
   </div>
 </template>
 

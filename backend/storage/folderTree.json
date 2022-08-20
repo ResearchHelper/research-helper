@@ -1,1 +1,1 @@
-[{"id": "library", "icon": "home", "label": "Library", "projectIds": ["46ebb9f2-d35b-4350-823f-2a180800c8ec"], "children": [{"icon": "star", "label": "Favorites", "id": "favorites", "projectIds": [], "children": []}]}]
+[{"id": "library", "icon": "home", "label": "Library", "projectIds": ["46ebb9f2-d35b-4350-823f-2a180800c8ec", "1671bf61-bb5a-4170-a006-26c25b3933d9", "6d0d202c-1e39-4a14-8128-f6e7f0555ed1"], "children": [{"icon": "star", "label": "Favorites", "id": "favorites", "projectIds": [], "children": []}]}]
