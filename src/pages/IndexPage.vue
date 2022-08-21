@@ -8,7 +8,7 @@
     >
       <template v-slot:before>
         <q-tabs
-          v-model="tab"
+          v-model="stateStore.currentPage"
           vertical
         >
           <div>
@@ -21,6 +21,7 @@
               name="reader"
               icon="auto_stories"
               :ripple="false"
+              :disable="stateStore.openedProjects.length === 0"
             />
           </div>
           <div>
@@ -39,7 +40,7 @@
       </template>
       <template v-slot:after>
         <q-tab-panels
-          v-model="tab"
+          v-model="stateStore.currentPage"
           animated
           swipeable
           vertical
@@ -86,6 +87,7 @@
 </template>
 
 <script>
+import { useStateStore } from "src/stores/appState";
 import { defineComponent, ref } from "vue";
 import { useQuasar } from "quasar";
 import SystemBar from "../components/SystemBar.vue";
@@ -99,6 +101,9 @@ export default defineComponent({
     const $q = useQuasar();
     $q.dark.set(true); // or false or "auto"
     // $q.dark.toggle();
+
+    const stateStore = useStateStore();
+    return { stateStore };
   },
 
   components: {

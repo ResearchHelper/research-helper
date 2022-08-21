@@ -1,5 +1,5 @@
 <template>
-  <q-toolbar dense>
+  <q-toolbar class="q-px-none">
     <q-btn
       flat
       dense
@@ -13,7 +13,8 @@
     />
 
     <q-tabs
-      v-model="stateStore.workingProject"
+      v-model="currentProjectId"
+      @update:model-value="(id) => getProjectById(id)"
       shrink
       v-if="stateStore.openedProjects.length < 3"
     >
@@ -70,16 +71,68 @@
       flat
       dense
       label="View"
-    ></q-btn-dropdown>
+    >
+      <q-list dense>
+        <q-item
+          clickable
+          v-close-popup
+          @click="$emit('changeScaleValue', 'page-width')"
+        >
+          Page Width
+        </q-item>
+        <q-item
+          clickable
+          v-close-popup
+          @click="$emit('changeScaleValue', 'page-height')"
+        >
+          Page Height
+        </q-item>
+        <q-item>
+          <q-btn
+            dense
+            :ripple="false"
+            @click="$emit('changeScale', -0.1)"
+          >
+            -
+          </q-btn>
+          <q-btn :ripple="false">100%</q-btn>
+          <q-btn
+            dense
+            :ripple="false"
+            @click="$emit('changeScale', 0.1)"
+          >
+            +
+          </q-btn>
+        </q-item>
+        <q-separator />
+        <q-item
+          clickable
+          v-close-popup
+          @click="$emit('changeSpreadMode', 0)"
+        >
+          No Spread
+        </q-item>
+        <q-item
+          clickable
+          v-close-popup
+          @click="$emit('changeSpreadMode', 1)"
+        >
+          Odd Spread
+        </q-item>
+        <q-item
+          clickable
+          v-close-popup
+          @click="$emit('changeSpreadMode', 2)"
+        >
+          Even Spread
+        </q-item>
+      </q-list>
+    </q-btn-dropdown>
     <q-btn-dropdown
       flat
       dense
       label="Tool"
     ></q-btn-dropdown>
-    <q-separator
-      dark
-      vertical
-    />
     <q-btn
       flat
       dense
@@ -99,9 +152,17 @@ export default {
     return { stateStore };
   },
 
+  data() {
+    return {
+      currentProjectId: this.stateStore.workingProject.projectId,
+    };
+  },
+
   methods: {
-    switchProject(params) {
-      console.log(params);
+    getProjectById(id) {
+      for (let project of this.stateStore.openedProjects) {
+        if (project.projectId === id) this.stateStore.workingProject = project;
+      }
     },
   },
 };

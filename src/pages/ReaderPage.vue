@@ -1,10 +1,18 @@
 <template>
   <div>
-    <PDFToolBar />
+    <PDFToolBar
+      @changeScaleValue="
+        (scaleValue) => (pdfViewer.currentScaleValue = scaleValue)
+      "
+      @changeScale="(deltaScale) => (pdfViewer.currentScale += deltaScale)"
+      @changeSpreadMode="(spreadMode) => (pdfViewer.spreadMode = spreadMode)"
+    />
     <q-splitter
       :style="'height:' + height + 'px;'"
       :limits="[0, 30]"
+      separator-class="separator"
       v-model="stateStore.leftMenuSize"
+      after-class="overflow-hidden"
     >
       <template v-slot:before>
         <PDFTOC
@@ -17,7 +25,7 @@
           reverse
           :limits="[0, 60]"
           v-model="stateStore.infoPaneSize"
-          style="overflow-x: hidden"
+          separator-class="separator"
         >
           <template v-slot:before>
             <div id="viewerContainer">
@@ -62,7 +70,7 @@ export default {
   data() {
     return {
       // layout
-      height: window.innerHeight - 50,
+      height: window.innerHeight - 32 - 50,
 
       // pdf reader
       // pdfViewer: null, // DO NOT use this, otherwise pdfViewer becomes Proxy object
@@ -74,13 +82,6 @@ export default {
     "stateStore.workingProject"(project) {
       console.log("loading doc");
       this.loadPDF(project.path);
-    },
-
-    pdfViewer: {
-      handler: function () {
-        console.log("updated:", pdfViewer);
-      },
-      deep: true,
     },
   },
 
@@ -115,7 +116,7 @@ export default {
 
   methods: {
     computeHeight() {
-      this.height = window.innerHeight - 50;
+      this.height = window.innerHeight - 32 - 50;
     },
 
     loadPDF(PDFRelativePath) {
@@ -180,7 +181,7 @@ export default {
 };
 </script>
 
-<style>
+<style lang="scss">
 @import "pdfjs-dist/web/pdf_viewer.css";
 #viewerContainer {
   position: absolute;
@@ -188,5 +189,19 @@ export default {
   height: 100%;
   width: 100%;
   margin-right: 10px;
+}
+.scroll-x {
+  // FIXME: this doesn't work when info pane pop out
+  overflow-x: scroll !important;
+}
+.separator {
+  &:hover {
+    width: 5px;
+    background-color: $primary;
+  }
+  &:active {
+    width: 5px;
+    background-color: $primary;
+  }
 }
 </style>

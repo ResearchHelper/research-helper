@@ -1,5 +1,5 @@
 <template>
-  <q-toolbar>
+  <q-toolbar class="q-px-none">
     <q-btn
       flat
       dense

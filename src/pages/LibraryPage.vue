@@ -5,6 +5,7 @@
     <q-splitter
       :style="'height:' + height + 'px; overflow: auto;'"
       :limits="[0, 30]"
+      separator-class="separator"
       v-model="stateStore.leftMenuSize"
     >
       <template v-slot:before>
@@ -14,6 +15,7 @@
         <q-splitter
           reverse
           :limits="[0, 60]"
+          separator-class="separator"
           v-model="stateStore.infoPaneSize"
         >
           <template v-slot:before>
@@ -70,4 +72,15 @@ export default {
 };
 </script>
 
-<style></style>
+<style lang="scss">
+.separator {
+  &:hover {
+    width: 5px;
+    background-color: $primary;
+  }
+  &:active {
+    width: 5px;
+    background-color: $primary;
+  }
+}
+</style>

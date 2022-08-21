@@ -4,7 +4,7 @@ import { defineStore } from "pinia";
 export const useStateStore = defineStore("stateStore", {
   state: () => ({
     // page
-    currentPage: 0,
+    currentPage: "library",
 
     // layout
     leftMenuSize: 20,
