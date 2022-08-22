@@ -52,7 +52,7 @@
 
 <script>
 import { useStateStore } from "src/stores/appState";
-import NoteEditor from "./NoteEditor.vue";
+
 export default {
   setup() {
     const stateStore = useStateStore();
@@ -79,6 +79,5 @@ export default {
       });
     },
   },
-  components: { NoteEditor },
 };
 </script>
