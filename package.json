@@ -14,7 +14,6 @@
     "@electron/remote": "^2.0.8",
     "@quasar/extras": "^1.0.0",
     "axios": "^0.21.1",
-    "ink-mde": "^0.11.1",
     "pdfjs-dist": "^2.15.349",
     "pinia": "^2.0.11",
     "quasar": "^2.6.0",
