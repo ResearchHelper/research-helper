@@ -190,10 +190,6 @@ export default {
   width: 100%;
   margin-right: 10px;
 }
-.scroll-x {
-  // FIXME: this doesn't work when info pane pop out
-  overflow-x: scroll !important;
-}
 .separator {
   &:hover {
     width: 5px;

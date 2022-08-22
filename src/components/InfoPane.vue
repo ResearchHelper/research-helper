@@ -16,11 +16,11 @@
       Notes
     </q-tab>
   </q-tabs>
-  <q-tab-panels v-model="infoPaneTab">
-    <q-tab-panel
-      name="metaInfoTab"
-      v-if="stateStore.selectedProject"
-    >
+  <q-tab-panels
+    v-if="stateStore.selectedProject"
+    v-model="infoPaneTab"
+  >
+    <q-tab-panel name="metaInfoTab">
       <q-input
         filled
         type="textarea"
@@ -43,23 +43,26 @@
         @blur="modifyInfo"
       />
     </q-tab-panel>
+
+    <q-tab-panel name="noteTab">
+      <NoteEditor />
+    </q-tab-panel>
   </q-tab-panels>
 </template>
 
 <script>
 import { useStateStore } from "src/stores/appState";
+import NoteEditor from "./NoteEditor.vue";
 export default {
   setup() {
     const stateStore = useStateStore();
     return { stateStore };
   },
-
   data() {
     return {
       infoPaneTab: "metaInfoTab",
     };
   },
-
   methods: {
     modifyInfo() {
       fetch(
@@ -76,5 +79,6 @@ export default {
       });
     },
   },
+  components: { NoteEditor },
 };
 </script>
