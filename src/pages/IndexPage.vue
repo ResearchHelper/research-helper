@@ -41,8 +41,6 @@
       <template v-slot:after>
         <q-tab-panels
           v-model="stateStore.currentPage"
-          animated
-          swipeable
           vertical
           transition-duration="0"
           class="window-height"
