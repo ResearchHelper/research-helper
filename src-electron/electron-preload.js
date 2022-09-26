@@ -17,6 +17,8 @@
  */
 import { contextBridge } from "electron";
 import { BrowserWindow } from "@electron/remote";
+import fs from "fs";
+import path from "path";
 
 contextBridge.exposeInMainWorld("myWindowAPI", {
   minimize() {
@@ -37,3 +39,7 @@ contextBridge.exposeInMainWorld("myWindowAPI", {
     BrowserWindow.getFocusedWindow().close();
   },
 });
+
+// I need to inject these 2 libraries in preload, otherwise they are externalized
+contextBridge.exposeInMainWorld("fs", fs);
+contextBridge.exposeInMainWorld("path", path);

@@ -6,7 +6,7 @@
     :nodes="stateStore.folders"
     node-key="id"
     v-model:expanded="expandedKeys"
-    v-model:selected="stateStore.selectedFolderId"
+    v-model:selected="selectedFolderId"
     :no-selection-unset="true"
     selected-color="primary"
     ref="tree"
@@ -60,13 +60,12 @@
       </div>
     </template>
   </q-tree>
-
-  {{ stateStore.selectedFolderId }}
 </template>
 
 <script>
 import { v4 as uuidv4 } from "uuid";
 import { useStateStore } from "src/stores/appState";
+import { loadTree, saveTree } from "src/backend";
 
 export default {
   setup() {
@@ -76,6 +75,7 @@ export default {
 
   data() {
     return {
+      selectedFolderId: "library",
       specialFolderKeys: ["library", "favorites"],
       folders: [{ id: "library" }],
       expandedKeys: ["library"],
@@ -85,15 +85,17 @@ export default {
   },
 
   watch: {
-    "stateStore.selectedFolderId"(folderId) {
-      let node = this.stateStore.getTreeNodeByKey(folderId);
-      this.stateStore.projectIds = node.projectIds;
+    selectedFolderId(folderId) {
+      this.stateStore.selectedTreeNode = this.$refs.tree.getNodeByKey(folderId);
     },
   },
 
   mounted() {
-    this.stateStore.loadTree();
-    this.stateStore.getTreeNodeByKey = this.$refs.tree.getNodeByKey;
+    this.stateStore.folders = loadTree();
+    this.$nextTick(() => {
+      this.stateStore.selectedTreeNode =
+        this.$refs.tree.getNodeByKey("library");
+    });
   },
 
   methods: {
@@ -104,11 +106,11 @@ export default {
         icon: "folder",
         children: [],
         id: uuidv4(),
+        projectIds: [],
       };
       parentNode.children.push(node);
       this.expandedKeys.push(parentNode.id);
-      this.saveTree();
-      this.renameFolder(node);
+      saveTree();
     },
 
     deleteFolder(node) {
@@ -133,8 +135,9 @@ export default {
 
         return newNode;
       }
-      this.folders[0].children = _dfs(this.folders[0]);
-      this.saveTree();
+      // console.log(this.folders[0]);
+      this.stateStore.folders[0].children = _dfs(this.stateStore.folders[0]);
+      saveTree();
     },
 
     renameFolder(node) {
@@ -150,7 +153,7 @@ export default {
 
     blurInput(e) {
       this.renamingFolderId = null;
-      this.saveTree();
+      saveTree();
     },
   },
 };

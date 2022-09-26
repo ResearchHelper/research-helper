@@ -3,6 +3,14 @@
     <q-btn
       flat
       dense
+      @click="test"
+    >
+      "test"
+    </q-btn>
+
+    <q-btn
+      flat
+      dense
       icon="account_tree"
       @click="stateStore.toggleLeftMenu"
     >
@@ -13,7 +21,7 @@
       :append="false"
       :accept="'.pdf'"
       style="display: none"
-      @update:model-value="(files) => stateStore.addProject(files)"
+      @update:model-value="(files) => addProject(files)"
       ref="filePicker"
     />
     <q-btn
@@ -54,11 +62,19 @@
 
 <script>
 import { useStateStore } from "src/stores/appState";
+import { extractContent, addProject } from "src/backend";
 
 export default {
   setup() {
     const stateStore = useStateStore();
-    return { stateStore };
+    return { stateStore, addProject };
+  },
+
+  methods: {
+    test() {
+      // extractContent();
+      addProject();
+    },
   },
 };
 </script>

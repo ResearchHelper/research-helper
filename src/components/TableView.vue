@@ -28,14 +28,14 @@
       <q-item
         clickable
         v-close-popup
-        @click="stateStore.deleteProject(false)"
+        @click="deleteProject(false)"
       >
         <q-item-section>Delete From Table</q-item-section>
       </q-item>
       <q-item
         clickable
         v-close-popup
-        @click="stateStore.deleteProject(true)"
+        @click="deleteProject(true)"
       >
         <q-item-section>Delete From DataBase</q-item-section>
       </q-item>
@@ -45,11 +45,12 @@
 
 <script>
 import { useStateStore } from "../stores/appState";
+import { deleteProject } from "src/backend";
 
 export default {
   setup() {
     const stateStore = useStateStore();
-    return { stateStore };
+    return { stateStore, deleteProject };
   },
 
   data() {
@@ -82,7 +83,7 @@ export default {
   },
 
   watch: {
-    "stateStore.projectIds": {
+    "stateStore.selectedTreeNode.projectIds": {
       handler: function (projectIds) {
         this.getProjects(projectIds);
       },
