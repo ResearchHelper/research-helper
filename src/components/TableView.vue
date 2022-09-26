@@ -45,12 +45,12 @@
 
 <script>
 import { useStateStore } from "../stores/appState";
-import { deleteProject } from "src/backend";
+import { deleteProject, getProject } from "src/backend";
 
 export default {
   setup() {
     const stateStore = useStateStore();
-    return { stateStore, deleteProject };
+    return { stateStore, deleteProject, getProject };
   },
 
   data() {
@@ -95,19 +95,20 @@ export default {
     getProjects(projectIds) {
       this.projects = [];
       for (let projectId of projectIds) {
-        fetch("http://localhost:5000/project/" + projectId, {
-          mode: "cors",
-          method: "GET",
-        })
-          .then((response) => {
-            return response.json();
-          })
-          .then((json) => {
-            let info = json.info;
-            info.files = json.files;
-            info.id = projectId; // must id as key since the expandable row requires it
-            this.projects.push(info);
-          });
+        this.projects.push(getProject(projectId));
+        // fetch("http://localhost:5000/project/" + projectId, {
+        //   mode: "cors",
+        //   method: "GET",
+        // })
+        //   .then((response) => {
+        //     return response.json();
+        //   })
+        //   .then((json) => {
+        //     let info = json.info;
+        //     info.files = json.files;
+        //     info.id = projectId; // must id as key since the expandable row requires it
+        //     this.projects.push(info);
+        //   });
       }
     },
 

@@ -51,12 +51,13 @@
 </template>
 
 <script>
+import { modifyProject } from "src/backend";
 import { useStateStore } from "src/stores/appState";
 
 export default {
   setup() {
     const stateStore = useStateStore();
-    return { stateStore };
+    return { stateStore, modifyProject };
   },
   data() {
     return {
@@ -65,18 +66,22 @@ export default {
   },
   methods: {
     modifyInfo() {
-      fetch(
-        "http://localhost:5000/project/" +
-          this.stateStore.selectedProject.projectId,
-        {
-          mode: "cors",
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(this.stateStore.selectedProject),
-        }
-      ).then((response) => {
-        console.log(response);
-      });
+      modifyProject(
+        this.stateStore.selectedProject.projectId,
+        this.stateStore.selectedProject
+      );
+      // fetch(
+      //   "http://localhost:5000/project/" +
+      //     this.stateStore.selectedProject.projectId,
+      //   {
+      //     mode: "cors",
+      //     method: "PUT",
+      //     headers: { "Content-Type": "application/json" },
+      //     body: JSON.stringify(this.stateStore.selectedProject),
+      //   }
+      // ).then((response) => {
+      //   console.log(response);
+      // });
     },
   },
 };

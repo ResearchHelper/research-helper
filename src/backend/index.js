@@ -65,6 +65,18 @@ function deleteProject(deleteFromDB) {
   saveTree();
 }
 
+function getProject(projectId) {
+  let dirPath = path.join(storagePath, "projects", projectId);
+  let metaPath = path.join(dirPath, "info.json");
+  return JSON.parse(fs.readFileSync(metaPath, "utf8"));
+}
+
+function modifyProject(projectId, data) {
+  let dirPath = path.join(storagePath, "projects", projectId);
+  let metaPath = path.join(dirPath, "info.json");
+  fs.writeFileSync(metaPath, JSON.stringify(data));
+}
+
 function loadPDFState() {
   // TODO
 }
@@ -84,6 +96,8 @@ export {
   saveTree,
   addProject,
   deleteProject,
+  getProject,
+  modifyProject,
   loadPDFState,
   savePDFStates,
   extractContent,
