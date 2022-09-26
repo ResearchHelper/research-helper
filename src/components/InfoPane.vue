@@ -53,17 +53,24 @@
 <script>
 import { modifyProject } from "src/backend";
 import { useStateStore } from "src/stores/appState";
+import NoteEditor from "./NoteEditor.vue";
 
 export default {
+  components: {
+    NoteEditor,
+  },
+
   setup() {
     const stateStore = useStateStore();
     return { stateStore, modifyProject };
   },
+
   data() {
     return {
       infoPaneTab: "metaInfoTab",
     };
   },
+
   methods: {
     modifyInfo() {
       modifyProject(
