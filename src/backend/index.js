@@ -1,3 +1,5 @@
+// TODO: create local storage folders if there is none
+
 import { v4 as uuidv4 } from "uuid";
 import axios from "axios";
 import { useStateStore } from "src/stores/appState";
