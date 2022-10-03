@@ -6,6 +6,7 @@
       "
       @changeScale="(deltaScale) => (pdfViewer.currentScale += deltaScale)"
       @changeSpreadMode="(spreadMode) => (pdfViewer.spreadMode = spreadMode)"
+      @changeEditorMode="(editorMode) => enableEditorMode(editorMode)"
     />
     <q-splitter
       :style="'height:' + height + 'px;'"
@@ -41,6 +42,27 @@
         </q-splitter>
       </template>
     </q-splitter>
+
+    <q-menu
+      touch-position
+      context-menu
+      ref="contextMenu"
+    >
+      <q-list dense>
+        <q-item
+          clickable
+          v-close-popup
+        >
+          Red
+        </q-item>
+        <q-item
+          clickable
+          v-close-popup
+        >
+          Delete
+        </q-item>
+      </q-list>
+    </q-menu>
   </div>
 </template>
 
@@ -53,6 +75,7 @@ import PDFTOC from "src/components/PDFTOC.vue";
 import PDFToolBar from "../components/PDFToolBar.vue";
 import * as pdfjsLib from "pdfjs-dist/build/pdf";
 import * as pdfjsViewer from "pdfjs-dist/web/pdf_viewer";
+import { Annotation, AnnotationType } from "src/annotation";
 pdfjsLib.GlobalWorkerOptions.workerSrc = "pdfjs-dist/build/pdf.worker.js";
 
 export default {
@@ -75,6 +98,12 @@ export default {
       // pdf reader
       // pdfViewer: null, // DO NOT use this, otherwise pdfViewer becomes Proxy object
       pdfDocument: null,
+
+      // for annotation
+      annotationType: AnnotationType.NONE,
+
+      // menu
+      showContextMenu: false,
     };
   },
 
@@ -107,11 +136,30 @@ export default {
     // pdf reader
     let container = document.getElementById("viewerContainer");
     let eventBus = new pdfjsViewer.EventBus();
-    this.pdfViewer = new pdfjsViewer.PDFViewer({ container, eventBus });
+    this.pdfViewer = new pdfjsViewer.PDFViewer({
+      container,
+      eventBus,
+      annotationEditorMode: pdfjsLib.AnnotationEditorType.NONE,
+    });
     this.loadPDF(this.stateStore.workingProject.path);
 
-    // some shortcuts
-    window.addEventListener("mousewheel", (e) => this.ctrlScrollZoom(e));
+    eventBus.on("pagesloaded", () => {
+      // ctrl+scroll to zoom
+      document.addEventListener("mousewheel", (e) => this.ctrlScrollZoom(e));
+
+      // for annotations
+      let annotation = new Annotation(this.pdfViewer);
+      // for (let dom of annotation.doms) {
+      //   dom.oncontextmenu = this.toggleContextMenu;
+      // }
+      container.onmouseup = (e) => {
+        let dom = annotation.createAnnotation({
+          type: this.annotationType,
+          rect: [e.clientX, e.clientY, 5, 5], // only for comment annotation
+        });
+        // if (!!dom) dom.oncontextmenu = this.toggleContextMenu;
+      };
+    });
   },
 
   methods: {
@@ -177,6 +225,43 @@ export default {
         this.savePDFStates();
       }
     },
+
+    enableEditorMode(editorMode) {
+      console.log(editorMode);
+      switch (editorMode) {
+        case "NONE":
+          this.pdfViewer.annotationEditorMode =
+            pdfjsLib.AnnotationEditorType.NONE;
+          this.annotationType = AnnotationType.NONE;
+          break;
+
+        case "HIGHLIGHT":
+          this.annotationType = AnnotationType.HIGHLIGHT;
+          break;
+
+        case "COMMENT":
+          this.annotationType = AnnotationType.COMMENT;
+          break;
+
+        case "FREETEXT":
+          this.pdfViewer.annotationEditorMode =
+            pdfjsLib.AnnotationEditorType.FREETEXT;
+          this.annotationType = AnnotationType.FREETEXT;
+          break;
+
+        case "INK":
+          this.pdfViewer.annotationEditorMode =
+            pdfjsLib.AnnotationEditorType.INK;
+          this.annotationType = AnnotationType.INK;
+          break;
+      }
+    },
+
+    toggleContextMenu() {
+      console.log("rc");
+      // this.showContextMenu = true;
+      this.$refs.contextMenu.show();
+    },
   },
 };
 </script>
@@ -199,5 +284,14 @@ export default {
     width: 5px;
     background-color: $primary;
   }
+}
+// Fix the text color in note
+.popup {
+  color: black;
+}
+
+// active annotation
+.activeAnnotation {
+  border: solid cyan;
 }
 </style>

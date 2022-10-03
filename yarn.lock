@@ -471,6 +471,11 @@
   resolved "https://registry.yarnpkg.com/@types/cors/-/cors-2.8.12.tgz#6b2c510a7ad7039e98e7b8d3d6598f4359e5c080"
   integrity sha512-vt+kDhq/M2ayberEtJcIN/hxXy1Pk+59g2FV/ZQceeaTyCtCucjL2Q7FXlFjtWn4n15KCr1NE2lNNFhp0lEThw==
 
+"@types/crypto-js@^4.0.1":
+  version "4.1.1"
+  resolved "https://registry.yarnpkg.com/@types/crypto-js/-/crypto-js-4.1.1.tgz#602859584cecc91894eb23a4892f38cfa927890d"
+  integrity sha512-BG7fQKZ689HIoc5h+6D2Dgq1fABRa0RbBWKBd9SP/MVRVXROflpm5fhwyATX5duFmbStzyzyycPB8qUYKDH3NA==
+
 "@types/express-serve-static-core@^4.17.18":
   version "4.17.30"
   resolved "https://registry.yarnpkg.com/@types/express-serve-static-core/-/express-serve-static-core-4.17.30.tgz#0f2f99617fa8f9696170c46152ccf7500b34ac04"
@@ -526,6 +531,11 @@
   version "16.11.49"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-16.11.49.tgz#560b1ea774b61e19a89c3fc72d2dcaa3863f38b2"
   integrity sha512-Abq9fBviLV93OiXMu+f6r0elxCzRwc0RC5f99cU892uBITL44pTvgvEqlRlPRi8EGcO1z7Cp8A4d0s/p3J/+Nw==
+
+"@types/pako@^1.0.1":
+  version "1.0.4"
+  resolved "https://registry.yarnpkg.com/@types/pako/-/pako-1.0.4.tgz#b4262aef92680a9331fcdb8420c69cf3dd98d3f3"
+  integrity sha512-Z+5bJSm28EXBSUJEgx29ioWeEEHUh6TiMkZHDhLwjc9wVFH+ressbkmX6waUZc5R3Gobn4Qu5llGxaoflZ+yhA==
 
 "@types/qs@*":
   version "6.9.7"
@@ -741,6 +751,16 @@ ajv@^8.0.1:
     json-schema-traverse "^1.0.0"
     require-from-string "^2.0.2"
     uri-js "^4.2.2"
+
+annotpdf@^1.0.15:
+  version "1.0.15"
+  resolved "https://registry.yarnpkg.com/annotpdf/-/annotpdf-1.0.15.tgz#64e251a9492d3f73f1621eaf924d97db11f7ae6d"
+  integrity sha512-uDR1M4UFb9jfO/EEmki7UznICdxIzYw6igBusGVubohsg09XQYu2/5PLJFM6L3iw3qztAneNlII6shg6v368gA==
+  dependencies:
+    "@types/crypto-js" "^4.0.1"
+    "@types/pako" "^1.0.1"
+    crypto-js "^4.0.0"
+    pako "^1.0.10"
 
 ansi-align@^2.0.0:
   version "2.0.0"
@@ -1633,6 +1653,11 @@ cross-spawn@^7.0.2, cross-spawn@^7.0.3:
     path-key "^3.1.0"
     shebang-command "^2.0.0"
     which "^2.0.1"
+
+crypto-js@^4.0.0:
+  version "4.1.1"
+  resolved "https://registry.yarnpkg.com/crypto-js/-/crypto-js-4.1.1.tgz#9e485bcf03521041bd85844786b83fb7619736cf"
+  integrity sha512-o2JlM7ydqd3Qk9CA0L4NL6mTzU2sdx96a+oOfPu8Mkl/PK51vSyoi8/rQ8NknZtk44vq15lmhAj9CIAGwgeWKw==
 
 crypto-random-string@^1.0.0:
   version "1.0.0"
@@ -5049,6 +5074,11 @@ pacote@^9.1.0, pacote@^9.5.12, pacote@^9.5.3:
     tar "^4.4.10"
     unique-filename "^1.1.1"
     which "^1.3.1"
+
+pako@^1.0.10:
+  version "1.0.11"
+  resolved "https://registry.yarnpkg.com/pako/-/pako-1.0.11.tgz#6c9599d340d54dfd3946380252a35705a6b992bf"
+  integrity sha512-4hLB8Py4zZce5s4yd9XzopqwVv/yGNhV1Bl8NTmCq1763HeK2+EwVTv+leGeL13Dnh2wfbqowVPXCIO0z4taYw==
 
 parallel-transform@^1.1.0:
   version "1.2.0"

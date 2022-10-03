@@ -128,11 +128,63 @@
         </q-item>
       </q-list>
     </q-btn-dropdown>
+
     <q-btn-dropdown
       flat
       dense
       label="Tool"
-    ></q-btn-dropdown>
+    >
+      <q-list dense>
+        <q-item
+          clickable
+          v-close-popup
+          @click="$emit('changeEditorMode', 'NONE')"
+        >
+          Cursor
+        </q-item>
+        <q-item
+          clickable
+          v-close-popup
+          @click="$emit('changeEditorMode', 'HIGHLIGHT')"
+        >
+          <q-item-section avatar>
+            <q-icon name="format_color_fill"></q-icon>
+          </q-item-section>
+          Hightlight
+        </q-item>
+        <q-item
+          clickable
+          v-close-popup
+          @click="$emit('changeEditorMode', 'COMMENT')"
+        >
+          <q-item-section avatar>
+            <q-icon name="comment"></q-icon>
+          </q-item-section>
+          Comment
+        </q-item>
+        <q-item
+          clickable
+          v-close-popup
+          @click="$emit('changeEditorMode', 'INK')"
+        >
+          <q-item-section avatar>
+            <q-icon name="edit"></q-icon>
+          </q-item-section>
+          Free Ink
+        </q-item>
+        <q-item
+          clickable
+          v-close-popup
+          @click="$emit('changeEditorMode', 'FREETEXT')"
+        >
+          <q-item-section avatar>
+            <q-icon name="title"></q-icon>
+          </q-item-section>
+          Free Text
+        </q-item>
+      </q-list>
+    </q-btn-dropdown>
+
     <q-btn
       flat
       dense
