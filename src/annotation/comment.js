@@ -1,5 +1,3 @@
-import { AnnotationFactory, AnnotationIcon } from "annotpdf";
-
 function clickCoordinates(rect, pdfViewer) {
   let ost = computePageOffset(pdfViewer);
   let x_1 = rect.left - ost.left;
@@ -29,8 +27,9 @@ function computePageOffset(pdfViewer) {
   };
 }
 
-function comment(annotation, pdfViewer, fromDB = false) {
-  if (!fromDB) annotation = clickCoordinates(annotation, pdfViewer);
+function comment(annotation, annotClass, fromDB = false) {
+  let pdfViewer = annotClass.pdfViewer;
+  if (!fromDB) annotation.rect = clickCoordinates(annotation.rect, pdfViewer);
 
   // update UI
   let section = document.createElement("section");

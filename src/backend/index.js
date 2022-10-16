@@ -70,7 +70,12 @@ function deleteProject(deleteFromDB) {
 function getProject(projectId) {
   let dirPath = path.join(storagePath, "projects", projectId);
   let metaPath = path.join(dirPath, "info.json");
-  return JSON.parse(fs.readFileSync(metaPath, "utf8"));
+  let project = JSON.parse(fs.readFileSync(metaPath, "utf8"));
+
+  // get files in this project
+  let files = fs.readdirSync(dirPath);
+  project.files = files;
+  return project;
 }
 
 function modifyProject(projectId, data) {

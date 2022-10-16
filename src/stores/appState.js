@@ -26,9 +26,6 @@ export const useStateStore = defineStore("stateStore", {
     // table view
     openedProjects: [],
     workingProject: null, // this is in the openedProjects list
-
-    // pdf states
-    pdfStates: {},
   }),
 
   actions: {
@@ -40,17 +37,9 @@ export const useStateStore = defineStore("stateStore", {
       this.infoPaneSize = this.infoPaneSize > 0 ? 0 : 25;
     },
 
-    setPDFState(state) {
-      let id = this.workingProject.projectId;
-      if (!(id in this.pdfStates)) this.pdfStates[id] = {};
-
-      for (let k in state) {
-        this.pdfStates[id][k] = state[k];
-      }
-    },
-
-    savePDFStates() {
-      console.log("save:", this.pdfStates);
+    setCurrentPage(page) {
+      if (page == this.currentPage) this.toggleLeftMenu();
+      this.currentPage = page;
     },
   },
 });

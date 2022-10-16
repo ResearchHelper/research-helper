@@ -14,12 +14,12 @@
 import { useStateStore } from "src/stores/appState";
 
 export default {
+  props: ["pdfDocument"],
+
   setup() {
     const stateStore = useStateStore();
     return { stateStore };
   },
-
-  props: ["pdfDocument"],
 
   data() {
     return {
@@ -35,8 +35,13 @@ export default {
     },
   },
 
+  mounted() {
+    this.getTOC();
+  },
+
   methods: {
     getTOC() {
+      if (!!this.pdfDocument == false) return;
       function _dfs(oldNode) {
         var tree = [];
         for (var k in oldNode) {
@@ -61,7 +66,6 @@ export default {
       if (node.ref === undefined) {
         this.pdfDocument.getDestination(node.dest).then((dest) => {
           let ref = dest[0];
-          console.log(ref);
           this.pdfDocument.getPageIndex(ref).then((pageIndex) => {
             this.$emit("clickTOC", pageIndex + 1);
           });

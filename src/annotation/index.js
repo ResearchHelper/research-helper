@@ -9,11 +9,11 @@ const path = window.path;
 const fs = window.fs;
 
 const AnnotationType = {
-  NONE: 0,
-  COMMENT: 1,
-  FREETEXT: 2,
-  INK: 3,
-  HIGHLIGHT: 4,
+  NONE: "cursor",
+  COMMENT: "comment",
+  FREETEXT: "freetext",
+  INK: "ink",
+  HIGHLIGHT: "highlight",
 };
 
 class Annotation {
@@ -22,7 +22,7 @@ class Annotation {
     this.folderPath = path.join(
       storagePath,
       "projects",
-      stateStore.selectedProject.projectId
+      stateStore.workingProject.projectId
     );
     this.annotations = [];
     this.doms = [];
@@ -37,20 +37,24 @@ class Annotation {
     if (!annotation.id) annotation.id = uuidv4();
 
     // push to ui
+    let result = null;
     let type = annotation.type;
     switch (type) {
       case AnnotationType.HIGHLIGHT:
-        annotation = highlight(annotation, this.pdfViewer, fromDB);
+        result = highlight(annotation, this, fromDB);
         break;
       case AnnotationType.COMMENT:
-        annotation = comment(annotation, this.pdfViewer, fromDB);
+        result = comment(annotation, this, fromDB);
+        break;
     }
 
     // save to DB
-    this.annotations.push(annotation);
-    if (!fromDB) this.saveAnnotations();
-
-    return annotation.dom;
+    // this.annotations.push(result.annotation);
+    if (!!result) {
+      this.annotations.push(result.annotation);
+      if (!fromDB) this.saveAnnotations();
+      return result.dom;
+    }
   }
 
   saveAnnotations() {
@@ -74,12 +78,31 @@ class Annotation {
     }
   }
 
-  modify() {
-    // TODO: modify an annotation
+  modifyAnnotation(annotationId, newProperties) {
+    let dom = document.getElementById(annotationId);
+    for (let i in this.annotations) {
+      if (this.annotations[i].id == annotationId) {
+        for (let key in newProperties) {
+          this.annotations[i][key] = newProperties[key];
+
+          if (this.annotations[i].type === AnnotationType.HIGHLIGHT)
+            dom.firstChild.style.backgroundColor = newProperties.color;
+        }
+      }
+
+      this.saveAnnotations();
+    }
   }
 
-  delete() {
-    // TODO: delete an annotation
+  deleteAnnotation(annotationId) {
+    this.annotations = this.annotations.filter(
+      (annot) => annot.id != annotationId
+    );
+    // this.doms = this.doms.filter((dom) => dom.id != annotationId);
+    let dom = document.getElementById(annotationId);
+    dom.parentNode.removeChild(dom);
+
+    this.saveAnnotations();
   }
 }
 

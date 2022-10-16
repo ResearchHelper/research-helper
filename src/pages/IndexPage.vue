@@ -16,12 +16,14 @@
               name="library"
               icon="library_books"
               :ripple="false"
+              @click="stateStore.setCurrentPage('library')"
             />
             <q-tab
               name="reader"
               icon="auto_stories"
               :ripple="false"
               :disable="stateStore.openedProjects.length === 0"
+              @click="stateStore.setCurrentPage('reader')"
             />
           </div>
           <div>
@@ -29,11 +31,13 @@
               name="user"
               icon="account_circle"
               :ripple="false"
+              @click="stateStore.setCurrentPage('user')"
             />
             <q-tab
               name="settings"
               icon="settings"
               :ripple="false"
+              @click="stateStore.setCurrentPage('settings')"
             />
           </div>
         </q-tabs>
@@ -86,15 +90,12 @@
 
 <script>
 import { useStateStore } from "src/stores/appState";
-import { defineComponent, ref } from "vue";
 import { useQuasar } from "quasar";
 import SystemBar from "../components/SystemBar.vue";
 import LibraryPage from "./LibraryPage.vue";
 import ReaderPage from "./ReaderPage.vue";
 
-export default defineComponent({
-  name: "IndexPage",
-
+export default {
   setup() {
     const $q = useQuasar();
     $q.dark.set(true); // or false or "auto"
@@ -109,13 +110,7 @@ export default defineComponent({
     LibraryPage,
     ReaderPage,
   },
-
-  data() {
-    return {
-      tab: ref("library"),
-    };
-  },
-});
+};
 </script>
 
 <style>

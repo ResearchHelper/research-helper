@@ -130,7 +130,7 @@ export default {
         }
       }
       this.stateStore.openedProjects.push(row);
-      this.stateStore.currentPage = "reader";
+      this.stateStore.setCurrentPage("reader");
     },
 
     toggleContextMenu(event, row, index) {
