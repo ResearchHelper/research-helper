@@ -7,7 +7,7 @@
         :value="pdfState.currentPageNumber"
         @keydown.enter="(e) => $emit('changePageNumber', e.target.value)"
       />
-      {{ "of " + pdfState.numPages }}
+      {{ "of " + pdfState.pagesCount }}
     </div>
 
     <!-- tools -->
@@ -172,14 +172,22 @@
 </template>
 
 <script>
+import { useStateStore } from "src/stores/appState";
 import { AnnotationType } from "src/annotation";
 
 export default {
-  props: ["pdfState"],
+  // props: ["pdfState"],
 
   setup() {
-    // so that template can use it
-    return { AnnotationType };
+    const stateStore = useStateStore();
+    // return AnnotationType so that template can use it
+    return { stateStore, AnnotationType };
+  },
+
+  computed: {
+    pdfState() {
+      return this.stateStore.getPDFState();
+    },
   },
 
   data() {

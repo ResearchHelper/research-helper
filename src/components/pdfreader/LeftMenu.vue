@@ -30,9 +30,13 @@ export default {
 
   props: ["pdfDocument"],
 
+  // define this to avoid the extraneous non-emits warning
+  // https://stackoverflow.com/questions/64220737/vue-3-emit-warning-extraneous-non-emits-event-listeners
+  emits: ["changePageNumber"],
+
   data() {
     return {
-      leftMenuTab: "toc",
+      leftMenuTab: "projects",
     };
   },
 };

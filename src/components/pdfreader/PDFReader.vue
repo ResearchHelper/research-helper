@@ -12,10 +12,10 @@
     <template v-slot:after>
       <!-- toolBar -->
       <PDFToolBar
-        :pdfState="pdfState"
         @changePageNumber="changePageNumber"
         @changeScale="changeScale"
         @changeScaleValue="changeScaleValue"
+        @changeSpreadMode="changeSpreadMode"
         @changeTool="changeTool"
         @searchText="searchText"
         @changeMatch="changeMatch"
@@ -59,39 +59,28 @@
           square
           icon="delete"
           size="sm"
+          :ripple="false"
+          @click="clickMenu({ option: 'deleteAnnot' })"
         >
         </q-btn>
-        <!-- <q-item
-            clickable
-            @click="clickMenu({ option: 'deleteAnnot' })"
-          >
-            Delete Annotation
-          </q-item> -->
       </div>
     </template>
   </q-splitter>
 </template>
 
 <script>
+import LeftMenu from "./LeftMenu.vue";
 import PDFToolBar from "./PDFToolBar.vue";
 
 import { useStateStore } from "src/stores/appState";
 
-import { Annotation, AnnotationType } from "src/annotation";
+import { AnnotationManager, AnnotationType } from "src/annotation";
 import * as pdfjsLib from "pdfjs-dist/build/pdf";
 import * as pdfjsViewer from "pdfjs-dist/web/pdf_viewer";
-import LeftMenu from "./LeftMenu.vue";
 pdfjsLib.GlobalWorkerOptions.workerSrc = "pdfjs-dist/build/pdf.worker.js";
 
 export default {
   components: { PDFToolBar, LeftMenu },
-
-  data() {
-    return {
-      showMenu: false,
-      menuOffset: null,
-    };
-  },
 
   setup() {
     const stateStore = useStateStore();
@@ -123,32 +112,39 @@ export default {
     this.pdfLinkService = pdfLinkService;
 
     this.loadPDF(this.stateStore.workingProject.path);
-    eventBus.on("pagesloaded", () => {
+    eventBus.on("pagesinit", () => {
+      console.log("document ready");
+      this.pagesInit = true;
       // load previous pdf state
-      this.loadPDFState(this.stateStore.workingProject.path);
+      this.loadPDFState();
 
       // scroll event and ctrl+scroll (zoom) event
-      document.addEventListener("mousewheel", (e) => this.handleScroll(e));
+      container.addEventListener("scroll", (e) => this.handleScroll(e));
+      container.addEventListener("mousewheel", (e) => this.handleCtrlScroll(e));
 
-      // for annotations
-      this.annotation = new Annotation(this.pdfViewer);
+      // annotation manager
+      this.annotManager = new AnnotationManager(this.pdfViewer);
+    });
 
-      // create annotations
-      for (let dom of this.annotation.doms) {
-        dom.onclick = () => this.clickAnnotation(dom);
-      }
-      container.onmouseup = (e) => {
+    eventBus.on("annotationlayerrendered", (e) => {
+      this.annotManager.drawAnnotations(e.pageNumber);
+      this.annotManager.bindFunc2Doms(e.pageNumber, this.clickAnnotation);
+
+      e.source.div.onmouseup = (ev) => {
         let rect = null;
-        if (this.pdfState.tool == AnnotationType.COMMENT)
-          rect = { left: e.clientX, top: e.clientY, width: 5, height: 5 };
-        let dom = this.annotation.createAnnotation({
-          type: this.pdfState.tool,
+        let pdfState = this.stateStore.getPDFState();
+        if (pdfState.tool == AnnotationType.COMMENT)
+          rect = { left: ev.clientX, top: ev.clientY, width: 5, height: 5 };
+        let dom = this.annotManager.createAnnotation({
+          type: pdfState.tool,
           rect: rect, // only for comment annotation
-          color: this.pdfState.color,
+          color: pdfState.color,
+          pageNumber: e.pageNumber,
         });
+        // bind function to dom
         if (!!dom) dom.onclick = () => this.clickAnnotation(dom);
 
-        // if the mouse is clicking somewhere else than menu, close it
+        // if mouse clicks outside of the menu, close it
         let menu = document.getElementById("menu");
         if (!menu.contains(e.target)) menu.hidden = true;
       };
@@ -157,27 +153,39 @@ export default {
     // find controller
     eventBus.on("updatefindmatchescount", (e) => {
       // update the total founded during searching
-      this.pdfState.matchesCount = e.matchesCount;
-      console.log("writing pdfState", this.pdfState.matchesCount);
+      this.stateStore.setPDFState({ matchesCount: e.matchesCount });
+      // this.pdfState.matchesCount = e.matchesCount;
+      // console.log("writing pdfState", this.pdfState.matchesCount);
     });
     eventBus.on("updatetextlayermatches", (e) => {
       // update the current / total during navigating between matches
-      if (!!this.pdfState.matchesCount) {
+      let pdfState = this.stateStore.getPDFState();
+      if (!!pdfState.matchesCount) {
         let findController = e.source;
         let pageIdx = findController.selected.pageIdx;
         let current = findController.selected.matchIdx + 1;
         for (let i = 0; i < pageIdx; i++) {
           current += findController.pageMatches[i].length;
         }
-        this.pdfState.matchesCount.current = current;
+        pdfState.matchesCount.current = current;
+        this.stateStore.setPDFState({ matchesCount: pdfState.matchesCount });
+        // this.pdfState.matchesCount.current = current;
       }
     });
   },
 
   watch: {
     "stateStore.workingProject"(project) {
+      this.pagesInit = false;
       console.log("loading:", project.path);
       this.loadPDF(project.path);
+    },
+
+    "stateStore.pdfStates": {
+      handler(newState, oldState) {
+        if (this.pagesInit) this.stateStore.savePDFStates();
+      },
+      deep: true,
     },
   },
 
@@ -188,7 +196,7 @@ export default {
       pdfDocument: null,
 
       pdfState: {
-        numPages: 1,
+        pagesCount: 1,
         currentPageNumber: 1,
         currentScale: 1,
         tool: AnnotationType.NONE,
@@ -205,22 +213,43 @@ export default {
       loadingTask.promise.then((pdfDocument) => {
         this.pdfLinkService.setDocument(pdfDocument, null);
         this.pdfViewer.setDocument(pdfDocument);
-        // total pages of the pdf
-        this.pdfState.numPages = pdfDocument.numPages;
 
+        // for table of content
         this.pdfDocument = pdfDocument;
       });
     },
 
-    loadPDFState(PDFRelativePath) {
-      this.changePageNumber(1);
-      this.changeScale(1);
-      this.changeScaleValue("page-width");
-      this.changeTool("cursor");
+    loadPDFState() {
+      // FIXME: it seems a single dict is shared to all projects,
+      // possibly because the proxy thing, all dicts are pointing to the
+      // same address, try use deepcopy to generate another dict ...
+      this.stateStore.loadPDFState();
+      let pdfState = this.stateStore.getPDFState();
+      // this.pdfState.pagesCount = this.pdfViewer.pagesCount;
+      this.stateStore.setPDFState({ pagesCount: this.pdfViewer.pagesCount });
+
+      this.changePageNumber(pdfState.currentPageNumber);
+      this.setScale(pdfState.currentScale);
+      if (!!pdfState.currentScaleValue)
+        this.changeScaleValue(pdfState.currentScaleValue);
+      this.changeSpreadMode(pdfState.spreadMode);
+      this.changeTool(pdfState.tool);
+      this.changeColor(pdfState.color);
     },
 
     handleScroll(e) {
+      // update pdfState
+      // this.pdfState.currentPageNumber = this.pdfViewer.currentPageNumber;
+      this.stateStore.setPDFState({
+        currentPageNumber: this.pdfViewer.currentPageNumber,
+      });
+    },
+
+    handleCtrlScroll(e) {
       if (e.ctrlKey === true) {
+        // this is not scrolling, so we need to
+        // disable the default action avoid the offsetParent not set error
+        e.preventDefault();
         if (e.deltaY < 0) {
           let oldScale = this.pdfViewer.currentScale;
           this.pdfViewer.currentScale += 0.1;
@@ -241,38 +270,66 @@ export default {
         } else {
           this.pdfViewer.currentScale -= 0.1;
         }
-      }
 
-      // update pdfState
-      this.pdfState.currentPageNumber = this.pdfViewer.currentPageNumber;
-      this.pdfState.currentScale = this.pdfViewer.currentScale;
+        this.stateStore.setPDFState({
+          currentScale: this.pdfViewer.currentScale,
+        });
+      }
     },
 
     // tool bar
     changePageNumber(pageNumber) {
-      console.log(pageNumber);
       pageNumber = parseInt(pageNumber);
       this.pdfViewer.currentPageNumber = pageNumber;
-      this.pdfState.currentPageNumber = pageNumber;
+      // this.pdfState.currentPageNumber = pageNumber;
+      this.stateStore.setPDFState({ currentPageNumber: pageNumber });
+    },
+
+    setScale(scale) {
+      this.pdfViewer.currentScale = parseFloat(scale);
+      // this.pdfState.currentScale = this.pdfViewer.currentScale;
+      this.stateStore.setPDFState({
+        currentScale: this.pdfViewer.currentScale,
+      });
     },
 
     changeScale(scale) {
       this.pdfViewer.currentScale += scale;
-      this.pdfState.currentScale = this.pdfViewer.currentScale;
+      // this.pdfState.currentScale = this.pdfViewer.currentScale;
+      this.stateStore.setPDFState({
+        currentScale: this.pdfViewer.currentScale,
+      });
     },
 
     changeScaleValue(scaleValue) {
       this.pdfViewer.currentScaleValue = scaleValue;
-      this.pdfState.currentScaleValue = this.pdfViewer.currentScaleValue;
-      this.pdfState.currentScale = this.pdfViewer.currentScale;
+      // this.pdfState.currentScaleValue = this.pdfViewer.currentScaleValue;
+      // this.pdfState.currentScale = this.pdfViewer.currentScale;
+      this.stateStore.setPDFState({
+        currentScaleValue: this.pdfViewer.currentScaleValue,
+        currentScale: this.pdfViewer.currentScale,
+      });
+    },
+
+    changeSpreadMode(spreadMode) {
+      this.pdfViewer.spreadMode = parseInt(spreadMode);
+      this.stateStore.setPDFState({
+        spreadMode: this.pdfViewer.spreadMode,
+      });
     },
 
     changeTool(tool) {
-      this.pdfState.tool = tool;
+      // this.pdfState.tool = tool;
+      this.stateStore.setPDFState({
+        tool: tool,
+      });
     },
 
     changeColor(color) {
-      this.pdfState.color = color;
+      // this.pdfState.color = color;
+      this.stateStore.setPDFState({
+        color: color,
+      });
     },
 
     searchText(text) {
@@ -303,8 +360,8 @@ export default {
         if (pageIdx < 0) {
           pageIdx = 0;
           break;
-        } else if (pageIdx > this.pdfState.numPages - 1) {
-          pageIdx = this.pdfState.numPages - 1;
+        } else if (pageIdx > this.pdfState.pagesCount - 1) {
+          pageIdx = this.pdfState.pagesCount - 1;
           break;
         }
         // if next: select first match (delta-1 = 0) in the next available pages
@@ -344,10 +401,10 @@ export default {
       let id = this.selectedAnnotation.id;
       switch (params.option) {
         case "changeColor":
-          this.annotation.modifyAnnotation(id, { color: params.color });
+          this.annotManager.modifyAnnotation(id, { color: params.color });
           break;
         case "deleteAnnot":
-          this.annotation.deleteAnnotation(id);
+          this.annotManager.deleteAnnotation(id);
           break;
       }
 

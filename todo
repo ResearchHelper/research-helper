@@ -1,7 +1,8 @@
-[x] pdf highlight and comment
-[x] annotation storage
-[ ] annotation contextMenu
+TODO:
+[ ] able to close the project
 
-[ ] pdf state storage
-[ ] note storage
+[ ] use veditor instead of prosemirror
 [ ] make content extractor as online service
+
+FIXME
+[ ] highlight color gradually becomes black (except yellow)

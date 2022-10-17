@@ -1,5 +1,5 @@
-function clickCoordinates(rect, pdfViewer) {
-  let ost = computePageOffset(pdfViewer);
+function clickCoordinates(rect, annotationLayer) {
+  let ost = computePageOffset(annotationLayer);
   let x_1 = rect.left - ost.left;
   let y_1 = rect.top - ost.top;
   // calculate the rect on UI (using percentage since it's invariant under scale change)
@@ -11,14 +11,8 @@ function clickCoordinates(rect, pdfViewer) {
   };
 }
 
-function computePageOffset(pdfViewer) {
-  let pg = document
-    .querySelector(
-      `div.page[data-page-number='${pdfViewer.currentPageNumber}']`
-    )
-    .querySelector(".annotationLayer");
-
-  let rect = pg.getBoundingClientRect();
+function computePageOffset(annotationLayer) {
+  let rect = annotationLayer.getBoundingClientRect();
   return {
     top: rect.top,
     left: rect.left,
@@ -27,9 +21,13 @@ function computePageOffset(pdfViewer) {
   };
 }
 
-function comment(annotation, annotClass, fromDB = false) {
-  let pdfViewer = annotClass.pdfViewer;
-  if (!fromDB) annotation.rect = clickCoordinates(annotation.rect, pdfViewer);
+function comment(annotation, fromDB = false) {
+  let annotationLayer = document
+    .querySelector(`div.page[data-page-number='${annotation.pageNumber}']`)
+    .querySelector(".annotationLayer");
+  // let pdfViewer = annotClass.pdfViewer;
+  if (!fromDB)
+    annotation.rect = clickCoordinates(annotation.rect, annotationLayer);
 
   // update UI
   let section = document.createElement("section");
@@ -73,12 +71,7 @@ function comment(annotation, annotClass, fromDB = false) {
     popup.hidden = !popup.hidden;
   });
 
-  document
-    .querySelector(
-      `div.page[data-page-number='${pdfViewer.currentPageNumber}']`
-    )
-    .querySelector(".annotationLayer")
-    .appendChild(section);
+  annotationLayer.appendChild(section);
 
   return { annotation: annotation, dom: section };
 }

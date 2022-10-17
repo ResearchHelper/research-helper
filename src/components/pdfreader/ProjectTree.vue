@@ -10,7 +10,35 @@
     v-model:selected="selected"
     v-model:expanded="expanded"
     @update:selected="clickItem"
-  />
+  >
+    <template v-slot:default-header="prop">
+      <q-menu
+        touch-position
+        context-menu
+      >
+        <q-list dense>
+          <q-item
+            clickable
+            v-close-popup
+            @click="addNote(prop.node)"
+          >
+            <q-item-section> Add Note </q-item-section>
+          </q-item>
+          <q-separator />
+          <q-item
+            clickable
+            v-close-popup
+            @click="closeProject(prop.key)"
+          >
+            <q-item-section> Close Project </q-item-section>
+          </q-item>
+        </q-list>
+      </q-menu>
+
+      <!-- body of the tree node -->
+      <div class="ellipsis">{{ prop.node.label }}</div>
+    </template>
+  </q-tree>
 </template>
 
 <script>
@@ -74,6 +102,14 @@ export default {
           this.stateStore.workingProject = project;
         }
       }
+    },
+
+    addNote(node) {
+      console.log(node);
+    },
+
+    closeProject(key) {
+      console.log(key);
     },
   },
 };

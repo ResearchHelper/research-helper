@@ -11,36 +11,47 @@
     dense
     :filter="stateStore.searchString"
   >
+    <template v-slot:body-cell="props">
+      <q-td :props="props">
+        <div
+          style="width: 20em"
+          class="ellipsis"
+        >
+          {{ props.value }}
+        </div>
+      </q-td>
+
+      <q-menu
+        touch-position
+        context-menu
+      >
+        <q-list dense>
+          <q-item
+            clickable
+            v-close-popup
+            @click="dblclickRow"
+          >
+            <q-item-section>Open</q-item-section>
+          </q-item>
+          <q-separator />
+          <q-item
+            clickable
+            v-close-popup
+            @click="deleteProject(false)"
+          >
+            <q-item-section>Delete From Table</q-item-section>
+          </q-item>
+          <q-item
+            clickable
+            v-close-popup
+            @click="deleteProject(true)"
+          >
+            <q-item-section>Delete From DataBase</q-item-section>
+          </q-item>
+        </q-list>
+      </q-menu>
+    </template>
   </q-table>
-  <q-menu
-    touch-position
-    context-menu
-  >
-    <q-list dense>
-      <q-item
-        clickable
-        v-close-popup
-        @click="dblclickRow"
-      >
-        <q-item-section>Open</q-item-section>
-      </q-item>
-      <q-separator />
-      <q-item
-        clickable
-        v-close-popup
-        @click="deleteProject(false)"
-      >
-        <q-item-section>Delete From Table</q-item-section>
-      </q-item>
-      <q-item
-        clickable
-        v-close-popup
-        @click="deleteProject(true)"
-      >
-        <q-item-section>Delete From DataBase</q-item-section>
-      </q-item>
-    </q-list>
-  </q-menu>
 </template>
 
 <script>
@@ -58,20 +69,14 @@ export default {
       headers: [
         {
           name: "title",
-          field: "author",
-          label: "Author(s)",
-          align: "left",
-        },
-        {
-          name: "year",
-          field: "year",
-          label: "Year",
-          align: "left",
-        },
-        {
-          name: "title",
           field: "title",
           label: "Title",
+          align: "left",
+        },
+        {
+          name: "author",
+          field: "author",
+          label: "Author(s)",
           align: "left",
         },
       ],
@@ -96,19 +101,6 @@ export default {
       this.projects = [];
       for (let projectId of projectIds) {
         this.projects.push(getProject(projectId));
-        // fetch("http://localhost:5000/project/" + projectId, {
-        //   mode: "cors",
-        //   method: "GET",
-        // })
-        //   .then((response) => {
-        //     return response.json();
-        //   })
-        //   .then((json) => {
-        //     let info = json.info;
-        //     info.files = json.files;
-        //     info.id = projectId; // must id as key since the expandable row requires it
-        //     this.projects.push(info);
-        //   });
       }
     },
 

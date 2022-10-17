@@ -1,5 +1,7 @@
-function selectionCoordinates(rect, pdfViewer) {
-  let ost = computePageOffset(pdfViewer);
+// FIXME: for two page view the coordinate is not right,
+// additional 100% is in the horizontal coordinates
+function selectionCoordinates(rect, annotationLayer) {
+  let ost = computePageOffset(annotationLayer);
   let x_1 = rect.x - ost.left;
   let y_1 = rect.y - ost.top;
   // calculate the rectt on UI (using percentage since it's invariant under scale change)
@@ -11,14 +13,8 @@ function selectionCoordinates(rect, pdfViewer) {
   };
 }
 
-function computePageOffset(pdfViewer) {
-  let pg = document
-    .querySelector(
-      `div.page[data-page-number='${pdfViewer.currentPageNumber}']`
-    )
-    .querySelector(".annotationLayer");
-
-  var rect = pg.getBoundingClientRect();
+function computePageOffset(annotationLayer) {
+  var rect = annotationLayer.getBoundingClientRect();
   return {
     top: rect.top,
     left: rect.left,
@@ -27,50 +23,16 @@ function computePageOffset(pdfViewer) {
   };
 }
 
-function createContextMenu(dom, annotClass) {
-  let div = document.createElement("div");
-  div.style.position = "relative";
-  div.style.left = "50%";
-  div.style.top = "5%";
-  div.style.backgroundColor = "#1D1D1D";
-  div.style.mixBlendMode = "unset !important";
-  div.hidden = true;
+function highlight(annotation, fromDB = false) {
+  let annotationLayer = document
+    .querySelector(`div.page[data-page-number='${annotation.pageNumber}']`)
+    .querySelector(".annotationLayer");
 
-  let addComment = document.createElement("div");
-  addComment.innerHTML = "Add Comment";
-  let deleteAnnot = document.createElement("div");
-  deleteAnnot.innerHTML = "Delete";
-  deleteAnnot.onclick = (annotClass) => {
-    annotClass.deleteAnnotation(dom.id);
-  };
-  let changeColor = document.createElement("div");
-  changeColor.innerHTML = "changeColor";
-
-  div.append(addComment, deleteAnnot, changeColor);
-  dom.appendChild(div);
-
-  // create contextMenu
-  dom.onclick = (ev) => {
-    div.hidden = false;
-    console.log(annotClass);
-    document.onclick = (e) => {
-      if (!dom.contains(e.target)) {
-        // if clicked outside, close the menu
-        div.hidden = true;
-        document.onclick = null;
-      } else {
-        console.log(ev);
-      }
-    };
-  };
-}
-
-function highlight(annotation, annotClass, fromDB = false) {
-  let pdfViewer = annotClass.pdfViewer;
   if (!fromDB) {
     let rec = window.getSelection().getRangeAt(0).getBoundingClientRect();
     // if there is selection, use the selection
-    if (rec.width > 1) annotation.rect = selectionCoordinates(rec, pdfViewer);
+    if (rec.width > 1)
+      annotation.rect = selectionCoordinates(rec, annotationLayer);
     else return;
   }
 
@@ -94,14 +56,8 @@ function highlight(annotation, annotClass, fromDB = false) {
   rect.style.mixBlendMode = "multiply";
   section.appendChild(rect);
 
-  // createContextMenu(section, annotClass);
-  document
-    .querySelector(
-      `div.page[data-page-number='${pdfViewer.currentPageNumber}']`
-    )
-    .querySelector(".annotationLayer")
-    .appendChild(section);
-
+  // put dom on the annotation layer
+  annotationLayer.appendChild(section);
   return { annotation: annotation, dom: section };
 }
 
