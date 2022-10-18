@@ -1,6 +1,8 @@
 TODO:
+[x] use veditor instead of prosemirror
+[ ] pdf toolbar button to toggle info pane
+[ ] veditor in a separate window, like zotero
 [ ] clicking note do not need context menu, it needs an editor
-[ ] use veditor instead of prosemirror
 [ ] make content extractor as online service
 
 FIXME

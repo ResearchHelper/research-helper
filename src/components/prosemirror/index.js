@@ -1,5 +1,0 @@
-export { EditorState } from 'prosemirror-state'
-export { EditorView } from 'prosemirror-view'
-export { DOMParser, Node } from 'prosemirror-model'
-export { schema } from './schema.js'
-export { setup } from './setup'
