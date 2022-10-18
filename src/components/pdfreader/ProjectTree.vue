@@ -67,6 +67,17 @@ export default {
     this.expanded.push(this.selected);
   },
 
+  watch: {
+    "stateStore.openedProjects": {
+      handler() {
+        this.getProjectTree();
+        this.selected = this.stateStore.workingProject.projectId;
+        this.expanded.push(this.selected);
+      },
+      deep: true,
+    },
+  },
+
   methods: {
     getProjectTree() {
       this.projects = [];
@@ -108,8 +119,8 @@ export default {
       console.log(node);
     },
 
-    closeProject(key) {
-      console.log(key);
+    closeProject(projectId) {
+      this.stateStore.closeProject(projectId);
     },
   },
 };

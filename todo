@@ -1,6 +1,5 @@
 TODO:
-[ ] able to close the project
-
+[ ] clicking note do not need context menu, it needs an editor
 [ ] use veditor instead of prosemirror
 [ ] make content extractor as online service
 

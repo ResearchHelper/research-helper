@@ -13,7 +13,7 @@
     <!-- tools -->
     <div>
       <q-btn-toggle
-        v-model="tool"
+        :model-value="pdfState.tool"
         unelevated
         :ripple="false"
         size="sm"
@@ -24,17 +24,17 @@
           { value: AnnotationType.HIGHLIGHT, icon: 'border_color' },
           { value: AnnotationType.COMMENT, icon: 'comment' },
         ]"
-        @update:model-value="$emit('changeTool', tool)"
+        @update:model-value="(tool) => $emit('changeTool', tool)"
       />
       <q-btn
-        :style="`background: ${color}`"
+        :style="`background: ${pdfState.color}`"
         unelevated
         :ripple="false"
         size="xs"
       >
         <q-menu>
           <q-color
-            v-model="color"
+            :model-value="pdfState.color"
             no-header
             no-footer
             bordered
@@ -47,7 +47,7 @@
               '#B2028A',
               '#2A0449',
             ]"
-            @change="$emit('changeColor', color)"
+            @change="(color) => $emit('changeColor', color)"
           />
         </q-menu>
       </q-btn>
@@ -60,52 +60,53 @@
         padding="xs"
       >
         <q-list dense>
-          <q-btn-toggle
-            stack
-            dense
-            :ripple="false"
-            v-model="scaleValue"
-            toggle-color="primary"
-            :options="[
-              { label: 'Page Width', value: 'page-width' },
-              { label: 'Page Height', value: 'page-height' },
-            ]"
-            @update:model-value="$emit('changeScaleValue', scaleValue)"
-          />
-
-          <q-btn
-            :ripple="false"
-            @click="
-              scaleValue = null;
-              $emit('changeScale', -0.1);
-            "
-          >
-            -
-          </q-btn>
-          {{ Math.trunc(pdfState.currentScale * 100) + "%" }}
-          <q-btn
-            :ripple="false"
-            @click="
-              scaleValue = null;
-              $emit('changeScale', 0.1);
-            "
-          >
-            +
-          </q-btn>
+          <q-item class="items-center">
+            <q-btn
+              dense
+              :ripple="false"
+              @click="$emit('changeScaleValue', 'page-width')"
+            >
+              Page Width
+            </q-btn>
+            <q-btn
+              dense
+              :ripple="false"
+              @click="$emit('changeScaleValue', 'page-height')"
+            >
+              Page Height
+            </q-btn>
+            <q-btn
+              :ripple="false"
+              @click="$emit('changeScale', -0.1)"
+            >
+              -
+            </q-btn>
+            <div>
+              {{ Math.trunc(pdfState.currentScale * 100) + "%" }}
+            </div>
+            <q-btn
+              :ripple="false"
+              @click="$emit('changeScale', 0.1)"
+            >
+              +
+            </q-btn>
+          </q-item>
           <q-separator />
           <q-item>
             <q-btn-toggle
               stack
               dense
               :ripple="false"
-              v-model="spreadMode"
               toggle-color="primary"
               :options="[
                 { label: 'No Spread', value: 0 },
                 { label: 'Odd Spread', value: 1 },
                 { label: 'Even Spread', value: 2 },
               ]"
-              @update:model-value="$emit('changeSpreadMode', spreadMode)"
+              :model-value="pdfState.spreadMode"
+              @update:model-value="
+                (spreadMode) => $emit('changeSpreadMode', spreadMode)
+              "
             />
           </q-item>
         </q-list>
@@ -124,7 +125,7 @@
             <q-input
               dense
               placeholder="Search"
-              v-model="searchText"
+              :model-value="pdfState.searchText"
               @keydown.enter="(e) => $emit('searchText', e.target.value)"
             ></q-input>
             <q-btn
@@ -176,30 +177,12 @@ import { useStateStore } from "src/stores/appState";
 import { AnnotationType } from "src/annotation";
 
 export default {
-  // props: ["pdfState"],
+  props: ["pdfState"],
 
   setup() {
     const stateStore = useStateStore();
     // return AnnotationType so that template can use it
     return { stateStore, AnnotationType };
-  },
-
-  computed: {
-    pdfState() {
-      return this.stateStore.getPDFState();
-    },
-  },
-
-  data() {
-    return {
-      tool: AnnotationType.NONE,
-      spreadMode: 0,
-      scaleValue: "page-width",
-
-      searchText: "",
-
-      color: "#FFFF00",
-    };
   },
 };
 </script>

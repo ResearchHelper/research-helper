@@ -35,6 +35,7 @@ export const useStateStore = defineStore("stateStore", {
   }),
 
   actions: {
+    // main layout related
     toggleLeftMenu() {
       this.leftMenuSize = this.leftMenuSize > 0 ? 0 : 20;
     },
@@ -48,6 +49,24 @@ export const useStateStore = defineStore("stateStore", {
       this.currentPage = page;
     },
 
+    // pdf left menu related
+    closeProject(projectId) {
+      // remove from opened projects
+      this.openedProjects = this.openedProjects.filter(
+        (project) => project.projectId != projectId
+      );
+
+      if (this.openedProjects.length == 0) {
+        this.setCurrentPage("library");
+      } else {
+        // if this is workingProject, change it to something else
+        if (projectId == this.workingProject.projectId) {
+          this.workingProject = this.openedProjects[0];
+        }
+      }
+    },
+
+    // pdf realated functionalities
     loadPDFState() {
       // load pdfState from disk
       let projectId = this.workingProject.projectId;

@@ -12,6 +12,7 @@
     <template v-slot:after>
       <!-- toolBar -->
       <PDFToolBar
+        :pdfState="pdfState"
         @changePageNumber="changePageNumber"
         @changeScale="changeScale"
         @changeScaleValue="changeScaleValue"
@@ -132,7 +133,7 @@ export default {
 
       e.source.div.onmouseup = (ev) => {
         let rect = null;
-        let pdfState = this.stateStore.getPDFState();
+        let pdfState = this.pdfState; // save to local var to decrease fetch freq
         if (pdfState.tool == AnnotationType.COMMENT)
           rect = { left: ev.clientX, top: ev.clientY, width: 5, height: 5 };
         let dom = this.annotManager.createAnnotation({
@@ -153,13 +154,12 @@ export default {
     // find controller
     eventBus.on("updatefindmatchescount", (e) => {
       // update the total founded during searching
-      this.stateStore.setPDFState({ matchesCount: e.matchesCount });
-      // this.pdfState.matchesCount = e.matchesCount;
-      // console.log("writing pdfState", this.pdfState.matchesCount);
+      // this.stateStore.setPDFState({ matchesCount: e.matchesCount });
+      this.pdfState = { matchesCount: e.matchesCount };
     });
     eventBus.on("updatetextlayermatches", (e) => {
       // update the current / total during navigating between matches
-      let pdfState = this.stateStore.getPDFState();
+      let pdfState = this.pdfState;
       if (!!pdfState.matchesCount) {
         let findController = e.source;
         let pageIdx = findController.selected.pageIdx;
@@ -168,8 +168,8 @@ export default {
           current += findController.pageMatches[i].length;
         }
         pdfState.matchesCount.current = current;
-        this.stateStore.setPDFState({ matchesCount: pdfState.matchesCount });
-        // this.pdfState.matchesCount.current = current;
+        // this.stateStore.setPDFState({ matchesCount: pdfState.matchesCount });
+        this.pdfState = { matchesCount: pdfState.matchesCount };
       }
     });
   },
@@ -195,14 +195,26 @@ export default {
 
       pdfDocument: null,
 
-      pdfState: {
-        pagesCount: 1,
-        currentPageNumber: 1,
-        currentScale: 1,
-        tool: AnnotationType.NONE,
-        color: "#FFFF00",
-      },
+      // pdfState: {
+      //   pagesCount: 1,
+      //   currentPageNumber: 1,
+      //   currentScale: 1,
+      //   tool: AnnotationType.NONE,
+      //   color: "#FFFF00",
+      // },
     };
+  },
+
+  computed: {
+    pdfState: {
+      get() {
+        return this.stateStore.getPDFState();
+      },
+
+      set(properties) {
+        this.stateStore.setPDFState(properties);
+      },
+    },
   },
 
   methods: {
@@ -220,13 +232,11 @@ export default {
     },
 
     loadPDFState() {
-      // FIXME: it seems a single dict is shared to all projects,
-      // possibly because the proxy thing, all dicts are pointing to the
-      // same address, try use deepcopy to generate another dict ...
       this.stateStore.loadPDFState();
-      let pdfState = this.stateStore.getPDFState();
-      // this.pdfState.pagesCount = this.pdfViewer.pagesCount;
-      this.stateStore.setPDFState({ pagesCount: this.pdfViewer.pagesCount });
+      // let pdfState = this.stateStore.getPDFState();
+      // this.stateStore.setPDFState({ pagesCount: this.pdfViewer.pagesCount });
+      let pdfState = this.pdfState;
+      this.pdfState = { pagesCount: this.pdfViewer.pagesCount };
 
       this.changePageNumber(pdfState.currentPageNumber);
       this.setScale(pdfState.currentScale);
@@ -239,7 +249,6 @@ export default {
 
     handleScroll(e) {
       // update pdfState
-      // this.pdfState.currentPageNumber = this.pdfViewer.currentPageNumber;
       this.stateStore.setPDFState({
         currentPageNumber: this.pdfViewer.currentPageNumber,
       });
@@ -271,9 +280,12 @@ export default {
           this.pdfViewer.currentScale -= 0.1;
         }
 
-        this.stateStore.setPDFState({
+        // this.stateStore.setPDFState({
+        //   currentScale: this.pdfViewer.currentScale,
+        // });
+        this.pdfState = {
           currentScale: this.pdfViewer.currentScale,
-        });
+        };
       }
     },
 
@@ -281,55 +293,68 @@ export default {
     changePageNumber(pageNumber) {
       pageNumber = parseInt(pageNumber);
       this.pdfViewer.currentPageNumber = pageNumber;
-      // this.pdfState.currentPageNumber = pageNumber;
-      this.stateStore.setPDFState({ currentPageNumber: pageNumber });
+      // this.stateStore.setPDFState({ currentPageNumber: pageNumber });
+      this.pdfState = { currentPageNumber: pageNumber };
     },
 
     setScale(scale) {
       this.pdfViewer.currentScale = parseFloat(scale);
-      // this.pdfState.currentScale = this.pdfViewer.currentScale;
-      this.stateStore.setPDFState({
+      // this.stateStore.setPDFState({
+      //   currentScale: this.pdfViewer.currentScale,
+      // });
+      this.pdfState = {
         currentScale: this.pdfViewer.currentScale,
-      });
+      };
     },
 
     changeScale(scale) {
       this.pdfViewer.currentScale += scale;
-      // this.pdfState.currentScale = this.pdfViewer.currentScale;
-      this.stateStore.setPDFState({
+      // this.stateStore.setPDFState({
+      //   currentScale: this.pdfViewer.currentScale,
+      // });
+      this.pdfState = {
         currentScale: this.pdfViewer.currentScale,
-      });
+      };
     },
 
     changeScaleValue(scaleValue) {
       this.pdfViewer.currentScaleValue = scaleValue;
-      // this.pdfState.currentScaleValue = this.pdfViewer.currentScaleValue;
-      // this.pdfState.currentScale = this.pdfViewer.currentScale;
-      this.stateStore.setPDFState({
+      // this.stateStore.setPDFState({
+      //   currentScaleValue: this.pdfViewer.currentScaleValue,
+      //   currentScale: this.pdfViewer.currentScale,
+      // });
+      this.pdfState = {
         currentScaleValue: this.pdfViewer.currentScaleValue,
         currentScale: this.pdfViewer.currentScale,
-      });
+      };
     },
 
     changeSpreadMode(spreadMode) {
       this.pdfViewer.spreadMode = parseInt(spreadMode);
-      this.stateStore.setPDFState({
+      // this.stateStore.setPDFState({
+      //   spreadMode: this.pdfViewer.spreadMode,
+      // });
+      this.pdfState = {
         spreadMode: this.pdfViewer.spreadMode,
-      });
+      };
     },
 
     changeTool(tool) {
-      // this.pdfState.tool = tool;
-      this.stateStore.setPDFState({
+      // this.stateStore.setPDFState({
+      //   tool: tool,
+      // });
+      this.pdfState = {
         tool: tool,
-      });
+      };
     },
 
     changeColor(color) {
-      // this.pdfState.color = color;
-      this.stateStore.setPDFState({
+      // this.stateStore.setPDFState({
+      //   color: color,
+      // });
+      this.pdfState = {
         color: color,
-      });
+      };
     },
 
     searchText(text) {
@@ -387,14 +412,24 @@ export default {
     },
 
     clickAnnotation(dom) {
-      let menu = document.getElementById("menu");
-      menu.style.position = "absolute";
-      menu.style.left =
-        parseFloat(dom.style.left) + parseFloat(dom.style.width) + "%";
-      menu.style.top = dom.style.top;
-      menu.hidden = false;
+      if (dom.className == "highlightAnnotation") {
+        let menu = document.getElementById("menu");
+        menu.hidden = false;
+        menu.style.position = "absolute";
+        menu.style.left =
+          parseFloat(dom.style.left) + parseFloat(dom.style.width) + 2 + "%";
+        menu.style.top = dom.style.top;
+        // menu moves to annotationLayer, we need to make it clickable
+        menu.style.pointerEvents = "auto";
+        // move the menu to the same level as the dom
+        // so that the percentage can work properly
+        dom.parentNode.appendChild(menu);
 
-      this.selectedAnnotation = dom;
+        // set this so the menu can recognize the annotation
+        this.selectedAnnotation = dom;
+      } else if (dom.className == "textAnnotation") {
+        // we want the note editor to popup
+      }
     },
 
     clickMenu(params) {
