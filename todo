@@ -1,6 +1,5 @@
 TODO:
 note editor
-[ ] set workingNote to other note
 [ ] clicking note do not need context menu, it needs an editor
 [ ] comment annotation storage
 
@@ -11,7 +10,7 @@ content extractor
 [ ] make content extractor as online service
 
 FIXME
-[ ] highlight color gradually becomes black (except yellow)
+[ ] highlight color gradually becomes black (except yellow) when zooming
 
 IMPROVE:
 [ ] veditor in a separate window, like zotero

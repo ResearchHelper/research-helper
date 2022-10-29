@@ -28,7 +28,7 @@
             v-if="!specialFolderKeys.includes(prop.node.id)"
             clickable
             v-close-popup
-            @click="renameFolder(prop.node)"
+            @click="setRenameFolder(prop.node)"
           >
             <q-item-section>Rename</q-item-section>
           </q-item>
@@ -48,14 +48,15 @@
         v-if="renamingFolderId === prop.node.id"
         outlined
         dense
-        for="renameInput"
+        ref="renameInput"
         v-model="prop.node.label"
-        :autofocus="true"
-        @focus="focusInput"
-        @click="focusInput"
-        @keydown.enter="blurInput"
+        @blur="renameFolder"
+        @keydown.enter="renameFolder"
       />
-      <div v-else>
+      <div
+        v-else
+        class="ellipsis"
+      >
         {{ prop.node.label }}
       </div>
     </template>
@@ -140,19 +141,19 @@ export default {
       saveTree();
     },
 
-    renameFolder(node) {
+    setRenameFolder(node) {
       this.renamingFolderId = node.id;
-    },
 
-    focusInput(e) {
-      // TODO: maybe this can improve ?
       setTimeout(() => {
-        e.target.focus();
+        // wait till input appears
+        // focus onto the input and select the text
+        let input = this.$refs.renameInput;
+        input.focus();
+        input.select();
       }, 100);
     },
 
-    blurInput(e) {
-      // FIXME: this has no use
+    renameFolder() {
       this.renamingFolderId = null;
       saveTree();
     },

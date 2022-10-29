@@ -70,11 +70,11 @@
 
       <!-- body of the tree node -->
       <q-input
+        v-if="prop.node == renamingNote"
         square
         outlined
         dense
         ref="renameInput"
-        v-if="prop.node == renamingNote"
         v-model="prop.node.label"
         @keydown.enter="renameNote"
         @blur="renameNote"
@@ -199,7 +199,6 @@ export default {
         },
       };
       note = addNote(note);
-      console.log(note);
 
       // update UI
       note.label = note.noteName;
@@ -217,19 +216,27 @@ export default {
       parent.children = parent.children.filter(
         (child) => child.noteId != node.noteId
       );
+      if (parent.children.length == 0) {
+        this.selectItem(parent.projectId);
+      } else {
+        this.selectItem(parent.children[0].noteId);
+      }
 
       // central store
-      // FIXME: set workingNote to other note
-      this.stateStore.workingNote = null;
+      // if parent.children = [], workingNote=undefined
+      this.stateStore.workingNote = parent.children[0];
     },
 
     setRenameNote(node) {
       // set renaming note and show input
-      console.log("reaname", node);
       this.renamingNote = node;
 
       setTimeout(() => {
-        this.$refs.renameInput.focus();
+        // wait till input appears
+        // focus onto the input and select the text
+        let input = this.$refs.renameInput;
+        input.focus();
+        input.select();
       }, 100);
     },
 
