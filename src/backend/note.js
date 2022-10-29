@@ -5,7 +5,8 @@ const storagePath = stateStore.storagePath;
 const path = window.path;
 const fs = window.fs;
 
-// project tree
+
+// Project tree
 /**
  * Create an empty markdown file and add the note info to info.json
  * @param {Dict} note
@@ -29,7 +30,7 @@ function addNote(note) {
 }
 
 /**
- *
+ * Get all notes of a project from info.json
  * @param {string} projectId
  * @returns {Array} notes
  */
@@ -46,7 +47,7 @@ function getNotes(projectId) {
 }
 
 /**
- *
+ * Delete note from disk and from info.json
  * @param {Dict} note
  * @returns {boolean} success
  */
@@ -70,7 +71,7 @@ function deleteNote(note) {
 }
 
 /**
- *
+ * Rename note and etc.
  * @param {Dict} newNote
  * @returns {boolean} success
  */
@@ -88,7 +89,7 @@ function modifyNote(newNote) {
   return true;
 }
 
-// editing note
+// Note editor
 /**
  * Load note content as markdown string
  * @param {string} projectId
@@ -103,6 +104,12 @@ function loadNote(projectId, noteId) {
   return content;
 }
 
+/**
+ * Save markdown content to disk
+ * @param {string} projectId
+ * @param {string} noteId
+ * @param {string} content
+ */
 function saveNote(projectId, noteId, content) {
   let projectPath = path.join(storagePath, "projects", projectId);
   let notePath = path.join(projectPath, noteId + ".md");
