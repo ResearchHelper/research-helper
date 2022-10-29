@@ -152,6 +152,7 @@ export default {
     },
 
     blurInput(e) {
+      // FIXME: this has no use
       this.renamingFolderId = null;
       saveTree();
     },

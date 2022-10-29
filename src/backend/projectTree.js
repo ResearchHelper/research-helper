@@ -1,5 +1,3 @@
-// TODO: create local storage folders if there is none
-
 import { v4 as uuidv4 } from "uuid";
 import axios from "axios";
 import { useStateStore } from "src/stores/appState";
@@ -10,13 +8,17 @@ const path = window.path;
 const fs = window.fs;
 
 // local storage
-function loadTree() {
+/**
+ *
+ * @param {Array} projects
+ * @returns {Array} projectTree
+ */
+function getProjectTree(projects) {
   if (!storagePath) {
     return [];
   }
-
-  let filePath = path.join(storagePath, "folderTree.json");
-  return JSON.parse(fs.readFileSync(filePath, "utf8"));
+  // TODO: do I really need this?
+  // since files are already in the project info
 }
 
 function saveTree() {

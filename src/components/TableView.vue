@@ -52,17 +52,13 @@
       </q-menu>
     </template>
   </q-table>
-
-  <!-- <NoteEditor /> -->
 </template>
 
 <script>
 import { useStateStore } from "../stores/appState";
 import { deleteProject, getProject } from "src/backend";
-// import NoteEditor from "./NoteEditor.vue";
 
 export default {
-  // components: { NoteEditor },
   setup() {
     const stateStore = useStateStore();
     return { stateStore, deleteProject, getProject };

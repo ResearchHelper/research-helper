@@ -167,6 +167,7 @@
         icon="edit_note"
         size="sm"
         padding="xs"
+        @click="stateStore.toggleInfoPane()"
       />
     </div>
   </div>

@@ -1,9 +1,20 @@
 TODO:
-[x] use veditor instead of prosemirror
-[ ] pdf toolbar button to toggle info pane
-[ ] veditor in a separate window, like zotero
+note editor
+[ ] set workingNote to other note
 [ ] clicking note do not need context menu, it needs an editor
+[ ] comment annotation storage
+
+pdfviewer
+[ ] popup window to show hyperlinks
+
+content extractor
 [ ] make content extractor as online service
 
 FIXME
 [ ] highlight color gradually becomes black (except yellow)
+
+IMPROVE:
+[ ] veditor in a separate window, like zotero
+[ ] paste image data too long
+[ ] upload image
+[ ] refactor annotation to store
