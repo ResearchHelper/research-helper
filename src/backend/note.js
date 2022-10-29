@@ -5,6 +5,7 @@ const storagePath = stateStore.storagePath;
 const path = window.path;
 const fs = window.fs;
 
+
 // Project tree
 /**
  * Create an empty markdown file and add the note info to info.json
