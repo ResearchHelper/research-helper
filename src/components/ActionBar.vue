@@ -1,21 +1,5 @@
 <template>
   <q-toolbar class="q-px-none">
-    <q-btn
-      flat
-      dense
-      @click="test"
-    >
-      "test"
-    </q-btn>
-
-    <q-btn
-      flat
-      dense
-      icon="account_tree"
-      @click="stateStore.toggleLeftMenu"
-    >
-    </q-btn>
-
     <q-file
       :multiple="true"
       :append="false"
@@ -62,19 +46,12 @@
 
 <script>
 import { useStateStore } from "src/stores/appState";
-import { extractContent, addProject } from "src/backend";
+import { addProject } from "src/backend";
 
 export default {
   setup() {
     const stateStore = useStateStore();
     return { stateStore, addProject };
-  },
-
-  methods: {
-    test() {
-      // extractContent();
-      addProject();
-    },
   },
 };
 </script>

@@ -38,60 +38,6 @@ class Extractor(Resource):
         # change folderTree.json and specialFolder.json
         return meta
 
-# class FolderTree(Resource):
-#     path: str = os.path.join(STORAGE,"folderTree.json")
-#     def get(self):
-#         """ load tree """
-#         with open(self.path, "r") as fp:
-#             return json.load(fp)
-
-#     def post(self):
-#         """ save tree """
-#         tree = request.get_json()
-#         with open(self.path, "w") as fp:
-#             json.dump(tree, fp)
-
-# class SpecialFolder(Resource):
-#     path: str = os.path.join(STORAGE,"specialFolder.json")
-#     def get(self) -> dict:
-#         """ load special folders """
-#         with open(self.path, "r") as fp:
-#             return json.load(fp)
-
-#     def post(self):
-#         """ save special folders """
-#         specialFolder = request.get_json()
-#         with open(self.path, "w") as fp:
-#             json.dump(specialFolder, fp)
-#         return 204
-
-# class Project(Resource):
-#     projects: str = os.path.join(STORAGE,"projects")
-#     def get(self, projectId: str):
-#         """ get project with projectId """
-#         dirname = os.path.join(self.projects, projectId)
-#         infoPath = os.path.join(dirname,"info.json")
-#         with open(infoPath, "r") as fp:
-#             info = json.load(fp)
-#         files = os.listdir(dirname)
-#         files.remove("info.json")
-#         return {"info": info, "files": files}
-
-#     def put(self, projectId: str):
-#         """ modify information of project with projectId """
-#         data = request.get_json()
-#         infoPath = os.path.join(self.projects, projectId, "info.json")
-#         with open(infoPath,"w") as fp:
-#             json.dump(data,fp)
-#         return 204
-
-#     def delete(self, projectId: str):
-#         """ delete project with projectId"""
-#         dirname = os.path.join(self.projects, projectId)
-#         shutil.rmtree(dirname)
-#         return 204
-
-
 class Test(Resource):
     def get(self):
         return {"msg": "success"}
@@ -102,9 +48,6 @@ class Test(Resource):
 
 
 api.add_resource(Extractor, "/extract")
-# api.add_resource(FolderTree, "/folderTree")
-# api.add_resource(SpecialFolder, "/specialFolder")
-# api.add_resource(Project, "/project/<string:projectId>")
 api.add_resource(Test, "/test")
 
 # usage

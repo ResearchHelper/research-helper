@@ -30,6 +30,12 @@ export const useStateStore = defineStore("stateStore", {
     openedProjects: [],
     workingProject: null, // this is in the openedProjects list
 
+    // info pane
+    infoPaneTab: "metaInfoTab",
+
+    // note
+    workingNote: null,
+
     // pdf states
     pdfStates: {},
   }),
@@ -42,6 +48,10 @@ export const useStateStore = defineStore("stateStore", {
 
     toggleInfoPane() {
       this.infoPaneSize = this.infoPaneSize > 0 ? 0 : 25;
+    },
+
+    setInfoPaneTab(tab) {
+      this.infoPaneTab = tab;
     },
 
     setCurrentPage(page) {

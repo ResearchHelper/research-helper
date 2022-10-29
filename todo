@@ -1,7 +1,19 @@
 TODO:
+note editor
 [ ] clicking note do not need context menu, it needs an editor
-[ ] use veditor instead of prosemirror
+[ ] comment annotation storage
+
+pdfviewer
+[ ] popup window to show hyperlinks
+
+content extractor
 [ ] make content extractor as online service
 
 FIXME
-[ ] highlight color gradually becomes black (except yellow)
+[ ] highlight color gradually becomes black (except yellow) when zooming
+
+IMPROVE:
+[ ] veditor in a separate window, like zotero
+[ ] paste image data too long
+[ ] upload image
+[ ] refactor annotation to store

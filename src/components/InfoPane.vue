@@ -1,6 +1,6 @@
 <template>
   <q-tabs
-    v-model="infoPaneTab"
+    v-model="this.stateStore.infoPaneTab"
     dense
   >
     <q-tab
@@ -18,7 +18,7 @@
   </q-tabs>
   <q-tab-panels
     v-if="stateStore.selectedProject"
-    v-model="infoPaneTab"
+    v-model="this.stateStore.infoPaneTab"
   >
     <q-tab-panel name="metaInfoTab">
       <q-input
@@ -65,30 +65,12 @@ export default {
     return { stateStore, modifyProject };
   },
 
-  data() {
-    return {
-      infoPaneTab: "metaInfoTab",
-    };
-  },
-
   methods: {
     modifyInfo() {
       modifyProject(
         this.stateStore.selectedProject.projectId,
         this.stateStore.selectedProject
       );
-      // fetch(
-      //   "http://localhost:5000/project/" +
-      //     this.stateStore.selectedProject.projectId,
-      //   {
-      //     mode: "cors",
-      //     method: "PUT",
-      //     headers: { "Content-Type": "application/json" },
-      //     body: JSON.stringify(this.stateStore.selectedProject),
-      //   }
-      // ).then((response) => {
-      //   console.log(response);
-      // });
     },
   },
 };

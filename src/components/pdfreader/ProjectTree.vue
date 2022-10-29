@@ -9,14 +9,19 @@
     node-key="key"
     v-model:selected="selected"
     v-model:expanded="expanded"
-    @update:selected="clickItem"
+    @update:selected="selectItem"
   >
     <template v-slot:default-header="prop">
       <q-menu
         touch-position
         context-menu
+        @before-show="menuSwitch(prop.node)"
       >
-        <q-list dense>
+        <!-- menu for project -->
+        <q-list
+          dense
+          v-if="projectMenu"
+        >
           <q-item
             clickable
             v-close-popup
@@ -33,16 +38,60 @@
             <q-item-section> Close Project </q-item-section>
           </q-item>
         </q-list>
+
+        <!-- menu for notes -->
+        <q-list
+          dense
+          v-else
+        >
+          <q-item
+            clickable
+            v-close-popup
+            @click="selectItem(prop.key)"
+          >
+            <q-item-section> Open </q-item-section>
+          </q-item>
+          <q-item
+            clickable
+            v-close-popup
+            @click="setRenameNote(prop.node)"
+          >
+            <q-item-section> Rename </q-item-section>
+          </q-item>
+          <q-item
+            clickable
+            v-close-popup
+            @click="deleteNote(prop.node)"
+          >
+            <q-item-section> Delete </q-item-section>
+          </q-item>
+        </q-list>
       </q-menu>
 
       <!-- body of the tree node -->
-      <div class="ellipsis">{{ prop.node.label }}</div>
+      <q-input
+        v-if="prop.node == renamingNote"
+        square
+        outlined
+        dense
+        ref="renameInput"
+        v-model="prop.node.label"
+        @keydown.enter="renameNote"
+        @blur="renameNote"
+      />
+      <div
+        v-else
+        class="ellipsis"
+      >
+        {{ prop.node.label }}
+      </div>
     </template>
   </q-tree>
 </template>
 
 <script>
 import { useStateStore } from "src/stores/appState";
+import { addNote, deleteNote, modifyNote, getNotes } from "src/backend/note";
 
 export default {
   setup() {
@@ -52,10 +101,13 @@ export default {
 
   data() {
     return {
+      // tree
       projects: [],
-
       selected: null,
       expanded: [],
+
+      // rename
+      renamingNote: null,
     };
   },
 
@@ -79,48 +131,129 @@ export default {
   },
 
   methods: {
+    menuSwitch(node) {
+      if ("noteId" in node) {
+        // show context menu for notes
+        this.projectMenu = false;
+      } else {
+        // show context menu for project
+        this.projectMenu = true;
+      }
+    },
+
     getProjectTree() {
       this.projects = [];
 
       let projects = this.stateStore.openedProjects;
       for (let p of projects) {
+        let notes = getNotes(p.projectId);
+        for (let note of notes) {
+          note.label = note.noteName;
+          note.key = note.noteId;
+        }
+
+        // do not change openProjects directly
+        // it will trigger recursive updates
         let project = {
           label: p.title,
           key: p.projectId,
-          children: [],
+          children: notes,
+          projectId: p.projectId,
         };
-        for (let file of p.files) {
-          if (
-            window.path.extname(file) == ".md" ||
-            window.path.extname(file) == ".pdf"
-          )
-            project.children.push({
-              label: file,
-              key: file,
-            });
-        }
-
         this.projects.push(project);
       }
     },
 
-    clickItem(itemKey) {
-      // open the markdown file for editing
-      // or set to different project
+    selectItem(itemKey) {
+      // open the markdown file for editing or set to different project
+      this.selected = itemKey;
+      let node = this.$refs.tree.getNodeByKey(itemKey);
+
+      // set working project
       for (let project of this.stateStore.openedProjects) {
-        if (itemKey === project.projectId) {
-          this.expanded.push(itemKey);
+        if (project.projectId == node.projectId) {
           this.stateStore.workingProject = project;
         }
       }
-    },
 
-    addNote(node) {
-      console.log(node);
+      // set working note
+      if (!!node.noteId) {
+        if (this.stateStore.infoPaneSize == 0) this.stateStore.toggleInfoPane();
+        this.stateStore.setInfoPaneTab("noteTab");
+        this.stateStore.workingNote = node;
+      }
     },
 
     closeProject(projectId) {
       this.stateStore.closeProject(projectId);
+    },
+
+    addNote(node) {
+      // backend
+      let note = {
+        noteName: "New Note",
+        projectId: node.key,
+        links: {
+          forward: [],
+          backward: [],
+        },
+      };
+      note = addNote(note);
+
+      // update UI
+      note.label = note.noteName;
+      note.key = note.noteId;
+      node.children.push(note);
+      this.selectItem(note.noteId);
+    },
+
+    deleteNote(node) {
+      // backend
+      deleteNote(node);
+
+      // update UI
+      let parent = this.$refs.tree.getNodeByKey(node.projectId);
+      parent.children = parent.children.filter(
+        (child) => child.noteId != node.noteId
+      );
+      if (parent.children.length == 0) {
+        this.selectItem(parent.projectId);
+      } else {
+        this.selectItem(parent.children[0].noteId);
+      }
+
+      // central store
+      // if parent.children = [], workingNote=undefined
+      this.stateStore.workingNote = parent.children[0];
+    },
+
+    setRenameNote(node) {
+      // set renaming note and show input
+      this.renamingNote = node;
+
+      setTimeout(() => {
+        // wait till input appears
+        // focus onto the input and select the text
+        let input = this.$refs.renameInput;
+        input.focus();
+        input.select();
+      }, 100);
+    },
+
+    renameNote() {
+      // backend
+      let oldNote = this.renamingNote;
+      let newNote = {
+        noteName: oldNote.label,
+        projectId: oldNote.projectId,
+        noteId: oldNote.noteId,
+        links: oldNote.links,
+      };
+      modifyNote(newNote);
+
+      // UI
+      // the label has been taken care by v-model of q-input
+      this.renamingNote = null;
     },
   },
 };

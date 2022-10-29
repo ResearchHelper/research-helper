@@ -63,7 +63,6 @@ export default {
     const stateStore = useStateStore();
     return { stateStore, deleteProject, getProject };
   },
-
   data() {
     return {
       headers: [
@@ -80,13 +79,10 @@ export default {
           align: "left",
         },
       ],
-
       projects: [],
-
       prvSelectedIndex: 0,
     };
   },
-
   watch: {
     "stateStore.selectedTreeNode.projectIds": {
       handler: function (projectIds) {
@@ -95,7 +91,6 @@ export default {
       deep: true,
     },
   },
-
   methods: {
     getProjects(projectIds) {
       this.projects = [];
@@ -103,7 +98,6 @@ export default {
         this.projects.push(getProject(projectId));
       }
     },
-
     clickRow(event, row, index) {
       this.stateStore.selectedProject = row;
       let rowEls = document.querySelectorAll("tr.cursor-pointer");
@@ -113,7 +107,6 @@ export default {
       rowEls[index].classList.add("bg-primary");
       this.prvSelectedIndex = index;
     },
-
     dblclickRow(event, row, index) {
       this.stateStore.workingProject = row;
       for (let i = 0; i < this.stateStore.openedProjects.length; i++) {
@@ -124,12 +117,10 @@ export default {
       this.stateStore.openedProjects.push(row);
       this.stateStore.setCurrentPage("reader");
     },
-
     toggleContextMenu(event, row, index) {
       this.showContextMenu = true;
       this.clickRow(null, row, index);
     },
-
     searchProject(rows, terms, cols, getCellValue) {
       // TODO: implement a filter-method to search abstract and other things
       // see https://quasar.dev/vue-components/table#introduction filter-method
