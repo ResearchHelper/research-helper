@@ -17,8 +17,7 @@ const AnnotationType = {
 };
 
 class AnnotationManager {
-  constructor(pdfViewer) {
-    this.pdfViewer = pdfViewer;
+  constructor() {
     this.folderPath = path.join(
       storagePath,
       "projects",

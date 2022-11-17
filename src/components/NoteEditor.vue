@@ -92,7 +92,7 @@ export default {
         after: () => {
           // dark theme, dark content theme, native code theme
           this.editor.setTheme("dark", "dark", "native");
-          this.setContent();
+          if (!!this.showEditor) this.setContent();
         },
         blur: () => {
           this.saveContent();

@@ -1,7 +1,12 @@
 TODO:
-note editor
-[ ] clicking note do not need context menu, it needs an editor
-[ ] comment annotation storage
+[x] scroll bar for all components
+[x] FIXME: multiline highlight highlights the entire block
+
+annotation list
+[x] FIXME: set activeAnnotation class using selectedAnnot
+[ ] add comment to annotation list when comment is created
+[ ] FIXME: shouldn't use scrollIntoView, first we need to change to the page where the annotation is on then use scrollIntoView (optional). I need to reformat the annotation storage in order to quickly find the corresponding page.
+[ ] FIXME: don't set comment when clicking on comment. The current fix doesn't work for annotations coming from database
 
 pdfviewer
 [ ] popup window to show hyperlinks

@@ -1,9 +1,9 @@
 <template>
   <div>
     <ActionBar />
-    <!-- window-height class is not suitable here since we have a bar -->
+    <!-- systembarheight: 32px actionbarheight: 50px -->
     <q-splitter
-      :style="'height:' + height + 'px; overflow: auto;'"
+      style="height: calc(100vh - 82px)"
       :limits="[0, 30]"
       separator-class="separator"
       v-model="stateStore.leftMenuSize"
@@ -13,6 +13,7 @@
       </template>
       <template v-slot:after>
         <q-splitter
+          style="overflow: hidden"
           reverse
           :limits="[0, 60]"
           separator-class="separator"
@@ -54,20 +55,7 @@ export default {
     return {
       leftMenuSize: 20,
       infoPaneSize: 25,
-
-      height: window.innerHeight - 50,
     };
-  },
-
-  mounted() {
-    this.computeHeight();
-    window.addEventListener("resize", this.computeHeight);
-  },
-
-  methods: {
-    computeHeight() {
-      this.height = window.innerHeight - 50;
-    },
   },
 };
 </script>

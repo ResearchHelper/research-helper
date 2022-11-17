@@ -22,56 +22,56 @@ function computePageOffset(annotationLayer) {
 }
 
 function comment(annotation, fromDB = false) {
-  let annotationLayer = document
+  let annotationEditorLayer = document
     .querySelector(`div.page[data-page-number='${annotation.pageNumber}']`)
-    .querySelector(".annotationLayer");
+    .querySelector(".annotationEditorLayer");
   // let pdfViewer = annotClass.pdfViewer;
   if (!fromDB)
-    annotation.rect = clickCoordinates(annotation.rect, annotationLayer);
+    annotation.rect = clickCoordinates(annotation.rect, annotationEditorLayer);
 
   // update UI
   let section = document.createElement("section");
   section.setAttribute("id", annotation.id);
+  section.style.position = "absolute";
   // using percentage since it's invariant under scale change
   section.style.left = `${annotation.rect.left}%`;
   section.style.top = `${annotation.rect.top}%`;
   section.style.width = `${annotation.rect.width}%`;
   section.style.height = `${annotation.rect.height}%`;
-  // section.style.cursor = "pointer";
+  section.style.pointerEvents = "auto";
+  section.style.cursor = "pointer";
   // section.style.pointerEvents = "visible";
   section.classList.add("textAnnotation");
 
-  let popupWrapper = document.createElement("div");
-  popupWrapper.classList.add("popupWrapper");
-  popupWrapper.style.left = "100%";
+  // let popupWrapper = document.createElement("div");
+  // popupWrapper.classList.add("popupWrapper");
+  // popupWrapper.style.left = "100%";
 
-  let popup = document.createElement("div");
-  popup.classList.add("popup");
+  // let popup = document.createElement("div");
+  // popup.classList.add("popup");
 
-  let h1 = document.createElement("h1");
-  h1.innerHTML = "Hunt";
+  // let editorArea = document.createElement("div");
+  // editorArea.classList.add("editorArea");
 
-  let span = document.createElement("span");
-  span.classList.add("popupData");
-  span.innerText = "2022/10/2";
-
-  let p = document.createElement("p");
-  p.classList.add("popupContent");
-  p.innerHTML = "Hello world";
+  // let buttonArea = document.createElement("div");
+  // buttonArea.classList.add("buttonArea");
 
   let img = document.createElement("img");
-  img.src = "node_modules/pdfjs-dist/web/images/annotation-note.svg";
+  img.src = "src/assets/annotation-note.svg";
+  img.style.position = "absolute";
 
-  popup.append(h1, span, p); // This is not so right, should hide when cursor is not on the note
-  popup.hidden = true;
-  popupWrapper.append(popup);
-  section.append(popupWrapper, img);
+  section.append(img);
 
-  section.addEventListener("click", (e) => {
-    popup.hidden = !popup.hidden;
-  });
+  // popup.append(h1, span, p); // This is not so right, should hide when cursor is not on the note
+  // popup.hidden = true;
+  // popupWrapper.append(popup);
+  // section.append(popupWrapper, img);
 
-  annotationLayer.appendChild(section);
+  // img.addEventListener("click", (e) => {
+  //   popup.hidden = !popup.hidden;
+  // });
+
+  annotationEditorLayer.appendChild(section);
 
   return { annotation: annotation, dom: section };
 }
