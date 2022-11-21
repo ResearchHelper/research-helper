@@ -1,6 +1,9 @@
 FIXME:
 
 TODO:
+annotStore
+[ ] make projectId as one of the attributes
+
 pdfviewer
 [ ] popup window to show hyperlinks
 

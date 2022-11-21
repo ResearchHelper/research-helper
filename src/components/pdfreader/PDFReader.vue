@@ -113,8 +113,7 @@ export default {
   setup() {
     const stateStore = useStateStore();
     const annotStore = useAnnotStore();
-    annotStore.init();
-    // annotStore.getAnnots();
+    annotStore.init(stateStore.workingProject.projectId);
     return { stateStore, annotStore };
   },
 

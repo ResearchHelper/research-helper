@@ -1,5 +1,4 @@
 import { defineStore } from "pinia";
-import { v4 as uuidv4 } from "uuid";
 import {
   createIndex,
   getAnnotations,
@@ -11,23 +10,21 @@ import {
   createAnnotation,
   AnnotationType,
 } from "src/api/annotation";
-import { db } from "src/api/database";
 
 export const useAnnotStore = defineStore("annotStore", {
   state: () => ({
+    projectId: "",
     annots: [],
-    event: {},
     selectedAnnotId: "",
 
     _inited: false,
   }),
 
   actions: {
-    async init(msg) {
-      console.log(msg);
+    async init(projectId) {
+      this.projectId = projectId;
       try {
         await createIndex();
-        // FIXME: don't know why, comment is empty for the first call
         await this.getAnnots();
         this._inited = true;
       } catch (err) {
@@ -37,9 +34,7 @@ export const useAnnotStore = defineStore("annotStore", {
 
     async getAnnots() {
       try {
-        this.annots = await getAnnotations();
-        // FIXME: comment is modified in database already
-        // but after pulling it the comment is ""
+        this.annots = await getAnnotations(this.projectId);
       } catch (err) {
         console.log(err);
       }
@@ -101,6 +96,7 @@ export const useAnnotStore = defineStore("annotStore", {
     async create(rawAnnot, fromDB = false) {
       // add to DB and
       // return the corresponding doms (for PDFReader UI)
+      rawAnnot.projectId = this.projectId;
       let result = await createAnnotation(rawAnnot, fromDB);
       if (!!!result) return []; // return empty doms if just clicking
 
