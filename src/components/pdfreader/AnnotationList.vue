@@ -83,8 +83,8 @@ export default {
   setup() {
     const stateStore = useStateStore();
     const annotStore = useAnnotStore();
-    // don't know why the annots have empty comments
-    annotStore.init();
+    // have to fetch docs again, otherwise annots have empty comments...
+    annotStore.init(stateStore.workingProject.projectId);
     return { stateStore, annotStore };
   },
 
