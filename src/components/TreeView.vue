@@ -1,66 +1,68 @@
 <template>
-  <q-tree
-    dense
-    no-connectors
-    :duration="0"
-    :nodes="stateStore.folders"
-    node-key="id"
-    v-model:expanded="expandedKeys"
-    v-model:selected="selectedFolderId"
-    :no-selection-unset="true"
-    selected-color="primary"
-    ref="tree"
-  >
-    <template v-slot:default-header="prop">
-      <q-menu
-        touch-position
-        context-menu
-      >
-        <q-list dense>
-          <q-item
-            clickable
-            v-close-popup
-            @click="addFolder(prop.node)"
-          >
-            <q-item-section>Add Folder</q-item-section>
-          </q-item>
-          <q-item
-            v-if="!specialFolderKeys.includes(prop.node.id)"
-            clickable
-            v-close-popup
-            @click="setRenameFolder(prop.node)"
-          >
-            <q-item-section>Rename</q-item-section>
-          </q-item>
-          <q-item
-            v-if="!specialFolderKeys.includes(prop.node.id)"
-            clickable
-            v-close-popup
-            @click="deleteFolder(prop.node)"
-          >
-            <q-item-section>Delete</q-item-section>
-          </q-item>
-        </q-list>
-      </q-menu>
-      <!-- the body of a tree node -->
-      <q-icon :name="prop.node.icon" />
-      <q-input
-        v-if="renamingFolderId === prop.node.id"
-        outlined
-        dense
-        ref="renameInput"
-        v-model="prop.node.label"
-        @blur="renameFolder"
-        @keydown.enter="renameFolder"
-      />
-      <div
-        v-else
-        class="ellipsis"
-      >
-        {{ prop.node.label }}
-      </div>
-    </template>
-  </q-tree>
+  <q-scroll-area style="height: 100%">
+    <q-tree
+      dense
+      no-connectors
+      :duration="0"
+      :nodes="stateStore.folders"
+      node-key="id"
+      v-model:expanded="expandedKeys"
+      v-model:selected="selectedFolderId"
+      :no-selection-unset="true"
+      selected-color="primary"
+      ref="tree"
+    >
+      <template v-slot:default-header="prop">
+        <q-menu
+          touch-position
+          context-menu
+        >
+          <q-list dense>
+            <q-item
+              clickable
+              v-close-popup
+              @click="addFolder(prop.node)"
+            >
+              <q-item-section>Add Folder</q-item-section>
+            </q-item>
+            <q-item
+              v-if="!specialFolderKeys.includes(prop.node.id)"
+              clickable
+              v-close-popup
+              @click="setRenameFolder(prop.node)"
+            >
+              <q-item-section>Rename</q-item-section>
+            </q-item>
+            <q-item
+              v-if="!specialFolderKeys.includes(prop.node.id)"
+              clickable
+              v-close-popup
+              @click="deleteFolder(prop.node)"
+            >
+              <q-item-section>Delete</q-item-section>
+            </q-item>
+          </q-list>
+        </q-menu>
+        <!-- the body of a tree node -->
+        <q-icon :name="prop.node.icon" />
+        <q-input
+          v-if="renamingFolderId === prop.node.id"
+          outlined
+          dense
+          ref="renameInput"
+          v-model="prop.node.label"
+          @blur="renameFolder"
+          @keydown.enter="renameFolder"
+        />
+        <div
+          v-else
+          class="ellipsis"
+        >
+          {{ prop.node.label }}
+        </div>
+      </template>
+    </q-tree>
+  </q-scroll-area>
 </template>
 
 <script>

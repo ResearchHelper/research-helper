@@ -1,63 +1,84 @@
 <template>
-  <q-tabs
-    v-model="this.stateStore.infoPaneTab"
-    dense
-  >
-    <q-tab
-      name="metaInfoTab"
-      :ripple="false"
+  <div>
+    <q-tabs
+      v-model="this.stateStore.infoPaneTab"
+      dense
     >
-      Meta Info
-    </q-tab>
-    <q-tab
-      name="noteTab"
-      :ripple="false"
-    >
-      Notes
-    </q-tab>
-  </q-tabs>
-  <q-tab-panels
-    v-if="stateStore.selectedProject"
-    v-model="this.stateStore.infoPaneTab"
-  >
-    <q-tab-panel name="metaInfoTab">
-      <q-input
-        filled
-        type="textarea"
-        label="Title"
-        v-model="stateStore.selectedProject.title"
-        @blur="modifyInfo"
-      />
-      <q-input
-        filled
-        type="textarea"
-        label="Author(s)"
-        v-model="stateStore.selectedProject.author"
-        @blur="modifyInfo"
-      />
-      <q-input
-        filled
-        type="textarea"
-        label="Abstract"
-        v-model="stateStore.selectedProject.abstract"
-        @blur="modifyInfo"
-      />
-    </q-tab-panel>
+      <q-tab
+        name="metaInfoTab"
+        :ripple="false"
+      >
+        Meta Info
+      </q-tab>
+      <q-tab
+        v-if="!!stateStore.workingProject"
+        name="annotationTab"
+        :ripple="false"
+      >
+        Annotations
+      </q-tab>
+      <q-tab
+        v-if="!!stateStore.workingProject"
+        name="noteTab"
+        :ripple="false"
+      >
+        Notes
+      </q-tab>
+    </q-tabs>
 
-    <q-tab-panel name="noteTab">
-      <NoteEditor />
-    </q-tab-panel>
-  </q-tab-panels>
+    <q-tab-panels
+      v-if="!!stateStore.selectedProject"
+      v-model="this.stateStore.infoPaneTab"
+    >
+      <q-tab-panel name="metaInfoTab">
+        <!-- systembar: 32px, actionbar: 50px, tab: 36px  -->
+        <q-scroll-area style="height: calc(100vh - 118px)">
+          <q-input
+            filled
+            type="textarea"
+            label="Title"
+            v-model="stateStore.selectedProject.title"
+            @blur="modifyInfo"
+          />
+          <q-input
+            filled
+            type="textarea"
+            label="Author(s)"
+            v-model="stateStore.selectedProject.author"
+            @blur="modifyInfo"
+          />
+          <q-input
+            style="height: 500px"
+            filled
+            type="textarea"
+            label="Abstract"
+            v-model="stateStore.selectedProject.abstract"
+            @blur="modifyInfo"
+          />
+        </q-scroll-area>
+      </q-tab-panel>
+
+      <q-tab-panel name="annotationTab">
+        <AnnotationList ref="annotationList" />
+      </q-tab-panel>
+
+      <q-tab-panel name="noteTab">
+        <NoteEditor :has-toolbar="true" />
+      </q-tab-panel>
+    </q-tab-panels>
+  </div>
 </template>
 
 <script>
 import { modifyProject } from "src/backend";
 import { useStateStore } from "src/stores/appState";
 import NoteEditor from "./NoteEditor.vue";
+import AnnotationList from "./pdfreader/AnnotationList.vue";
 
 export default {
   components: {
     NoteEditor,
+    AnnotationList,
   },
 
   setup() {

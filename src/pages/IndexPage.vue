@@ -2,10 +2,7 @@
   <div>
     <SystemBar />
     <!-- do not pass in the model Value because we want it fixed -->
-    <q-splitter
-      class="window-height"
-      :separator-style="{ cursor: 'default' }"
-    >
+    <q-splitter :separator-style="{ cursor: 'default' }">
       <template v-slot:before>
         <q-tabs
           v-model="stateStore.currentPage"
@@ -47,7 +44,7 @@
           v-model="stateStore.currentPage"
           vertical
           transition-duration="0"
-          class="window-height"
+          class="fit"
         >
           <q-tab-panel name="library">
             <LibraryPage />
@@ -57,31 +54,8 @@
             <ReaderPage />
           </q-tab-panel>
 
-          <q-tab-panel name="user">
-            <div class="text-h4 q-mb-md">Movies</div>
-            <p>
-              Lorem ipsum dolor sit, amet consectetur adipisicing elit. Quis
-              praesentium cumque magnam odio iure quidem, quod illum numquam
-              possimus obcaecati commodi minima assumenda consectetur culpa fuga
-              nulla ullam. In, libero.
-            </p>
-            <p>
-              Lorem ipsum dolor sit, amet consectetur adipisicing elit. Quis
-              praesentium cumque magnam odio iure quidem, quod illum numquam
-              possimus obcaecati commodi minima assumenda consectetur culpa fuga
-              nulla ullam. In, libero.
-            </p>
-            <p>
-              Lorem ipsum dolor sit, amet consectetur adipisicing elit. Quis
-              praesentium cumque magnam odio iure quidem, quod illum numquam
-              possimus obcaecati commodi minima assumenda consectetur culpa fuga
-              nulla ullam. In, libero.
-            </p>
-          </q-tab-panel>
-          <q-tab-panel name="settings">
-            <div class="text-h4 q-mb-md">Movies</div>
-            sfdsaf
-          </q-tab-panel>
+          <q-tab-panel name="user"> <TestPage /> </q-tab-panel>
+          <q-tab-panel name="settings"> Settings Page </q-tab-panel>
         </q-tab-panels>
       </template>
     </q-splitter>
@@ -94,6 +68,7 @@ import { useQuasar } from "quasar";
 import SystemBar from "../components/SystemBar.vue";
 import LibraryPage from "./LibraryPage.vue";
 import ReaderPage from "./ReaderPage.vue";
+import TestPage from "./TestPage.vue";
 
 export default {
   setup() {
@@ -109,6 +84,7 @@ export default {
     SystemBar,
     LibraryPage,
     ReaderPage,
+    TestPage,
   },
 };
 </script>
@@ -121,5 +97,9 @@ html {
 /* remove padding of tab panel */
 .q-tab-panel {
   padding: 0;
+}
+/* remove scrollbar for q-tab-panel */
+.q-panel.scroll {
+  overflow: hidden;
 }
 </style>

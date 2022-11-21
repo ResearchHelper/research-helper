@@ -1,6 +1,6 @@
 <template>
   <div>
-    <q-splitter
+    <!-- <q-splitter
       :style="'height:' + height + 'px;'"
       separator-class="separator"
       v-model="stateStore.infoPaneSize"
@@ -10,19 +10,20 @@
     >
       <template v-slot:before> <PDFReader /> </template>
       <template v-slot:after> <InfoPane /> </template>
-    </q-splitter>
+    </q-splitter> -->
+    <PDFReader class="reader" />
   </div>
 </template>
 
 <script>
 import { useStateStore } from "src/stores/appState";
 
-import InfoPane from "src/components/InfoPane.vue";
+// import InfoPane from "src/components/InfoPane.vue";
 import PDFReader from "src/components/pdfreader/PDFReader.vue";
 
 export default {
   components: {
-    InfoPane,
+    // InfoPane,
     PDFReader,
   },
 
@@ -62,5 +63,9 @@ export default {
     width: 5px;
     background-color: $primary;
   }
+}
+
+.reader {
+  height: $page-height;
 }
 </style>

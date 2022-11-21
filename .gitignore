@@ -4,6 +4,11 @@ node_modules
 /backend/linux-env
 .vscode
 
+# couchdb server info
+log.txt
+config.json
+remote_database
+
 # Quasar core related directories
 .quasar
 /dist

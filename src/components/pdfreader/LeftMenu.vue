@@ -1,5 +1,8 @@
 <template>
-  <q-tabs v-model="leftMenuTab">
+  <q-tabs
+    dense
+    v-model="leftMenuTab"
+  >
     <q-tab
       name="projects"
       label="Projects"

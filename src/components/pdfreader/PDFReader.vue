@@ -1,5 +1,7 @@
 <template>
+  <!-- systembar height : 32px -->
   <q-splitter
+    style="height: calc(100vh - 32px)"
     v-model="stateStore.leftMenuSize"
     :limits="[0, 30]"
   >
@@ -10,61 +12,84 @@
       />
     </template>
     <template v-slot:after>
-      <!-- toolBar -->
-      <PDFToolBar
-        :pdfState="pdfState"
-        @changePageNumber="changePageNumber"
-        @changeScale="changeScale"
-        @changeScaleValue="changeScaleValue"
-        @changeSpreadMode="changeSpreadMode"
-        @changeTool="changeTool"
-        @searchText="searchText"
-        @changeMatch="changeMatch"
-        @changeColor="changeColor"
-      />
-      <!-- Viewer -->
-      <div id="viewerContainer">
-        <div
-          id="viewer"
-          class="pdfViewer"
-        ></div>
-      </div>
-      <!-- Annotation Menu -->
-      <div
-        id="menu"
-        :hidden="true"
-        style="background: #1d1d1d"
+      <q-splitter
+        v-model="stateStore.infoPaneSize"
+        reverse
+        :limits="[0, 60]"
       >
-        <q-color
-          no-header
-          no-footer
-          bordered
-          default-view="palette"
-          :palette="[
-            '#FFFF00',
-            '#019A9D',
-            '#D9B801',
-            '#E8045A',
-            '#B2028A',
-            '#2A0449',
-          ]"
-          @change="
-            (color) =>
-              clickMenu({
-                option: 'changeColor',
-                color: color,
-              })
-          "
-        />
-        <q-btn
-          square
-          icon="delete"
-          size="sm"
-          :ripple="false"
-          @click="clickMenu({ option: 'deleteAnnot' })"
-        >
-        </q-btn>
-      </div>
+        <template v-slot:before>
+          <!-- toolBar -->
+          <PDFToolBar
+            :pdfState="pdfState"
+            @changePageNumber="changePageNumber"
+            @changeScale="changeScale"
+            @changeScaleValue="changeScaleValue"
+            @changeSpreadMode="changeSpreadMode"
+            @changeTool="changeTool"
+            @searchText="searchText"
+            @changeMatch="changeMatch"
+            @changeColor="changeColor"
+          />
+          <!-- Viewer -->
+          <div id="viewerContainer">
+            <div
+              id="viewer"
+              class="pdfViewer"
+            ></div>
+          </div>
+          <!-- Annotation Menu -->
+          <q-card
+            id="menu"
+            :hidden="true"
+            style="max-width: fit-content"
+          >
+            <q-color
+              no-header
+              no-footer
+              bordered
+              default-view="palette"
+              :palette="[
+                '#FFFF00',
+                '#019A9D',
+                '#D9B801',
+                '#E8045A',
+                '#B2028A',
+                '#2A0449',
+              ]"
+              @change="
+                (color) =>
+                  clickMenu({
+                    option: 'changeColor',
+                    color: color,
+                  })
+              "
+            />
+            <q-card-actions
+              align="around"
+              class="q-pa-none"
+            >
+              <q-btn
+                flat
+                icon="delete"
+                size="sm"
+                :ripple="false"
+                @click="clickMenu({ option: 'deleteAnnot' })"
+              >
+              </q-btn>
+              <q-btn
+                flat
+                icon="comment"
+                size="sm"
+                :ripple="false"
+              >
+              </q-btn>
+            </q-card-actions>
+          </q-card>
+        </template>
+        <template v-slot:after>
+          <InfoPane ref="infoPane" />
+        </template>
+      </q-splitter>
     </template>
   </q-splitter>
 </template>
@@ -72,20 +97,25 @@
 <script>
 import LeftMenu from "./LeftMenu.vue";
 import PDFToolBar from "./PDFToolBar.vue";
+import InfoPane from "../InfoPane.vue";
 
 import { useStateStore } from "src/stores/appState";
+import { useAnnotStore } from "src/stores/annotStore";
+import { AnnotationType } from "src/api/annotation";
 
-import { AnnotationManager, AnnotationType } from "src/annotation";
 import * as pdfjsLib from "pdfjs-dist/build/pdf";
 import * as pdfjsViewer from "pdfjs-dist/web/pdf_viewer";
-pdfjsLib.GlobalWorkerOptions.workerSrc = "pdfjs-dist/build/pdf.worker.js";
+pdfjsLib.GlobalWorkerOptions.workerSrc = "pdfjs-dist/build/pdf.worker.min.js";
 
 export default {
-  components: { PDFToolBar, LeftMenu },
+  components: { PDFToolBar, LeftMenu, InfoPane },
 
   setup() {
     const stateStore = useStateStore();
-    return { stateStore };
+    const annotStore = useAnnotStore();
+    annotStore.init();
+    // annotStore.getAnnots();
+    return { stateStore, annotStore };
   },
 
   mounted() {
@@ -122,39 +152,55 @@ export default {
       // scroll event and ctrl+scroll (zoom) event
       container.addEventListener("scroll", (e) => this.handleScroll(e));
       container.addEventListener("mousewheel", (e) => this.handleCtrlScroll(e));
-
-      // annotation manager
-      this.annotManager = new AnnotationManager(this.pdfViewer);
     });
 
-    eventBus.on("annotationlayerrendered", (e) => {
-      this.annotManager.drawAnnotations(e.pageNumber);
-      this.annotManager.bindFunc2Doms(e.pageNumber, this.clickAnnotation);
+    eventBus.on("annotationeditorlayerrendered", (e) => {
+      // draw annotations from db
+      let annots = this.annotStore.getAnnotsByPage(e.pageNumber);
+      for (let annot of annots) {
+        this.annotStore.create(annot, true).then((doms) => {
+          // bind function to dom
+          for (let dom of doms) dom.onclick = () => this.clickAnnotation(dom);
+        });
+      }
 
+      // draw annotations when mouse is up
       e.source.div.onmouseup = (ev) => {
         let rect = null;
         let pdfState = this.pdfState; // save to local var to decrease fetch freq
         if (pdfState.tool == AnnotationType.COMMENT)
-          rect = { left: ev.clientX, top: ev.clientY, width: 5, height: 5 };
-        let dom = this.annotManager.createAnnotation({
-          type: pdfState.tool,
-          rect: rect, // only for comment annotation
-          color: pdfState.color,
-          pageNumber: e.pageNumber,
-        });
-        // bind function to dom
-        if (!!dom) dom.onclick = () => this.clickAnnotation(dom);
+          rect = { left: ev.clientX, top: ev.clientY, width: 44, height: 44 };
+        this.annotStore
+          .create({
+            type: pdfState.tool,
+            rect: rect, // only for comment annotation
+            color: pdfState.color,
+            pageNumber: e.pageNumber,
+          })
+          .then((doms) => {
+            // bind function to dom
+            for (let dom of doms) {
+              dom.onclick = () => this.clickAnnotation(dom);
+              if (pdfState.tool == AnnotationType.COMMENT) {
+                dom.click(); // open the annotation list
+                this.changeTool("cursor"); // prevent adding note ontop of note
+              }
+            }
+          });
 
         // if mouse clicks outside of the menu, close it
+        // and deselect the annotation
         let menu = document.getElementById("menu");
-        if (!menu.contains(e.target)) menu.hidden = true;
+        if (!menu.contains(ev.target)) {
+          menu.hidden = true;
+          this.annotStore.select(null);
+        }
       };
     });
 
     // find controller
     eventBus.on("updatefindmatchescount", (e) => {
       // update the total founded during searching
-      // this.stateStore.setPDFState({ matchesCount: e.matchesCount });
       this.pdfState = { matchesCount: e.matchesCount };
     });
     eventBus.on("updatetextlayermatches", (e) => {
@@ -168,7 +214,6 @@ export default {
           current += findController.pageMatches[i].length;
         }
         pdfState.matchesCount.current = current;
-        // this.stateStore.setPDFState({ matchesCount: pdfState.matchesCount });
         this.pdfState = { matchesCount: pdfState.matchesCount };
       }
     });
@@ -187,21 +232,28 @@ export default {
       },
       deep: true,
     },
+
+    "annotStore.selectedAnnotId"(newId, oldId) {
+      // if we select an annotation in a page not yet rendered
+      // turn to that page
+      if (!!newId) {
+        this.annotStore.getAnnotById(newId).then((annot) => {
+          console.log(annot);
+          if (annot.pageNumber != this.pdfState.pageNumber) {
+            this.changePageNumber(annot.pageNumber);
+            setTimeout(() => {
+              // wait until the page rendered then make the annot active
+              this.annotStore.select(newId);
+            }, 200);
+          }
+        });
+      }
+    },
   },
 
   data() {
     return {
-      selectedAnnotation: null,
-
       pdfDocument: null,
-
-      // pdfState: {
-      //   pagesCount: 1,
-      //   currentPageNumber: 1,
-      //   currentScale: 1,
-      //   tool: AnnotationType.NONE,
-      //   color: "#FFFF00",
-      // },
     };
   },
 
@@ -219,8 +271,12 @@ export default {
 
   methods: {
     loadPDF(PDFRelativePath) {
+      let prefixPath =
+        "/home/huntfeng/projects/research-helper-quasar/backend/";
+      let buffer = window.fs.readFileSync(prefixPath + PDFRelativePath);
       let loadingTask = pdfjsLib.getDocument({
-        url: "http://localhost:5000/" + PDFRelativePath,
+        // url: "http://localhost:5000/" + PDFRelativePath,
+        data: buffer,
       });
       loadingTask.promise.then((pdfDocument) => {
         this.pdfLinkService.setDocument(pdfDocument, null);
@@ -233,8 +289,6 @@ export default {
 
     loadPDFState() {
       this.stateStore.loadPDFState();
-      // let pdfState = this.stateStore.getPDFState();
-      // this.stateStore.setPDFState({ pagesCount: this.pdfViewer.pagesCount });
       let pdfState = this.pdfState;
       this.pdfState = { pagesCount: this.pdfViewer.pagesCount };
 
@@ -280,9 +334,6 @@ export default {
           this.pdfViewer.currentScale -= 0.1;
         }
 
-        // this.stateStore.setPDFState({
-        //   currentScale: this.pdfViewer.currentScale,
-        // });
         this.pdfState = {
           currentScale: this.pdfViewer.currentScale,
         };
@@ -293,15 +344,11 @@ export default {
     changePageNumber(pageNumber) {
       pageNumber = parseInt(pageNumber);
       this.pdfViewer.currentPageNumber = pageNumber;
-      // this.stateStore.setPDFState({ currentPageNumber: pageNumber });
       this.pdfState = { currentPageNumber: pageNumber };
     },
 
     setScale(scale) {
       this.pdfViewer.currentScale = parseFloat(scale);
-      // this.stateStore.setPDFState({
-      //   currentScale: this.pdfViewer.currentScale,
-      // });
       this.pdfState = {
         currentScale: this.pdfViewer.currentScale,
       };
@@ -309,9 +356,6 @@ export default {
 
     changeScale(scale) {
       this.pdfViewer.currentScale += scale;
-      // this.stateStore.setPDFState({
-      //   currentScale: this.pdfViewer.currentScale,
-      // });
       this.pdfState = {
         currentScale: this.pdfViewer.currentScale,
       };
@@ -319,10 +363,6 @@ export default {
 
     changeScaleValue(scaleValue) {
       this.pdfViewer.currentScaleValue = scaleValue;
-      // this.stateStore.setPDFState({
-      //   currentScaleValue: this.pdfViewer.currentScaleValue,
-      //   currentScale: this.pdfViewer.currentScale,
-      // });
       this.pdfState = {
         currentScaleValue: this.pdfViewer.currentScaleValue,
         currentScale: this.pdfViewer.currentScale,
@@ -331,27 +371,18 @@ export default {
 
     changeSpreadMode(spreadMode) {
       this.pdfViewer.spreadMode = parseInt(spreadMode);
-      // this.stateStore.setPDFState({
-      //   spreadMode: this.pdfViewer.spreadMode,
-      // });
       this.pdfState = {
         spreadMode: this.pdfViewer.spreadMode,
       };
     },
 
     changeTool(tool) {
-      // this.stateStore.setPDFState({
-      //   tool: tool,
-      // });
       this.pdfState = {
         tool: tool,
       };
     },
 
     changeColor(color) {
-      // this.stateStore.setPDFState({
-      //   color: color,
-      // });
       this.pdfState = {
         color: color,
       };
@@ -412,7 +443,7 @@ export default {
     },
 
     clickAnnotation(dom) {
-      if (dom.className == "highlightAnnotation") {
+      if (dom.classList.contains("highlightAnnotation")) {
         let menu = document.getElementById("menu");
         menu.hidden = false;
         menu.style.position = "absolute";
@@ -424,22 +455,22 @@ export default {
         // move the menu to the same level as the dom
         // so that the percentage can work properly
         dom.parentNode.appendChild(menu);
-
-        // set this so the menu can recognize the annotation
-        this.selectedAnnotation = dom;
-      } else if (dom.className == "textAnnotation") {
-        // we want the note editor to popup
       }
+      // open info pane
+      if (this.stateStore.infoPaneSize == 0) this.stateStore.toggleInfoPane();
+      this.stateStore.setInfoPaneTab("annotationTab");
+      this.annotStore.select(dom.getAttribute("annotation-id"));
     },
 
     clickMenu(params) {
-      let id = this.selectedAnnotation.id;
+      let id = this.annotStore.selectedAnnotId;
+      console.log("clickMenu", id);
       switch (params.option) {
         case "changeColor":
-          this.annotManager.modifyAnnotation(id, { color: params.color });
+          this.annotStore.update(id, { color: params.color });
           break;
         case "deleteAnnot":
-          this.annotManager.deleteAnnotation(id);
+          this.annotStore.delete(id);
           break;
       }
 
@@ -459,13 +490,8 @@ export default {
   width: 100%;
   margin-right: 10px;
 }
-// Fix the text color in note
-.popup {
-  color: black;
-}
 
-// active annotation
 .activeAnnotation {
-  border: solid cyan;
+  border: dashed 2px cyan;
 }
 </style>
