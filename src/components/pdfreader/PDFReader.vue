@@ -15,6 +15,7 @@
       <q-splitter
         v-model="stateStore.infoPaneSize"
         reverse
+        :limits="[0, 60]"
       >
         <template v-slot:before>
           <!-- toolBar -->
@@ -37,10 +38,10 @@
             ></div>
           </div>
           <!-- Annotation Menu -->
-          <div
+          <q-card
             id="menu"
             :hidden="true"
-            style="background: #1d1d1d"
+            style="max-width: fit-content"
           >
             <q-color
               no-header
@@ -63,15 +64,27 @@
                   })
               "
             />
-            <q-btn
-              square
-              icon="delete"
-              size="sm"
-              :ripple="false"
-              @click="clickMenu({ option: 'deleteAnnot' })"
+            <q-card-actions
+              align="around"
+              class="q-pa-none"
             >
-            </q-btn>
-          </div>
+              <q-btn
+                flat
+                icon="delete"
+                size="sm"
+                :ripple="false"
+                @click="clickMenu({ option: 'deleteAnnot' })"
+              >
+              </q-btn>
+              <q-btn
+                flat
+                icon="comment"
+                size="sm"
+                :ripple="false"
+              >
+              </q-btn>
+            </q-card-actions>
+          </q-card>
         </template>
         <template v-slot:after>
           <InfoPane ref="infoPane" />
@@ -87,7 +100,8 @@ import PDFToolBar from "./PDFToolBar.vue";
 import InfoPane from "../InfoPane.vue";
 
 import { useStateStore } from "src/stores/appState";
-import { AnnotationManager, AnnotationType } from "src/annotation";
+import { useAnnotStore } from "src/stores/annotStore";
+import { AnnotationType } from "src/api/annotation";
 
 import * as pdfjsLib from "pdfjs-dist/build/pdf";
 import * as pdfjsViewer from "pdfjs-dist/web/pdf_viewer";
@@ -98,7 +112,10 @@ export default {
 
   setup() {
     const stateStore = useStateStore();
-    return { stateStore };
+    const annotStore = useAnnotStore();
+    annotStore.init();
+    // annotStore.getAnnots();
+    return { stateStore, annotStore };
   },
 
   mounted() {
@@ -135,40 +152,49 @@ export default {
       // scroll event and ctrl+scroll (zoom) event
       container.addEventListener("scroll", (e) => this.handleScroll(e));
       container.addEventListener("mousewheel", (e) => this.handleCtrlScroll(e));
-
-      // annotation manager
-      this.annotManager = new AnnotationManager(this.pdfViewer);
     });
 
     eventBus.on("annotationeditorlayerrendered", (e) => {
-      this.annotManager.drawAnnotations(e.pageNumber);
-      this.annotManager.bindFunc2Doms(e.pageNumber, this.clickAnnotation);
+      // draw annotations from db
+      let annots = this.annotStore.getAnnotsByPage(e.pageNumber);
+      for (let annot of annots) {
+        this.annotStore.create(annot, true).then((doms) => {
+          // bind function to dom
+          for (let dom of doms) dom.onclick = () => this.clickAnnotation(dom);
+        });
+      }
 
+      // draw annotations when mouse is up
       e.source.div.onmouseup = (ev) => {
         let rect = null;
         let pdfState = this.pdfState; // save to local var to decrease fetch freq
         if (pdfState.tool == AnnotationType.COMMENT)
-          rect = { left: ev.clientX, top: ev.clientY, width: 5, height: 5 };
-        let dom = this.annotManager.createAnnotation({
-          type: pdfState.tool,
-          rect: rect, // only for comment annotation
-          color: pdfState.color,
-          pageNumber: e.pageNumber,
-        });
-
-        if (!!dom) {
-          // bind function to dom
-          let tool = pdfState.tool;
-          dom.onclick = () => this.clickAnnotation(dom);
-          // FIXME: this doesn't work for annotations from database
-          dom.onmouseover = () => this.changeTool("cursor");
-          dom.onmouseleave = () => this.changeTool(tool);
-          dom.click();
-        }
+          rect = { left: ev.clientX, top: ev.clientY, width: 44, height: 44 };
+        this.annotStore
+          .create({
+            type: pdfState.tool,
+            rect: rect, // only for comment annotation
+            color: pdfState.color,
+            pageNumber: e.pageNumber,
+          })
+          .then((doms) => {
+            // bind function to dom
+            for (let dom of doms) {
+              dom.onclick = () => this.clickAnnotation(dom);
+              if (pdfState.tool == AnnotationType.COMMENT) {
+                dom.click(); // open the annotation list
+                this.changeTool("cursor"); // prevent adding note ontop of note
+              }
+            }
+          });
 
         // if mouse clicks outside of the menu, close it
+        // and deselect the annotation
         let menu = document.getElementById("menu");
-        if (!menu.contains(e.target)) menu.hidden = true;
+        if (!menu.contains(ev.target)) {
+          menu.hidden = true;
+          this.annotStore.select(null);
+        }
       };
     });
 
@@ -207,31 +233,27 @@ export default {
       deep: true,
     },
 
-    "stateStore.selectedAnnotId"(newId, oldId) {
-      let newAnnot = document.getElementById(newId);
-      let oldAnnot = document.getElementById(oldId);
-
-      // change active annotation and annotation card
-      if (!!oldAnnot) oldAnnot.classList.remove("activeAnnotation");
-      newAnnot.classList.add("activeAnnotation");
-
-      // FIXME: shouldn't use scrollIntoView since some pages are not rendered
-      console.log(newAnnot);
-      // this.changePageNumber(annotManager.);
-      // newAnnot.scrollIntoView({
-      //   behavior: "smooth",
-      //   block: "nearest",
-      //   inline: "nearest",
-      // });
+    "annotStore.selectedAnnotId"(newId, oldId) {
+      // if we select an annotation in a page not yet rendered
+      // turn to that page
+      if (!!newId) {
+        this.annotStore.getAnnotById(newId).then((annot) => {
+          console.log(annot);
+          if (annot.pageNumber != this.pdfState.pageNumber) {
+            this.changePageNumber(annot.pageNumber);
+            setTimeout(() => {
+              // wait until the page rendered then make the annot active
+              this.annotStore.select(newId);
+            }, 200);
+          }
+        });
+      }
     },
   },
 
   data() {
     return {
       pdfDocument: null,
-
-      selectedAnnotation: null,
-      showCommentEditor: false,
     };
   },
 
@@ -249,8 +271,12 @@ export default {
 
   methods: {
     loadPDF(PDFRelativePath) {
+      let prefixPath =
+        "/home/huntfeng/projects/research-helper-quasar/backend/";
+      let buffer = window.fs.readFileSync(prefixPath + PDFRelativePath);
       let loadingTask = pdfjsLib.getDocument({
-        url: "http://localhost:5000/" + PDFRelativePath,
+        // url: "http://localhost:5000/" + PDFRelativePath,
+        data: buffer,
       });
       loadingTask.promise.then((pdfDocument) => {
         this.pdfLinkService.setDocument(pdfDocument, null);
@@ -417,7 +443,7 @@ export default {
     },
 
     clickAnnotation(dom) {
-      if (dom.className == "highlightAnnotation") {
+      if (dom.classList.contains("highlightAnnotation")) {
         let menu = document.getElementById("menu");
         menu.hidden = false;
         menu.style.position = "absolute";
@@ -429,25 +455,22 @@ export default {
         // move the menu to the same level as the dom
         // so that the percentage can work properly
         dom.parentNode.appendChild(menu);
-
-        // set this so the menu can recognize the annotation
-        this.selectedAnnotation = dom;
-      } else if (dom.className == "textAnnotation") {
-        // we want to open annotation list and edit it
-        if (this.stateStore.infoPaneSize == 0) this.stateStore.toggleInfoPane();
-        this.stateStore.setInfoPaneTab("annotationTab");
-        this.stateStore.selectedAnnotId = dom.id;
       }
+      // open info pane
+      if (this.stateStore.infoPaneSize == 0) this.stateStore.toggleInfoPane();
+      this.stateStore.setInfoPaneTab("annotationTab");
+      this.annotStore.select(dom.getAttribute("annotation-id"));
     },
 
     clickMenu(params) {
-      let id = this.selectedAnnotation.id;
+      let id = this.annotStore.selectedAnnotId;
+      console.log("clickMenu", id);
       switch (params.option) {
         case "changeColor":
-          this.annotManager.modifyAnnotation(id, { color: params.color });
+          this.annotStore.update(id, { color: params.color });
           break;
         case "deleteAnnot":
-          this.annotManager.deleteAnnotation(id);
+          this.annotStore.delete(id);
           break;
       }
 
@@ -466,5 +489,9 @@ export default {
   height: 97%; // this and toolBar adds up to 100%
   width: 100%;
   margin-right: 10px;
+}
+
+.activeAnnotation {
+  border: dashed 2px cyan;
 }
 </style>

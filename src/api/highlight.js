@@ -1,30 +1,54 @@
 function getSelectionRects() {
   let selection = window.getSelection();
   let range = selection.getRangeAt(0);
-  let rects = range.getClientRects();
+  // convert DOMRectList to Array since we need filter function
+  let rects = Array.from(range.getClientRects());
 
+  // remove invalid selection
+  rects = rects.filter((rect) => {
+    return rect.width > 0.5 && rect.height > 0;
+  });
+
+  // remove repeated rectangles
+  let left = null;
+  let top = null;
+  let dx = 0;
+  let dy = 0;
+  let prvRectWidth = null;
+  rects = rects.filter((rect) => {
+    dx = Math.abs(rect.left - left); // Number-null = Number
+    dy = Math.abs(rect.top - top);
+    left = rect.left;
+    top = rect.top;
+    return dx > prvRectWidth / 2 || dy > rect.height / 2;
+  });
+
+  // TODO: we can make it more robust, do this later
+  // join rectangles
   let newRects = [];
+  let len = 0;
   for (let rect of rects) {
-    if (rect.width > 0.5 && rect.height > 0) {
-      if (newRects.length == 0) {
-        newRects.push({
-          top: rect.top,
-          left: rect.left,
-          width: rect.width,
-          height: rect.height,
-        });
-      } else if (
-        Math.abs(newRects[newRects.length - 1].top - rect.top) < rect.height
-      ) {
-        newRects[newRects.length - 1].width += rect.width;
-      } else {
-        newRects.push({
-          top: rect.top,
-          left: rect.left,
-          width: rect.width,
-          height: rect.height,
-        });
-      }
+    if (len == 0) {
+      newRects.push({
+        top: rect.top,
+        left: rect.left,
+        width: rect.width,
+        height: rect.height,
+      });
+      len++;
+    } else if (
+      Math.abs(newRects[len - 1].top - rect.top) <
+      newRects[len - 1].height / 3
+    ) {
+      newRects[len - 1].width = rect.right - newRects[len - 1].left;
+    } else {
+      newRects.push({
+        top: rect.top,
+        left: rect.left,
+        width: rect.width,
+        height: rect.height,
+      });
+      len++;
     }
   }
   return newRects;
@@ -53,29 +77,24 @@ function computePageOffset(annotationLayer) {
   };
 }
 
-function highlight(annotation, fromDB = false) {
+function highlight(annot, fromDB = false) {
   let annotationEditorLayer = document
-    .querySelector(`div.page[data-page-number='${annotation.pageNumber}']`)
+    .querySelector(`div.page[data-page-number='${annot.pageNumber}']`)
     .querySelector(".annotationEditorLayer");
 
   if (!fromDB) {
-    // let rec = window.getSelection().getRangeAt(0).getBoundingClientRect();
-    // // if there is selection, use the selection
-    // if (rec.width > 1)
-    //   annotation.rect = selectionCoordinates(rec, annotationEditorLayer);
-    // else return;
     let rects = getSelectionRects();
     for (let i in rects) {
       rects[i] = selectionCoordinates(rects[i], annotationEditorLayer);
     }
-    annotation.rects = rects;
+    annot.rects = rects;
   }
 
   let doms = [];
-  for (let rect of annotation.rects) {
+  for (let rect of annot.rects) {
     // update UI
     let section = document.createElement("section");
-    section.setAttribute("annotation-id", annotation.id);
+    section.setAttribute("annotation-id", annot._id);
     section.style.position = "absolute";
     // using percentage since it's invariant under scale change
     section.style.left = `${rect.left}%`;
@@ -85,22 +104,14 @@ function highlight(annotation, fromDB = false) {
     section.style.pointerEvents = "auto";
     section.style.cursor = "pointer";
     section.className = "highlightAnnotation";
-    section.style.backgroundColor = annotation.color;
+    section.style.backgroundColor = annot.color;
     section.style.mixBlendMode = "multiply";
-
-    // let rect = document.createElement("div");
-    // rect.style.width = "100%";
-    // rect.style.height = "100%";
-    // rect.style.backgroundColor = annotation.color;
-    // using mixBlendMode so the highlight rect doesn't cover the text
-    // rect.style.mixBlendMode = "multiply";
-    // section.appendChild(rect);
 
     // put dom on the annotation layer
     annotationEditorLayer.appendChild(section);
     doms.push(section);
   }
-  return { annotation: annotation, doms: doms };
+  return { annot: annot, doms: doms };
 }
 
 export { highlight };

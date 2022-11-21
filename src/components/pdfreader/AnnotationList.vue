@@ -2,15 +2,18 @@
   <q-list class="q-px-xs">
     <q-card
       bordered
-      v-for="annot in annotations"
-      :key="annot.id"
+      v-for="annot in annotStore.annots"
+      :key="annot._id"
       :class="{
-        activeAnnotationCard: annot.id == stateStore.selectedAnnotId,
+        activeAnnotationCard: annot._id == annotStore.selectedAnnotId,
       }"
-      @click="clickAnnotationCard(annot)"
+      @click="annotStore.select(annot._id)"
     >
       <q-card-section class="q-py-none">
-        <div class="row justify-between items-center">
+        <div
+          :annot-card-id="annot._id"
+          class="row justify-between items-center"
+        >
           <p>
             <span class="text-h6"> {{ annot.type.toUpperCase() }} </span>
             {{ " page" + annot.pageNumber }}
@@ -34,7 +37,7 @@
                 <q-item
                   clickable
                   v-close-popup
-                  @click="deleteAnnotation(annot)"
+                  @click="annotStore.delete(annot._id)"
                 >
                   Delete
                 </q-item>
@@ -44,7 +47,7 @@
         </div>
       </q-card-section>
       <q-separator />
-      <div v-if="annot.id == editingAnnotId">
+      <div v-if="annot._id == editingAnnotId">
         <div id="commentEditor"></div>
         <div class="row justify-end">
           <q-btn
@@ -59,13 +62,13 @@
             dense
             flat
             :ripple="false"
-            @click="updateAnnotation(annot)"
+            @click="confirmAnnotation(annot)"
           >
             Confirm
           </q-btn>
         </div>
       </div>
-      <div v-else>{{ annot.content }}</div>
+      <div v-else>{{ annot.comment }}</div>
     </q-card>
   </q-list>
 </template>
@@ -74,39 +77,22 @@
 import Vditor from "vditor";
 import "vditor/dist/index.css";
 import { useStateStore } from "src/stores/appState";
-import { AnnotationManager, AnnotationType } from "src/annotation";
+import { useAnnotStore } from "src/stores/annotStore";
 
 export default {
+  setup() {
+    const stateStore = useStateStore();
+    const annotStore = useAnnotStore();
+    // don't know why the annots have empty comments
+    annotStore.init();
+    return { stateStore, annotStore };
+  },
+
   data() {
     return {
       editor: null,
       editingAnnotId: "",
-
-      annotations: [],
-      selectedAnnotId: "",
-      selectedAnnot: null,
-      prvSelectedAnnot: null,
     };
-  },
-
-  watch: {
-    "annotManager.annotations": {
-      handler(newAnnotations, oldAnnotations) {
-        console.log("added new annotation");
-        this.getAnnotations();
-      },
-      deep: true,
-    },
-  },
-
-  setup() {
-    const stateStore = useStateStore();
-    const annotManager = new AnnotationManager();
-    return { stateStore, annotManager };
-  },
-
-  mounted() {
-    this.getAnnotations();
   },
 
   methods: {
@@ -135,56 +121,25 @@ export default {
       this.editor.destroy();
     },
 
-    getAnnotations() {
-      let annotDict = this.annotManager.annotations;
-      for (let page in annotDict) {
-        for (let annot of annotDict[page]) {
-          this.annotations.push(annot);
-        }
-      }
-    },
-
     editAnnotation(annot) {
-      console.log("edit");
-      this.editingAnnotId = annot.id;
+      this.editingAnnotId = annot._id;
       setTimeout(() => {
-        this.initEditor(annot.content);
+        this.initEditor(annot.comment);
       }, 100);
     },
 
-    deleteAnnotation(annot) {
-      // remove from disk and pdf page
-      this.annotManager.deleteAnnotation(annot.id);
-
-      // remove from annotation list
-      this.annotations = this.annotations.filter(
-        (annotation) => annotation.id != annot.id
-      );
-    },
-
-    updateAnnotation(annot) {
+    confirmAnnotation(annot) {
       // backend
-      this.annotManager.modifyAnnotation(annot.id, {
-        content: this.editor.getValue(),
-      });
+      this.annotStore.update(annot._id, { comment: this.editor.getValue() });
 
       // destroy editor
       this.destroyEditor();
-    },
-
-    clickAnnotationCard(annot) {
-      this.stateStore.selectedAnnotId = annot.id;
-      let newAnnot = document.getElementById(annot.id);
-      console.log(newAnnot);
     },
   },
 };
 </script>
 
 <style>
-.activeAnnotation {
-  border: dashed 2px cyan;
-}
 .activeAnnotationCard {
   border: solid 2px cyan;
 }

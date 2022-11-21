@@ -175,7 +175,7 @@
 
 <script>
 import { useStateStore } from "src/stores/appState";
-import { AnnotationType } from "src/annotation";
+import { AnnotationType } from "src/api/annotation";
 
 export default {
   props: ["pdfState"],

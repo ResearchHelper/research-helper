@@ -40,6 +40,6 @@ contextBridge.exposeInMainWorld("myWindowAPI", {
   },
 });
 
-// I need to inject these 2 libraries in preload, otherwise they are externalized
+// inject these libraries in preload, otherwise they are externalized
 contextBridge.exposeInMainWorld("fs", fs);
 contextBridge.exposeInMainWorld("path", path);
