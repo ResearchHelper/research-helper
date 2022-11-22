@@ -37,10 +37,21 @@
               class="pdfViewer"
             ></div>
           </div>
+
+          <!-- Peek Viewer -->
+          <div
+            style="display: none"
+            id="peekContainer"
+          >
+            <div
+              id="peakViewer"
+              class="pdfViewer singlePageView"
+            ></div>
+          </div>
           <!-- Annotation Menu -->
           <q-card
             id="menu"
-            :hidden="true"
+            hidden="true"
             style="max-width: fit-content"
           >
             <q-color
@@ -101,8 +112,10 @@ import InfoPane from "../InfoPane.vue";
 
 import { useStateStore } from "src/stores/appState";
 import { useAnnotStore } from "src/stores/annotStore";
+import { PeekManager } from "src/api/pdfpeek";
 import { AnnotationType } from "src/api/annotation";
 
+// The pdfjs-dist is on public
 import * as pdfjsLib from "pdfjs-dist/build/pdf";
 import * as pdfjsViewer from "pdfjs-dist/web/pdf_viewer";
 pdfjsLib.GlobalWorkerOptions.workerSrc = "pdfjs-dist/build/pdf.worker.min.js";
@@ -141,7 +154,7 @@ export default {
     this.pdfViewer = pdfViewer;
     this.pdfLinkService = pdfLinkService;
 
-    this.loadPDF(this.stateStore.workingProject.path);
+    this.loadPDF();
     eventBus.on("pagesinit", () => {
       console.log("document ready");
       this.pagesInit = true;
@@ -154,6 +167,10 @@ export default {
     });
 
     eventBus.on("annotationeditorlayerrendered", (e) => {
+      // peek hyperlinks
+      let links = document.querySelectorAll("a.internalLink");
+      for (let link of links) this.peekManager.peak(link);
+
       // draw annotations from db
       let annots = this.annotStore.getAnnotsByPage(e.pageNumber);
       for (let annot of annots) {
@@ -222,7 +239,7 @@ export default {
     "stateStore.workingProject"(project) {
       this.pagesInit = false;
       console.log("loading:", project.path);
-      this.loadPDF(project.path);
+      this.loadPDF();
     },
 
     "stateStore.pdfStates": {
@@ -269,12 +286,13 @@ export default {
   },
 
   methods: {
-    loadPDF(PDFRelativePath) {
-      let prefixPath =
-        "/home/huntfeng/projects/research-helper-quasar/backend/";
-      let buffer = window.fs.readFileSync(prefixPath + PDFRelativePath);
+    loadPDF() {
+      let path = window.path.join(
+        this.stateStore.storagePath,
+        this.stateStore.workingProject.path
+      );
+      let buffer = window.fs.readFileSync(path);
       let loadingTask = pdfjsLib.getDocument({
-        // url: "http://localhost:5000/" + PDFRelativePath,
         data: buffer,
       });
       loadingTask.promise.then((pdfDocument) => {
@@ -284,6 +302,7 @@ export default {
         // for table of content
         this.pdfDocument = pdfDocument;
       });
+      this.peekManager = new PeekManager(path);
     },
 
     loadPDFState() {
@@ -488,6 +507,19 @@ export default {
   height: 97%; // this and toolBar adds up to 100%
   width: 100%;
   margin-right: 10px;
+}
+
+#peekContainer {
+  position: absolute;
+  overflow: auto;
+  background: grey;
+  border: solid black 5px;
+  border-radius: 5px;
+}
+
+.pdfViewer.singlePageView .page {
+  // fix the empty space on the right
+  border: unset !important;
 }
 
 .activeAnnotation {
