@@ -1,15 +1,14 @@
 FIXME:
+find controller
+[ ] bounds of the find controller
 
 TODO:
-pdfviewer
-[ ] popup window to show hyperlinks
-
 content extractor
 [ ] make content extractor as online service
 
 IMPROVE:
 pdfState
-[ ] Improve the structure of pdfStateStore
+[ ] Improve the structure of PDFReader?
 
 veditor
 [ ] in a separate window, like zotero
@@ -22,3 +21,6 @@ highlight annotation
 
 annotation
 [ ] after changing page, wait until the page is rendered before setting the annotation active
+
+extractor
+[ ] the filepath must start from projects/...
