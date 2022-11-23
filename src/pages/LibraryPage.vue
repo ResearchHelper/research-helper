@@ -1,9 +1,8 @@
 <template>
   <div>
-    <ActionBar />
-    <!-- systembarheight: 32px actionbarheight: 50px -->
+    <!-- systembarheight: 32px, actionbarheight: 50px -->
     <q-splitter
-      style="height: calc(100vh - 82px)"
+      style="height: calc(100vh - 32px)"
       :limits="[0, 30]"
       separator-class="separator"
       v-model="stateStore.leftMenuSize"
@@ -20,6 +19,7 @@
           v-model="stateStore.infoPaneSize"
         >
           <template v-slot:before>
+            <ActionBar />
             <TableView />
           </template>
           <template v-slot:after>
@@ -49,13 +49,6 @@ export default {
     TableView,
     TreeView,
     InfoPane,
-  },
-
-  data() {
-    return {
-      leftMenuSize: 20,
-      infoPaneSize: 25,
-    };
   },
 };
 </script>

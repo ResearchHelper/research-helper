@@ -45,7 +45,7 @@
           >
             <div
               id="peakViewer"
-              class="pdfViewer singlePageView"
+              class="pdfViewer"
             ></div>
           </div>
           <!-- Annotation Menu -->
@@ -126,7 +126,6 @@ export default {
   setup() {
     const stateStore = useStateStore();
     const annotStore = useAnnotStore();
-    annotStore.init(stateStore.workingProject.projectId);
     return { stateStore, annotStore };
   },
 
@@ -172,6 +171,8 @@ export default {
       for (let link of links) this.peekManager.peak(link);
 
       // draw annotations from db
+      // FIXME: everytime the page is zoomed, this event is fired
+      // do not draw annotations again and again.
       let annots = this.annotStore.getAnnotsByPage(e.pageNumber);
       for (let annot of annots) {
         this.annotStore.create(annot, true).then((doms) => {
@@ -238,7 +239,6 @@ export default {
   watch: {
     "stateStore.workingProject"(project) {
       this.pagesInit = false;
-      console.log("loading:", project.path);
       this.loadPDF();
     },
 
@@ -302,7 +302,10 @@ export default {
         // for table of content
         this.pdfDocument = pdfDocument;
       });
+      // install peek manager for hyperlink preview
       this.peekManager = new PeekManager(path);
+      // load annotations
+      this.annotStore.init(this.stateStore.workingProject.projectId);
     },
 
     loadPDFState() {
@@ -477,7 +480,10 @@ export default {
       // open info pane
       if (this.stateStore.infoPaneSize == 0) this.stateStore.toggleInfoPane();
       this.stateStore.setInfoPaneTab("annotationTab");
-      this.annotStore.select(dom.getAttribute("annotation-id"));
+      setTimeout(() => {
+        // TODO: improve wait until the annotation list is ready
+        this.annotStore.select(dom.getAttribute("annotation-id"));
+      }, 100);
     },
 
     clickMenu(params) {
@@ -504,8 +510,9 @@ export default {
 #viewerContainer {
   position: absolute;
   overflow: auto;
-  height: 97%; // this and toolBar adds up to 100%
-  width: 100%;
+  // systembar: 32px toolbar: 36px
+  height: calc(100vh - 68px);
+  width: 99%; // so the right scroll bar does not touch right edge
   margin-right: 10px;
 }
 
@@ -517,12 +524,38 @@ export default {
   border-radius: 5px;
 }
 
-.pdfViewer.singlePageView .page {
-  // fix the empty space on the right
-  border: unset !important;
+.page {
+  // fix no gap between pages
+  box-sizing: unset !important;
 }
 
 .activeAnnotation {
   border: dashed 2px cyan;
+}
+
+.q-splitter__after {
+  // hide the bottom scrollbar in pdf page
+  overflow: hidden;
+}
+
+// scrollbar styles in pdfreader
+/* width */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+/* handle */
+::-webkit-scrollbar-thumb {
+  background: rgb(75, 75, 75);
+  border-radius: 10px;
+  &:hover {
+    background: #005cb3;
+  }
+}
+
+/* corner */
+::-webkit-scrollbar-corner {
+  color: transparent;
 }
 </style>

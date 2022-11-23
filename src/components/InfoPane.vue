@@ -1,7 +1,7 @@
 <template>
   <div>
     <q-tabs
-      v-model="this.stateStore.infoPaneTab"
+      v-model="stateStore.infoPaneTab"
       dense
     >
       <q-tab
@@ -11,14 +11,14 @@
         Meta Info
       </q-tab>
       <q-tab
-        v-if="!!stateStore.workingProject"
+        v-if="stateStore.currentPage == 'reader'"
         name="annotationTab"
         :ripple="false"
       >
         Annotations
       </q-tab>
       <q-tab
-        v-if="!!stateStore.workingProject"
+        v-if="stateStore.currentPage == 'reader'"
         name="noteTab"
         :ripple="false"
       >
@@ -28,11 +28,11 @@
 
     <q-tab-panels
       v-if="!!stateStore.selectedProject"
-      v-model="this.stateStore.infoPaneTab"
+      v-model="stateStore.infoPaneTab"
     >
       <q-tab-panel name="metaInfoTab">
-        <!-- systembar: 32px, actionbar: 50px, tab: 36px  -->
-        <q-scroll-area style="height: calc(100vh - 118px)">
+        <!-- systembar: 32px, tab: 36px  -->
+        <q-scroll-area style="height: calc(100vh - 68px)">
           <q-input
             filled
             type="textarea"
@@ -58,11 +58,17 @@
         </q-scroll-area>
       </q-tab-panel>
 
-      <q-tab-panel name="annotationTab">
+      <q-tab-panel
+        v-if="stateStore.currentPage == 'reader'"
+        name="annotationTab"
+      >
         <AnnotationList ref="annotationList" />
       </q-tab-panel>
 
-      <q-tab-panel name="noteTab">
+      <q-tab-panel
+        v-if="stateStore.currentPage == 'reader'"
+        name="noteTab"
+      >
         <NoteEditor :has-toolbar="true" />
       </q-tab-panel>
     </q-tab-panels>
