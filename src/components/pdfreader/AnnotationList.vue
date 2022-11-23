@@ -1,76 +1,81 @@
 <template>
-  <q-list class="q-px-xs">
-    <q-card
-      bordered
-      v-for="annot in annotStore.annots"
-      :key="annot._id"
-      :class="{
-        activeAnnotationCard: annot._id == annotStore.selectedAnnotId,
-      }"
-      @click="annotStore.select(annot._id)"
-    >
-      <q-card-section class="q-py-none">
-        <div
-          :annot-card-id="annot._id"
-          class="row justify-between items-center"
-        >
-          <p>
-            <span class="text-h6"> {{ annot.type.toUpperCase() }} </span>
-            {{ " page" + annot.pageNumber }}
-          </p>
+  <!-- systembar: 32px, tab: 36px  -->
+  <q-scroll-area style="height: calc(100vh - 68px)">
+    <q-list class="q-px-xs">
+      <q-card
+        bordered
+        v-for="annot in annotStore.annots"
+        :key="annot._id"
+        :class="{
+          activeAnnotationCard: annot._id == annotStore.selectedAnnotId,
+        }"
+        @click="annotStore.select(annot._id)"
+      >
+        <q-card-section class="q-py-none">
+          <div
+            :annot-card-id="annot._id"
+            class="row justify-between items-center"
+          >
+            <p>
+              <span class="text-h6"> {{ annot.type.toUpperCase() }} </span>
+              {{ " page" + annot.pageNumber }}
+            </p>
 
-          <q-btn
-            dense
-            flat
-            :ripple="false"
-            icon="more_horiz"
-          >
-            <q-menu>
-              <q-list dense>
-                <q-item
-                  clickable
-                  v-close-popup
-                  @click="editAnnotation(annot)"
-                >
-                  Edit
-                </q-item>
-                <q-item
-                  clickable
-                  v-close-popup
-                  @click="annotStore.delete(annot._id)"
-                >
-                  Delete
-                </q-item>
-              </q-list>
-            </q-menu>
-          </q-btn>
+            <q-btn
+              dense
+              flat
+              :ripple="false"
+              icon="more_horiz"
+            >
+              <q-menu>
+                <q-list dense>
+                  <q-item
+                    clickable
+                    v-close-popup
+                    @click="editAnnotation(annot)"
+                  >
+                    Edit
+                  </q-item>
+                  <q-item
+                    clickable
+                    v-close-popup
+                    @click="annotStore.delete(annot._id)"
+                  >
+                    Delete
+                  </q-item>
+                </q-list>
+              </q-menu>
+            </q-btn>
+          </div>
+        </q-card-section>
+        <q-separator />
+        <div v-if="annot._id == editingAnnotId">
+          <div id="commentEditor"></div>
+          <div class="row justify-end">
+            <q-btn
+              dense
+              flat
+              :ripple="false"
+              @click="destroyEditor()"
+            >
+              Cancel
+            </q-btn>
+            <q-btn
+              dense
+              flat
+              :ripple="false"
+              @click="confirmAnnotation(annot)"
+            >
+              Confirm
+            </q-btn>
+          </div>
         </div>
-      </q-card-section>
-      <q-separator />
-      <div v-if="annot._id == editingAnnotId">
-        <div id="commentEditor"></div>
-        <div class="row justify-end">
-          <q-btn
-            dense
-            flat
-            :ripple="false"
-            @click="destroyEditor()"
-          >
-            Cancel
-          </q-btn>
-          <q-btn
-            dense
-            flat
-            :ripple="false"
-            @click="confirmAnnotation(annot)"
-          >
-            Confirm
-          </q-btn>
-        </div>
-      </div>
-      <div v-else>{{ annot.comment }}</div>
-    </q-card>
-  </q-list>
+        <!-- DO NOT use annot.comment -->
+        <!-- pouchdb fetch empty comment, maybe it is not working right -->
+        <div v-else>{{ annot.content }}</div>
+      </q-card>
+    </q-list>
+  </q-scroll-area>
 </template>
 
 <script>
@@ -83,8 +88,6 @@ export default {
   setup() {
     const stateStore = useStateStore();
     const annotStore = useAnnotStore();
-    // have to fetch docs again, otherwise annots have empty comments...
-    annotStore.init(stateStore.workingProject.projectId);
     return { stateStore, annotStore };
   },
 
@@ -124,13 +127,13 @@ export default {
     editAnnotation(annot) {
       this.editingAnnotId = annot._id;
       setTimeout(() => {
-        this.initEditor(annot.comment);
+        this.initEditor(annot.content);
       }, 100);
     },
 
     confirmAnnotation(annot) {
       // backend
-      this.annotStore.update(annot._id, { comment: this.editor.getValue() });
+      this.annotStore.update(annot._id, { content: this.editor.getValue() });
 
       // destroy editor
       this.destroyEditor();

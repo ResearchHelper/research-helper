@@ -68,6 +68,9 @@ async function createAnnotation(annot, fromDB = false) {
   // give annotation an id if it has none
   if (!!!annot._id) annot._id = uuidv4();
 
+  // don't draw existing annotation again
+  if (!!document.querySelector(`section[annotation-id="${annot._id}"]`)) return;
+
   // some necessary attributes
   annot.datatype = "pdf_annotation";
   annot.comment = "";

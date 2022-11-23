@@ -3,6 +3,10 @@ find controller
 [ ] bounds of the find controller
 
 TODO:
+backend
+[ ] refactor backend to pouchdb
+[ ] think about how the double link system works
+
 content extractor
 [ ] make content extractor as online service
 
@@ -16,11 +20,13 @@ veditor
 [ ] upload image
 
 highlight annotation
-[ ] highlight color gradually becomes black (except yellow) when zooming
 [ ] make the join rectangle algo more robust
 
 annotation
 [ ] after changing page, wait until the page is rendered before setting the annotation active
+
+UI
+[ ] set global var systembarheight, toolbarheight, and tabsheight. So we can refer them more quickly
 
 extractor
 [ ] the filepath must start from projects/...

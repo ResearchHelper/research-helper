@@ -1,3 +1,4 @@
+import { useStateStore } from "./appState";
 import { defineStore } from "pinia";
 import {
   createIndex,
@@ -11,14 +12,20 @@ import {
   AnnotationType,
 } from "src/api/annotation";
 
+const stateStore = useStateStore();
+
 export const useAnnotStore = defineStore("annotStore", {
   state: () => ({
     projectId: "",
     annots: [],
     selectedAnnotId: "",
-
-    _inited: false,
   }),
+
+  watch: {
+    "stateStore.workingProject"(projectId) {
+      console.log(projectId);
+    },
+  },
 
   actions: {
     async init(projectId) {
@@ -26,7 +33,6 @@ export const useAnnotStore = defineStore("annotStore", {
       try {
         await createIndex();
         await this.getAnnots();
-        this._inited = true;
       } catch (err) {
         console.log(err);
       }
