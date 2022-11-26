@@ -5,7 +5,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = "pdfjs-dist/build/pdf.worker.min.js";
 import { GrabToPan } from "./grab_to_pan";
 
 class PeekManager {
-  constructor(filePath) {
+  constructor() {
     let container = document.getElementById("peekContainer");
     this.container = container;
     const eventBus = new pdfjsViewer.EventBus();
@@ -21,18 +21,25 @@ class PeekManager {
       annotationMode: pdfjsLib.AnnotationMode.DISABLE,
     });
     pdfLinkService.setViewer(pdfSinglePageViewer);
+    this.pdfViewer = pdfSinglePageViewer;
+    this.linkService = pdfLinkService;
 
     container.addEventListener("mousewheel", (e) => this.handleZoom(e));
     this.handtool = new GrabToPan({ element: container });
+  }
 
+  loadPDF(filePath) {
+    // close any existing popup window first
+    this.closeContainer();
+
+    // load pdf
     let buffer = window.fs.readFileSync(filePath);
     let loadingTask = pdfjsLib.getDocument({
       data: buffer,
     });
     loadingTask.promise.then((pdfDocument) => {
-      pdfSinglePageViewer.setDocument(pdfDocument);
-      pdfLinkService.setDocument(pdfDocument, null);
-      this.pdfViewer = pdfSinglePageViewer;
+      this.pdfViewer.setDocument(pdfDocument);
+      this.linkService.setDocument(pdfDocument, null);
     });
   }
 
@@ -93,6 +100,10 @@ class PeekManager {
     this.container.style.height = h + "px";
     this.container.style.display = "block";
     this.container.style.zIndex = 1000;
+  }
+
+  closeContainer() {
+    this.container.style.display = "none";
   }
 
   handleZoom(e) {
