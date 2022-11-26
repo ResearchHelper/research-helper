@@ -130,9 +130,12 @@ export default {
   },
 
   mounted() {
+    // install peek manager
+    this.peekManager = new PeekManager();
+
+    // setup pdf js
     let container = document.getElementById("viewerContainer");
-    let eventBus = new pdfjsViewer.EventBus();
-    // (Optionally) enable hyperlinks within PDF files.
+    const eventBus = new pdfjsViewer.EventBus();
     const pdfLinkService = new pdfjsViewer.PDFLinkService({
       eventBus,
     });
@@ -171,8 +174,6 @@ export default {
       for (let link of links) this.peekManager.peak(link);
 
       // draw annotations from db
-      // FIXME: everytime the page is zoomed, this event is fired
-      // do not draw annotations again and again.
       let annots = this.annotStore.getAnnotsByPage(e.pageNumber);
       for (let annot of annots) {
         this.annotStore.create(annot, true).then((doms) => {
@@ -221,6 +222,10 @@ export default {
       this.pdfState = { matchesCount: e.matchesCount };
     });
     eventBus.on("updatetextlayermatches", (e) => {
+      // if not found, set the matchesCount.total to 0
+      if (e.source.selected.matchIdx == -1 && e.source.selected.pageIdx == -1) {
+        this.pdfState = { matchesCount: { current: -1, total: 0 } };
+      }
       // update the current / total during navigating between matches
       let pdfState = this.pdfState;
       if (!!pdfState.matchesCount) {
@@ -254,7 +259,6 @@ export default {
       // turn to that page
       if (!!newId) {
         this.annotStore.getAnnotById(newId).then((annot) => {
-          console.log(annot);
           if (annot.pageNumber != this.pdfState.pageNumber) {
             this.changePageNumber(annot.pageNumber);
             setTimeout(() => {
@@ -302,10 +306,10 @@ export default {
         // for table of content
         this.pdfDocument = pdfDocument;
       });
-      // install peek manager for hyperlink preview
-      this.peekManager = new PeekManager(path);
       // load annotations
       this.annotStore.init(this.stateStore.workingProject.projectId);
+      // peek manager set to another pdf
+      this.peekManager.loadPDF(path);
     },
 
     loadPDFState() {
@@ -409,20 +413,14 @@ export default {
       };
     },
 
-    searchText(text) {
-      // this will move the next nearest match
-      this.pdfViewer.eventBus.dispatch("find", {
-        caseSensitive: false,
-        findPrevious: undefined,
-        highlightAll: true,
-        phraseSearch: true,
-        query: text,
-      });
+    searchText(search) {
+      // this will move to the next nearest match
+      this.pdfViewer.eventBus.dispatch("find", search);
     },
 
     changeMatch(delta) {
-      // TODO: improve this, bound the search within page number
       // delta can only be +1 (next) or -1 (prev)
+      // highlight the next/previous match
       let findController = this.pdfViewer.findController;
 
       let currentMatch = findController.selected;
@@ -434,16 +432,10 @@ export default {
 
       while (newMatchIdx < 0 || newMatchIdx > matchIdxList.length - 1) {
         pageIdx += delta;
-        if (pageIdx < 0) {
-          pageIdx = 0;
-          break;
-        } else if (pageIdx > this.pdfState.pagesCount - 1) {
-          pageIdx = this.pdfState.pagesCount - 1;
-          break;
-        }
+        let mod = pageIdx % this.pdfState.pagesCount; // mod can be negative
+        pageIdx = mod >= 0 ? mod : this.pdfState.pagesCount - Math.abs(mod);
         // if next: select first match (delta-1 = 0) in the next available pages
         // if prev: select last match (length-1) in the previous available pages
-        console.log(pageIdx);
         matchIdxList = matches[pageIdx];
         newMatchIdx = delta > 0 ? 0 : matchIdxList.length - 1;
       }
@@ -451,8 +443,6 @@ export default {
       if (newMatchIdx < 0) newMatchIdx = 0;
       if (newMatchIdx > matchIdxList.length)
         newMatchIdx = matchIdxList.length - 1;
-
-      console.log(`pageIdx=${pageIdx}, matchIdx=${newMatchIdx}`);
 
       this.pdfViewer.findController.selected.pageIdx = pageIdx;
       this.pdfViewer.findController.selected.matchIdx = newMatchIdx;
@@ -488,7 +478,6 @@ export default {
 
     clickMenu(params) {
       let id = this.annotStore.selectedAnnotId;
-      console.log("clickMenu", id);
       switch (params.option) {
         case "changeColor":
           this.annotStore.update(id, { color: params.color });

@@ -94,6 +94,12 @@ export const useStateStore = defineStore("stateStore", {
           spreadMode: 0,
           tool: "cursor",
           color: "#FFFF00",
+          search: {
+            query: "",
+            highlightAll: true,
+            caseSensitive: false,
+            entireWord: false,
+          },
         };
       }
       this.pdfStates[projectId] = state;
