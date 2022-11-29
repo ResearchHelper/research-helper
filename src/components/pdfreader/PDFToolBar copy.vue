@@ -11,10 +11,9 @@
     </div>
 
     <q-space />
-
     <!-- tools -->
     <q-btn-toggle
-      v-model="pdfState.tool"
+      :model-value="pdfState.tool"
       unelevated
       :ripple="false"
       size="sm"
@@ -25,6 +24,7 @@
         { value: AnnotationType.HIGHLIGHT, icon: 'border_color' },
         { value: AnnotationType.COMMENT, icon: 'comment' },
       ]"
+      @update:model-value="(tool) => $emit('changeTool', tool)"
     />
     <q-btn
       :style="`background: ${pdfState.color}`"
@@ -34,7 +34,7 @@
     >
       <q-menu>
         <q-color
-          v-model="pdfState.color"
+          :model-value="pdfState.color"
           no-header
           no-footer
           bordered
@@ -47,6 +47,7 @@
             '#B2028A',
             '#2A0449',
           ]"
+          @change="(color) => $emit('changeColor', color)"
         />
       </q-menu>
     </q-btn>
@@ -63,20 +64,20 @@
           <q-btn
             dense
             :ripple="false"
-            @click="$emit('changeScale', { scaleValue: 'page-width' })"
+            @click="$emit('changeScaleValue', 'page-width')"
           >
             Page Width
           </q-btn>
           <q-btn
             dense
             :ripple="false"
-            @click="$emit('changeScale', { scaleValue: 'page-height' })"
+            @click="$emit('changeScaleValue', 'page-height')"
           >
             Page Height
           </q-btn>
           <q-btn
             :ripple="false"
-            @click="$emit('changeScale', { delta: -0.1 })"
+            @click="$emit('changeScale', -0.1)"
           >
             -
           </q-btn>
@@ -85,7 +86,7 @@
           </div>
           <q-btn
             :ripple="false"
-            @click="$emit('changeScale', { delta: 0.1 })"
+            @click="$emit('changeScale', 0.1)"
           >
             +
           </q-btn>
@@ -102,7 +103,10 @@
               { label: 'Odd Spread', value: 1 },
               { label: 'Even Spread', value: 2 },
             ]"
-            v-model="pdfState.spreadMode"
+            :model-value="pdfState.spreadMode"
+            @update:model-value="
+              (spreadMode) => $emit('changeSpreadMode', spreadMode)
+            "
           />
         </q-item>
       </q-list>
@@ -118,6 +122,7 @@
     >
       <q-menu
         persistent
+        @show="showSearch"
         @hide="clearSearch"
       >
         <q-item dense>
@@ -126,7 +131,7 @@
             outlined
             hide-bottom-space
             placeholder="Search"
-            v-model="pdfState.search.query"
+            v-model="search.query"
             @keydown.enter="$emit('changeMatch', 1)"
           ></q-input>
           <q-btn
@@ -148,17 +153,17 @@
           <q-checkbox
             dense
             label="Highlight All"
-            v-model="pdfState.search.highlightAll"
+            v-model="search.highlightAll"
           />
           <q-checkbox
             dense
             label="Match Case"
-            v-model="pdfState.search.caseSensitive"
+            v-model="search.caseSensitive"
           />
           <q-checkbox
             dense
             label="Whole Words"
-            v-model="pdfState.search.entireWord"
+            v-model="search.entireWord"
           />
         </q-item>
         <q-item>
@@ -168,7 +173,6 @@
     </q-btn>
 
     <q-space />
-
     <!-- comment and note -->
     <div>
       <q-btn
@@ -193,18 +197,39 @@
 </template>
 
 <script>
-import { usePDFStateStore } from "src/stores/pdfState";
 import { useStateStore } from "src/stores/appState";
 import { AnnotationType } from "src/api/annotation";
 
 export default {
+  props: ["pdfState"],
+
   setup() {
-    const pdfState = usePDFStateStore();
     const stateStore = useStateStore();
-    return { pdfState, stateStore, AnnotationType };
+    // return AnnotationType so that template can use it
+    return { stateStore, AnnotationType };
+  },
+
+  data() {
+    return {
+      readyForSearch: false,
+    };
   },
 
   computed: {
+    search() {
+      let s = this.pdfState.search;
+      if (!!!s) {
+        s = {
+          query: "",
+          highlightAll: true,
+          caseSensitive: false,
+          entireWord: false,
+        };
+      }
+
+      return s;
+    },
+
     searchSummary() {
       let text = "";
       let matchesCount = this.pdfState.matchesCount;
@@ -220,7 +245,22 @@ export default {
     },
   },
 
+  watch: {
+    search: {
+      handler(newSearch, oldSearch) {
+        if (this.readyForSearch && !!newSearch.query)
+          this.$emit("searchText", newSearch);
+      },
+      deep: true,
+    },
+  },
+
   methods: {
+    showSearch() {
+      this.readyForSearch = true;
+      if (!!this.search.query) this.$emit("searchText", this.search);
+    },
+
     clearSearch() {
       this.readyForSearch = false;
       this.$emit("searchText", { query: "" });

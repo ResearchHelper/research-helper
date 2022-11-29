@@ -73,7 +73,7 @@ async function createAnnotation(annot, fromDB = false) {
 
   // some necessary attributes
   annot.datatype = "pdf_annotation";
-  annot.comment = "";
+  annot.content = "";
 
   // create annotation and push to ui
   let result = null;
