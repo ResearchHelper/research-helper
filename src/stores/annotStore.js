@@ -41,6 +41,7 @@ export const useAnnotStore = defineStore("annotStore", {
     async getAnnots() {
       try {
         this.annots = await getAnnotations(this.projectId);
+        console.log("getAnnots:", this.annots);
       } catch (err) {
         console.log(err);
       }
@@ -73,6 +74,9 @@ export const useAnnotStore = defineStore("annotStore", {
     select(annotId) {
       // update AnnotationList UI
       this.selectedAnnotId = annotId;
+      this.getAnnotById(annotId).then((annot) => {
+        console.log(annot);
+      });
 
       // update PDFReader UI
       // remove active class

@@ -45,6 +45,8 @@ function comment(annot, fromDB = false) {
   let img = document.createElement("img");
   img.src = "src/assets/annotation-note.svg";
   img.style.position = "absolute";
+  img.style.left = `0px`;
+  img.style.top = `0px`;
 
   section.append(img);
 

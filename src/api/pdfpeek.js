@@ -1,6 +1,7 @@
 import * as pdfjsLib from "pdfjs-dist/build/pdf";
 import * as pdfjsViewer from "pdfjs-dist/web/pdf_viewer";
-pdfjsLib.GlobalWorkerOptions.workerSrc = "pdfjs-dist/build/pdf.worker.min.js";
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+  "node_modules/pdfjs-dist/build/pdf.worker.min.js";
 
 import { GrabToPan } from "./grab_to_pan";
 

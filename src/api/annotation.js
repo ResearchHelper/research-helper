@@ -63,17 +63,17 @@ async function deleteAnnotation(annotId) {
 }
 
 async function createAnnotation(annot, fromDB = false) {
-  if (annot.type === AnnotationType.NONE) return;
+  if (!fromDB) {
+    if (annot.type === AnnotationType.NONE) return;
 
-  // give annotation an id if it has none
-  if (!!!annot._id) annot._id = uuidv4();
+    // some necessary attributes
+    annot._id = uuidv4();
+    annot.datatype = "pdf_annotation";
+    annot.content = "";
+  }
 
   // don't draw existing annotation again
   if (!!document.querySelector(`section[annotation-id="${annot._id}"]`)) return;
-
-  // some necessary attributes
-  annot.datatype = "pdf_annotation";
-  annot.comment = "";
 
   // create annotation and push to ui
   let result = null;

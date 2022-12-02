@@ -9,8 +9,6 @@ content extractor
 [ ] make content extractor as online service
 
 IMPROVE:
-pdfState
-[ ] Improve the structure of PDFReader?
 
 veditor
 [ ] in a separate window, like zotero
