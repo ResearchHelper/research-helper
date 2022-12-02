@@ -49,14 +49,11 @@ class PDFApplication {
   }
 
   async loadPDF(filePath) {
-    console.log(filePath);
     let buffer = window.fs.readFileSync(filePath);
     this.pdfDocument = await pdfjsLib.getDocument({ data: buffer }).promise;
     this.pdfLinkService.setDocument(this.pdfDocument, null);
     this.pdfViewer.setDocument(this.pdfDocument);
     this.peekManager.loadPDF(filePath);
-
-    return await this.getTOC();
   }
 
   handleCtrlScroll(e) {

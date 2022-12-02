@@ -69,49 +69,37 @@ export default {
     };
   },
 
-  mounted() {
+  async mounted() {
+    let project = this.stateStore.workingProject;
+    await this.pdfState.getPDFState(project.projectId);
+    await this.annotStore.init(project.projectId);
+
     this.pdfApp = new PDFApplication();
-    this.pdfApp.loadPDF(this.stateStore.workingProject.path).then((outline) => {
-      this.pdfState.outline = outline;
-    });
+    await this.pdfApp.loadPDF(this.stateStore.workingProject.path);
+    this.pdfState.outline = await this.pdfApp.getTOC();
 
     // reactive events
     this.pdfApp.eventBus.on("pagesinit", (e) => {
-      // load pdf state when pages inited
-      this.pdfState
-        .getPDFState(this.stateStore.workingProject.projectId)
-        .then((state) => {
-          this.changePageNumber(state.currentPageNumber);
-          this.changeSpreadMode(state.spreadMode);
-          this.changeScale({ scaleValue: state.currentScaleValue });
-          this.ready = true;
-        });
+      // set pdf state when pages inited
+      this.changePageNumber(this.pdfState.currentPageNumber);
+      this.changeSpreadMode(this.pdfState.spreadMode);
+      this.changeScale({ scaleValue: this.pdfState.currentScaleValue });
 
-      // init annotStore
-      this.annotStore.init(this.stateStore.workingProject.projectId);
-
-      // if there is no such project in db, use default values
       if (this.pdfState.pagesCount == 0) {
-        this.pdfState.pagesCount = e.source.pagesCount;
+        this.pdfState.pagesCount = this.pdfApp.pdfViewer.pagesCount;
       }
+      this.ready = true;
     });
 
     this.pdfApp.eventBus.on("annotationeditorlayerrendered", (e) => {
       // draw annotations from db
-      let annots = this.annotStore.getAnnotsByPage(e.pageNumber);
-      for (let annot of annots) {
-        this.annotStore.create(annot, true).then((doms) => {
-          // bind function to dom
-          for (let dom of doms) dom.onclick = () => this.clickAnnotation(dom);
-        });
-      }
+      this.drawAnnotations(e.pageNumber);
 
       // draw annotations when mouse is up
       e.source.div.onmouseup = (ev) => this.createAnnotation(e.pageNumber, ev);
     });
 
     this.pdfApp.eventBus.on("pagechanging", (e) => {
-      console.log("pagechanging:", e.pageNumber);
       this.pdfState.currentPageNumber = e.pageNumber;
     });
 
@@ -258,6 +246,16 @@ export default {
         source: findController,
         pageIndex: pageIdx,
       });
+    },
+
+    drawAnnotations(pageNumber) {
+      let annots = this.annotStore.getAnnotsByPage(pageNumber);
+      for (let annot of annots) {
+        this.annotStore.create(annot, true).then((doms) => {
+          // bind function to dom
+          for (let dom of doms) dom.onclick = () => this.clickAnnotation(dom);
+        });
+      }
     },
 
     createAnnotation(pageNumber, mouseEvent) {
