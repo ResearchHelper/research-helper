@@ -19,7 +19,6 @@
           v-model="stateStore.infoPaneSize"
         >
           <template v-slot:before>
-            <ActionBar />
             <TableView />
           </template>
           <template v-slot:after>
@@ -33,7 +32,6 @@
 
 <script>
 import { useStateStore } from "src/stores/appState";
-import ActionBar from "../components/ActionBar.vue";
 import TableView from "../components/TableView.vue";
 import TreeView from "../components/TreeView.vue";
 import InfoPane from "../components/InfoPane.vue";
@@ -45,7 +43,6 @@ export default {
   },
 
   components: {
-    ActionBar,
     TableView,
     TreeView,
     InfoPane,

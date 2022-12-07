@@ -114,7 +114,7 @@ export default {
   mounted() {
     this.getProjectTree();
     // set selected
-    this.selected = this.stateStore.workingProject.projectId;
+    this.selected = this.stateStore.workingProject._id;
     // set expanded
     this.expanded.push(this.selected);
   },
@@ -123,7 +123,7 @@ export default {
     "stateStore.openedProjects": {
       handler() {
         this.getProjectTree();
-        this.selected = this.stateStore.workingProject.projectId;
+        this.selected = this.stateStore.workingProject._id;
         this.expanded.push(this.selected);
       },
       deep: true,
@@ -146,7 +146,8 @@ export default {
 
       let projects = this.stateStore.openedProjects;
       for (let p of projects) {
-        let notes = getNotes(p.projectId);
+        // let notes = getNotes(p._id);
+        let notes = [];
         for (let note of notes) {
           note.label = note.noteName;
           note.key = note.noteId;
@@ -156,9 +157,9 @@ export default {
         // it will trigger recursive updates
         let project = {
           label: p.title,
-          key: p.projectId,
+          key: p._id,
           children: notes,
-          projectId: p.projectId,
+          projectId: p._id,
         };
         this.projects.push(project);
       }
@@ -171,7 +172,7 @@ export default {
 
       // set working project
       for (let project of this.stateStore.openedProjects) {
-        if (project.projectId == node.projectId) {
+        if (project._id == node.projectId) {
           this.stateStore.workingProject = project;
         }
       }

@@ -71,15 +71,16 @@ export default {
 
   async mounted() {
     let project = this.stateStore.workingProject;
-    await this.pdfState.getPDFState(project.projectId);
-    await this.annotStore.init(project.projectId);
+    await this.pdfState.getPDFState(project._id);
+    await this.annotStore.init(project._id);
 
     this.pdfApp = new PDFApplication();
-    await this.pdfApp.loadPDF(this.stateStore.workingProject.path);
+    this.pdfApp.loadPDF(this.stateStore.workingProject.path);
     this.pdfState.outline = await this.pdfApp.getTOC();
 
     // reactive events
     this.pdfApp.eventBus.on("pagesinit", (e) => {
+      console.log("pagesInit");
       // set pdf state when pages inited
       this.changePageNumber(this.pdfState.currentPageNumber);
       this.changeSpreadMode(this.pdfState.spreadMode);
@@ -128,42 +129,41 @@ export default {
 
   watch: {
     "stateStore.workingProject": {
-      handler(project, _) {
-        this.ready = false; // don't save things until the document is loaded
-        this.pdfApp.loadPDF(project.path);
-        this.pdfState.outline = this.pdfApp.getTOC();
+      async handler(project, _) {
+        if (this.ready) {
+          this.ready = false; // don't save things until the document is loaded
+          await this.pdfState.getPDFState(project._id);
+          await this.annotStore.init(project._id);
+          this.pdfState.outline = await this.pdfApp.getTOC();
+          this.pdfApp.loadPDF(project.path);
+        }
       },
       deep: true,
     },
 
     "pdfState.pagesCount"(pagesCount, oldPagesCount) {
       if (!this.ready) return;
-      console.log("pagesCount:");
       this.pdfState.savePDFState();
     },
 
     "pdfState.currentPageNumber"(pageNumber, _) {
       if (!this.ready) return;
-      console.log("pageNumber:");
       this.pdfState.savePDFState();
     },
 
     "pdfState.spreadMode"(spreadMode, _) {
       if (!this.ready) return;
-      console.log("spreadMode:");
       this.changeSpreadMode(spreadMode);
       this.pdfState.savePDFState();
     },
 
     "pdfState.tool"(tool, _) {
       if (!this.ready) return;
-      console.log("tool:");
       this.pdfState.savePDFState();
     },
 
     "pdfState.color"(color, _) {
       if (!this.ready) return;
-      console.log("color:");
       this.pdfState.savePDFState();
     },
 
@@ -176,7 +176,6 @@ export default {
     },
 
     "pdfState.selectedOutlineNode"(node, _) {
-      console.log("clicking node", node);
       this.pdfApp.getTOCPage(node).then((pageNumber) => {
         this.changePageNumber(pageNumber);
       });

@@ -1,8 +1,0 @@
-2022-06-06 15:24:19,551 - F:/myCode/ResearchHelper/src/code/backend/tables/user.py[line:9] - ERROR: IntegrityError(1062, "Duplicate entry 'sfu2@sfu.ca' for key 'user.email'")
-2022-06-06 15:25:29,241 - F:/myCode/ResearchHelper/src/code/backend/tables/user.py[line:9] - ERROR: IntegrityError(1062, "Duplicate entry 'sfu2@sfu.ca' for key 'user.email'")
-2022-06-06 15:39:52,730 - F:/myCode/ResearchHelper/src/code/backend/tables/user.py[line:9] - ERROR: IntegrityError(1062, "Duplicate entry 'sfu2@sfu.ca' for key 'user.email'")
-2022-06-06 15:48:17,975 - F:/myCode/ResearchHelper/src/code/backend/tables/user.py[line:9] - ERROR: IntegrityError(1062, "Duplicate entry 'sfu6@sfu.ca' for key 'user.email'")
-2022-06-06 15:50:40,450 - F:/myCode/ResearchHelper/src/code/backend/tables/user.py[line:9] - ERROR: IntegrityError(1062, "Duplicate entry 'sfu6@sfu.ca' for key 'user.email'")
-2022-06-06 15:56:55,214 - F:/myCode/ResearchHelper/src/code/backend/tables/user.py[line:9] - ERROR: ()
-2022-06-06 16:00:13,932 - F:/myCode/ResearchHelper/src/code/backend/tables/user.py[line:9] - ERROR: userID is -1 while deleting
-2022-06-06 16:03:52,050 - F:/myCode/ResearchHelper/src/code/backend/tables/user.py[line:9] - ERROR: userID is -1 while deleting

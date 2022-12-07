@@ -7,7 +7,7 @@
       :nodes="folders"
       node-key="_id"
       v-model:expanded="expandedKeys"
-      v-model:selected="selectedFolderId"
+      v-model:selected="stateStore.selectedFolderId"
       :no-selection-unset="true"
       selected-color="primary"
       ref="tree"
@@ -82,7 +82,7 @@ export default {
 
   data() {
     return {
-      selectedFolderId: "library",
+      // selectedFolderId: "library",
       specialFolderIds: ["library"],
       folders: [{ _id: "library" }],
       expandedKeys: ["library"],
@@ -91,16 +91,9 @@ export default {
     };
   },
 
-  watch: {
-    selectedFolderId(folderId) {
-      this.stateStore.selectedTreeNode = this.$refs.tree.getNodeByKey(folderId);
-      console.log(this.stateStore.selectedTreeNode);
-    },
-  },
-
   async mounted() {
     this.folders = await getFolderTree();
-    this.stateStore.selectedTreeNode = this.folders[0];
+    this.stateStore.selectedFolderId = "library";
   },
 
   methods: {

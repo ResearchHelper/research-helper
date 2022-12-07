@@ -36,7 +36,6 @@ async function addFolder(parentId) {
       label: "New Folder",
       icon: "folder",
       children: [],
-      projectIds: [],
       datatype: "folder",
     };
     let result = await db.post(node);

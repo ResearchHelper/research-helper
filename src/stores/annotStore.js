@@ -21,12 +21,6 @@ export const useAnnotStore = defineStore("annotStore", {
     selectedAnnotId: "",
   }),
 
-  watch: {
-    "stateStore.workingProject"(projectId) {
-      console.log(projectId);
-    },
-  },
-
   actions: {
     async init(projectId) {
       this.projectId = projectId;
@@ -41,7 +35,6 @@ export const useAnnotStore = defineStore("annotStore", {
     async getAnnots() {
       try {
         this.annots = await getAnnotations(this.projectId);
-        console.log("getAnnots:", this.annots);
       } catch (err) {
         console.log(err);
       }

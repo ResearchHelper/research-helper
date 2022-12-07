@@ -3,6 +3,7 @@
 node_modules
 /backend/linux-env
 .vscode
+/backend/extractor/__pycache__
 
 # couchdb server info
 log.txt

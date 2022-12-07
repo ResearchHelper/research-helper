@@ -17,12 +17,8 @@ export const useStateStore = defineStore("stateStore", {
     leftMenuSize: 20,
     infoPaneSize: 0,
 
-    // actionbar
-    addedFiles: [],
-    searchString: "",
-
     // tree view
-    selectedTreeNode: null,
+    selectedFolderId: "",
 
     // table view
     selectedProject: null,
