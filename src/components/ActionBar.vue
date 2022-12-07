@@ -21,8 +21,7 @@
     <q-input
       outlined
       dense
-      v-model="searchString"
-      @update:model-value="$emit('search', searchString)"
+      v-model="projectStore.searchString"
       placeholder="Search"
     >
       <template v-slot:append>
@@ -47,28 +46,19 @@
 
 <script>
 import { useStateStore } from "src/stores/appState";
-import { addProject } from "src/api/project/projectInfo";
+import { useProjectStore } from "src/stores/projectStore";
 
 export default {
   setup() {
     const stateStore = useStateStore();
-    return { stateStore };
-  },
-
-  data() {
-    return {
-      searchString: "",
-    };
+    const projectStore = useProjectStore();
+    return { stateStore, projectStore };
   },
 
   methods: {
     async addRows(files) {
       for (let file of files) {
-        // update db
-        let project = await addProject(file);
-
-        // update ui
-        this.$emit("insertRow", project);
+        await this.projectStore.add(file);
       }
     },
   },

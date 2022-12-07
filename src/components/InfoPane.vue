@@ -27,10 +27,7 @@
     </q-tabs>
 
     <q-tab-panels v-model="stateStore.infoPaneTab">
-      <q-tab-panel
-        v-if="!!stateStore.selectedProject"
-        name="metaInfoTab"
-      >
+      <q-tab-panel name="metaInfoTab">
         <MetaInfoTab />
       </q-tab-panel>
 
@@ -52,7 +49,6 @@
 </template>
 
 <script>
-import { modifyProject } from "src/backend";
 import { useStateStore } from "src/stores/appState";
 import NoteEditor from "./NoteEditor.vue";
 import AnnotationList from "./pdfreader/AnnotationList.vue";
@@ -67,7 +63,7 @@ export default {
 
   setup() {
     const stateStore = useStateStore();
-    return { stateStore, modifyProject };
+    return { stateStore };
   },
 };
 </script>

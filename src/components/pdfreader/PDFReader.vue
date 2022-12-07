@@ -52,6 +52,7 @@ import { PDFApplication, AnnotationType } from "src/api/pdfreader";
 import { usePDFStateStore } from "src/stores/pdfState";
 import { useStateStore } from "src/stores/appState";
 import { useAnnotStore } from "src/stores/annotStore";
+import { useProjectStore } from "src/stores/projectStore";
 
 export default {
   components: { PDFToolBar, LeftMenu, InfoPane },
@@ -60,7 +61,8 @@ export default {
     const stateStore = useStateStore();
     const annotStore = useAnnotStore();
     const pdfState = usePDFStateStore();
-    return { stateStore, annotStore, pdfState };
+    const projectStore = useProjectStore();
+    return { stateStore, annotStore, pdfState, projectStore };
   },
 
   data() {
@@ -70,12 +72,14 @@ export default {
   },
 
   async mounted() {
-    let project = this.stateStore.workingProject;
+    // let project = this.stateStore.workingProject;
+    let project = this.projectStore.workingProject;
     await this.pdfState.getPDFState(project._id);
     await this.annotStore.init(project._id);
 
     this.pdfApp = new PDFApplication();
-    this.pdfApp.loadPDF(this.stateStore.workingProject.path);
+    // this.pdfApp.loadPDF(this.stateStore.workingProject.path);
+    this.pdfApp.loadPDF(project.path);
     this.pdfState.outline = await this.pdfApp.getTOC();
 
     // reactive events
@@ -127,7 +131,8 @@ export default {
   },
 
   watch: {
-    "stateStore.workingProject": {
+    // "stateStore.workingProject": {
+    "projectStore.workingProject": {
       async handler(project, _) {
         if (this.ready) {
           this.ready = false; // don't save things until the document is loaded

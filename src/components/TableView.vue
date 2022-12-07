@@ -1,70 +1,93 @@
 <template>
   <div>
-    <ActionBar
-      @insertRow="(project) => projects.push(project)"
-      @search="(str) => (searchString = str)"
-    />
+    <ActionBar />
     <q-table
       class="stickyDynamic"
       virtual-scroll
       dense
       hide-bottom
       :columns="headers"
-      :rows="projects"
+      :rows="projectStore.projects"
       row-key="_id"
       :wrap-cells="true"
-      :filter="searchString"
-      @row-click="clickRow"
-      @row-dblclick="dblclickRow"
-      @row-contextmenu="toggleContextMenu"
+      :filter="projectStore.searchString"
+      :filter-method="searchProject"
     >
-      <template v-slot:body-cell="props">
-        <q-td
+      <template v-slot:body="props">
+        <q-tr
+          style="cursor: pointer"
           :props="props"
           :class="{
             'bg-primary':
-              !!stateStore.selectedProject &&
-              props.key == stateStore.selectedProject._id,
+              !!projectStore.selectedProject &&
+              props.key == projectStore.selectedProject._id,
           }"
+          @click="clickRow(props.row)"
+          @dblclick="dblclickRow(props.row)"
+          @contextmenu="toggleContextMenu(props.row)"
+        >
+          <q-td
+            v-for="col in props.cols"
+            :key="col.name"
+            :props="props"
+          >
+            <div
+              style="width: 20em"
+              class="ellipsis"
+            >
+              {{ col.value }}
+            </div>
+          </q-td>
+
+          <q-menu
+            touch-position
+            context-menu
+          >
+            <q-list dense>
+              <q-item
+                clickable
+                v-close-popup
+                @click="dblclickRow"
+              >
+                <q-item-section>Open</q-item-section>
+              </q-item>
+              <q-separator />
+              <q-item
+                clickable
+                v-close-popup
+                @click="copyProjectId"
+              >
+                <q-item-section>Copy Project ID</q-item-section>
+              </q-item>
+              <q-separator />
+              <q-item
+                v-if="stateStore.selectedFolderId != 'library'"
+                clickable
+                v-close-popup
+                @click="projectStore.delete(false)"
+              >
+                <q-item-section>Delete From Table</q-item-section>
+              </q-item>
+              <q-item
+                clickable
+                v-close-popup
+                @click="projectStore.delete(true)"
+              >
+                <q-item-section>Delete From DataBase</q-item-section>
+              </q-item>
+            </q-list>
+          </q-menu>
+        </q-tr>
+        <q-tr
+          v-show="!!projectStore.searchString"
+          :props="props"
         >
           <div
-            style="width: 20em"
-            class="ellipsis"
-          >
-            {{ props.value }}
-          </div>
-        </q-td>
-
-        <q-menu
-          touch-position
-          context-menu
-        >
-          <q-list dense>
-            <q-item
-              clickable
-              v-close-popup
-              @click="dblclickRow"
-            >
-              <q-item-section>Open</q-item-section>
-            </q-item>
-            <q-separator />
-            <q-item
-              v-if="stateStore.selectedFolderId != 'library'"
-              clickable
-              v-close-popup
-              @click="deleteRow(false)"
-            >
-              <q-item-section>Delete From Table</q-item-section>
-            </q-item>
-            <q-item
-              clickable
-              v-close-popup
-              @click="deleteRow(true)"
-            >
-              <q-item-section>Delete From DataBase</q-item-section>
-            </q-item>
-          </q-list>
-        </q-menu>
+            style="position: absolute; width: 100%"
+            class="q-px-md ellipsis"
+            v-html="expansionText[props.rowIndex]"
+          ></div>
+        </q-tr>
       </template>
     </q-table>
   </div>
@@ -72,11 +95,9 @@
 
 <script>
 import ActionBar from "../components/ActionBar.vue";
+import { copyToClipboard } from "quasar";
 import { useStateStore } from "../stores/appState";
-import {
-  getProjectsByFolderId,
-  deleteProject,
-} from "src/api/project/projectInfo";
+import { useProjectStore } from "src/stores/projectStore";
 
 export default {
   components: {
@@ -85,14 +106,12 @@ export default {
 
   setup() {
     const stateStore = useStateStore();
-    return { stateStore };
+    const projectStore = useProjectStore();
+    return { stateStore, projectStore };
   },
 
   mounted() {
-    getProjectsByFolderId(this.stateStore.selectedFolderId).then((projects) => {
-      this.projects = projects;
-      this.stateStore.selectedProject = this.projects[0];
-    });
+    this.projectStore.getProjects(this.stateStore.selectedFolderId);
   },
 
   data() {
@@ -111,53 +130,77 @@ export default {
           align: "left",
         },
       ],
-      projects: [],
       prvSelectedIndex: 0,
-      searchString: "",
+      showExpansion: false,
+      expansionText: [],
     };
   },
 
   watch: {
     "stateStore.selectedFolderId"(folderId, _) {
-      getProjectsByFolderId(folderId).then(
-        (projects) => (this.projects = projects)
-      );
+      this.projectStore.getProjects(folderId);
     },
   },
 
   methods: {
-    deleteRow(deleteFromDB) {
-      // update db
-      let project = this.stateStore.selectedProject;
-      deleteProject(project, deleteFromDB);
-
-      // update ui
-      this.projects = this.projects.filter((p) => p._id != project._id);
+    clickRow(row) {
+      this.projectStore.selectedProject = row;
     },
 
-    clickRow(event, row, index) {
-      this.stateStore.selectedProject = row;
-    },
-
-    dblclickRow(event, row, index) {
-      this.stateStore.workingProject = row;
-      for (let i = 0; i < this.stateStore.openedProjects.length; i++) {
-        if (row._id === this.stateStore.openedProjects[i]._id) {
+    dblclickRow(row) {
+      this.projectStore.workingProject = row;
+      for (let i = 0; i < this.projectStore.openedProjects.length; i++) {
+        if (row._id === this.projectStore.openedProjects[i]._id) {
           return;
         }
       }
-      this.stateStore.openedProjects.push(row);
+      this.projectStore.openedProjects.push(row);
       this.stateStore.setCurrentPage("reader");
     },
 
-    toggleContextMenu(event, row, index) {
+    toggleContextMenu(row) {
       this.showContextMenu = true;
-      this.clickRow(null, row, index);
+      this.clickRow(row);
+    },
+
+    async copyProjectId() {
+      await copyToClipboard(this.projectStore.selectedProject._id);
     },
 
     searchProject(rows, terms, cols, getCellValue) {
-      // TODO: implement a filter-method to search abstract and other things
-      // see https://quasar.dev/vue-components/table#introduction filter-method
+      this.expansionText = [];
+      let text = "";
+      let re = RegExp(terms, "i"); // case insensitive
+      let filtered = rows.filter((row) => {
+        for (let prop in row) {
+          if (prop == "tags") {
+            for (let tag of row.tags) {
+              if (tag.search(re) != -1) {
+                text = tag.replace(
+                  re,
+                  `<span class="bg-primary">${terms}</span>`
+                );
+                this.expansionText.push("tag: " + text);
+                return true;
+              }
+            }
+          } else if (prop != "related" && prop != "folderIds") {
+            if (prop == "year") row[prop] = String(row[prop]);
+
+            if (row[prop].search(re) != -1) {
+              text = row[prop].replace(
+                re,
+                `<span class="bg-primary">${terms}</span>`
+              );
+              this.expansionText.push(`${prop}: ${text}`);
+              return true;
+            }
+          }
+        }
+        return false;
+      });
+      this.showExpansion = true;
+      return filtered;
     },
   },
 };

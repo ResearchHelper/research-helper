@@ -3,7 +3,7 @@
   <!-- show this after infoPane is shown, 
     otherwise autogrow extends to full-height -->
   <q-scroll-area
-    v-if="!!stateStore.infoPaneSize"
+    v-if="!!stateStore.infoPaneSize && !!projectStore.selectedProject"
     style="height: calc(100vh - 68px)"
     class="q-mx-sm"
   >
@@ -12,45 +12,45 @@
       autogrow
       dense
       label="Title"
-      v-model="stateStore.selectedProject.title"
-      @blur="modifyInfo"
+      v-model="projectStore.selectedProject.title"
+      @blur="modifyInfo('title')"
     />
     <q-input
       borderless
       autogrow
       dense
       label="Author(s)"
-      v-model="stateStore.selectedProject.author"
-      @blur="modifyInfo"
+      v-model="projectStore.selectedProject.author"
+      @blur="modifyInfo('author')"
     />
     <q-input
       borderless
       dense
       type="textarea"
       label="Abstract"
-      v-model="stateStore.selectedProject.abstract"
-      @blur="modifyInfo"
+      v-model="projectStore.selectedProject.abstract"
+      @blur="modifyInfo('abstract')"
     />
     <q-input
       borderless
       autogrow
       dense
       label="ArxivID"
-      v-model="stateStore.selectedProject.arxiv_id"
+      v-model="projectStore.selectedProject.arxiv_id"
     />
     <q-input
       borderless
       autogrow
       dense
       label="DOI"
-      v-model="stateStore.selectedProject.doi"
+      v-model="projectStore.selectedProject.doi"
     />
     <q-input
       borderless
       autogrow
       dense
       label="ISBN"
-      v-model="stateStore.selectedProject.isbn"
+      v-model="projectStore.selectedProject.isbn"
     />
     <q-input
       borderless
@@ -61,7 +61,7 @@
     />
     <div class="column">
       <q-chip
-        v-for="(tag, index) in stateStore.selectedProject.tags"
+        v-for="(tag, index) in projectStore.selectedProject.tags"
         :key="index"
         :ripple="false"
         dense
@@ -77,6 +77,7 @@
       dense
       label="Related"
       v-model.trim="relatedProjectId"
+      placeholder="projectID"
       @keydown.enter="addRelated"
     />
     <div
@@ -84,7 +85,7 @@
       class="column"
     >
       <q-chip
-        v-for="(project, index) in this.relatedProjects"
+        v-for="(project, index) in relatedProjects"
         :key="index"
         :ripple="false"
         dense
@@ -101,12 +102,14 @@
 
 <script>
 import { useStateStore } from "src/stores/appState";
+import { useProjectStore } from "src/stores/projectStore";
 import { getProject, updateProject } from "src/api/project/projectInfo";
 
 export default {
   setup() {
     const stateStore = useStateStore();
-    return { stateStore };
+    const projectStore = useProjectStore();
+    return { stateStore, projectStore };
   },
 
   data() {
@@ -118,89 +121,72 @@ export default {
   },
 
   watch: {
-    "stateStore.selectedProject._id"(projectId, _) {
-      this.getProjectInfo();
+    "projectStore.selectedProject._id"(projectId, _) {
+      this.projectStore.getRelatedProjects().then((projects) => {
+        this.relatedProjects = projects;
+      });
     },
-  },
-
-  mounted() {
-    this.getProjectInfo();
   },
 
   methods: {
-    modifyInfo() {
-      updateProject(this.stateStore.selectedProject);
+    modifyInfo(prop) {
+      let project = this.projectStore.selectedProject;
+      this.projectStore.update(project._id, { prop: project[prop] });
     },
 
-    addTag() {
-      // update ui
-      this.stateStore.selectedProject.tags.push(this.tag);
+    async addTag() {
+      let project = this.projectStore.selectedProject;
+      project.tags.push(this.tag);
+      this.projectStore.update(project._id, { tags: project.tags });
+
+      // remove texts in input
       this.tag = "";
-
-      // update db
-      updateProject(this.stateStore.selectedProject);
     },
 
-    removeTag(tag) {
-      let project = this.stateStore.selectedProject;
+    async removeTag(tag) {
+      let project = this.projectStore.selectedProject;
       project.tags = project.tags.filter((t) => t != tag);
-
-      updateProject(project);
-    },
-
-    async getProjectInfo() {
-      // fetch the project from db to ensure latest related project
-      // we have to do this because the row in tableview didn't changed
-      let project = await getProject(this.stateStore.selectedProject._id);
-      this.stateStore.selectedProject.related = project.related;
-
-      // get related projects
-      let projectIds = this.stateStore.selectedProject.related;
-      this.relatedProjects = [];
-      for (let projectId of projectIds) {
-        let relatedProject = await getProject(projectId);
-        this.relatedProjects.push(relatedProject);
-      }
+      this.projectStore.update(project._id, { tags: project.tags });
     },
 
     async addRelated() {
-      // update db
-      this.stateStore.selectedProject.related.push(this.relatedProjectId);
-      await updateProject(this.stateStore.selectedProject);
+      let project = this.projectStore.selectedProject;
+      project.related.push(this.relatedProjectId);
+      this.projectStore.update(project._id, { related: project.related });
 
-      let relatedProject = await getProject(this.relatedProjectId);
-      relatedProject.related.push(this.stateStore.selectedProject._id);
-      await updateProject(relatedProject);
+      let relatedProject = await this.projectStore.get(this.relatedProjectId);
+      relatedProject.related.push(project._id);
+      this.projectStore.update(this.relatedProjectId, {
+        related: relatedProject.related,
+      });
 
-      // update ui
       this.relatedProjectId = "";
-      this.relatedProjects.push(relatedProject);
+      this.relatedProjects = await this.projectStore.getRelatedProjects();
     },
 
     async removeRelated(relatedProject) {
-      let project = this.stateStore.selectedProject;
-      // update db
+      let project = this.projectStore.selectedProject;
       project.related = project.related.filter(
         (id) => id != relatedProject._id
       );
-      await updateProject(project);
+      await this.projectStore.update(project._id, { related: project.related });
 
+      relatedProject = await this.projectStore.get(relatedProject._id);
       relatedProject.related = relatedProject.related.filter(
         (id) => id != project._id
       );
-      await updateProject(relatedProject);
+      await this.projectStore.update(relatedProject._id, {
+        related: relatedProject.related,
+      });
 
-      // update ui
-      this.relatedProjects = this.relatedProjects.filter(
-        (rp) => rp._id != relatedProject._id
-      );
+      this.relatedProjects = await this.projectStore.getRelatedProjects();
     },
 
     clickRelated(project) {
       // in case the related projects are not in the same folder
       // switch to library folder first
       this.stateStore.selectedFolderId = "library";
-      this.stateStore.selectedProject = project;
+      this.projectStore.selectedProject = project;
     },
   },
 };
