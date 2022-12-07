@@ -1,9 +1,7 @@
 FIXME:
 
 TODO:
-backend
-[ ] refactor backend to pouchdb
-[ ] think about how the double link system works
+[ ] Note backend
 
 content extractor
 [ ] make content extractor as online service

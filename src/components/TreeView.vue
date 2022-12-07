@@ -4,10 +4,10 @@
       dense
       no-connectors
       :duration="0"
-      :nodes="stateStore.folders"
-      node-key="id"
+      :nodes="folders"
+      node-key="_id"
       v-model:expanded="expandedKeys"
-      v-model:selected="selectedFolderId"
+      v-model:selected="stateStore.selectedFolderId"
       :no-selection-unset="true"
       selected-color="primary"
       ref="tree"
@@ -26,7 +26,7 @@
               <q-item-section>Add Folder</q-item-section>
             </q-item>
             <q-item
-              v-if="!specialFolderKeys.includes(prop.node.id)"
+              v-if="!specialFolderIds.includes(prop.node._id)"
               clickable
               v-close-popup
               @click="setRenameFolder(prop.node)"
@@ -34,7 +34,7 @@
               <q-item-section>Rename</q-item-section>
             </q-item>
             <q-item
-              v-if="!specialFolderKeys.includes(prop.node.id)"
+              v-if="!specialFolderIds.includes(prop.node._id)"
               clickable
               v-close-popup
               @click="deleteFolder(prop.node)"
@@ -46,7 +46,7 @@
         <!-- the body of a tree node -->
         <q-icon :name="prop.node.icon" />
         <q-input
-          v-if="renamingFolderId === prop.node.id"
+          v-if="renamingFolderId === prop.node._id"
           outlined
           dense
           ref="renameInput"
@@ -66,9 +66,13 @@
 </template>
 
 <script>
-import { v4 as uuidv4 } from "uuid";
 import { useStateStore } from "src/stores/appState";
-import { loadTree, saveTree } from "src/backend";
+import {
+  getFolderTree,
+  addFolder,
+  updateFolder,
+  deleteFolder,
+} from "src/api/project/folderTree";
 
 export default {
   setup() {
@@ -78,73 +82,59 @@ export default {
 
   data() {
     return {
-      selectedFolderId: "library",
-      specialFolderKeys: ["library", "favorites"],
-      folders: [{ id: "library" }],
+      // selectedFolderId: "library",
+      specialFolderIds: ["library"],
+      folders: [{ _id: "library" }],
       expandedKeys: ["library"],
 
       renamingFolderId: null,
     };
   },
 
-  watch: {
-    selectedFolderId(folderId) {
-      this.stateStore.selectedTreeNode = this.$refs.tree.getNodeByKey(folderId);
-    },
-  },
-
-  mounted() {
-    this.stateStore.folders = loadTree();
-    this.$nextTick(() => {
-      this.stateStore.selectedTreeNode =
-        this.$refs.tree.getNodeByKey("library");
-    });
+  async mounted() {
+    this.folders = await getFolderTree();
+    this.stateStore.selectedFolderId = "library";
   },
 
   methods: {
-    addFolder(parentNode) {
-      // add folder
-      let node = {
-        label: "New Folder",
-        icon: "folder",
-        children: [],
-        id: uuidv4(),
-        projectIds: [],
-      };
+    async addFolder(parentNode) {
+      // add to database
+      let node = await addFolder(parentNode._id);
+
+      // add to UI and expand the parent folder
       parentNode.children.push(node);
-      this.expandedKeys.push(parentNode.id);
-      saveTree();
+      this.expandedKeys.push(parentNode._id);
     },
 
     deleteFolder(node) {
-      if (["library", "favorites"].includes(node.id)) return;
+      if (this.specialFolderIds.includes(node._id)) return;
 
+      // remove from ui
       function _dfs(oldNode) {
         var newNode = [];
         for (let n of oldNode.children) {
-          if (n.id !== node.id) {
+          if (n._id !== node._id) {
             console.log(n);
-            // newNode.children = _dfs(n);
             if (!newNode.children) newNode.children = [];
             newNode.push({
               icon: n.icon,
               label: n.label,
-              id: n.id,
+              _id: n._id,
               projectIds: n.projectIds,
               children: _dfs(n),
             });
           }
         }
-
         return newNode;
       }
-      // console.log(this.folders[0]);
-      this.stateStore.folders[0].children = _dfs(this.stateStore.folders[0]);
-      saveTree();
+      this.folders[0].children = _dfs(this.folders[0]);
+
+      // remove from db
+      deleteFolder(node._id);
     },
 
     setRenameFolder(node) {
-      this.renamingFolderId = node.id;
+      this.renamingFolderId = node._id;
 
       setTimeout(() => {
         // wait till input appears
@@ -156,8 +146,16 @@ export default {
     },
 
     renameFolder() {
+      let node = this.$refs.tree.getNodeByKey(this.renamingFolderId);
+
+      // change objects in children to folderIds
+      let newNode = JSON.parse(JSON.stringify(node));
+      for (let i in newNode.children) {
+        newNode.children[i] = newNode.children[i]._id;
+      }
+      updateFolder(newNode);
+
       this.renamingFolderId = null;
-      saveTree();
     },
   },
 };

@@ -1,72 +1,119 @@
 <template>
   <div>
+    <ActionBar />
     <q-table
       class="stickyDynamic"
       virtual-scroll
       dense
       hide-bottom
       :columns="headers"
-      :rows="projects"
-      row-key="title"
+      :rows="projectStore.projects"
+      row-key="_id"
       :wrap-cells="true"
-      :filter="stateStore.searchString"
-      @row-click="clickRow"
-      @row-dblclick="dblclickRow"
-      @row-contextmenu="toggleContextMenu"
+      :filter="projectStore.searchString"
+      :filter-method="searchProject"
     >
-      <template v-slot:body-cell="props">
-        <q-td :props="props">
-          <div
-            style="width: 20em"
-            class="ellipsis"
-          >
-            {{ props.value }}
-          </div>
-        </q-td>
-
-        <q-menu
-          touch-position
-          context-menu
+      <template v-slot:body="props">
+        <q-tr
+          style="cursor: pointer"
+          :props="props"
+          :class="{
+            'bg-primary':
+              !!projectStore.selectedProject &&
+              props.key == projectStore.selectedProject._id,
+          }"
+          @click="clickRow(props.row)"
+          @dblclick="dblclickRow(props.row)"
+          @contextmenu="toggleContextMenu(props.row)"
         >
-          <q-list dense>
-            <q-item
-              clickable
-              v-close-popup
-              @click="dblclickRow"
+          <q-td
+            v-for="col in props.cols"
+            :key="col.name"
+            :props="props"
+          >
+            <div
+              style="width: 20em"
+              class="ellipsis"
             >
-              <q-item-section>Open</q-item-section>
-            </q-item>
-            <q-separator />
-            <q-item
-              clickable
-              v-close-popup
-              @click="deleteProject(false)"
-            >
-              <q-item-section>Delete From Table</q-item-section>
-            </q-item>
-            <q-item
-              clickable
-              v-close-popup
-              @click="deleteProject(true)"
-            >
-              <q-item-section>Delete From DataBase</q-item-section>
-            </q-item>
-          </q-list>
-        </q-menu>
+              {{ col.value }}
+            </div>
+          </q-td>
+
+          <q-menu
+            touch-position
+            context-menu
+          >
+            <q-list dense>
+              <q-item
+                clickable
+                v-close-popup
+                @click="dblclickRow"
+              >
+                <q-item-section>Open</q-item-section>
+              </q-item>
+              <q-separator />
+              <q-item
+                clickable
+                v-close-popup
+                @click="copyProjectId"
+              >
+                <q-item-section>Copy Project ID</q-item-section>
+              </q-item>
+              <q-separator />
+              <q-item
+                v-if="stateStore.selectedFolderId != 'library'"
+                clickable
+                v-close-popup
+                @click="projectStore.delete(false)"
+              >
+                <q-item-section>Delete From Table</q-item-section>
+              </q-item>
+              <q-item
+                clickable
+                v-close-popup
+                @click="projectStore.delete(true)"
+              >
+                <q-item-section>Delete From DataBase</q-item-section>
+              </q-item>
+            </q-list>
+          </q-menu>
+        </q-tr>
+        <q-tr
+          v-show="!!projectStore.searchString"
+          :props="props"
+        >
+          <div
+            style="position: absolute; width: 100%"
+            class="q-px-md ellipsis"
+            v-html="expansionText[props.rowIndex]"
+          ></div>
+        </q-tr>
       </template>
     </q-table>
   </div>
 </template>
 
 <script>
+import ActionBar from "../components/ActionBar.vue";
+import { copyToClipboard } from "quasar";
 import { useStateStore } from "../stores/appState";
-import { deleteProject, getProject } from "src/backend";
+import { useProjectStore } from "src/stores/projectStore";
 
 export default {
+  components: {
+    ActionBar,
+  },
+
   setup() {
     const stateStore = useStateStore();
-    return { stateStore, deleteProject, getProject };
+    const projectStore = useProjectStore();
+    return { stateStore, projectStore };
   },
+
+  mounted() {
+    this.projectStore.getProjects(this.stateStore.selectedFolderId);
+  },
+
   data() {
     return {
       headers: [
@@ -83,51 +130,77 @@ export default {
           align: "left",
         },
       ],
-      projects: [],
       prvSelectedIndex: 0,
+      showExpansion: false,
+      expansionText: [],
     };
   },
+
   watch: {
-    "stateStore.selectedTreeNode.projectIds": {
-      handler: function (projectIds) {
-        this.getProjects(projectIds);
-      },
-      deep: true,
+    "stateStore.selectedFolderId"(folderId, _) {
+      this.projectStore.getProjects(folderId);
     },
   },
+
   methods: {
-    getProjects(projectIds) {
-      this.projects = [];
-      for (let projectId of projectIds) {
-        this.projects.push(getProject(projectId));
-      }
+    clickRow(row) {
+      this.projectStore.selectedProject = row;
     },
-    clickRow(event, row, index) {
-      this.stateStore.selectedProject = row;
-      let rowEls = document.querySelectorAll("tr.cursor-pointer");
-      // check if the previous row is deleted
-      if (rowEls[this.prvSelectedIndex])
-        rowEls[this.prvSelectedIndex].classList.remove("bg-primary");
-      rowEls[index].classList.add("bg-primary");
-      this.prvSelectedIndex = index;
-    },
-    dblclickRow(event, row, index) {
-      this.stateStore.workingProject = row;
-      for (let i = 0; i < this.stateStore.openedProjects.length; i++) {
-        if (row.projectId === this.stateStore.openedProjects[i].projectId) {
+
+    dblclickRow(row) {
+      this.projectStore.workingProject = row;
+      for (let i = 0; i < this.projectStore.openedProjects.length; i++) {
+        if (row._id === this.projectStore.openedProjects[i]._id) {
           return;
         }
       }
-      this.stateStore.openedProjects.push(row);
+      this.projectStore.openedProjects.push(row);
       this.stateStore.setCurrentPage("reader");
     },
-    toggleContextMenu(event, row, index) {
+
+    toggleContextMenu(row) {
       this.showContextMenu = true;
-      this.clickRow(null, row, index);
+      this.clickRow(row);
     },
+
+    async copyProjectId() {
+      await copyToClipboard(this.projectStore.selectedProject._id);
+    },
+
     searchProject(rows, terms, cols, getCellValue) {
-      // TODO: implement a filter-method to search abstract and other things
-      // see https://quasar.dev/vue-components/table#introduction filter-method
+      this.expansionText = [];
+      let text = "";
+      let re = RegExp(terms, "i"); // case insensitive
+      let filtered = rows.filter((row) => {
+        for (let prop in row) {
+          if (prop == "tags") {
+            for (let tag of row.tags) {
+              if (tag.search(re) != -1) {
+                text = tag.replace(
+                  re,
+                  `<span class="bg-primary">${terms}</span>`
+                );
+                this.expansionText.push("tag: " + text);
+                return true;
+              }
+            }
+          } else if (prop != "related" && prop != "folderIds") {
+            if (prop == "year") row[prop] = String(row[prop]);
+
+            if (row[prop].search(re) != -1) {
+              text = row[prop].replace(
+                re,
+                `<span class="bg-primary">${terms}</span>`
+              );
+              this.expansionText.push(`${prop}: ${text}`);
+              return true;
+            }
+          }
+        }
+        return false;
+      });
+      this.showExpansion = true;
+      return filtered;
     },
   },
 };

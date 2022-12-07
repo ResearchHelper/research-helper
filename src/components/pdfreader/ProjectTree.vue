@@ -91,12 +91,14 @@
 
 <script>
 import { useStateStore } from "src/stores/appState";
+import { useProjectStore } from "src/stores/projectStore";
 import { addNote, deleteNote, modifyNote, getNotes } from "src/backend/note";
 
 export default {
   setup() {
     const stateStore = useStateStore();
-    return { stateStore };
+    const projectStore = useProjectStore();
+    return { stateStore, projectStore };
   },
 
   data() {
@@ -114,16 +116,25 @@ export default {
   mounted() {
     this.getProjectTree();
     // set selected
-    this.selected = this.stateStore.workingProject.projectId;
+    // this.selected = this.stateStore.workingProject._id;
+    this.selected = this.projectStore.workingProject._id;
     // set expanded
     this.expanded.push(this.selected);
   },
 
   watch: {
-    "stateStore.openedProjects": {
+    // "stateStore.openedProjects": {
+    //   handler() {
+    //     this.getProjectTree();
+    //     this.selected = this.stateStore.workingProject._id;
+    //     this.expanded.push(this.selected);
+    //   },
+    //   deep: true,
+    // },
+    "projectStore.openedProjects": {
       handler() {
         this.getProjectTree();
-        this.selected = this.stateStore.workingProject.projectId;
+        this.selected = this.projectStore.workingProject._id;
         this.expanded.push(this.selected);
       },
       deep: true,
@@ -144,9 +155,11 @@ export default {
     getProjectTree() {
       this.projects = [];
 
-      let projects = this.stateStore.openedProjects;
+      // let projects = this.stateStore.openedProjects;
+      let projects = this.projectStore.openedProjects;
       for (let p of projects) {
-        let notes = getNotes(p.projectId);
+        // let notes = getNotes(p._id);
+        let notes = [];
         for (let note of notes) {
           note.label = note.noteName;
           note.key = note.noteId;
@@ -156,9 +169,9 @@ export default {
         // it will trigger recursive updates
         let project = {
           label: p.title,
-          key: p.projectId,
+          key: p._id,
           children: notes,
-          projectId: p.projectId,
+          projectId: p._id,
         };
         this.projects.push(project);
       }
@@ -170,9 +183,11 @@ export default {
       let node = this.$refs.tree.getNodeByKey(itemKey);
 
       // set working project
-      for (let project of this.stateStore.openedProjects) {
-        if (project.projectId == node.projectId) {
-          this.stateStore.workingProject = project;
+      // for (let project of this.stateStore.openedProjects) {
+      for (let project of this.projectStore.openedProjects) {
+        if (project._id == node.projectId) {
+          // this.stateStore.workingProject = project;
+          this.projectStore.workingProject = project;
         }
       }
 
