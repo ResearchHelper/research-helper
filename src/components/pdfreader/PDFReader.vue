@@ -80,7 +80,6 @@ export default {
 
     // reactive events
     this.pdfApp.eventBus.on("pagesinit", (e) => {
-      console.log("pagesInit");
       // set pdf state when pages inited
       this.changePageNumber(this.pdfState.currentPageNumber);
       this.changeSpreadMode(this.pdfState.spreadMode);
@@ -204,7 +203,10 @@ export default {
       let scaleValue = this.pdfApp.pdfViewer.currentScaleValue;
       this.pdfState.currentScale = scale;
       this.pdfState.currentScaleValue = scaleValue;
-      this.pdfState.savePDFState();
+
+      if (this.ready) {
+        this.pdfState.savePDFState();
+      }
     },
 
     searchText(search) {

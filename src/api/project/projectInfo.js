@@ -60,6 +60,16 @@ async function deleteProject(project, deleteFromDB) {
       // remove from db
       await db.remove(project);
 
+      // remove related pdf_state and pdf_annotations on db
+      let result = await db.find({
+        selector: {
+          projectId: project._id,
+        },
+      });
+      for (let doc of result.docs) {
+        await db.remove(doc);
+      }
+
       // remove the acutual files
       console.log("removing", path.dirname(project.path));
       fs.rmSync(path.dirname(project.path), { recursive: true, force: true });

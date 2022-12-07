@@ -197,6 +197,9 @@ export default {
     },
 
     clickRelated(project) {
+      // in case the related projects are not in the same folder
+      // switch to library folder first
+      this.stateStore.selectedFolderId = "library";
       this.stateStore.selectedProject = project;
     },
   },
