@@ -2,14 +2,13 @@
   <q-tree
     ref="tree"
     dense
-    :duration="0"
+    no-transition
     no-selection-unset
     selected-color="primary"
     :nodes="projects"
     node-key="_id"
     v-model:selected="selected"
     v-model:expanded="expanded"
-    @update:selected="selectItem"
   >
     <template v-slot:default-header="prop">
       <q-menu
@@ -47,13 +46,6 @@
           <q-item
             clickable
             v-close-popup
-            @click="selectItem(prop.key)"
-          >
-            <q-item-section> Open </q-item-section>
-          </q-item>
-          <q-item
-            clickable
-            v-close-popup
             @click="setRenameNote(prop.node)"
           >
             <q-item-section> Rename </q-item-section>
@@ -67,8 +59,6 @@
           </q-item>
         </q-list>
       </q-menu>
-
-      <!-- body of the tree node -->
       <q-input
         v-if="prop.node == renamingNote"
         square
@@ -79,9 +69,13 @@
         @keydown.enter="renameNote"
         @blur="renameNote"
       />
+      <!-- use width: 100% such that click trailing empty space 
+        of the node still fires click event -->
       <div
         v-else
+        style="width: 100%"
         class="ellipsis"
+        @click="selectItem(prop.key)"
       >
         {{ prop.node.label }}
       </div>
@@ -120,10 +114,12 @@ export default {
 
   mounted() {
     this.getProjectTree();
-    // set selected
-    this.selected = this.projectStore.workingProject._id;
-    // set expanded
-    this.expanded.push(this.selected);
+    if (!!this.projectStore.workingNote) {
+      this.selected = this.projectStore.workingNote._id;
+    } else {
+      this.selected = this.projectStore.workingProject._id;
+    }
+    this.expanded.push(this.projectStore.workingProject._id);
   },
 
   watch: {
@@ -164,18 +160,21 @@ export default {
     },
 
     selectItem(itemKey) {
+      // console.log("click:", itemKey);
       // open the markdown file for editing or set to different project
       this.selected = itemKey;
       let node = this.$refs.tree.getNodeByKey(itemKey);
-      console.log("click:", node);
 
       if (node.datatype == "note") {
-        if (this.stateStore.infoPaneSize == 0) this.stateStore.toggleInfoPane();
-        this.stateStore.setInfoPaneTab("noteTab");
+        this.stateStore.openRightMenu("noteEditor");
         this.projectStore.workingNote = node;
       } else {
         // datatype == "project"
+        if (this.stateStore.rightMenuSize > 0)
+          this.stateStore.setRightMenuMode("infoPane");
         this.projectStore.workingProject = node;
+        this.projectStore.workingNote = null;
+        this.expanded.push(itemKey);
       }
     },
 

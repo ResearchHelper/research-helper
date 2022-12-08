@@ -109,6 +109,7 @@ export default {
     setContent() {
       let note = this.projectStore.workingNote;
       let content = loadNote(note.projectId, note._id);
+      console.log("loading content:", content);
       this.editor.setValue(content);
     },
 
@@ -118,6 +119,7 @@ export default {
       let content = this.editor.getValue();
       let note = this.projectStore.workingNote;
       saveNote(note.projectId, note._id, content);
+      console.log("saving content:", content);
     },
   },
 };

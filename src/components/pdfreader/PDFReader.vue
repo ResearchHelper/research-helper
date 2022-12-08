@@ -5,11 +5,11 @@
     :limits="[0, 30]"
   >
     <template v-slot:before>
-      <LeftMenu @changePageNumber="changePageNumber" />
+      <LeftMenu />
     </template>
     <template v-slot:after>
       <q-splitter
-        v-model="stateStore.infoPaneSize"
+        v-model="stateStore.rightMenuSize"
         reverse
         :limits="[0, 60]"
       >
@@ -36,7 +36,7 @@
           </div>
         </template>
         <template v-slot:after>
-          <InfoPane ref="infoPane" />
+          <RightMenu />
         </template>
       </q-splitter>
     </template>
@@ -46,7 +46,7 @@
 <script>
 import PDFToolBar from "./PDFToolBar.vue";
 import LeftMenu from "./LeftMenu.vue";
-import InfoPane from "../InfoPane.vue";
+import RightMenu from "../RightMenu.vue";
 
 import { PDFApplication, AnnotationType } from "src/api/pdfreader/pdfreader";
 import { usePDFStateStore } from "src/stores/pdfState";
@@ -55,7 +55,7 @@ import { useAnnotStore } from "src/stores/annotStore";
 import { useProjectStore } from "src/stores/projectStore";
 
 export default {
-  components: { PDFToolBar, LeftMenu, InfoPane },
+  components: { PDFToolBar, LeftMenu, RightMenu },
 
   setup() {
     const stateStore = useStateStore();
@@ -72,13 +72,7 @@ export default {
   },
 
   async mounted() {
-    let project = this.projectStore.workingProject;
-    await this.pdfState.getPDFState(project._id);
-    await this.annotStore.init(project._id);
-
     this.pdfApp = new PDFApplication();
-    this.pdfApp.loadPDF(project.path);
-    this.pdfState.outline = await this.pdfApp.getTOC();
 
     // reactive events
     this.pdfApp.eventBus.on("pagesinit", (e) => {
@@ -129,6 +123,12 @@ export default {
         this.pdfState.matchesCount.current = current;
       }
     });
+
+    let project = this.projectStore.workingProject;
+    await this.pdfState.getPDFState(project._id);
+    await this.annotStore.init(project._id);
+    await this.pdfApp.loadPDF(project.path);
+    this.pdfState.outline = await this.pdfApp.getTOC();
   },
 
   watch: {
@@ -138,8 +138,8 @@ export default {
           this.ready = false; // don't save things until the document is loaded
           await this.pdfState.getPDFState(project._id);
           await this.annotStore.init(project._id);
+          await this.pdfApp.loadPDF(project.path);
           this.pdfState.outline = await this.pdfApp.getTOC();
-          this.pdfApp.loadPDF(project.path);
         }
       },
       deep: true,
@@ -320,8 +320,8 @@ export default {
 
     clickAnnotation(dom) {
       // open info pane
-      if (this.stateStore.infoPaneSize == 0) this.stateStore.toggleInfoPane();
-      this.stateStore.setInfoPaneTab("annotationTab");
+      this.stateStore.openRightMenu("infoPane");
+      this.stateStore.setRightMenuTab("annotationTab");
       setTimeout(() => {
         // IMPROVE: improve wait until the annotation list is ready
         this.annotStore.selectedAnnotId = dom.getAttribute("annotation-id");

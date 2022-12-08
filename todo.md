@@ -1,12 +1,15 @@
 FIXME:
 [x] scroll to selected annotation
-[ ] able to modify meta info both in library page and reading page, that means infoPane must independently get/set project infos without relying on the selectedProject
-[ ] ?? project store needs improvement, it seems we only need selected/working/opened project's id rather than the whole project
+[x] able to modify meta info both in library page and reading page, that means infoPane must independently get/set project infos without relying on the selectedProject
+[x] fixed the async await issue in pdfreader
+[x] open note from context menu after clicking an annotation deletes the content because the context menu blurs the editor
+[x] tags and related projects extend to full width but with ellipsis
 
 TODO:
 [x] Note backend
-left menu / right menu
-[ ] use expansion item instead of tab
+[x] change style of pdf
+[x] left menu use expansion item instead of tab
+[x] right menu style changed
 
 content extractor
 [ ] make content extractor as online service

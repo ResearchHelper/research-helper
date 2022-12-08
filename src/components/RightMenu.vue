@@ -1,7 +1,7 @@
 <template>
-  <div>
+  <div v-if="stateStore.rightMenuMode == 'infoPane'">
     <q-tabs
-      v-model="stateStore.infoPaneTab"
+      v-model="stateStore.rightMenuTab"
       dense
     >
       <q-tab
@@ -17,16 +17,9 @@
       >
         Annotations
       </q-tab>
-      <q-tab
-        v-if="stateStore.currentPage == 'reader'"
-        name="noteTab"
-        :ripple="false"
-      >
-        Notes
-      </q-tab>
     </q-tabs>
 
-    <q-tab-panels v-model="stateStore.infoPaneTab">
+    <q-tab-panels v-model="stateStore.rightMenuTab">
       <q-tab-panel name="metaInfoTab">
         <MetaInfoTab />
       </q-tab-panel>
@@ -37,15 +30,12 @@
       >
         <AnnotationList ref="annotationList" />
       </q-tab-panel>
-
-      <q-tab-panel
-        v-if="stateStore.currentPage == 'reader'"
-        name="noteTab"
-      >
-        <NoteEditor :has-toolbar="true" />
-      </q-tab-panel>
     </q-tab-panels>
   </div>
+  <NoteEditor
+    v-if="stateStore.rightMenuMode == 'noteEditor'"
+    :has-toolbar="true"
+  />
 </template>
 
 <script>
