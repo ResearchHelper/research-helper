@@ -195,7 +195,7 @@
 <script>
 import { usePDFStateStore } from "src/stores/pdfState";
 import { useStateStore } from "src/stores/appState";
-import { AnnotationType } from "src/api/annotation";
+import { AnnotationType } from "src/api/pdfreader/annotation";
 
 export default {
   setup() {

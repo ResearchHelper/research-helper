@@ -103,7 +103,6 @@
 <script>
 import { useStateStore } from "src/stores/appState";
 import { useProjectStore } from "src/stores/projectStore";
-import { getProject, updateProject } from "src/api/project/projectInfo";
 
 export default {
   setup() {
@@ -118,6 +117,10 @@ export default {
       relatedProjects: [],
       relatedProjectId: "",
     };
+  },
+
+  mounted() {
+    console.log("mounted");
   },
 
   watch: {

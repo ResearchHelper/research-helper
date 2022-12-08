@@ -72,7 +72,7 @@ import {
   addFolder,
   updateFolder,
   deleteFolder,
-} from "src/api/project/folderTree";
+} from "src/api/project/folder";
 
 export default {
   setup() {

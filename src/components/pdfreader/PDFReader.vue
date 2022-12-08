@@ -48,7 +48,7 @@ import PDFToolBar from "./PDFToolBar.vue";
 import LeftMenu from "./LeftMenu.vue";
 import InfoPane from "../InfoPane.vue";
 
-import { PDFApplication, AnnotationType } from "src/api/pdfreader";
+import { PDFApplication, AnnotationType } from "src/api/pdfreader/pdfreader";
 import { usePDFStateStore } from "src/stores/pdfState";
 import { useStateStore } from "src/stores/appState";
 import { useAnnotStore } from "src/stores/annotStore";
@@ -72,13 +72,11 @@ export default {
   },
 
   async mounted() {
-    // let project = this.stateStore.workingProject;
     let project = this.projectStore.workingProject;
     await this.pdfState.getPDFState(project._id);
     await this.annotStore.init(project._id);
 
     this.pdfApp = new PDFApplication();
-    // this.pdfApp.loadPDF(this.stateStore.workingProject.path);
     this.pdfApp.loadPDF(project.path);
     this.pdfState.outline = await this.pdfApp.getTOC();
 
@@ -101,6 +99,9 @@ export default {
 
       // draw annotations when mouse is up
       e.source.div.onmouseup = (ev) => this.createAnnotation(e.pageNumber, ev);
+
+      // highlight any active annotation (wait until annot layer is ready)
+      this.setActiveAnnotation(this.annotStore.selectedAnnotId);
     });
 
     this.pdfApp.eventBus.on("pagechanging", (e) => {
@@ -131,7 +132,6 @@ export default {
   },
 
   watch: {
-    // "stateStore.workingProject": {
     "projectStore.workingProject": {
       async handler(project, _) {
         if (this.ready) {
@@ -182,6 +182,29 @@ export default {
     "pdfState.selectedOutlineNode"(node, _) {
       this.pdfApp.getTOCPage(node).then((pageNumber) => {
         this.changePageNumber(pageNumber);
+      });
+    },
+
+    "annotStore.selectedAnnotId"(annotId, _) {
+      console.log(annotId);
+      // remove active class
+      this.setActiveAnnotation(null);
+
+      if (!!!annotId) return;
+      this.annotStore.getAnnotById(annotId).then((annot) => {
+        let dom = document.querySelector(`section[annotation-id="${annotId}"]`);
+        if (!!dom) {
+          // highlight it if we can find they directly
+          this.setActiveAnnotation(annotId);
+          // scroll into view
+          dom.scrollIntoView({
+            behavior: "smooth",
+            block: "nearest",
+            inline: "nearest",
+          });
+        } else {
+          this.changePageNumber(annot.pageNumber);
+        }
       });
     },
   },
@@ -266,7 +289,6 @@ export default {
 
     createAnnotation(pageNumber, mouseEvent) {
       let rect = null;
-      // save to local var to decrease fetch freq
       if (this.pdfState.tool == AnnotationType.COMMENT)
         rect = {
           left: mouseEvent.clientX,
@@ -282,6 +304,9 @@ export default {
           pageNumber: pageNumber,
         })
         .then((doms) => {
+          // if no doms, that means we are just clicking the page
+          if (doms.length == 0) this.annotStore.selectedAnnotId = null;
+
           // bind function to dom
           for (let dom of doms) {
             dom.onclick = () => this.clickAnnotation(dom);
@@ -298,9 +323,27 @@ export default {
       if (this.stateStore.infoPaneSize == 0) this.stateStore.toggleInfoPane();
       this.stateStore.setInfoPaneTab("annotationTab");
       setTimeout(() => {
-        // TODO: improve wait until the annotation list is ready
-        this.annotStore.select(dom.getAttribute("annotation-id"));
+        // IMPROVE: improve wait until the annotation list is ready
+        this.annotStore.selectedAnnotId = dom.getAttribute("annotation-id");
       }, 100);
+    },
+
+    setActiveAnnotation(annotId) {
+      if (!!annotId) {
+        // highlight it
+        let doms = document.querySelectorAll(
+          `section[annotation-id="${annotId}"]`
+        );
+        for (let dom of doms) {
+          dom.classList.add("activeAnnotation");
+        }
+      } else {
+        // deselect annotation
+        let doms = document.querySelectorAll(".activeAnnotation");
+        for (let dom of doms) {
+          dom.classList.remove("activeAnnotation");
+        }
+      }
     },
   },
 };

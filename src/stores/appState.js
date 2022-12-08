@@ -50,22 +50,5 @@ export const useStateStore = defineStore("stateStore", {
       if (page == this.currentPage) this.toggleLeftMenu();
       this.currentPage = page;
     },
-
-    // pdf left menu related
-    closeProject(projectId) {
-      // remove from opened projects
-      this.openedProjects = this.openedProjects.filter(
-        (project) => project.projectId != projectId
-      );
-
-      if (this.openedProjects.length == 0) {
-        this.setCurrentPage("library");
-      } else {
-        // if this is workingProject, change it to something else
-        if (projectId == this.workingProject.projectId) {
-          this.workingProject = this.openedProjects[0];
-        }
-      }
-    },
   },
 });
