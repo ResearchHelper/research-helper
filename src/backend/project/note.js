@@ -18,7 +18,7 @@ async function addNote(projectId) {
   // add to db
   let note = {
     _id: noteId,
-    datatype: "note",
+    dataType: "note",
     projectId: projectId,
     links: { forward: [], backward: [] },
     label: "New Note",
@@ -44,8 +44,18 @@ async function updateNote(noteId, data) {
 async function getNotes(projectId) {
   let result = await db.find({
     selector: {
-      datatype: "note",
+      dataType: "note",
       projectId: projectId,
+    },
+  });
+
+  return result.docs;
+}
+
+async function getAllNotes() {
+  let result = await db.find({
+    selector: {
+      dataType: "note",
     },
   });
 
@@ -78,4 +88,12 @@ function saveNote(projectId, noteId, content) {
   fs.writeFileSync(notePath, content);
 }
 
-export { addNote, deleteNote, updateNote, getNotes, loadNote, saveNote };
+export {
+  addNote,
+  deleteNote,
+  updateNote,
+  getNotes,
+  getAllNotes,
+  loadNote,
+  saveNote,
+};

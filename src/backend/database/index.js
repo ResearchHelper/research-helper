@@ -36,4 +36,11 @@ function destroyDB() {
   remotedb.destroy();
   return db.destroy();
 }
+
+db.createIndex({
+  index: {
+    fields: ["dataType", "projectId", "pageNumber", "folderIds", "children"],
+  },
+});
+
 export { db, remotedb, destroyDB };

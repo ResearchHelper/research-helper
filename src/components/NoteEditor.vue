@@ -14,7 +14,7 @@
 <script>
 import { useStateStore } from "src/stores/appState";
 import { useProjectStore } from "src/stores/projectStore";
-import { loadNote, saveNote } from "src/backend/project/note";
+import { loadNote, saveNote, getAllNotes } from "src/backend/project/note";
 import Vditor from "vditor";
 import "vditor/dist/index.css";
 
@@ -31,12 +31,19 @@ export default {
     return {
       editor: "",
       showEditor: false,
+
+      notes: [],
+      projects: [],
+      hints: [],
     };
   },
 
-  mounted() {
+  async mounted() {
     if (!!this.projectStore.workingNote) this.showEditor = true;
     this.initEditor();
+    // used to filter stuff
+    this.projects = await this.projectStore.getAll();
+    this.notes = await getAllNotes();
   },
 
   watch: {
@@ -91,32 +98,26 @@ export default {
         cache: {
           enable: false,
         },
+        hint: {
+          parse: false,
+          delay: 200, // unit: ms
+          extend: [
+            {
+              key: "[[",
+              hint: this.filterHints,
+            },
+          ],
+        },
         after: () => {
           // dark theme, dark content theme, native code theme
           this.editor.setTheme("dark", "dark", "native");
           if (!!this.showEditor) this.setContent();
-
-          // this.editor.vditor.lute.SetJSRenderers({
-          //   renderers: {
-          //     renderLink: (node, entering) => {
-          //       console.log(node);
-          //       if (entering) {
-          //         return [
-          //           `<a href='https://youtube.com'>${node.Text()}`,
-          //           Lute.WalkContinue,
-          //         ];
-          //       } else {
-          //         return ["</a>", Lute.WalkContinue];
-          //       }
-          //     },
-          //   },
-          // });
         },
         blur: () => {
           this.saveContent();
         },
-        upload: {
-          accept: "image/*",
+        input: () => {
+          this.changeLinks();
         },
       });
     },
@@ -124,8 +125,8 @@ export default {
     setContent() {
       let note = this.projectStore.workingNote;
       let content = loadNote(note.projectId, note._id);
-      console.log("loading content:", content);
       this.editor.setValue(content);
+      this.changeLinks();
     },
 
     saveContent() {
@@ -134,7 +135,44 @@ export default {
       let content = this.editor.getValue();
       let note = this.projectStore.workingNote;
       saveNote(note.projectId, note._id, content);
-      console.log("saving content:", content);
+    },
+
+    async clickLink(linkNode) {
+      this.editor.blur(); // save the content before jumping
+
+      let link = linkNode.querySelector(
+        "span.vditor-ir__marker--link"
+      ).innerText;
+      let doc = await this.projectStore.get(link);
+      if (doc.dataType == "note") {
+        await this.projectStore.setWorkingProject(doc.projectId);
+        this.projectStore.workingNote = doc;
+      } else if (doc.dataType == "project") {
+        this.projectStore.setWorkingProject(doc._id);
+      }
+    },
+
+    changeLinks() {
+      let vditor = document.getElementById("vditor");
+      let linkNodes = vditor.querySelectorAll("[data-type='a']");
+      console.log("changing link nodes");
+      for (let linkNode of linkNodes) {
+        linkNode.onclick = () => this.clickLink(linkNode);
+      }
+    },
+
+    filterHints(key) {
+      this.hints = [];
+      for (let item of this.projects.concat(this.notes)) {
+        if (item.dataType == "project") item.label = item.title;
+        if (item.label.toLocaleLowerCase().indexOf(key) > -1) {
+          this.hints.push({
+            value: `[${item.label}](${item._id})`,
+            html: `<p class="ellipsis"><strong>${item.dataType}</strong>: ${item.label}</p>`,
+          });
+        }
+      }
+      return this.hints;
     },
   },
 };

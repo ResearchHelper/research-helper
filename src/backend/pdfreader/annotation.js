@@ -14,7 +14,7 @@ const AnnotationType = {
 function createIndex() {
   return db.createIndex({
     index: {
-      fields: ["datatype", "projectId", "pageNumber"],
+      fields: ["dataType", "projectId", "pageNumber"],
     },
   });
 }
@@ -22,7 +22,7 @@ function createIndex() {
 async function getAnnotations(projectId) {
   try {
     let result = await db.find({
-      selector: { datatype: "pdf_annotation", projectId: projectId },
+      selector: { dataType: "pdf_annotation", projectId: projectId },
     });
 
     return result.docs;
@@ -68,7 +68,7 @@ async function createAnnotation(annot, fromDB = false) {
 
     // some necessary attributes
     annot._id = uuidv4();
-    annot.datatype = "pdf_annotation";
+    annot.dataType = "pdf_annotation";
     annot.content = "";
   }
 

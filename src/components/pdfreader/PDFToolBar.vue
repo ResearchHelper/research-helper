@@ -170,6 +170,7 @@
     <q-btn-toggle
       v-model="rightMenuMode"
       clearable
+      unelevated
       :ripple="false"
       size="sm"
       padding="xs"

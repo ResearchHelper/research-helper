@@ -123,19 +123,23 @@ export default {
   },
 
   watch: {
-    "projectStore.openedProjects": {
-      handler() {
-        this.getProjectTree();
-        this.selected = this.projectStore.workingProject._id;
-        this.expanded.push(this.selected);
-      },
-      deep: true,
+    "projectStore.workingProject._id"(projectId, _) {
+      console.log("setting project to", projectId);
+      this.selected = projectId;
+      this.expanded.push(this.selected);
+      this.getProjectTree();
+    },
+
+    "projectStore.workingNote._id"(noteId, _) {
+      if (!!!noteId) return;
+      console.log("setting note to", noteId);
+      this.selected = noteId;
     },
   },
 
   methods: {
     menuSwitch(node) {
-      if (node.datatype == "note") {
+      if (node.dataType == "note") {
         // show context menu for notes
         this.projectMenu = false;
       } else {
@@ -150,7 +154,7 @@ export default {
         let notes = await getNotes(p._id);
         let project = {
           _id: p._id,
-          datatype: p.datatype,
+          dataType: p.dataType,
           label: p.title,
           children: notes,
           path: p.path,
@@ -165,11 +169,11 @@ export default {
       this.selected = itemKey;
       let node = this.$refs.tree.getNodeByKey(itemKey);
 
-      if (node.datatype == "note") {
+      if (node.dataType == "note") {
         this.stateStore.openRightMenu("noteEditor");
         this.projectStore.workingNote = node;
       } else {
-        // datatype == "project"
+        // dataType == "project"
         if (this.stateStore.rightMenuSize > 0)
           this.stateStore.setRightMenuMode("infoPane");
         this.projectStore.workingProject = node;

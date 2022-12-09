@@ -5,6 +5,7 @@ import {
   updateProject,
   getProject,
   getProjectsByFolderId,
+  getAllProjects,
 } from "src/backend/project/project";
 
 export const useProjectStore = defineStore("projectStore", {
@@ -19,7 +20,8 @@ export const useProjectStore = defineStore("projectStore", {
   }),
 
   actions: {
-    setWorkingProject(project) {
+    async setWorkingProject(projectId) {
+      let project = await this.get(projectId);
       this.workingProject = {
         _id: project._id,
         path: project.path,
@@ -36,8 +38,17 @@ export const useProjectStore = defineStore("projectStore", {
       this.projects = await getProjectsByFolderId(folderId);
     },
 
-    async get(projectId) {
-      return await getProject(projectId);
+    /**
+     * We can use it to get project or note
+     * @param {String} id
+     * @returns {Object} project|note
+     */
+    async get(id) {
+      return await getProject(id);
+    },
+
+    async getAll() {
+      return await getAllProjects();
     },
 
     async add(file) {

@@ -30,7 +30,7 @@ async function addProject(file) {
       path: dstPath,
     });
     project._id = projectId;
-    project.datatype = "project";
+    project.dataType = "project";
     project.type = "paper";
     project.path = dstPath;
     project.related = [];
@@ -91,17 +91,38 @@ function getProject(projectId) {
   return db.get(projectId);
 }
 
+async function getAllProjects() {
+  let result = await db.find({
+    selector: {
+      dataType: "project",
+    },
+  });
+  return result.docs;
+}
+
+async function findProjectsByTitle(key) {
+  let re = new RegExp(key, "i");
+  console.log(re);
+  let result = await db.find({
+    selector: {
+      dataType: "project",
+      title: { $regex: re },
+    },
+  });
+  return result.docs;
+}
+
 /**
  * Get corresponding projects given their ids
  * @param {String} folderId
  * @returns {Array} projects
  */
 async function getProjectsByFolderId(folderId) {
-  await db.createIndex({
-    index: {
-      fields: ["folderIds"],
-    },
-  });
+  // await db.createIndex({
+  //   index: {
+  //     fields: ["folderIds"],
+  //   },
+  // });
   let result = await db.find({
     selector: {
       folderIds: { $in: [folderId] },
@@ -117,4 +138,6 @@ export {
   updateProject,
   getProjectsByFolderId,
   getProject,
+  findProjectsByTitle,
+  getAllProjects,
 };

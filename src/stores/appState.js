@@ -23,6 +23,14 @@ export const useStateStore = defineStore("stateStore", {
     // rightMenu
     rightMenuTab: "metaInfoTab",
     rightMenuMode: null, // "infoPane" or "noteEditor"
+
+    // projects
+    selectedProjectId: "", // select from tableview
+    workingProjectId: "", // select from projectTree
+    openedProjects: [], //for projectTree
+
+    // note
+    workingNote: null,
   }),
 
   actions: {

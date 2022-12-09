@@ -66,3 +66,10 @@ app.on("activate", () => {
     createWindow();
   }
 });
+
+// no new window is allowed to create
+app.on("web-contents-created", (e, webContents) => {
+  webContents.on("new-window", (event, url) => {
+    event.preventDefault();
+  });
+});

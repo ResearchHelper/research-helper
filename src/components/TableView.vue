@@ -147,8 +147,8 @@ export default {
       this.projectStore.selectedProject = row;
     },
 
-    dblclickRow(row) {
-      this.projectStore.setWorkingProject(row);
+    async dblclickRow(row) {
+      await this.projectStore.setWorkingProject(row._id);
       this.stateStore.setCurrentPage("reader");
     },
 
