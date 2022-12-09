@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import { db } from "src/api/database";
+import { db } from "src/backend/database";
 
 export const usePDFStateStore = defineStore("pdfStateStore", {
   state: () => ({

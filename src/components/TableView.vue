@@ -148,13 +148,7 @@ export default {
     },
 
     dblclickRow(row) {
-      this.projectStore.workingProject = row;
-      for (let i = 0; i < this.projectStore.openedProjects.length; i++) {
-        if (row._id === this.projectStore.openedProjects[i]._id) {
-          return;
-        }
-      }
-      this.projectStore.openedProjects.push(row);
+      this.projectStore.setWorkingProject(row);
       this.stateStore.setCurrentPage("reader");
     },
 

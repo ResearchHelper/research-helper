@@ -15,7 +15,6 @@
     <!-- tools -->
     <q-btn-toggle
       v-model="pdfState.tool"
-      unelevated
       :ripple="false"
       size="sm"
       padding="xs"
@@ -52,7 +51,6 @@
     </q-btn>
     <q-btn-dropdown
       dense
-      unelevated
       :ripple="false"
       icon="visibility"
       size="sm"
@@ -110,7 +108,6 @@
 
     <q-btn
       square
-      unelevated
       :ripple="false"
       icon="search"
       size="sm"
@@ -170,32 +167,25 @@
     <q-space />
 
     <!-- comment and note -->
-    <div>
-      <q-btn
-        square
-        unelevated
-        :ripple="false"
-        icon="sticky_note_2"
-        size="sm"
-        padding="xs"
-      />
-      <q-btn
-        square
-        unelevated
-        :ripple="false"
-        icon="edit_note"
-        size="sm"
-        padding="xs"
-        @click="stateStore.toggleInfoPane()"
-      />
-    </div>
+    <q-btn-toggle
+      v-model="rightMenuMode"
+      clearable
+      :ripple="false"
+      size="sm"
+      padding="xs"
+      toggle-color="primary"
+      :options="[
+        { value: 'infoPane', icon: 'list' },
+        { value: 'noteEditor', icon: 'sticky_note_2' },
+      ]"
+    />
   </q-toolbar>
 </template>
 
 <script>
 import { usePDFStateStore } from "src/stores/pdfState";
 import { useStateStore } from "src/stores/appState";
-import { AnnotationType } from "src/api/annotation";
+import { AnnotationType } from "src/backend/pdfreader/annotation";
 
 export default {
   setup() {
@@ -205,6 +195,20 @@ export default {
   },
 
   computed: {
+    rightMenuMode: {
+      get() {
+        return this.stateStore.rightMenuMode;
+      },
+
+      set(mode) {
+        if (!!mode) {
+          this.stateStore.openRightMenu(mode);
+        } else {
+          this.stateStore.closeRightMenu();
+        }
+      },
+    },
+
     searchSummary() {
       let text = "";
       let matchesCount = this.pdfState.matchesCount;

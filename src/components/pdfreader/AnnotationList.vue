@@ -9,7 +9,7 @@
         :class="{
           activeAnnotationCard: annot._id == annotStore.selectedAnnotId,
         }"
-        @click="annotStore.select(annot._id)"
+        @click="clickAnnotCard(annot._id)"
       >
         <q-card-section class="q-py-none">
           <div
@@ -98,7 +98,29 @@ export default {
     };
   },
 
+  watch: {
+    "annotStore.selectedAnnotId"(annotId, _) {
+      if (!!annotId) {
+        // AnnotationList scrollIntoView
+        let card = document.querySelector(`div[annot-card-id="${annotId}"]`);
+        card.scrollIntoView({
+          behavior: "smooth",
+          block: "nearest",
+        });
+      }
+    },
+  },
+
   methods: {
+    clickAnnotCard(annotId) {
+      // a weird trick to trigger the watch in PDFReader.vue
+      // so we can click on the already selected card to scroll into view
+      this.annotStore.selectedAnnotId = null;
+      this.$nextTick(() => {
+        this.annotStore.selectedAnnotId = annotId;
+      });
+    },
+
     initEditor(content) {
       let editorArea = document.getElementById("commentEditor");
       this.editor = new Vditor(editorArea, {

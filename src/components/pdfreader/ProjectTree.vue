@@ -2,14 +2,13 @@
   <q-tree
     ref="tree"
     dense
-    :duration="0"
+    no-transition
     no-selection-unset
     selected-color="primary"
     :nodes="projects"
-    node-key="key"
+    node-key="_id"
     v-model:selected="selected"
     v-model:expanded="expanded"
-    @update:selected="selectItem"
   >
     <template v-slot:default-header="prop">
       <q-menu
@@ -47,13 +46,6 @@
           <q-item
             clickable
             v-close-popup
-            @click="selectItem(prop.key)"
-          >
-            <q-item-section> Open </q-item-section>
-          </q-item>
-          <q-item
-            clickable
-            v-close-popup
             @click="setRenameNote(prop.node)"
           >
             <q-item-section> Rename </q-item-section>
@@ -67,8 +59,6 @@
           </q-item>
         </q-list>
       </q-menu>
-
-      <!-- body of the tree node -->
       <q-input
         v-if="prop.node == renamingNote"
         square
@@ -79,9 +69,13 @@
         @keydown.enter="renameNote"
         @blur="renameNote"
       />
+      <!-- use width: 100% such that click trailing empty space 
+        of the node still fires click event -->
       <div
         v-else
+        style="width: 100%"
         class="ellipsis"
+        @click="selectItem(prop.key)"
       >
         {{ prop.node.label }}
       </div>
@@ -92,7 +86,12 @@
 <script>
 import { useStateStore } from "src/stores/appState";
 import { useProjectStore } from "src/stores/projectStore";
-import { addNote, deleteNote, modifyNote, getNotes } from "src/backend/note";
+import {
+  getNotes,
+  addNote,
+  deleteNote,
+  updateNote,
+} from "src/backend/project/note";
 
 export default {
   setup() {
@@ -115,22 +114,15 @@ export default {
 
   mounted() {
     this.getProjectTree();
-    // set selected
-    // this.selected = this.stateStore.workingProject._id;
-    this.selected = this.projectStore.workingProject._id;
-    // set expanded
-    this.expanded.push(this.selected);
+    if (!!this.projectStore.workingNote) {
+      this.selected = this.projectStore.workingNote._id;
+    } else {
+      this.selected = this.projectStore.workingProject._id;
+    }
+    this.expanded.push(this.projectStore.workingProject._id);
   },
 
   watch: {
-    // "stateStore.openedProjects": {
-    //   handler() {
-    //     this.getProjectTree();
-    //     this.selected = this.stateStore.workingProject._id;
-    //     this.expanded.push(this.selected);
-    //   },
-    //   deep: true,
-    // },
     "projectStore.openedProjects": {
       handler() {
         this.getProjectTree();
@@ -143,7 +135,7 @@ export default {
 
   methods: {
     menuSwitch(node) {
-      if ("noteId" in node) {
+      if (node.datatype == "note") {
         // show context menu for notes
         this.projectMenu = false;
       } else {
@@ -152,94 +144,85 @@ export default {
       }
     },
 
-    getProjectTree() {
+    async getProjectTree() {
       this.projects = [];
-
-      // let projects = this.stateStore.openedProjects;
-      let projects = this.projectStore.openedProjects;
-      for (let p of projects) {
-        // let notes = getNotes(p._id);
-        let notes = [];
-        for (let note of notes) {
-          note.label = note.noteName;
-          note.key = note.noteId;
-        }
-
-        // do not change openProjects directly
-        // it will trigger recursive updates
+      for (let p of this.projectStore.openedProjects) {
+        let notes = await getNotes(p._id);
         let project = {
+          _id: p._id,
+          datatype: p.datatype,
           label: p.title,
-          key: p._id,
           children: notes,
-          projectId: p._id,
+          path: p.path,
         };
         this.projects.push(project);
       }
     },
 
     selectItem(itemKey) {
+      // console.log("click:", itemKey);
       // open the markdown file for editing or set to different project
       this.selected = itemKey;
       let node = this.$refs.tree.getNodeByKey(itemKey);
 
-      // set working project
-      // for (let project of this.stateStore.openedProjects) {
-      for (let project of this.projectStore.openedProjects) {
-        if (project._id == node.projectId) {
-          // this.stateStore.workingProject = project;
-          this.projectStore.workingProject = project;
-        }
-      }
-
-      // set working note
-      if (!!node.noteId) {
-        if (this.stateStore.infoPaneSize == 0) this.stateStore.toggleInfoPane();
-        this.stateStore.setInfoPaneTab("noteTab");
-        this.stateStore.workingNote = node;
+      if (node.datatype == "note") {
+        this.stateStore.openRightMenu("noteEditor");
+        this.projectStore.workingNote = node;
+      } else {
+        // datatype == "project"
+        if (this.stateStore.rightMenuSize > 0)
+          this.stateStore.setRightMenuMode("infoPane");
+        this.projectStore.workingProject = node;
+        this.projectStore.workingNote = null;
+        this.expanded.push(itemKey);
       }
     },
 
     closeProject(projectId) {
-      this.stateStore.closeProject(projectId);
+      // remove from opened projects
+      this.projectStore.openedProjects =
+        this.projectStore.openedProjects.filter(
+          (project) => project._id != projectId
+        );
+
+      if (this.projectStore.openedProjects.length == 0) {
+        this.stateStore.setCurrentPage("library");
+      } else {
+        // if this is workingProject, change it to something else
+        if (projectId == this.projectStore.workingProject._id) {
+          this.projectStore.workingProject =
+            this.projectStore.openedProjects[0];
+        }
+      }
     },
 
-    addNote(node) {
-      // backend
-      let note = {
-        noteName: "New Note",
-        projectId: node.key,
-        links: {
-          forward: [],
-          backward: [],
-        },
-      };
-      note = addNote(note);
+    async addNote(node) {
+      // update db
+      let note = await addNote(node._id);
 
-      // update UI
-      note.label = note.noteName;
-      note.key = note.noteId;
+      // update ui
       node.children.push(note);
-      this.selectItem(note.noteId);
     },
 
-    deleteNote(node) {
-      // backend
-      deleteNote(node);
+    async deleteNote(node) {
+      // update db
+      await deleteNote(node._id);
 
-      // update UI
+      // update ui
       let parent = this.$refs.tree.getNodeByKey(node.projectId);
+
       parent.children = parent.children.filter(
-        (child) => child.noteId != node.noteId
+        (child) => child._id != node._id
       );
       if (parent.children.length == 0) {
-        this.selectItem(parent.projectId);
+        this.selectItem(parent._id);
       } else {
-        this.selectItem(parent.children[0].noteId);
+        this.selectItem(parent.children[0]._id);
       }
 
       // central store
       // if parent.children = [], workingNote=undefined
-      this.stateStore.workingNote = parent.children[0];
+      this.projectStore.workingNote = parent.children[0];
     },
 
     setRenameNote(node) {
@@ -256,18 +239,10 @@ export default {
     },
 
     renameNote() {
-      // backend
-      let oldNote = this.renamingNote;
-      let newNote = {
-        noteName: oldNote.label,
-        projectId: oldNote.projectId,
-        noteId: oldNote.noteId,
-        links: oldNote.links,
-      };
-      modifyNote(newNote);
+      // update db
+      updateNote(this.renamingNote._id, { label: this.renamingNote.label });
 
-      // UI
-      // the label has been taken care by v-model of q-input
+      // update ui
       this.renamingNote = null;
     },
   },

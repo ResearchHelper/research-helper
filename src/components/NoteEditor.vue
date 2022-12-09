@@ -4,7 +4,7 @@
     id="vditor"
   ></div>
   <div
-    v-if="!!!stateStore.workingNote"
+    v-if="!!!projectStore.workingNote"
     :ripple="false"
     @click="initEditor"
   >
@@ -13,7 +13,8 @@
 </template>
 <script>
 import { useStateStore } from "src/stores/appState";
-import { addNote, loadNote, saveNote } from "src/backend/note";
+import { useProjectStore } from "src/stores/projectStore";
+import { loadNote, saveNote } from "src/backend/project/note";
 import Vditor from "vditor";
 import "vditor/dist/index.css";
 
@@ -22,7 +23,8 @@ export default {
 
   setup() {
     const stateStore = useStateStore();
-    return { stateStore, addNote, loadNote, saveNote };
+    const projectStore = useProjectStore();
+    return { stateStore, projectStore, loadNote, saveNote };
   },
 
   data() {
@@ -33,12 +35,12 @@ export default {
   },
 
   mounted() {
-    if (!!this.stateStore.workingNote) this.showEditor = true;
+    if (!!this.projectStore.workingNote) this.showEditor = true;
     this.initEditor();
   },
 
   watch: {
-    "stateStore.workingNote"(newNote, oldNote) {
+    "projectStore.workingNote"(newNote, oldNote) {
       if (!!newNote) {
         if (!!!this.showEditor) this.showEditor = true;
         this.setContent();
@@ -93,6 +95,22 @@ export default {
           // dark theme, dark content theme, native code theme
           this.editor.setTheme("dark", "dark", "native");
           if (!!this.showEditor) this.setContent();
+
+          // this.editor.vditor.lute.SetJSRenderers({
+          //   renderers: {
+          //     renderLink: (node, entering) => {
+          //       console.log(node);
+          //       if (entering) {
+          //         return [
+          //           `<a href='https://youtube.com'>${node.Text()}`,
+          //           Lute.WalkContinue,
+          //         ];
+          //       } else {
+          //         return ["</a>", Lute.WalkContinue];
+          //       }
+          //     },
+          //   },
+          // });
         },
         blur: () => {
           this.saveContent();
@@ -104,8 +122,9 @@ export default {
     },
 
     setContent() {
-      let note = this.stateStore.workingNote;
-      let content = loadNote(note.projectId, note.noteId);
+      let note = this.projectStore.workingNote;
+      let content = loadNote(note.projectId, note._id);
+      console.log("loading content:", content);
       this.editor.setValue(content);
     },
 
@@ -113,8 +132,9 @@ export default {
       // save the content when it's blur
       // this will be called before unmount
       let content = this.editor.getValue();
-      let note = this.stateStore.workingNote;
-      saveNote(note.projectId, note.noteId, content);
+      let note = this.projectStore.workingNote;
+      saveNote(note.projectId, note._id, content);
+      console.log("saving content:", content);
     },
   },
 };

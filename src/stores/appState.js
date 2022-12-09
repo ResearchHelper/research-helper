@@ -15,21 +15,14 @@ export const useStateStore = defineStore("stateStore", {
 
     // layout
     leftMenuSize: 20,
-    infoPaneSize: 0,
+    rightMenuSize: 0,
 
     // tree view
     selectedFolderId: "",
 
-    // table view
-    selectedProject: null,
-    openedProjects: [],
-    workingProject: null, // this is in the openedProjects list
-
-    // info pane
-    infoPaneTab: "metaInfoTab",
-
-    // note
-    workingNote: null,
+    // rightMenu
+    rightMenuTab: "metaInfoTab",
+    rightMenuMode: null, // "infoPane" or "noteEditor"
   }),
 
   actions: {
@@ -38,34 +31,37 @@ export const useStateStore = defineStore("stateStore", {
       this.leftMenuSize = this.leftMenuSize > 0 ? 0 : 20;
     },
 
-    toggleInfoPane() {
-      this.infoPaneSize = this.infoPaneSize > 0 ? 0 : 25;
+    toggleRightMenu(mode) {
+      this.rightMenuSize = this.rightMenuSize > 0 ? 0 : 25;
+      this.rightMenuMode = this.rightMenuSize > 0 ? mode : null;
     },
 
-    setInfoPaneTab(tab) {
-      this.infoPaneTab = tab;
+    openRightMenu(mode) {
+      this.rightMenuSize = 25;
+      this.rightMenuMode = mode;
+    },
+
+    closeRightMenu() {
+      this.rightMenuSize = 0;
+      this.rightMenuMode = null;
+    },
+
+    /**
+     * Set the mode of right menu
+     * mode can be "infoPane" or "noteEditor"
+     * @param {String} mode
+     */
+    setRightMenuMode(mode) {
+      this.rightMenuMode = mode;
+    },
+
+    setRightMenuTab(tab) {
+      this.rightMenuTab = tab;
     },
 
     setCurrentPage(page) {
       if (page == this.currentPage) this.toggleLeftMenu();
       this.currentPage = page;
-    },
-
-    // pdf left menu related
-    closeProject(projectId) {
-      // remove from opened projects
-      this.openedProjects = this.openedProjects.filter(
-        (project) => project.projectId != projectId
-      );
-
-      if (this.openedProjects.length == 0) {
-        this.setCurrentPage("library");
-      } else {
-        // if this is workingProject, change it to something else
-        if (projectId == this.workingProject.projectId) {
-          this.workingProject = this.openedProjects[0];
-        }
-      }
     },
   },
 });

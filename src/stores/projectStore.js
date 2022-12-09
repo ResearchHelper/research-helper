@@ -5,7 +5,7 @@ import {
   updateProject,
   getProject,
   getProjectsByFolderId,
-} from "src/api/project/projectInfo";
+} from "src/backend/project/project";
 
 export const useProjectStore = defineStore("projectStore", {
   state: () => ({
@@ -13,11 +13,25 @@ export const useProjectStore = defineStore("projectStore", {
     selectedProject: null,
     openedProjects: [],
     workingProject: null, // this is in the openedProjects List
+    workingNote: null,
 
     searchString: "", // used to filter projects
   }),
 
   actions: {
+    setWorkingProject(project) {
+      this.workingProject = {
+        _id: project._id,
+        path: project.path,
+      };
+      this.workingNote = null;
+
+      for (let p of this.openedProjects) {
+        if (p._id == project._id) return;
+      }
+      this.openedProjects.push(project);
+    },
+
     async getProjects(folderId) {
       this.projects = await getProjectsByFolderId(folderId);
     },
@@ -60,10 +74,9 @@ export const useProjectStore = defineStore("projectStore", {
       }
     },
 
-    async getRelatedProjects() {
+    async getRelatedProjects(projectIds) {
       let projects = [];
-      if (!!!this.selectedProject) return [];
-      for (let projectId of this.selectedProject.related) {
+      for (let projectId of projectIds) {
         projects.push(await getProject(projectId));
       }
       return projects;

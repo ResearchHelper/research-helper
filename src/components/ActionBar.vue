@@ -38,7 +38,7 @@
       flat
       dense
       icon="list"
-      @click="stateStore.toggleInfoPane"
+      @click="stateStore.toggleRightMenu('infoPane')"
     >
     </q-btn>
   </q-toolbar>

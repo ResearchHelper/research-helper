@@ -10,7 +10,7 @@ import {
   deleteAnnotation,
   createAnnotation,
   AnnotationType,
-} from "src/api/annotation";
+} from "src/backend/pdfreader/annotation";
 
 const stateStore = useStateStore();
 
@@ -55,44 +55,6 @@ export const useAnnotStore = defineStore("annotStore", {
         return await getAnnotationById(annotId);
       } catch (err) {
         console.log(err);
-      }
-    },
-
-    /**
-     *
-     * @param {str|null} annotId
-     *
-     * select the corresponding annot if annotId is provided
-     */
-    select(annotId) {
-      // update AnnotationList UI
-      this.selectedAnnotId = annotId;
-      this.getAnnotById(annotId).then((annot) => {
-        console.log(annot);
-      });
-
-      // update PDFReader UI
-      // remove active class
-      let doms = document.querySelectorAll(".activeAnnotation");
-      for (let dom of doms) {
-        dom.classList.remove("activeAnnotation");
-      }
-
-      if (!!annotId) {
-        doms = document.querySelectorAll(`section[annotation-id="${annotId}"]`);
-        if (!!doms.length) {
-          // set active class
-          for (let dom of doms) {
-            dom.classList.add("activeAnnotation");
-          }
-
-          // AnnotationList scrollIntoView
-          let card = document.querySelector(`div[annot-card-id="${annotId}"]`);
-          card.scrollIntoView({
-            behavior: "auto",
-            block: "nearest",
-          });
-        }
       }
     },
 

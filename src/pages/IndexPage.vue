@@ -19,7 +19,7 @@
               name="reader"
               icon="auto_stories"
               :ripple="false"
-              :disable="stateStore.openedProjects.length === 0"
+              :disable="projectStore.openedProjects.length === 0"
               @click="stateStore.setCurrentPage('reader')"
             />
           </div>
@@ -54,7 +54,7 @@
             <ReaderPage />
           </q-tab-panel>
 
-          <q-tab-panel name="user"> <TestPage /> </q-tab-panel>
+          <q-tab-panel name="user"> User Page </q-tab-panel>
           <q-tab-panel name="settings"> Settings Page </q-tab-panel>
         </q-tab-panels>
       </template>
@@ -64,11 +64,11 @@
 
 <script>
 import { useStateStore } from "src/stores/appState";
+import { useProjectStore } from "src/stores/projectStore";
 import { useQuasar } from "quasar";
 import SystemBar from "../components/SystemBar.vue";
 import LibraryPage from "./LibraryPage.vue";
 import ReaderPage from "./ReaderPage.vue";
-import TestPage from "./TestPage.vue";
 
 export default {
   setup() {
@@ -77,14 +77,14 @@ export default {
     // $q.dark.toggle();
 
     const stateStore = useStateStore();
-    return { stateStore };
+    const projectStore = useProjectStore();
+    return { stateStore, projectStore };
   },
 
   components: {
     SystemBar,
     LibraryPage,
     ReaderPage,
-    TestPage,
   },
 };
 </script>

@@ -16,13 +16,13 @@
           reverse
           :limits="[0, 60]"
           separator-class="separator"
-          v-model="stateStore.infoPaneSize"
+          v-model="stateStore.rightMenuSize"
         >
           <template v-slot:before>
             <TableView />
           </template>
           <template v-slot:after>
-            <InfoPane />
+            <RightMenu />
           </template>
         </q-splitter>
       </template>
@@ -34,7 +34,7 @@
 import { useStateStore } from "src/stores/appState";
 import TableView from "../components/TableView.vue";
 import TreeView from "../components/TreeView.vue";
-import InfoPane from "../components/InfoPane.vue";
+import RightMenu from "../components/RightMenu.vue";
 
 export default {
   setup() {
@@ -45,7 +45,7 @@ export default {
   components: {
     TableView,
     TreeView,
-    InfoPane,
+    RightMenu,
   },
 };
 </script>
