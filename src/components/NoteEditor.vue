@@ -14,8 +14,7 @@
 <script>
 import { useStateStore } from "src/stores/appState";
 import { useProjectStore } from "src/stores/projectStore";
-// import { loadNote, saveNote } from "src/backend/note";
-import { loadNote, saveNote } from "src/api/project/note";
+import { loadNote, saveNote } from "src/backend/project/note";
 import Vditor from "vditor";
 import "vditor/dist/index.css";
 
@@ -96,6 +95,22 @@ export default {
           // dark theme, dark content theme, native code theme
           this.editor.setTheme("dark", "dark", "native");
           if (!!this.showEditor) this.setContent();
+
+          // this.editor.vditor.lute.SetJSRenderers({
+          //   renderers: {
+          //     renderLink: (node, entering) => {
+          //       console.log(node);
+          //       if (entering) {
+          //         return [
+          //           `<a href='https://youtube.com'>${node.Text()}`,
+          //           Lute.WalkContinue,
+          //         ];
+          //       } else {
+          //         return ["</a>", Lute.WalkContinue];
+          //       }
+          //     },
+          //   },
+          // });
         },
         blur: () => {
           this.saveContent();

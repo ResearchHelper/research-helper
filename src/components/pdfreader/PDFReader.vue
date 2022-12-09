@@ -48,7 +48,10 @@ import PDFToolBar from "./PDFToolBar.vue";
 import LeftMenu from "./LeftMenu.vue";
 import RightMenu from "../RightMenu.vue";
 
-import { PDFApplication, AnnotationType } from "src/api/pdfreader/pdfreader";
+import {
+  PDFApplication,
+  AnnotationType,
+} from "src/backend/pdfreader/pdfreader";
 import { usePDFStateStore } from "src/stores/pdfState";
 import { useStateStore } from "src/stores/appState";
 import { useAnnotStore } from "src/stores/annotStore";

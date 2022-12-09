@@ -10,7 +10,7 @@ import {
   deleteAnnotation,
   createAnnotation,
   AnnotationType,
-} from "src/api/pdfreader/annotation";
+} from "src/backend/pdfreader/annotation";
 
 const stateStore = useStateStore();
 

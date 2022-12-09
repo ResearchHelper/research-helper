@@ -10,6 +10,8 @@ TODO:
 [x] change style of pdf
 [x] left menu use expansion item instead of tab
 [x] right menu style changed
+[x] delete src/backend and rename src/api to src/backend
+[ ] double link in veditor
 
 content extractor
 [ ] make content extractor as online service

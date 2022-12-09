@@ -91,7 +91,7 @@ import {
   addNote,
   deleteNote,
   updateNote,
-} from "src/api/project/note";
+} from "src/backend/project/note";
 
 export default {
   setup() {

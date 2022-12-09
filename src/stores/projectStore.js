@@ -5,7 +5,7 @@ import {
   updateProject,
   getProject,
   getProjectsByFolderId,
-} from "src/api/project/project";
+} from "src/backend/project/project";
 
 export const useProjectStore = defineStore("projectStore", {
   state: () => ({
