@@ -5,7 +5,6 @@ var db = new PouchDB("mydb");
 var remotedb = new PouchDB("http://localhost:3000/mydb");
 PouchDB.sync("mydb", "http://localhost:3000/mydb", {
   live: true,
-  retry: true,
 })
   .on("change", function (info) {
     // handle change

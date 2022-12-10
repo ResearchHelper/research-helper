@@ -37,6 +37,7 @@
       dense
       label="ArxivID"
       v-model="project.arxiv_id"
+      @blur="modifyInfo()"
     />
     <q-input
       borderless
@@ -44,6 +45,7 @@
       dense
       label="DOI"
       v-model="project.doi"
+      @blur="modifyInfo()"
     />
     <q-input
       borderless
@@ -51,6 +53,7 @@
       dense
       label="ISBN"
       v-model="project.isbn"
+      @blur="modifyInfo()"
     />
     <div
       style="position: absolute; width: 98%"
@@ -153,12 +156,18 @@ export default {
     async modifyInfo() {
       // update db and also update rev in this.project
       this.project = await updateProject(this.project);
+
+      // update table data
+      this.stateStore.modifiedProject = this.project;
     },
 
     async addTag() {
       // update ui
       this.project.tags.push(this.tag);
       this.tag = ""; // remove text in input
+
+      // update table data
+      this.stateStore.modifiedProject = this.project;
 
       // update db
       this.project = await updateProject(this.project);
@@ -167,6 +176,9 @@ export default {
     async removeTag(tag) {
       // update ui
       this.project.tags = this.project.tags.filter((t) => t != tag);
+
+      // update table data
+      this.stateStore.modifiedProject = this.project;
 
       // update db
       this.project = await updateProject(this.project);

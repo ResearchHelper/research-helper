@@ -15,7 +15,14 @@
 import Vditor from "vditor";
 import "vditor/dist/index.css";
 import { useStateStore } from "src/stores/appState";
-import { loadNote, saveNote, getAllNotes } from "src/backend/project/note";
+import {
+  loadNote,
+  saveNote,
+  getAllNotes,
+  updateNote,
+  getNote,
+  uploadImage,
+} from "src/backend/project/note";
 import { getAllProjects, getProject } from "src/backend/project/project";
 
 export default {
@@ -40,9 +47,6 @@ export default {
   async mounted() {
     if (!!this.stateStore.workingNoteId) this.showEditor = true;
     this.initEditor();
-    // used to filter stuff
-    this.projects = await getAllProjects();
-    this.notes = await getAllNotes();
   },
 
   watch: {
@@ -111,12 +115,32 @@ export default {
           // dark theme, dark content theme, native code theme
           this.editor.setTheme("dark", "dark", "native");
           if (!!this.showEditor) this.setContent();
+          console.log(this.editor);
+        },
+        focus: () => {
+          // used to filter stuff
+          getAllProjects().then((projects) => (this.projects = projects));
+          getAllNotes().then((notes) => (this.notes = notes));
         },
         blur: () => {
           this.saveContent();
         },
         input: () => {
           this.changeLinks();
+        },
+        upload: {
+          accept: "image/*",
+          handler: (files) => {
+            for (let file of files) {
+              getNote(this.stateStore.workingNoteId).then((note) => {
+                uploadImage(note.projectId, file).then((uploaded) => {
+                  this.editor.insertValue(
+                    `![${uploaded.imgName}](${uploaded.imgPath})`
+                  );
+                });
+              });
+            }
+          },
         },
       });
     },
@@ -132,6 +156,28 @@ export default {
       // this will be called before unmount
       let content = this.editor.getValue();
       await saveNote(this.stateStore.workingNoteId, content);
+      await this.saveLinks();
+    },
+
+    async saveLinks() {
+      let note = await getNote(this.stateStore.workingNoteId);
+      note.links = [];
+      let parser = new DOMParser();
+      let html = parser.parseFromString(this.editor.getHTML(), "text/html");
+      let linkNodes = html.querySelectorAll("a");
+      for (let node of linkNodes) {
+        let link = node.getAttribute("href");
+        try {
+          new URL(link);
+          // this is a valid url, do nothing
+        } catch (error) {
+          // this is an invalid url, might be an id
+          if (!link.includes(".")) {
+            note.links.push(link);
+          }
+        }
+      }
+      updateNote(this.stateStore.workingNoteId, { links: note.links });
     },
 
     async clickLink(linkNode) {
@@ -140,20 +186,25 @@ export default {
       let link = linkNode.querySelector(
         "span.vditor-ir__marker--link"
       ).innerText;
-      // we just want the document, both getProject or getNote are good
-      let doc = await getProject(link);
-      if (doc.dataType == "note") {
-        this.stateStore.openProject(doc.projectId);
-        this.stateStore.workingNoteId = doc._id;
-      } else if (doc.dataType == "project") {
-        this.stateStore.openProject(doc._id);
+
+      try {
+        new URL(link);
+        // valid external url, do nothing
+      } catch (error) {
+        // we just want the document, both getProject or getNote are good
+        let doc = await getProject(link);
+        if (doc.dataType == "note") {
+          this.stateStore.openProject(doc.projectId);
+          this.stateStore.workingNoteId = doc._id;
+        } else if (doc.dataType == "project") {
+          this.stateStore.openProject(doc._id);
+        }
       }
     },
 
     changeLinks() {
       let vditor = document.getElementById("vditor");
       let linkNodes = vditor.querySelectorAll("[data-type='a']");
-      console.log("changing link nodes");
       for (let linkNode of linkNodes) {
         linkNode.onclick = () => this.clickLink(linkNode);
       }

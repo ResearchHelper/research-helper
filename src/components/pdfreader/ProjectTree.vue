@@ -130,13 +130,11 @@ export default {
     "stateStore.workingProjectId"(projectId, _) {
       this.selected = projectId;
       this.expanded.push(this.selected);
-      console.log("setting project to", projectId);
       this.getProjectTree();
     },
 
     "stateStore.workingNoteId"(noteId, _) {
       if (!!!noteId) return;
-      console.log("setting note to", noteId);
       this.selected = noteId;
     },
   },
@@ -195,7 +193,6 @@ export default {
       } else {
         // change projectId when closing currently working project
         if (projectId == this.stateStore.workingProjectId) {
-          console.log("closing", projectId);
           this.stateStore.workingProjectId = this.projects[0]._id;
         }
       }
@@ -227,7 +224,8 @@ export default {
 
       // central store
       // if parent.children = [], workingNote=undefined
-      this.stateStore.workingNoteId = parent.children[0]._id;
+      this.stateStore.workingNoteId =
+        parent.children.length > 0 ? parent.children[0]._id : "";
     },
 
     setRenameNote(node) {

@@ -1,6 +1,7 @@
 import { db } from "../database";
 import { useStateStore } from "src/stores/appState";
 import { v4 as uuidv4 } from "uuid";
+import { Buffer } from "buffer";
 
 const fs = window.fs;
 const path = window.path;
@@ -20,7 +21,7 @@ async function addNote(projectId) {
     _id: noteId,
     dataType: "note",
     projectId: projectId,
-    links: { forward: [], backward: [] },
+    links: [],
     label: "New Note",
     path: filePath,
   };
@@ -39,6 +40,10 @@ async function updateNote(noteId, data) {
     note[prop] = data[prop];
   }
   await db.put(note);
+}
+
+async function getNote(noteId) {
+  return await db.get(noteId);
 }
 
 async function getNotes(projectId) {
@@ -88,12 +93,37 @@ async function saveNote(noteId, content) {
   fs.writeFileSync(notePath, content);
 }
 
+/**
+ * Upload image and save it under the same project folder
+ * @param {String} projectId
+ * @param {File} file
+ */
+async function uploadImage(projectId, file) {
+  if (!file.type.includes("image")) return;
+
+  try {
+    let imgType = path.extname(file.name); // .png
+    let imgName = uuidv4() + imgType;
+    let imgFolder = path.join(storagePath, "projects", projectId, "img");
+    let imgPath = path.join(imgFolder, imgName);
+    if (!fs.existsSync(imgFolder)) fs.mkdirSync(imgFolder);
+
+    let arrayBuffer = await file.arrayBuffer();
+    fs.writeFileSync(imgPath, Buffer.from(arrayBuffer));
+    return { imgName: imgName, imgPath: imgPath };
+  } catch (error) {
+    console.log(error);
+  }
+}
+
 export {
   addNote,
   deleteNote,
   updateNote,
+  getNote,
   getNotes,
   getAllNotes,
   loadNote,
   saveNote,
+  uploadImage,
 };
