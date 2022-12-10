@@ -50,12 +50,12 @@ async function addProject(file) {
 
 /**
  *
- * @param {String} folderId
- * @param {Object} project
+ * @param {String} projectId
  * @param {Boolean} deleteFromDB
  */
-async function deleteProject(project, deleteFromDB) {
+async function deleteProject(projectId, deleteFromDB) {
   try {
+    let project = await db.get(projectId);
     if (deleteFromDB) {
       // remove from db
       await db.remove(project);
@@ -83,8 +83,9 @@ async function deleteProject(project, deleteFromDB) {
   }
 }
 
-function updateProject(project) {
-  return db.put(project);
+async function updateProject(project) {
+  let result = await db.put(project);
+  return await db.get(result.id);
 }
 
 function getProject(projectId) {
@@ -100,29 +101,12 @@ async function getAllProjects() {
   return result.docs;
 }
 
-async function findProjectsByTitle(key) {
-  let re = new RegExp(key, "i");
-  console.log(re);
-  let result = await db.find({
-    selector: {
-      dataType: "project",
-      title: { $regex: re },
-    },
-  });
-  return result.docs;
-}
-
 /**
  * Get corresponding projects given their ids
  * @param {String} folderId
  * @returns {Array} projects
  */
 async function getProjectsByFolderId(folderId) {
-  // await db.createIndex({
-  //   index: {
-  //     fields: ["folderIds"],
-  //   },
-  // });
   let result = await db.find({
     selector: {
       folderIds: { $in: [folderId] },
@@ -138,6 +122,5 @@ export {
   updateProject,
   getProjectsByFolderId,
   getProject,
-  findProjectsByTitle,
   getAllProjects,
 };

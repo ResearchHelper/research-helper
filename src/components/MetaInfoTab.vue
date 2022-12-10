@@ -13,7 +13,7 @@
       dense
       label="Title"
       v-model="project.title"
-      @blur="modifyInfo('title')"
+      @blur="modifyInfo()"
     />
     <q-input
       borderless
@@ -21,7 +21,7 @@
       dense
       label="Author(s)"
       v-model="project.author"
-      @blur="modifyInfo('author')"
+      @blur="modifyInfo()"
     />
     <q-input
       borderless
@@ -29,7 +29,7 @@
       type="textarea"
       label="Abstract"
       v-model="project.abstract"
-      @blur="modifyInfo('abstract')"
+      @blur="modifyInfo()"
     />
     <q-input
       borderless
@@ -102,13 +102,12 @@
 
 <script>
 import { useStateStore } from "src/stores/appState";
-import { useProjectStore } from "src/stores/projectStore";
+import { getProject, updateProject } from "src/backend/project/project";
 
 export default {
   setup() {
     const stateStore = useStateStore();
-    const projectStore = useProjectStore();
-    return { stateStore, projectStore };
+    return { stateStore };
   },
 
   data() {
@@ -123,92 +122,83 @@ export default {
   mounted() {
     let projectId = "";
     if (this.stateStore.currentPage == "library") {
-      if (!!!this.projectStore.selectedProject) return;
-      projectId = this.projectStore.selectedProject._id;
+      projectId = this.stateStore.selectedProjectId;
     } else if (this.stateStore.currentPage == "reader") {
-      projectId = this.projectStore.workingProject._id;
+      projectId = this.stateStore.workingProjectId;
     }
 
     this.getInfo(projectId);
   },
 
   watch: {
-    "projectStore.selectedProject._id"(projectId, _) {
+    "stateStore.selectedProjectId"(projectId, _) {
       this.getInfo(projectId);
     },
   },
 
   methods: {
     async getInfo(projectId) {
-      this.project = await this.projectStore.get(projectId);
-      this.relatedProjects = await this.projectStore.getRelatedProjects(
-        this.project.related
-      );
+      if (!!!projectId) return;
+      this.project = await getProject(projectId);
+      await this.getRelatedProjects(this.project.related);
     },
 
-    async modifyInfo(prop) {
-      // use [prop] to set variable key
-      await this.projectStore.update(this.project._id, {
-        [prop]: this.project[prop],
-      });
+    async getRelatedProjects(related) {
+      this.relatedProjects = [];
+      for (let projectId of related) {
+        this.relatedProjects.push(await getProject(projectId));
+      }
+    },
+
+    async modifyInfo() {
+      // update db and also update rev in this.project
+      this.project = await updateProject(this.project);
     },
 
     async addTag() {
+      // update ui
       this.project.tags.push(this.tag);
-      await this.projectStore.update(this.project._id, {
-        tags: this.project.tags,
-      });
+      this.tag = ""; // remove text in input
 
-      // remove texts in input
-      this.tag = "";
+      // update db
+      this.project = await updateProject(this.project);
     },
 
     async removeTag(tag) {
+      // update ui
       this.project.tags = this.project.tags.filter((t) => t != tag);
-      await this.projectStore.update(this.project._id, {
-        tags: this.project.tags,
-      });
+
+      // update db
+      this.project = await updateProject(this.project);
     },
 
     async addRelated() {
       // update related of current project
       this.project.related.push(this.relatedProjectId);
-      this.projectStore.update(this.project._id, {
-        related: this.project.related,
-      });
+      this.project = await updateProject(this.project);
 
       // update related of the related project
-      let relatedProject = await this.projectStore.get(this.relatedProjectId);
+      let relatedProject = await getProject(this.relatedProjectId);
       relatedProject.related.push(this.project._id);
-      this.projectStore.update(this.relatedProjectId, {
-        related: relatedProject.related,
-      });
+      relatedProject = await updateProject(relatedProject);
 
       this.relatedProjectId = "";
-      this.relatedProjects = await this.projectStore.getRelatedProjects(
-        this.project.related
-      );
+      await this.getRelatedProjects(this.project.related);
     },
 
     async removeRelated(relatedProject) {
       this.project.related = this.project.related.filter(
         (id) => id != relatedProject._id
       );
-      await this.projectStore.update(this.project._id, {
-        related: this.project.related,
-      });
+      this.project = await updateProject(this.project);
 
-      relatedProject = await this.projectStore.get(relatedProject._id);
+      relatedProject = await getProject(relatedProject._id);
       relatedProject.related = relatedProject.related.filter(
         (id) => id != this.project._id
       );
-      await this.projectStore.update(relatedProject._id, {
-        related: relatedProject.related,
-      });
+      relatedProject = await updateProject(relatedProject);
 
-      this.relatedProjects = await this.projectStore.getRelatedProjects(
-        this.project.related
-      );
+      await this.getRelatedProjects(this.project.related);
     },
 
     clickRelated(project) {
@@ -218,7 +208,7 @@ export default {
         this.stateStore.setCurrentPage("library");
       }
       this.stateStore.selectedFolderId = "library";
-      this.projectStore.selectedProject = project;
+      this.stateStore.selectedProjectId = project._id;
     },
   },
 };

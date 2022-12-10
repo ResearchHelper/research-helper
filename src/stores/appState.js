@@ -27,10 +27,13 @@ export const useStateStore = defineStore("stateStore", {
     // projects
     selectedProjectId: "", // select from tableview
     workingProjectId: "", // select from projectTree
-    openedProjects: [], //for projectTree
+    openedProjectIds: [], //for projectTree
+
+    modifiedProject: null, // data send from metainfo pane to table
+    selectedProjectIndex: null, // for faster modification
 
     // note
-    workingNote: null,
+    workingNoteId: null,
   }),
 
   actions: {
@@ -54,12 +57,8 @@ export const useStateStore = defineStore("stateStore", {
       this.rightMenuMode = null;
     },
 
-    /**
-     * Set the mode of right menu
-     * mode can be "infoPane" or "noteEditor"
-     * @param {String} mode
-     */
     setRightMenuMode(mode) {
+      // mode can be "infoPane" or "noteEditor"
       this.rightMenuMode = mode;
     },
 
@@ -70,6 +69,12 @@ export const useStateStore = defineStore("stateStore", {
     setCurrentPage(page) {
       if (page == this.currentPage) this.toggleLeftMenu();
       this.currentPage = page;
+    },
+
+    openProject(projectId) {
+      this.workingProjectId = projectId;
+      if (!this.openedProjectIds.includes(projectId))
+        this.openedProjectIds.push(projectId);
     },
   },
 });

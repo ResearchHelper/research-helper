@@ -64,12 +64,12 @@ async function getAllNotes() {
 
 /**
  * Load note content as markdown string
- * @param {string} projectId
  * @param {string} noteId
  * @returns {string} content
  */
-function loadNote(projectId, noteId) {
-  let projectPath = path.join(storagePath, "projects", projectId);
+async function loadNote(noteId) {
+  let note = await db.get(noteId);
+  let projectPath = path.join(storagePath, "projects", note.projectId);
   let notePath = path.join(projectPath, noteId + ".md");
   let content = "";
   if (fs.existsSync(notePath)) content = fs.readFileSync(notePath, "utf8");
@@ -78,12 +78,12 @@ function loadNote(projectId, noteId) {
 
 /**
  * Save markdown content to disk
- * @param {string} projectId
  * @param {string} noteId
  * @param {string} content
  */
-function saveNote(projectId, noteId, content) {
-  let projectPath = path.join(storagePath, "projects", projectId);
+async function saveNote(noteId, content) {
+  let note = await db.get(noteId);
+  let projectPath = path.join(storagePath, "projects", note.projectId);
   let notePath = path.join(projectPath, noteId + ".md");
   fs.writeFileSync(notePath, content);
 }

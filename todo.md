@@ -1,4 +1,5 @@
 FIXME:
+[ ] table is not updated when metainfo is updated
 [x] create library folder when user first enter the app
 [x] wait until the projectTree is ready, then select what we need
 
@@ -9,6 +10,7 @@ TODO:
 [x] hint in veditor
 [x] return a list of projects to hint
 [x] return a list of notes to hint
+[ ] add x besides project to close it
 [ ] no need record backwardLinks, remove that from db
 
 content extractor

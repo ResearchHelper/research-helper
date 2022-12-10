@@ -4,7 +4,7 @@
     id="vditor"
   ></div>
   <div
-    v-if="!!!projectStore.workingNote"
+    v-if="!!!stateStore.workingNoteId"
     :ripple="false"
     @click="initEditor"
   >
@@ -12,19 +12,18 @@
   </div>
 </template>
 <script>
-import { useStateStore } from "src/stores/appState";
-import { useProjectStore } from "src/stores/projectStore";
-import { loadNote, saveNote, getAllNotes } from "src/backend/project/note";
 import Vditor from "vditor";
 import "vditor/dist/index.css";
+import { useStateStore } from "src/stores/appState";
+import { loadNote, saveNote, getAllNotes } from "src/backend/project/note";
+import { getAllProjects, getProject } from "src/backend/project/project";
 
 export default {
   props: { hasToolbar: Boolean },
 
   setup() {
     const stateStore = useStateStore();
-    const projectStore = useProjectStore();
-    return { stateStore, projectStore, loadNote, saveNote };
+    return { stateStore, loadNote, saveNote };
   },
 
   data() {
@@ -39,16 +38,16 @@ export default {
   },
 
   async mounted() {
-    if (!!this.projectStore.workingNote) this.showEditor = true;
+    if (!!this.stateStore.workingNoteId) this.showEditor = true;
     this.initEditor();
     // used to filter stuff
-    this.projects = await this.projectStore.getAll();
+    this.projects = await getAllProjects();
     this.notes = await getAllNotes();
   },
 
   watch: {
-    "projectStore.workingNote"(newNote, oldNote) {
-      if (!!newNote) {
+    "stateStore.workingNoteId"(noteId, _) {
+      if (!!noteId) {
         if (!!!this.showEditor) this.showEditor = true;
         this.setContent();
       } else {
@@ -122,19 +121,17 @@ export default {
       });
     },
 
-    setContent() {
-      let note = this.projectStore.workingNote;
-      let content = loadNote(note.projectId, note._id);
+    async setContent() {
+      let content = await loadNote(this.stateStore.workingNoteId);
       this.editor.setValue(content);
       this.changeLinks();
     },
 
-    saveContent() {
+    async saveContent() {
       // save the content when it's blur
       // this will be called before unmount
       let content = this.editor.getValue();
-      let note = this.projectStore.workingNote;
-      saveNote(note.projectId, note._id, content);
+      await saveNote(this.stateStore.workingNoteId, content);
     },
 
     async clickLink(linkNode) {
@@ -143,12 +140,13 @@ export default {
       let link = linkNode.querySelector(
         "span.vditor-ir__marker--link"
       ).innerText;
-      let doc = await this.projectStore.get(link);
+      // we just want the document, both getProject or getNote are good
+      let doc = await getProject(link);
       if (doc.dataType == "note") {
-        await this.projectStore.setWorkingProject(doc.projectId);
-        this.projectStore.workingNote = doc;
+        this.stateStore.openProject(doc.projectId);
+        this.stateStore.workingNoteId = doc._id;
       } else if (doc.dataType == "project") {
-        this.projectStore.setWorkingProject(doc._id);
+        this.stateStore.openProject(doc._id);
       }
     },
 

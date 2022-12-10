@@ -55,7 +55,7 @@ import {
 import { usePDFStateStore } from "src/stores/pdfState";
 import { useStateStore } from "src/stores/appState";
 import { useAnnotStore } from "src/stores/annotStore";
-import { useProjectStore } from "src/stores/projectStore";
+import { getProject } from "src/backend/project/project";
 
 export default {
   components: { PDFToolBar, LeftMenu, RightMenu },
@@ -64,8 +64,7 @@ export default {
     const stateStore = useStateStore();
     const annotStore = useAnnotStore();
     const pdfState = usePDFStateStore();
-    const projectStore = useProjectStore();
-    return { stateStore, annotStore, pdfState, projectStore };
+    return { stateStore, annotStore, pdfState };
   },
 
   data() {
@@ -127,7 +126,7 @@ export default {
       }
     });
 
-    let project = this.projectStore.workingProject;
+    let project = await getProject(this.stateStore.workingProjectId);
     await this.pdfState.getPDFState(project._id);
     await this.annotStore.init(project._id);
     await this.pdfApp.loadPDF(project.path);
@@ -135,10 +134,11 @@ export default {
   },
 
   watch: {
-    "projectStore.workingProject": {
-      async handler(project, _) {
+    "stateStore.workingProjectId": {
+      async handler(projectId, _) {
         if (this.ready) {
           this.ready = false; // don't save things until the document is loaded
+          let project = await getProject(this.stateStore.workingProjectId);
           await this.pdfState.getPDFState(project._id);
           await this.annotStore.init(project._id);
           await this.pdfApp.loadPDF(project.path);
