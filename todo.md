@@ -2,6 +2,12 @@ FIXME:
 [x] table is not updated when metainfo is updated
 [x] create library folder when user first enter the app
 [x] wait until the projectTree is ready, then select what we need
+[x] annotation card bgcolor follows annotation color
+[x] annotation list shows math after confirm
+[x] able to change annot card color
+[x] double click annot card to edit
+[x] edit content = prv content
+[x] live rendering math content in comment
 
 TODO:
 [x] intercept link click event in vditor
@@ -20,8 +26,6 @@ TODO:
 veditor
 [x] paste image data too long
 [x] upload image
-[ ] figure out how vditor gets the image in dev mode, the base_url http://localhost:9300 is getting in the way. In production mode it is okay.
-[ ] in a separate window, like zotero
 
 content extractor
 [ ] make content extractor as online service
@@ -29,6 +33,10 @@ content extractor
 IMPROVE:
 pouchdb
 [x] create all neccessary index in db.js instead of each file
+
+vditor
+[ ] able to open it in a separate window, like zotero
+[ ] figure out how vditor gets the image in dev mode, the base_url http://localhost:9300 is getting in the way. In production mode it is okay.
 
 highlight annotation
 [ ] make the join rectangle algo more robust

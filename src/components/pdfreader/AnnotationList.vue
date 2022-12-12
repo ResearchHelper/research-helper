@@ -1,25 +1,32 @@
 <template>
   <!-- systembar: 32px, tab: 36px  -->
   <q-scroll-area style="height: calc(100vh - 68px)">
-    <q-list class="q-px-xs">
+    <q-list
+      class="q-mx-sm"
+      id="annotationList"
+    >
       <q-card
-        bordered
         v-for="annot in annotStore.annots"
         :key="annot._id"
+        bordered
+        class="q-my-sm"
         :class="{
           activeAnnotationCard: annot._id == annotStore.selectedAnnotId,
         }"
         @click="clickAnnotCard(annot._id)"
+        @dblclick="editAnnotation(annot._id)"
       >
-        <q-card-section class="q-py-none">
+        <q-card-section
+          :style="`background: ${annot.color}`"
+          class="q-py-none text-black"
+        >
           <div
             :annot-card-id="annot._id"
             class="row justify-between items-center"
           >
-            <p>
-              <span class="text-h6"> {{ annot.type.toUpperCase() }} </span>
-              {{ " page" + annot.pageNumber }}
-            </p>
+            <div>
+              {{ annot.type.toUpperCase() + " - page" + annot.pageNumber }}
+            </div>
 
             <q-btn
               dense
@@ -28,35 +35,61 @@
               icon="more_horiz"
             >
               <q-menu>
-                <q-list dense>
-                  <q-item
-                    clickable
-                    v-close-popup
-                    @click="editAnnotation(annot)"
-                  >
-                    Edit
-                  </q-item>
-                  <q-item
-                    clickable
-                    v-close-popup
+                <q-color
+                  v-close-popup
+                  no-header
+                  no-footer
+                  bordered
+                  default-view="palette"
+                  :palette="[
+                    '#FFFF00',
+                    '#019A9D',
+                    '#D9B801',
+                    '#E8045A',
+                    '#B2028A',
+                    '#2A0449',
+                  ]"
+                  v-model="annot.color"
+                  @update:model-value="
+                    annotStore.update(annot._id, { color: annot.color })
+                  "
+                />
+                <div class="row justify-end">
+                  <q-btn
+                    class="col-1 text-red"
+                    unelevated
+                    :ripple="false"
+                    icon="delete"
                     @click="annotStore.delete(annot._id)"
-                  >
-                    Delete
-                  </q-item>
-                </q-list>
+                  />
+                  <q-btn
+                    class="col-1"
+                    unelevated
+                    v-close-popup
+                    :ripple="false"
+                    icon="edit_note"
+                    @click="editAnnotation(annot._id)"
+                  />
+                </div>
               </q-menu>
             </q-btn>
           </div>
         </q-card-section>
         <q-separator />
         <div v-if="annot._id == editingAnnotId">
-          <div id="commentEditor"></div>
+          <pre
+            style="border: solid 1px white"
+            class="q-ma-none"
+            contenteditable
+            @input="(e) => liveRender(e, annot)"
+            >{{ annot.content }}</pre
+          >
           <div class="row justify-end">
             <q-btn
               dense
               flat
               :ripple="false"
-              @click="destroyEditor()"
+              @click="editingAnnotId = ''"
             >
               Cancel
             </q-btn>
@@ -69,18 +102,21 @@
               Confirm
             </q-btn>
           </div>
+          <q-separator />
         </div>
-        <!-- DO NOT use annot.comment -->
-        <!-- pouchdb fetch empty comment, maybe it is not working right -->
-        <div v-else>{{ annot.content }}</div>
+        <pre
+          :annot-content-id="annot._id"
+          class="q-ma-sm"
+          >{{ annot.content }}</pre
+        >
       </q-card>
     </q-list>
   </q-scroll-area>
 </template>
 
 <script>
-import Vditor from "vditor";
-import "vditor/dist/index.css";
+import renderMathInElement from "katex/dist/contrib/auto-render";
+import "katex/dist/katex.min.css";
 import { useStateStore } from "src/stores/appState";
 import { useAnnotStore } from "src/stores/annotStore";
 
@@ -89,6 +125,13 @@ export default {
     const stateStore = useStateStore();
     const annotStore = useAnnotStore();
     return { stateStore, annotStore };
+  },
+
+  mounted() {
+    let doms = document.querySelectorAll("[annot-content-id]");
+    for (let dom of doms) {
+      this.renderMath(dom);
+    }
   },
 
   data() {
@@ -112,6 +155,33 @@ export default {
   },
 
   methods: {
+    renderMath(dom) {
+      renderMathInElement(dom, {
+        delimiters: [
+          { left: "$$", right: "$$", display: true },
+          { left: "$", right: "$", display: false },
+          { left: "\\(", right: "\\)", display: false },
+          { left: "\\[", right: "\\]", display: true },
+        ],
+        ignoredTags: [
+          "script",
+          "noscript",
+          "style",
+          "textarea",
+          "code",
+          "option",
+        ],
+        throwOnError: false,
+      });
+    },
+
+    liveRender(e, annot) {
+      annot.content = e.target.innerText;
+      this.$nextTick(() => {
+        this.renderMath(this.renderingDOM);
+      });
+    },
+
     clickAnnotCard(annotId) {
       // a weird trick to trigger the watch in PDFReader.vue
       // so we can click on the already selected card to scroll into view
@@ -121,44 +191,22 @@ export default {
       });
     },
 
-    initEditor(content) {
-      let editorArea = document.getElementById("commentEditor");
-      this.editor = new Vditor(editorArea, {
-        toolbar: [],
-        lang: "en_US",
-        preview: {
-          math: {
-            inlineDigit: true,
-          },
-        },
-        placeholder: "Live Markdown editor + Latex supported!",
-        cache: {
-          enable: false,
-        },
-        after: () => {
-          this.editor.setValue(content);
-        },
-      });
-    },
-
-    destroyEditor() {
-      this.editingAnnotId = "";
-      this.editor.destroy();
-    },
-
-    editAnnotation(annot) {
-      this.editingAnnotId = annot._id;
-      setTimeout(() => {
-        this.initEditor(annot.content);
-      }, 100);
+    editAnnotation(annotId) {
+      this.editingAnnotId = annotId;
+      this.renderingDOM = document.querySelector(
+        `[annot-content-id='${annotId}']`
+      );
     },
 
     confirmAnnotation(annot) {
       // backend
-      this.annotStore.update(annot._id, { content: this.editor.getValue() });
+      this.annotStore.update(annot._id, { content: annot.content });
 
-      // destroy editor
-      this.destroyEditor();
+      // update ui
+      this.editingAnnotId = "";
+      this.renderMath(this.renderingDOM);
+      // render the math before making this dom null
+      this.renderingDOM = null;
     },
   },
 };
@@ -166,6 +214,6 @@ export default {
 
 <style>
 .activeAnnotationCard {
-  border: solid 2px cyan;
+  border: dashed 2px cyan;
 }
 </style>
