@@ -1,16 +1,19 @@
 <template>
   <div>
-    <ActionBar />
+    <ActionBar
+      @addProject="addProject"
+      ref="actionBar"
+    />
     <q-table
       class="stickyDynamic"
       virtual-scroll
       dense
       hide-bottom
       :columns="headers"
-      :rows="projectStore.projects"
+      :rows="projects"
       row-key="_id"
       :wrap-cells="true"
-      :filter="projectStore.searchString"
+      :filter="$refs.actionBar ? $refs.actionBar.searchString : ''"
       :filter-method="searchProject"
     >
       <template v-slot:body="props">
@@ -18,12 +21,10 @@
           style="cursor: pointer"
           :props="props"
           :class="{
-            'bg-primary':
-              !!projectStore.selectedProject &&
-              props.key == projectStore.selectedProject._id,
+            'bg-primary': props.key == stateStore.selectedProjectId,
           }"
-          @click="clickRow(props.row)"
-          @dblclick="dblclickRow(props.row)"
+          @click="clickProject(props.row, props.rowIndex)"
+          @dblclick="dblclickProject(props.row)"
           @contextmenu="toggleContextMenu(props.row)"
         >
           <q-td
@@ -47,7 +48,7 @@
               <q-item
                 clickable
                 v-close-popup
-                @click="dblclickRow"
+                @click="dblclickProject"
               >
                 <q-item-section>Open</q-item-section>
               </q-item>
@@ -64,14 +65,14 @@
                 v-if="stateStore.selectedFolderId != 'library'"
                 clickable
                 v-close-popup
-                @click="projectStore.delete(false)"
+                @click="deleteProject(false)"
               >
-                <q-item-section>Delete From Table</q-item-section>
+                <q-item-section>Delete From Folder</q-item-section>
               </q-item>
               <q-item
                 clickable
                 v-close-popup
-                @click="projectStore.delete(true)"
+                @click="deleteProject(true)"
               >
                 <q-item-section>Delete From DataBase</q-item-section>
               </q-item>
@@ -79,7 +80,7 @@
           </q-menu>
         </q-tr>
         <q-tr
-          v-show="!!projectStore.searchString"
+          v-show="!!$refs.actionBar.searchString"
           :props="props"
         >
           <div
@@ -97,7 +98,10 @@
 import ActionBar from "../components/ActionBar.vue";
 import { copyToClipboard } from "quasar";
 import { useStateStore } from "../stores/appState";
-import { useProjectStore } from "src/stores/projectStore";
+import {
+  getProjectsByFolderId,
+  deleteProject,
+} from "src/backend/project/project";
 
 export default {
   components: {
@@ -106,12 +110,13 @@ export default {
 
   setup() {
     const stateStore = useStateStore();
-    const projectStore = useProjectStore();
-    return { stateStore, projectStore };
+    return { stateStore };
   },
 
-  mounted() {
-    this.projectStore.getProjects(this.stateStore.selectedFolderId);
+  async mounted() {
+    this.projects = await getProjectsByFolderId(
+      this.stateStore.selectedFolderId
+    );
   },
 
   data() {
@@ -130,7 +135,9 @@ export default {
           align: "left",
         },
       ],
-      prvSelectedIndex: 0,
+      projects: [],
+
+      // for search
       showExpansion: false,
       expansionText: [],
     };
@@ -138,27 +145,53 @@ export default {
 
   watch: {
     "stateStore.selectedFolderId"(folderId, _) {
-      this.projectStore.getProjects(folderId);
+      getProjectsByFolderId(folderId).then(
+        (projects) => (this.projects = projects)
+      );
+    },
+
+    "stateStore.modifiedProject": {
+      handler(project, _) {
+        let index = this.stateStore.selectedProjectIndex;
+        this.projects[index] = project;
+      },
+      deep: true,
     },
   },
 
   methods: {
-    clickRow(row) {
-      this.projectStore.selectedProject = row;
+    addProject(project) {
+      // update db has been done in action bar
+      // update ui
+      this.projects.push(project);
     },
 
-    dblclickRow(row) {
-      this.projectStore.setWorkingProject(row);
+    deleteProject(deleteFromDB) {
+      // update db
+      deleteProject(this.stateStore.selectedProjectId, deleteFromDB);
+      // update ui
+      this.projects = this.projects.filter(
+        (p) => p._id != this.stateStore.selectedProjectId
+      );
+    },
+
+    clickProject(row, rowIndex) {
+      this.stateStore.selectedProjectId = row._id;
+      this.stateStore.selectedProjectIndex = rowIndex;
+    },
+
+    dblclickProject(row) {
+      this.stateStore.openProject(row._id);
       this.stateStore.setCurrentPage("reader");
     },
 
     toggleContextMenu(row) {
       this.showContextMenu = true;
-      this.clickRow(row);
+      this.clickProject(row);
     },
 
     async copyProjectId() {
-      await copyToClipboard(this.projectStore.selectedProject._id);
+      await copyToClipboard(this.stateStore.selectedProjectId);
     },
 
     searchProject(rows, terms, cols, getCellValue) {

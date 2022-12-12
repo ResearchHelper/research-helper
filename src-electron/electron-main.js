@@ -1,4 +1,4 @@
-import { app, BrowserWindow, nativeTheme } from "electron";
+import { app, BrowserWindow, nativeTheme, shell } from "electron";
 import { initialize, enable } from "@electron/remote/main";
 import path from "path";
 import os from "os";
@@ -65,4 +65,22 @@ app.on("activate", () => {
   if (mainWindow === null) {
     createWindow();
   }
+});
+
+// no new window is allowed to create
+app.on("web-contents-created", (e, webContents) => {
+  webContents.on("new-window", (event, url) => {
+    event.preventDefault();
+    if (process.env.DEV) {
+      // in dev mode, every incomplete link with have
+      // base_url http://localhost:port
+      url = url.replace(process.env.APP_URL + "/", "");
+    }
+    try {
+      new URL(url);
+      shell.openExternal(url); // a valid external url
+    } catch (error) {
+      // not a valid url, do nothing
+    }
+  });
 });

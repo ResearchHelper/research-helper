@@ -25,7 +25,7 @@ export const useAnnotStore = defineStore("annotStore", {
     async init(projectId) {
       this.projectId = projectId;
       try {
-        await createIndex();
+        // await createIndex();
         await this.getAnnots();
       } catch (err) {
         console.log(err);

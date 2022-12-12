@@ -21,8 +21,8 @@
     <q-input
       outlined
       dense
-      v-model="projectStore.searchString"
       placeholder="Search"
+      v-model="searchString"
     >
       <template v-slot:append>
         <q-icon
@@ -46,19 +46,24 @@
 
 <script>
 import { useStateStore } from "src/stores/appState";
-import { useProjectStore } from "src/stores/projectStore";
+import { addProject } from "src/backend/project/project";
 
 export default {
   setup() {
     const stateStore = useStateStore();
-    const projectStore = useProjectStore();
-    return { stateStore, projectStore };
+    return { stateStore };
+  },
+
+  data() {
+    return {
+      searchString: "",
+    };
   },
 
   methods: {
     async addRows(files) {
       for (let file of files) {
-        await this.projectStore.add(file);
+        this.$emit("addProject", await addProject(file));
       }
     },
   },

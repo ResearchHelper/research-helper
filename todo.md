@@ -1,29 +1,42 @@
 FIXME:
-[x] scroll to selected annotation
-[x] able to modify meta info both in library page and reading page, that means infoPane must independently get/set project infos without relying on the selectedProject
-[x] fixed the async await issue in pdfreader
-[x] open note from context menu after clicking an annotation deletes the content because the context menu blurs the editor
-[x] tags and related projects extend to full width but with ellipsis
+[x] table is not updated when metainfo is updated
+[x] create library folder when user first enter the app
+[x] wait until the projectTree is ready, then select what we need
+[x] annotation card bgcolor follows annotation color
+[x] annotation list shows math after confirm
+[x] able to change annot card color
+[x] double click annot card to edit
+[x] edit content = prv content
+[x] live rendering math content in comment
 
 TODO:
-[x] Note backend
-[x] change style of pdf
-[x] left menu use expansion item instead of tab
-[x] right menu style changed
-[x] delete src/backend and rename src/api to src/backend
-[ ] double link in veditor
+[x] intercept link click event in vditor
+[x] using the link click event to jump to corresponding file
+[x] forward link in vditor
+[x] hint in veditor
+[x] return a list of projects to hint
+[x] return a list of notes to hint
+[x] add x besides project to close it
+[x] no need record backwardLinks, remove that from db
+[x] find a way to distinguish external and internal links
+[x] update links in db
+[x] open external link in browser
+[x] update filter list when new note or new project is added
+
+veditor
+[x] paste image data too long
+[x] upload image
 
 content extractor
 [ ] make content extractor as online service
 
 IMPROVE:
 pouchdb
-[ ] create all neccessary index in db.js instead of each file
+[x] create all neccessary index in db.js instead of each file
 
-veditor
-[ ] in a separate window, like zotero
-[ ] paste image data too long
-[ ] upload image
+vditor
+[ ] able to open it in a separate window, like zotero
+[ ] figure out how vditor gets the image in dev mode, the base_url http://localhost:9300 is getting in the way. In production mode it is okay.
 
 highlight annotation
 [ ] make the join rectangle algo more robust

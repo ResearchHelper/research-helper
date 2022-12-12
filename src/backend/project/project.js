@@ -30,7 +30,7 @@ async function addProject(file) {
       path: dstPath,
     });
     project._id = projectId;
-    project.datatype = "project";
+    project.dataType = "project";
     project.type = "paper";
     project.path = dstPath;
     project.related = [];
@@ -50,12 +50,12 @@ async function addProject(file) {
 
 /**
  *
- * @param {String} folderId
- * @param {Object} project
+ * @param {String} projectId
  * @param {Boolean} deleteFromDB
  */
-async function deleteProject(project, deleteFromDB) {
+async function deleteProject(projectId, deleteFromDB) {
   try {
+    let project = await db.get(projectId);
     if (deleteFromDB) {
       // remove from db
       await db.remove(project);
@@ -83,12 +83,22 @@ async function deleteProject(project, deleteFromDB) {
   }
 }
 
-function updateProject(project) {
-  return db.put(project);
+async function updateProject(project) {
+  let result = await db.put(project);
+  return await db.get(result.id);
 }
 
 function getProject(projectId) {
   return db.get(projectId);
+}
+
+async function getAllProjects() {
+  let result = await db.find({
+    selector: {
+      dataType: "project",
+    },
+  });
+  return result.docs;
 }
 
 /**
@@ -97,11 +107,6 @@ function getProject(projectId) {
  * @returns {Array} projects
  */
 async function getProjectsByFolderId(folderId) {
-  await db.createIndex({
-    index: {
-      fields: ["folderIds"],
-    },
-  });
   let result = await db.find({
     selector: {
       folderIds: { $in: [folderId] },
@@ -117,4 +122,5 @@ export {
   updateProject,
   getProjectsByFolderId,
   getProject,
+  getAllProjects,
 };

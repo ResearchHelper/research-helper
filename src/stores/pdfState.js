@@ -56,7 +56,7 @@ export const usePDFStateStore = defineStore("pdfStateStore", {
       // get from backend
       try {
         let result = await db.find({
-          selector: { datatype: "pdf_state", projectId: this.projectId },
+          selector: { dataType: "pdf_state", projectId: this.projectId },
         });
 
         let state = result.docs[0];
@@ -89,7 +89,7 @@ export const usePDFStateStore = defineStore("pdfStateStore", {
     async savePDFState() {
       //save to backend
       let state = {
-        datatype: "pdf_state",
+        dataType: "pdf_state",
         projectId: this.projectId,
         pagesCount: this.pagesCount,
         currentPageNumber: this.currentPageNumber,

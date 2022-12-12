@@ -4,10 +4,12 @@ async function getFolderTree() {
   try {
     let result = await db.find({
       selector: {
-        datatype: "folder",
+        dataType: "folder",
       },
     });
     let docs = result.docs;
+
+    if (docs.length == 0) return [];
 
     // create a dict for later use
     let folders = {};
@@ -36,7 +38,7 @@ async function addFolder(parentId) {
       label: "New Folder",
       icon: "folder",
       children: [],
-      datatype: "folder",
+      dataType: "folder",
     };
     let result = await db.post(node);
     node = await db.get(result.id);
@@ -58,11 +60,11 @@ function updateFolder(node) {
 
 async function deleteFolder(folderId) {
   try {
-    await db.createIndex({
-      index: {
-        fields: ["children"],
-      },
-    });
+    // await db.createIndex({
+    //   index: {
+    //     fields: ["children"],
+    //   },
+    // });
 
     // delete from children of parent folder
     let result = await db.find({
@@ -76,7 +78,7 @@ async function deleteFolder(folderId) {
     // delete subfolders using dfs
     result = await db.find({
       selector: {
-        datatype: "folder",
+        dataType: "folder",
       },
     });
     let docs = result.docs;

@@ -82,9 +82,8 @@ export default {
 
   data() {
     return {
-      // selectedFolderId: "library",
       specialFolderIds: ["library"],
-      folders: [{ _id: "library" }],
+      folders: [],
       expandedKeys: ["library"],
 
       renamingFolderId: null,
@@ -93,6 +92,18 @@ export default {
 
   async mounted() {
     this.folders = await getFolderTree();
+    if (this.folders.length == 0) {
+      // create library folder for user if there is none
+      let library = {
+        _id: "library",
+        label: "Library",
+        icon: "home",
+        children: [],
+        dataType: "folder",
+      };
+      this.folders.push(library);
+      await updateFolder(library);
+    }
     this.stateStore.selectedFolderId = "library";
   },
 

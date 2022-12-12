@@ -75,29 +75,33 @@
         v-else
         style="width: 100%"
         class="ellipsis"
-        @click="selectItem(prop.key)"
+        @click="selectItem(prop.node)"
       >
         {{ prop.node.label }}
       </div>
+      <q-icon
+        v-if="prop.node.dataType == 'project'"
+        name="cancel"
+        @click="closeProject(prop.key)"
+      />
     </template>
   </q-tree>
 </template>
 
 <script>
 import { useStateStore } from "src/stores/appState";
-import { useProjectStore } from "src/stores/projectStore";
 import {
   getNotes,
   addNote,
   deleteNote,
   updateNote,
 } from "src/backend/project/note";
+import { getProject } from "src/backend/project/project";
 
 export default {
   setup() {
     const stateStore = useStateStore();
-    const projectStore = useProjectStore();
-    return { stateStore, projectStore };
+    return { stateStore };
   },
 
   data() {
@@ -112,30 +116,32 @@ export default {
     };
   },
 
-  mounted() {
-    this.getProjectTree();
-    if (!!this.projectStore.workingNote) {
-      this.selected = this.projectStore.workingNote._id;
+  async mounted() {
+    await this.getProjectTree();
+    if (!!this.stateStore.workingNoteId) {
+      this.selected = this.stateStore.workingNoteId;
     } else {
-      this.selected = this.projectStore.workingProject._id;
+      this.selected = this.stateStore.workingProjectId;
     }
-    this.expanded.push(this.projectStore.workingProject._id);
+    this.expanded.push(this.stateStore.workingProjectId);
   },
 
   watch: {
-    "projectStore.openedProjects": {
-      handler() {
-        this.getProjectTree();
-        this.selected = this.projectStore.workingProject._id;
-        this.expanded.push(this.selected);
-      },
-      deep: true,
+    "stateStore.workingProjectId"(projectId, _) {
+      this.selected = projectId;
+      this.expanded.push(this.selected);
+      this.getProjectTree();
+    },
+
+    "stateStore.workingNoteId"(noteId, _) {
+      if (!!!noteId) return;
+      this.selected = noteId;
     },
   },
 
   methods: {
     menuSwitch(node) {
-      if (node.datatype == "note") {
+      if (node.dataType == "note") {
         // show context menu for notes
         this.projectMenu = false;
       } else {
@@ -146,52 +152,48 @@ export default {
 
     async getProjectTree() {
       this.projects = [];
-      for (let p of this.projectStore.openedProjects) {
-        let notes = await getNotes(p._id);
-        let project = {
-          _id: p._id,
-          datatype: p.datatype,
-          label: p.title,
+      for (let projectId of this.stateStore.openedProjectIds) {
+        let project = await getProject(projectId);
+        let notes = await getNotes(project._id);
+        this.projects.push({
+          _id: project._id,
+          dataType: project.dataType,
+          label: project.title,
           children: notes,
-          path: p.path,
-        };
-        this.projects.push(project);
+          path: project.path,
+        });
       }
+      // set to current project after getting all projects
+      this.selected = this.stateStore.workingProjectId;
     },
 
-    selectItem(itemKey) {
-      // console.log("click:", itemKey);
+    selectItem(node) {
       // open the markdown file for editing or set to different project
-      this.selected = itemKey;
-      let node = this.$refs.tree.getNodeByKey(itemKey);
+      this.selected = node._id;
 
-      if (node.datatype == "note") {
+      if (node.dataType == "note") {
         this.stateStore.openRightMenu("noteEditor");
-        this.projectStore.workingNote = node;
-      } else {
-        // datatype == "project"
+        this.stateStore.workingNoteId = node._id;
+      } else if (node.dataType == "project") {
         if (this.stateStore.rightMenuSize > 0)
           this.stateStore.setRightMenuMode("infoPane");
-        this.projectStore.workingProject = node;
-        this.projectStore.workingNote = null;
-        this.expanded.push(itemKey);
+        this.stateStore.workingProjectId = node._id;
+        this.stateStore.workingNoteId = null;
+        this.expanded.push(node._id);
       }
     },
 
     closeProject(projectId) {
       // remove from opened projects
-      this.projectStore.openedProjects =
-        this.projectStore.openedProjects.filter(
-          (project) => project._id != projectId
-        );
+      this.stateStore.openedProjectIds =
+        this.stateStore.openedProjectIds.filter((id) => id != projectId);
 
-      if (this.projectStore.openedProjects.length == 0) {
+      if (this.stateStore.openedProjectIds.length == 0) {
         this.stateStore.setCurrentPage("library");
       } else {
-        // if this is workingProject, change it to something else
-        if (projectId == this.projectStore.workingProject._id) {
-          this.projectStore.workingProject =
-            this.projectStore.openedProjects[0];
+        // change projectId when closing currently working project
+        if (projectId == this.stateStore.workingProjectId) {
+          this.stateStore.workingProjectId = this.projects[0]._id;
         }
       }
     },
@@ -215,14 +217,15 @@ export default {
         (child) => child._id != node._id
       );
       if (parent.children.length == 0) {
-        this.selectItem(parent._id);
+        this.selectItem(parent);
       } else {
-        this.selectItem(parent.children[0]._id);
+        this.selectItem(parent.children[0]);
       }
 
       // central store
       // if parent.children = [], workingNote=undefined
-      this.projectStore.workingNote = parent.children[0];
+      this.stateStore.workingNoteId =
+        parent.children.length > 0 ? parent.children[0]._id : "";
     },
 
     setRenameNote(node) {
