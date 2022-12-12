@@ -25,10 +25,10 @@
           </div>
           <div>
             <q-tab
-              name="user"
-              icon="account_circle"
+              name="graphview"
+              icon="hub"
               :ripple="false"
-              @click="stateStore.setCurrentPage('user')"
+              @click="stateStore.setCurrentPage('graphview')"
             />
             <q-tab
               name="settings"
@@ -54,7 +54,7 @@
             <ReaderPage />
           </q-tab-panel>
 
-          <q-tab-panel name="user"> User Page </q-tab-panel>
+          <q-tab-panel name="graphview"> <GraphView /> </q-tab-panel>
           <q-tab-panel name="settings"> Settings Page </q-tab-panel>
         </q-tab-panels>
       </template>
@@ -68,6 +68,7 @@ import { useQuasar } from "quasar";
 import SystemBar from "../components/SystemBar.vue";
 import LibraryPage from "./LibraryPage.vue";
 import ReaderPage from "./ReaderPage.vue";
+import GraphView from "src/components/GraphView.vue";
 
 export default {
   setup() {
@@ -83,6 +84,7 @@ export default {
     SystemBar,
     LibraryPage,
     ReaderPage,
+    GraphView,
   },
 };
 </script>
