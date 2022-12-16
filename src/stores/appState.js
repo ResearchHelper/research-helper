@@ -14,15 +14,18 @@ export const useStateStore = defineStore("stateStore", {
     currentPage: "library",
 
     // layout
-    leftMenuSize: 20,
+    leftMenuSize: 0,
     rightMenuSize: 0,
 
-    // tree view
-    selectedFolderId: "",
+    // leftMenu
+    leftMenuMode: null,
 
     // rightMenu
     rightMenuTab: "metaInfoTab",
     rightMenuMode: null, // "infoPane" or "noteEditor"
+
+    // tree view
+    selectedFolderId: "",
 
     // projects
     selectedProjectId: "", // select from tableview

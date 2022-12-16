@@ -4,7 +4,7 @@
     otherwise autogrow extends to full-height -->
   <q-scroll-area
     v-if="!!stateStore.rightMenuSize && !!project"
-    style="height: calc(100vh - 68px)"
+    style="height: calc(100vh - 32px - 36px - 36px)"
     class="q-mx-sm"
   >
     <q-input

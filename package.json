@@ -16,6 +16,7 @@
     "axios": "^0.21.1",
     "cytoscape": "^3.23.0",
     "events": "^3.3.0",
+    "golden-layout": "^2.6.0",
     "katex": "^0.16.4",
     "pdfjs-dist": "2.15.349",
     "pinia": "^2.0.11",

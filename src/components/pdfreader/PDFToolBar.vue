@@ -177,7 +177,7 @@
       toggle-color="primary"
       :options="[
         { value: 'infoPane', icon: 'list' },
-        { value: 'noteEditor', icon: 'sticky_note_2' },
+        // { value: 'noteEditor', icon: 'sticky_note_2' },
       ]"
     />
   </q-toolbar>

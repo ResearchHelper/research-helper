@@ -1,94 +1,113 @@
 <template>
-  <q-tree
-    ref="tree"
+  <q-expansion-item
     dense
-    no-transition
-    no-selection-unset
-    selected-color="primary"
-    :nodes="projects"
-    node-key="_id"
-    v-model:selected="selected"
-    v-model:expanded="expanded"
+    dense-toggle
+    expand-separator
+    default-opened
+    label="Projects"
   >
-    <template v-slot:default-header="prop">
-      <q-menu
-        touch-position
-        context-menu
-        @before-show="menuSwitch(prop.node)"
-      >
-        <!-- menu for project -->
-        <q-list
-          dense
-          v-if="projectMenu"
+    <q-tree
+      ref="tree"
+      dense
+      no-transition
+      no-selection-unset
+      selected-color="primary"
+      no-nodes-label="No working projects"
+      :nodes="projects"
+      node-key="_id"
+      v-model:selected="selected"
+      v-model:expanded="expanded"
+    >
+      <template v-slot:default-header="prop">
+        <q-menu
+          touch-position
+          context-menu
+          @before-show="menuSwitch(prop.node)"
         >
-          <q-item
-            clickable
-            v-close-popup
-            @click="addNote(prop.node)"
+          <!-- menu for project -->
+          <q-list
+            dense
+            v-if="projectMenu"
           >
-            <q-item-section> Add Note </q-item-section>
-          </q-item>
-          <q-separator />
-          <q-item
-            clickable
-            v-close-popup
-            @click="closeProject(prop.key)"
-          >
-            <q-item-section> Close Project </q-item-section>
-          </q-item>
-        </q-list>
+            <q-item
+              clickable
+              v-close-popup
+              @click="addNote(prop.node)"
+            >
+              <q-item-section> Add Note </q-item-section>
+            </q-item>
+            <q-separator />
+            <q-item
+              clickable
+              v-close-popup
+              @click="closeProject(prop.key)"
+            >
+              <q-item-section> Close Project </q-item-section>
+            </q-item>
+          </q-list>
 
-        <!-- menu for notes -->
-        <q-list
+          <!-- menu for notes -->
+          <q-list
+            dense
+            v-else
+          >
+            <q-item
+              clickable
+              v-close-popup
+              @click="setRenameNote(prop.node)"
+            >
+              <q-item-section> Rename </q-item-section>
+            </q-item>
+            <q-item
+              clickable
+              v-close-popup
+              @click="deleteNote(prop.node)"
+            >
+              <q-item-section> Delete </q-item-section>
+            </q-item>
+          </q-list>
+        </q-menu>
+        <q-input
+          v-if="prop.node == renamingNote"
+          square
+          outlined
           dense
-          v-else
-        >
-          <q-item
-            clickable
-            v-close-popup
-            @click="setRenameNote(prop.node)"
-          >
-            <q-item-section> Rename </q-item-section>
-          </q-item>
-          <q-item
-            clickable
-            v-close-popup
-            @click="deleteNote(prop.node)"
-          >
-            <q-item-section> Delete </q-item-section>
-          </q-item>
-        </q-list>
-      </q-menu>
-      <q-input
-        v-if="prop.node == renamingNote"
-        square
-        outlined
-        dense
-        ref="renameInput"
-        v-model="prop.node.label"
-        @keydown.enter="renameNote"
-        @blur="renameNote"
-      />
-      <!-- use width: 100% such that click trailing empty space 
+          ref="renameInput"
+          v-model="prop.node.label"
+          @keydown.enter="renameNote"
+          @blur="renameNote"
+        />
+        <!-- use width: 100% such that click trailing empty space 
         of the node still fires click event -->
-      <div
-        v-else
-        style="width: 100%"
-        class="ellipsis"
-        @click="selectItem(prop.node)"
-      >
-        {{ prop.node.label }}
-      </div>
-      <q-icon
-        v-if="prop.node.dataType == 'project'"
-        name="cancel"
-        @click="closeProject(prop.key)"
-      />
-    </template>
-  </q-tree>
+        <div
+          v-else
+          style="width: 100%"
+          class="ellipsis"
+          @click="selectItem(prop.node)"
+        >
+          {{ prop.node.label }}
+        </div>
+        <q-icon
+          v-if="prop.node.dataType == 'project'"
+          name="cancel"
+          @click="closeProject(prop.key)"
+        />
+      </template>
+    </q-tree>
+  </q-expansion-item>
+  <q-expansion-item
+    dense
+    dense-toggle
+    expand-separator
+    label="Graph view"
+  >
+    <GraphView />
+  </q-expansion-item>
 </template>
 
 <script>
+import GraphView from "./GraphView.vue";
+
 import { useStateStore } from "src/stores/appState";
 import {
   getNotes,
@@ -99,6 +118,8 @@ import {
 import { getProject } from "src/backend/project/project";
 
 export default {
+  components: { GraphView },
+
   setup() {
     const stateStore = useStateStore();
     return { stateStore };

@@ -1,5 +1,5 @@
 <template>
-  <!-- <SystemBar /> -->
+  <SystemBar />
   <q-layout view="lHh Lpr lFf">
     <q-page-container>
       <router-view />
@@ -9,13 +9,13 @@
 
 <script>
 import { defineComponent, ref } from "vue";
-// import SystemBar from "src/components/SystemBar.vue";
+import SystemBar from "src/components/SystemBar.vue";
 
 export default defineComponent({
   name: "MainLayout",
 
-  // components: {
-  //   SystemBar,
-  // },
+  components: {
+    SystemBar,
+  },
 });
 </script>

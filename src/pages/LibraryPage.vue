@@ -1,11 +1,11 @@
 <template>
   <div>
-    <!-- systembarheight: 32px, actionbarheight: 50px -->
+    <!-- systembarheight: 32px, tab: 36px actionbarheight: 50px -->
     <q-splitter
-      style="height: calc(100vh - 32px)"
+      style="height: calc(100vh - 32px - 36px)"
       :limits="[0, 30]"
       separator-class="separator"
-      v-model="stateStore.leftMenuSize"
+      v-model="leftMenuSize"
     >
       <template v-slot:before>
         <TreeView />
@@ -46,6 +46,12 @@ export default {
     TableView,
     TreeView,
     RightMenu,
+  },
+
+  data() {
+    return {
+      leftMenuSize: 20,
+    };
   },
 };
 </script>

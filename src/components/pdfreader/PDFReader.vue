@@ -1,5 +1,5 @@
 <template>
-  <q-splitter
+  <!-- <q-splitter
     style="height: calc(100vh - 32px)"
     v-model="stateStore.leftMenuSize"
     :limits="[0, 30]"
@@ -7,45 +7,46 @@
     <template v-slot:before>
       <LeftMenu />
     </template>
-    <template v-slot:after>
-      <q-splitter
-        v-model="stateStore.rightMenuSize"
-        reverse
-        :limits="[0, 60]"
-      >
-        <template v-slot:before>
-          <PDFToolBar
-            style="position: absolute; top: 0"
-            @changePageNumber="changePageNumber"
-            @changeScale="changeScale"
-            @searchText="searchText"
-            @changeMatch="changeMatch"
-          />
+    <template v-slot:after> -->
+  <q-splitter
+    style="height: calc(100vh - 32px)"
+    v-model="stateStore.rightMenuSize"
+    reverse
+    :limits="[0, 60]"
+  >
+    <template v-slot:before>
+      <PDFToolBar
+        style="position: absolute; top: 0"
+        @changePageNumber="changePageNumber"
+        @changeScale="changeScale"
+        @searchText="searchText"
+        @changeMatch="changeMatch"
+      />
 
-          <div id="viewerContainer">
-            <div
-              id="viewer"
-              class="pdfViewer"
-            ></div>
-          </div>
-          <div id="peekContainer">
-            <div
-              id="peakViewer"
-              class="pdfViewer"
-            ></div>
-          </div>
-        </template>
-        <template v-slot:after>
-          <RightMenu />
-        </template>
-      </q-splitter>
+      <div id="viewerContainer">
+        <div
+          id="viewer"
+          class="pdfViewer"
+        ></div>
+      </div>
+      <div id="peekContainer">
+        <div
+          id="peakViewer"
+          class="pdfViewer"
+        ></div>
+      </div>
+    </template>
+    <template v-slot:after>
+      <RightMenu />
     </template>
   </q-splitter>
+  <!-- </template>
+  </q-splitter> -->
 </template>
 
 <script>
 import PDFToolBar from "./PDFToolBar.vue";
-import LeftMenu from "./LeftMenu.vue";
+// import LeftMenu from "./LeftMenu.vue";
 import RightMenu from "../RightMenu.vue";
 
 import {
@@ -58,7 +59,7 @@ import { useAnnotStore } from "src/stores/annotStore";
 import { getProject } from "src/backend/project/project";
 
 export default {
-  components: { PDFToolBar, LeftMenu, RightMenu },
+  components: { PDFToolBar, RightMenu },
 
   setup() {
     const stateStore = useStateStore();
