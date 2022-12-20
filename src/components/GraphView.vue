@@ -79,10 +79,12 @@ export default {
       // we cannot use this to access this.stateStore now
       let type = this.data("type");
       if (type == "project") {
-        stateStore.openProject(this.data("id"));
+        // stateStore.openProject(this.data("id"));
+        stateStore.workingItemId = this.data("id");
       } else if (type == "note") {
-        stateStore.openProject(this.data("parent"));
-        stateStore.workingNoteId = this.data("id");
+        // stateStore.openProject(this.data("parent"));
+        stateStore.workingItemId = this.data("parent");
+        stateStore.workingItemId = this.data("id");
       }
       stateStore.setCurrentPage("reader");
     });

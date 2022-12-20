@@ -9,12 +9,16 @@
 
     <div style="position: absolute; width: 100%; height: 100%">
       <GLComponent
-        v-for="(component, key) in AllComponents"
+        v-for="(item, key) in AllComponents"
         :key="key"
         :ref="GlcKeyPrefix + key"
         :id="GlcKeyPrefix + key"
+        @click="onClick(key)"
       >
-        <component :is="component"></component>
+        <component
+          :is="item.component"
+          :itemId="item.id"
+        ></component>
       </GLComponent>
     </div>
   </div>
@@ -29,18 +33,22 @@ import {
   defineExpose,
   defineAsyncComponent,
   defineProps,
+  defineEmits,
   nextTick,
   getCurrentInstance,
+  watch,
 } from "vue";
-import { VirtualLayout } from "golden-layout";
+import { VirtualLayout, LayoutConfig } from "golden-layout";
 import GLComponent from "./GLComponent.vue";
 
 /*******************
- * Prop
+ * Props and Emits
  *******************/
 const props = defineProps({
   glcPath: String,
+  workingItemId: String,
 });
+const emit = defineEmits(["update:workingItemId", "layoutchanged"]);
 
 /*******************
  * Data
@@ -52,44 +60,72 @@ const GlcKeyPrefix = readonly(ref("glc_"));
 var MapComponents = {};
 
 const AllComponents = ref({});
+let IdToRef = {};
 var UnusedIndexes = [];
 let CurIndex = 0;
 let GlBoundingClientRect;
 
 const instance = getCurrentInstance();
+const initialized = ref(false);
+
+/*******************
+ * Props
+ *******************/
+watch(initialized, (initialized) => {
+  // after initialized, focus the workingItem
+  if (initialized) focusById(props.workingItemId);
+});
+
+watch(
+  () => props.workingItemId,
+  (id) => focusById(id)
+);
 
 /*******************
  * Method
  *******************/
 /** @internal */
-const addComponent = (componentType, title) => {
+const addComponent = (componentType, title, id) => {
   let index = CurIndex;
   if (UnusedIndexes.length > 0) index = UnusedIndexes.pop();
   else CurIndex++;
 
-  AllComponents.value[index] = markRaw(
+  const component = markRaw(
     defineAsyncComponent(() => import(props.glcPath + componentType + ".vue"))
   );
+  AllComponents.value[index] = { component, id };
 
   return index;
 };
 
-const addGLComponent = async (componentType, title) => {
+/**
+ *
+ * @param {String} componentType Vue document name
+ * @param {String} title Tab title
+ * @param {String} id projectId or noteId
+ */
+const addGLComponent = async (componentType, title, id) => {
   if (componentType.length == 0)
     throw new Error("addGLComponent: Component's type is empty");
 
-  const index = addComponent(componentType, title);
+  if (id in IdToRef) {
+    focusById(id);
+    return; // don't repeatly add components
+  }
 
+  const index = addComponent(componentType, title, id);
   await nextTick(); // wait 1 tick for vue to add the dom
-
-  GLayout.addComponent(componentType, { refId: index }, title);
+  GLayout.addComponent(componentType, { refId: index, id: id }, title);
 };
 
 const loadGLLayout = async (layoutConfig) => {
   GLayout.clear();
   AllComponents.value = {};
 
-  const config = layoutConfig;
+  // When reloading a saved Layout, first convert the saved "Resolved Config" to a "Config" by calling LayoutConfig.fromResolved().
+  const config = layoutConfig.resolved
+    ? LayoutConfig.fromResolved(layoutConfig)
+    : layoutConfig;
   let contents = [config.root.content];
 
   let index = 0;
@@ -97,7 +133,11 @@ const loadGLLayout = async (layoutConfig) => {
     const content = contents.shift();
     for (let itemConfig of content) {
       if (itemConfig.type == "component") {
-        index = addComponent(itemConfig.componentType, itemConfig.title);
+        index = addComponent(
+          itemConfig.componentType,
+          itemConfig.title,
+          itemConfig.componentState.id
+        );
         if (typeof itemConfig.componentState == "object")
           itemConfig.componentState["refId"] = index;
         else itemConfig.componentState = { refId: index };
@@ -109,7 +149,10 @@ const loadGLLayout = async (layoutConfig) => {
 
   await nextTick(); // wait 1 tick for vue to add the dom
 
-  GLayout.loadLayout(config);
+  await GLayout.loadLayout(config);
+
+  // initialization complete, emit initialized
+  initialized.value = true;
 };
 
 const getLayoutConfig = () => {
@@ -121,6 +164,21 @@ const resize = () => {
   let width = dom ? dom.offsetWidth : 0;
   let height = dom ? dom.offsetHeight : 0;
   GLayout.setSize(width, height);
+};
+
+const onClick = (refId) => {
+  MapComponents[refId].container.focus();
+};
+
+const focusById = (id) => {
+  if (id in IdToRef) {
+    let refId = IdToRef[id];
+    MapComponents[refId].container.focus();
+  }
+};
+
+const removeGLComponent = (removeId) => {
+  MapComponents[IdToRef[removeId]].container.close();
 };
 
 /*******************
@@ -196,9 +254,10 @@ onMounted(() => {
     let ref = GlcKeyPrefix.value + refId;
     const component = instance?.refs[ref];
     MapComponents[container.state.refId] = {
-      refId: refId,
+      container: container,
       glc: component[0],
     };
+
     container.virtualRectingRequiredEvent = (container, width, height) =>
       handleContainerVirtualRectingRequiredEvent(container, width, height);
 
@@ -223,14 +282,24 @@ onMounted(() => {
   };
 
   const unbindComponentEventListener = (container) => {
-    const component = MapComponents[container.state.refId];
+    let refId = container.state.refId;
+    let removeId = container.state.id;
+    const component = MapComponents[refId];
     if (!component || !component?.glc) {
       throw new Error("handleUnbindComponentEvent: Component not found");
     }
 
-    delete MapComponents[container.state.refId];
-    delete AllComponents.value[component.refId];
-    UnusedIndexes.push(component.refId);
+    delete MapComponents[refId];
+    delete AllComponents.value[refId];
+    UnusedIndexes.push(refId);
+
+    // closing the tab should change the current focus
+    // always set to the next tab if there is a tab after the deleted tab
+    let Ids = Object.keys(IdToRef);
+    let index = Ids.findIndex((id) => id == removeId);
+    let nxtIdx = index + 1 == Ids.length ? index - 1 : index + 1;
+    delete IdToRef[removeId];
+    focusById(Ids[nxtIdx]);
   };
 
   GLayout = new VirtualLayout(
@@ -240,6 +309,22 @@ onMounted(() => {
   );
 
   GLayout.beforeVirtualRectingEvent = handleBeforeVirtualRectingEvent;
+
+  GLayout.on("focus", (e) => {
+    let state = e.target.container.state;
+    emit("update:workingItemId", state.id);
+    nextTick(() => {
+      // wait until layout is updated
+      // this is needed for closing component
+      emit("layoutchanged");
+    });
+  });
+
+  GLayout.on("componentCreated", (e) => {
+    // record id-refid pair
+    let state = e.target.container.state;
+    IdToRef[state.id] = state.refId;
+  });
 });
 
 /*******************
@@ -247,6 +332,7 @@ onMounted(() => {
  *******************/
 defineExpose({
   addGLComponent,
+  removeGLComponent,
   loadGLLayout,
   getLayoutConfig,
   resize,

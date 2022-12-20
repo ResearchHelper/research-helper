@@ -6,9 +6,8 @@ pdfjsLib.GlobalWorkerOptions.workerSrc =
 import { GrabToPan } from "./grab_to_pan";
 
 class PeekManager {
-  constructor() {
-    let container = document.getElementById("peekContainer");
-    this.container = container;
+  constructor(viewerContainer, container) {
+    // IMPORTANT: DO NOT CHANGE container to peekContainer, otherwise it breaks
     const eventBus = new pdfjsViewer.EventBus();
     const pdfLinkService = new pdfjsViewer.PDFLinkService({
       eventBus,
@@ -22,11 +21,13 @@ class PeekManager {
       annotationMode: pdfjsLib.AnnotationMode.DISABLE,
     });
     pdfLinkService.setViewer(pdfSinglePageViewer);
-    this.pdfViewer = pdfSinglePageViewer;
-    this.linkService = pdfLinkService;
 
     container.addEventListener("mousewheel", (e) => this.handleZoom(e));
     this.handtool = new GrabToPan({ element: container });
+    this.container = container;
+    this.viewerContainer = viewerContainer;
+    this.pdfViewer = pdfSinglePageViewer;
+    this.linkService = pdfLinkService;
   }
 
   loadPDF(filePath) {
@@ -58,9 +59,7 @@ class PeekManager {
 
   showContainer(annot) {
     let annotRect = annot.getBoundingClientRect();
-    let viewerRect = document
-      .getElementById("viewerContainer")
-      .getBoundingClientRect();
+    let viewerRect = this.viewerContainer.getBoundingClientRect();
 
     // container dimension (in px)
     let vw = viewerRect.width;

@@ -124,12 +124,17 @@ export default {
 
   mounted() {
     let projectId = "";
-    if (this.stateStore.currentPage == "library") {
-      projectId = this.stateStore.selectedProjectId;
-    } else if (this.stateStore.currentPage == "reader") {
-      projectId = this.stateStore.workingProjectId;
-    }
+    // if (this.stateStore.currentPage == "library") {
+    //   projectId = this.stateStore.selectedProjectId;
+    // } else if (this.stateStore.currentPage == "reader") {
+    //   projectId = this.stateStore.workingItemId;
+    // }
 
+    if (this.stateStore.workingItemId == "library") {
+      projectId = this.stateStore.selectedProjectId;
+    } else {
+      projectId = this.stateStore.workingItemId;
+    }
     this.getInfo(projectId);
   },
 

@@ -2,7 +2,7 @@
   <div>
     <!-- systembarheight: 32px, tab: 36px actionbarheight: 50px -->
     <q-splitter
-      style="height: calc(100vh - 32px - 36px)"
+      style="position: absolute; width: 100%; height: 100%"
       :limits="[0, 30]"
       separator-class="separator"
       v-model="leftMenuSize"

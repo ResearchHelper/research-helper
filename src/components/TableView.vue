@@ -181,8 +181,7 @@ export default {
     },
 
     dblclickProject(row) {
-      this.stateStore.openProject(row._id);
-      this.stateStore.setCurrentPage("reader");
+      this.stateStore.workingItemId = row._id;
     },
 
     toggleContextMenu(row) {

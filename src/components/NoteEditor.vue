@@ -1,15 +1,8 @@
 <template>
   <div
     v-show="showEditor"
-    id="vditor"
+    ref="vditor"
   ></div>
-  <div
-    v-if="!!!stateStore.workingNoteId"
-    :ripple="false"
-    @click="initEditor"
-  >
-    Add/Select a note in project navigator!
-  </div>
 </template>
 <script>
 import Vditor from "vditor";
@@ -45,19 +38,13 @@ export default {
   },
 
   async mounted() {
-    if (!!this.stateStore.workingNoteId) this.showEditor = true;
+    console.log("workingId:", this.stateStore.workingItemId);
+    this.$refs.vditor.setAttribute(
+      "id",
+      `vditor-${this.stateStore.workingItemId}`
+    );
+    this.showEditor = true;
     this.initEditor();
-  },
-
-  watch: {
-    "stateStore.workingNoteId"(noteId, _) {
-      if (!!noteId) {
-        if (!!!this.showEditor) this.showEditor = true;
-        this.setContent();
-      } else {
-        if (!!this.showEditor) this.showEditor = false;
-      }
-    },
   },
 
   methods: {
@@ -85,8 +72,9 @@ export default {
           "fullscreen",
         ];
 
-      this.editor = new Vditor("vditor", {
-        height: 500,
+      this.editor = new Vditor("vditor-" + this.stateStore.workingItemId, {
+        height: "100%",
+        mode: "wysiwyg",
         toolbarConfig: {
           pin: true,
         },
@@ -132,7 +120,7 @@ export default {
           accept: "image/*",
           handler: (files) => {
             for (let file of files) {
-              getNote(this.stateStore.workingNoteId).then((note) => {
+              getNote(this.stateStore.workingItemId).then((note) => {
                 uploadImage(note.projectId, file).then((uploaded) => {
                   this.editor.insertValue(
                     `![${uploaded.imgName}](${uploaded.imgPath})`
@@ -146,7 +134,7 @@ export default {
     },
 
     async setContent() {
-      let content = await loadNote(this.stateStore.workingNoteId);
+      let content = await loadNote(this.stateStore.workingItemId);
       this.editor.setValue(content);
       this.changeLinks();
     },
@@ -155,12 +143,12 @@ export default {
       // save the content when it's blur
       // this will be called before unmount
       let content = this.editor.getValue();
-      await saveNote(this.stateStore.workingNoteId, content);
+      await saveNote(this.stateStore.workingItemId, content);
       await this.saveLinks();
     },
 
     async saveLinks() {
-      let note = await getNote(this.stateStore.workingNoteId);
+      let note = await getNote(this.stateStore.workingItemId);
       note.links = [];
       let parser = new DOMParser();
       let html = parser.parseFromString(this.editor.getHTML(), "text/html");
@@ -177,7 +165,7 @@ export default {
           }
         }
       }
-      updateNote(this.stateStore.workingNoteId, { links: note.links });
+      updateNote(this.stateStore.workingItemId, { links: note.links });
     },
 
     async clickLink(linkNode) {
@@ -195,7 +183,7 @@ export default {
         let doc = await getProject(link);
         if (doc.dataType == "note") {
           this.stateStore.openProject(doc.projectId);
-          this.stateStore.workingNoteId = doc._id;
+          this.stateStore.workingItemId = doc._id;
         } else if (doc.dataType == "project") {
           this.stateStore.openProject(doc._id);
         }
@@ -203,7 +191,8 @@ export default {
     },
 
     changeLinks() {
-      let vditor = document.getElementById("vditor");
+      // let vditor = document.getElementById("vditor");
+      let vditor = this.$refs.vditor;
       let linkNodes = vditor.querySelectorAll("[data-type='a']");
       for (let linkNode of linkNodes) {
         linkNode.onclick = () => this.clickLink(linkNode);

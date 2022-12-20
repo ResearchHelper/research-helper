@@ -9,20 +9,43 @@
         style="height: calc(100vh - 32px)"
         class="column justify-between"
       >
-        <q-btn-toggle
-          v-model="leftMenu"
-          unelevated
-          square
-          :ripple="false"
-          clearable
-          :options="[{ icon: 'account_tree', value: true }]"
-        />
+        <div>
+          <q-btn
+            icon="home"
+            class="bg-secondary"
+            :ripple="false"
+            square
+            @click="
+              $refs.GLayoutRoot.addGLComponent(
+                'LibraryPage',
+                'Library',
+                'library'
+              )
+            "
+          >
+            <q-tooltip>Show Library Page</q-tooltip>
+          </q-btn>
+          <q-btn-toggle
+            v-model="leftMenu"
+            unelevated
+            square
+            :ripple="false"
+            clearable
+            :options="[{ icon: 'account_tree', value: true }]"
+          />
+        </div>
         <q-btn
           unelevated
           square
           :ripple="false"
           icon="settings"
-          @click="$refs.GLayoutRoot.addGLComponent('SettingPage', 'Settings')"
+          @click="
+            $refs.GLayoutRoot.addGLComponent(
+              'SettingPage',
+              'Settings',
+              'settings'
+            )
+          "
         />
       </div>
     </template>
@@ -33,12 +56,18 @@
         v-model="stateStore.leftMenuSize"
         @update:model-value="$refs.GLayoutRoot.resize()"
       >
-        <template v-slot:before> <ProjectTree /> </template>
+        <template v-slot:before>
+          <ProjectTree
+            @closeProject="(projectId) => removeComponent(projectId)"
+          />
+        </template>
         <template v-slot:after>
           <GLayout
             ref="GLayoutRoot"
             glc-path="./"
-            style="width: 100%; height: 100vh"
+            style="width: 100%; height: calc(100vh - 32px)"
+            v-model:workingItemId="stateStore.workingItemId"
+            @layoutchanged="saveLayout"
           ></GLayout>
         </template>
       </q-splitter>
@@ -57,6 +86,7 @@ import "golden-layout/dist/css/themes/goldenlayout-dark-theme.css";
 
 import { useStateStore } from "src/stores/appState";
 import { getProject } from "src/backend/project/project";
+import { getLayout, updateLayout } from "src/backend/layout";
 
 export default {
   components: {
@@ -73,14 +103,20 @@ export default {
     return { stateStore };
   },
 
+  data() {
+    return {
+      initialized: false,
+    };
+  },
+
   computed: {
     leftMenu: {
       get() {
         return this.stateStore.leftMenuSize > 0;
       },
 
-      set(show) {
-        this.stateStore.leftMenuSize = !!show ? 20 : 0;
+      set(visible) {
+        this.stateStore.leftMenuSize = visible ? 20 : 0;
         this.$nextTick(() => {
           this.$refs.GLayoutRoot.resize();
         });
@@ -89,43 +125,55 @@ export default {
   },
 
   watch: {
-    "stateStore.workingProjectId"(projectId, _) {
-      getProject(projectId).then((project) => {
-        this.$refs.GLayoutRoot.addGLComponent("ReaderPage", project.title);
-      });
+    "stateStore.workingItemId"(id) {
+      console.log("workingId:", id);
+      this.setComponent(id);
     },
   },
 
-  mounted() {
-    const config = {
-      settings: {
-        showPopoutIcon: false,
-        showMaximiseIcon: false,
-        // must have close icon otherwise the last tab can't close
-        showCloseIcon: true,
-      },
-      dimensions: {
-        borderWidth: 3,
-        headerHeight: 36,
-      },
-      root: {
-        type: "stack",
-        content: [
-          {
-            type: "component",
-            title: "Library",
-            componentType: "LibraryPage",
-          },
-          {
-            type: "component",
-            title: "GraphView",
-            componentType: "LibraryPage",
-          },
-        ],
-      },
-    };
+  async mounted() {
+    const layout = await getLayout();
+    await this.$refs.GLayoutRoot.loadGLLayout(layout.config);
+    this.initialized = true;
+  },
 
-    this.$refs.GLayoutRoot.loadGLLayout(config);
+  methods: {
+    /**
+     * Set focus to component with specified id
+     * create it if it doesn't exist
+     * @param {String} id
+     */
+    async setComponent(id) {
+      let componentType = "";
+      let title = "";
+      if (id == "library") {
+        componentType = "LibraryPage";
+        title = "Library";
+      } else if (id == "settings") {
+        componentType = "SettingPage";
+        title = "Settings";
+      } else {
+        let item = await getProject(id);
+        if (item.dataType == "project") {
+          componentType = "ReaderPage";
+          title = item.title;
+        } else if (item.dataType == "note") {
+          componentType = "NotePage";
+          title = item.label;
+        }
+      }
+      this.$refs.GLayoutRoot.addGLComponent(componentType, title, id);
+    },
+
+    removeComponent(id) {
+      this.$refs.GLayoutRoot.removeGLComponent(id);
+    },
+
+    async saveLayout() {
+      if (!this.initialized) return;
+      let config = this.$refs.GLayoutRoot.getLayoutConfig();
+      await updateLayout(config);
+    },
   },
 };
 </script>

@@ -11,6 +11,7 @@
     <q-btn
       flat
       dense
+      square
       icon="add"
       @click="$refs.filePicker.$el.click()"
     >
@@ -34,13 +35,16 @@
 
     <q-space />
 
-    <q-btn
+    <q-btn-toggle
+      v-model="rightMenu"
+      clearable
       flat
       dense
-      icon="list"
-      @click="stateStore.toggleRightMenu('infoPane')"
-    >
-    </q-btn>
+      square
+      :ripple="false"
+      toggle-color="primary"
+      :options="[{ value: true, icon: 'list' }]"
+    />
   </q-toolbar>
 </template>
 
@@ -58,6 +62,19 @@ export default {
     return {
       searchString: "",
     };
+  },
+
+  computed: {
+    rightMenu: {
+      get() {
+        return this.stateStore.rightMenuSize > 0;
+      },
+
+      set(visible) {
+        this.stateStore.currentPage = "library";
+        this.stateStore.rightMenuSize = visible ? 25 : 0;
+      },
+    },
   },
 
   methods: {

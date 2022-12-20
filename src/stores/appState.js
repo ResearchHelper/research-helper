@@ -22,47 +22,24 @@ export const useStateStore = defineStore("stateStore", {
 
     // rightMenu
     rightMenuTab: "metaInfoTab",
-    rightMenuMode: null, // "infoPane" or "noteEditor"
 
     // tree view
     selectedFolderId: "",
 
     // projects
     selectedProjectId: "", // select from tableview
-    workingProjectId: "", // select from projectTree
-    openedProjectIds: [], //for projectTree
 
     modifiedProject: null, // data send from metainfo pane to table
     selectedProjectIndex: null, // for faster modification
 
-    // note
-    workingNoteId: null,
+    workingItemId: "library", // workingItem
+    openedProjectIds: [], // for projectTree
   }),
 
   actions: {
     // main layout related
     toggleLeftMenu() {
       this.leftMenuSize = this.leftMenuSize > 0 ? 0 : 20;
-    },
-
-    toggleRightMenu(mode) {
-      this.rightMenuSize = this.rightMenuSize > 0 ? 0 : 25;
-      this.rightMenuMode = this.rightMenuSize > 0 ? mode : null;
-    },
-
-    openRightMenu(mode) {
-      this.rightMenuSize = 25;
-      this.rightMenuMode = mode;
-    },
-
-    closeRightMenu() {
-      this.rightMenuSize = 0;
-      this.rightMenuMode = null;
-    },
-
-    setRightMenuMode(mode) {
-      // mode can be "infoPane" or "noteEditor"
-      this.rightMenuMode = mode;
     },
 
     setRightMenuTab(tab) {
@@ -75,7 +52,7 @@ export const useStateStore = defineStore("stateStore", {
     },
 
     openProject(projectId) {
-      this.workingProjectId = projectId;
+      this.workingItemId = projectId;
       if (!this.openedProjectIds.includes(projectId))
         this.openedProjectIds.push(projectId);
     },
