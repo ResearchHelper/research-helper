@@ -197,7 +197,7 @@
 
     <!-- right menu -->
     <q-btn-toggle
-      v-model="rightMenu"
+      v-model="showRightMenu"
       clearable
       unelevated
       :ripple="false"
@@ -205,6 +205,7 @@
       padding="xs"
       toggle-color="primary"
       :options="[{ value: true, icon: 'list' }]"
+      @update:model-value="$emit('toggleRightMenu', showRightMenu)"
     />
   </q-toolbar>
 </template>
@@ -212,9 +213,10 @@
 <script>
 import { useStateStore } from "src/stores/appState";
 import { AnnotationType } from "src/backend/pdfreader/annotation";
+import { set } from "vue-demi";
 
 export default {
-  props: { pdfState: Object, matchesCount: Object },
+  props: { pdfState: Object, matchesCount: Object, rightMenuSize: Number },
   emits: [
     "update:pdfState",
     "changePageNumber",
@@ -222,6 +224,7 @@ export default {
     "changeSpreadMode",
     "searchText",
     "changeMatch",
+    "toggleRightMenu",
   ],
 
   setup() {
@@ -238,10 +241,15 @@ export default {
         entireWord: false,
       },
       state: {},
+      showRightMenu: false,
     };
   },
 
   watch: {
+    rightMenuSize(size) {
+      this.showRightMenu = size > 0;
+    },
+
     pdfState: {
       handler(state) {
         this.state = state;
@@ -258,17 +266,6 @@ export default {
   },
 
   computed: {
-    rightMenu: {
-      get() {
-        return this.stateStore.rightMenuSize > 0;
-      },
-
-      set(visible) {
-        this.stateStore.currentPage = "reader";
-        this.stateStore.rightMenuSize = visible ? 25 : 0;
-      },
-    },
-
     searchSummary() {
       let text = "";
       let matchesCount = this.matchesCount;

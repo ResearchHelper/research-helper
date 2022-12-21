@@ -1,6 +1,8 @@
 <template>
   <div>
     <ActionBar
+      :rightMenuSize="rightMenuSize"
+      @toggle-right-menu="(show) => $emit('toggleRightMenu', show)"
       @addProject="addProject"
       ref="actionBar"
     />
@@ -104,6 +106,9 @@ import {
 } from "src/backend/project/project";
 
 export default {
+  props: { rightMenuSize: Number },
+  emits: ["toggleRightMenu"],
+
   components: {
     ActionBar,
   },
@@ -140,6 +145,9 @@ export default {
       // for search
       showExpansion: false,
       expansionText: [],
+
+      // for update
+      selectedProjectIndex: null,
     };
   },
 
@@ -149,14 +157,6 @@ export default {
         (projects) => (this.projects = projects)
       );
     },
-
-    "stateStore.modifiedProject": {
-      handler(project, _) {
-        let index = this.stateStore.selectedProjectIndex;
-        this.projects[index] = project;
-      },
-      deep: true,
-    },
   },
 
   methods: {
@@ -164,6 +164,10 @@ export default {
       // update db has been done in action bar
       // update ui
       this.projects.push(project);
+    },
+
+    updateProject(project) {
+      this.projects[this.selectedProjectIndex] = project;
     },
 
     deleteProject(deleteFromDB) {
@@ -177,11 +181,12 @@ export default {
 
     clickProject(row, rowIndex) {
       this.stateStore.selectedProjectId = row._id;
-      this.stateStore.selectedProjectIndex = rowIndex;
+      this.selectedProjectIndex = rowIndex;
     },
 
     dblclickProject(row) {
-      this.stateStore.workingItemId = row._id;
+      // this.stateStore.workingItemId = row._id;
+      this.stateStore.openProject(row._id);
     },
 
     toggleContextMenu(row) {

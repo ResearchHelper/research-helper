@@ -3,6 +3,12 @@ FIXME:
 [x] projectTree cannot close project
 [x] cannot reopen note after closed
 [x] unable to load project when layout is loaded. each tab must load their corresponding projectId rather than the workingItemId since initially many the projects have to be load at the same time. We can read the id from the componentState of the tab. Maybe we need to input the projectId through the defineAsyncComponent. Or maybe read from some state in stateStore
+[x] right menu size is controlled separately by each component
+[x] metaInfoTab content extends deep when initially started
+[x] cannot correctly set the active component when started. This is fine as long as we save and load workingItemId rather than using the default library.
+[x] split readers is not loading after focusing
+[x] cannot close projects properly
+[x] clickRelated flashes between two workingItem. I think it's the same problem as the not closing component issue. Maybe we need to set the program to rest after setting workingItemId.
 
 TODO:
 [x] try golden layout
@@ -22,7 +28,9 @@ TODO:
 [x] separate data load/save of each pdf reader by changing pdfState from pinia store to ref variables
 [x] 1. change all pdfState to local variables
 [x] 2. separate the search and matchCounts from states and deal with them separately
-[ ] 3. do not use annotStore, maintain the annotList in PDFReader.vue
+[x] 3. do not use annotStore, maintain the annotList in PDFReader.vue
+[ ] able to save appState, especially the openedProjects
+[ ] refactor the code related to layout
 
 IMPROVE:
 leftmenu

@@ -21,8 +21,8 @@ function computePageOffset(annotationLayer) {
   };
 }
 
-function comment(annot, fromDB = false) {
-  let annotationEditorLayer = document
+function comment(container, annot, fromDB = false) {
+  let annotationEditorLayer = container
     .querySelector(`div.page[data-page-number='${annot.pageNumber}']`)
     .querySelector(".annotationEditorLayer");
   // let pdfViewer = annotClass.pdfViewer;

@@ -15,13 +15,7 @@
             class="bg-secondary"
             :ripple="false"
             square
-            @click="
-              $refs.GLayoutRoot.addGLComponent(
-                'LibraryPage',
-                'Library',
-                'library'
-              )
-            "
+            @click="setComponent('library')"
           >
             <q-tooltip>Show Library Page</q-tooltip>
           </q-btn>
@@ -39,13 +33,7 @@
           square
           :ripple="false"
           icon="settings"
-          @click="
-            $refs.GLayoutRoot.addGLComponent(
-              'SettingPage',
-              'Settings',
-              'settings'
-            )
-          "
+          @click="setComponent('settings')"
         />
       </div>
     </template>
@@ -53,12 +41,14 @@
       <q-splitter
         :limits="[0, 30]"
         emit-immediately
-        v-model="stateStore.leftMenuSize"
+        v-model="leftMenuSize"
         @update:model-value="$refs.GLayoutRoot.resize()"
       >
         <template v-slot:before>
           <ProjectTree
+            @openProject="(projectId) => setComponent(projectId)"
             @closeProject="(projectId) => removeComponent(projectId)"
+            ref="tree"
           />
         </template>
         <template v-slot:after>
@@ -105,18 +95,24 @@ export default {
 
   data() {
     return {
-      initialized: false,
+      leftMenuSize: 0,
     };
   },
 
   computed: {
     leftMenu: {
       get() {
-        return this.stateStore.leftMenuSize > 0;
+        return this.leftMenuSize > 0 || this.stateStore.showLeftMenu;
       },
 
       set(visible) {
-        this.stateStore.leftMenuSize = visible ? 20 : 0;
+        this.stateStore.showLeftMenu = visible;
+        if (visible) {
+          this.leftMenuSize = this.stateStore.leftMenuSize;
+        } else {
+          this.stateStore.leftMenuSize = this.leftMenuSize;
+          this.leftMenuSize = 0;
+        }
         this.$nextTick(() => {
           this.$refs.GLayoutRoot.resize();
         });
@@ -125,8 +121,7 @@ export default {
   },
 
   watch: {
-    "stateStore.workingItemId"(id) {
-      console.log("workingId:", id);
+    "stateStore.openItemId"(id) {
       this.setComponent(id);
     },
   },
@@ -134,7 +129,6 @@ export default {
   async mounted() {
     const layout = await getLayout();
     await this.$refs.GLayoutRoot.loadGLLayout(layout.config);
-    this.initialized = true;
   },
 
   methods: {
@@ -144,6 +138,7 @@ export default {
      * @param {String} id
      */
     async setComponent(id) {
+      console.log("setting component:", id);
       let componentType = "";
       let title = "";
       if (id == "library") {
@@ -162,6 +157,7 @@ export default {
           title = item.label;
         }
       }
+
       this.$refs.GLayoutRoot.addGLComponent(componentType, title, id);
     },
 
@@ -170,7 +166,7 @@ export default {
     },
 
     async saveLayout() {
-      if (!this.initialized) return;
+      if (!this.$refs.GLayoutRoot.initialized) return;
       let config = this.$refs.GLayoutRoot.getLayoutConfig();
       await updateLayout(config);
     },

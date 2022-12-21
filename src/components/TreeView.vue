@@ -1,5 +1,5 @@
 <template>
-  <q-scroll-area style="height: 100%">
+  <div style="height: 100%">
     <q-tree
       dense
       no-connectors
@@ -62,7 +62,7 @@
         </div>
       </template>
     </q-tree>
-  </q-scroll-area>
+  </div>
 </template>
 
 <script>

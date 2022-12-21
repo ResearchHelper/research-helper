@@ -5,7 +5,7 @@
       style="position: absolute; width: 100%; height: 100%"
       :limits="[0, 30]"
       separator-class="separator"
-      v-model="leftMenuSize"
+      v-model="treeViewSize"
     >
       <template v-slot:before>
         <TreeView />
@@ -16,13 +16,41 @@
           reverse
           :limits="[0, 60]"
           separator-class="separator"
-          v-model="stateStore.rightMenuSize"
+          v-model="rightMenuSize"
         >
           <template v-slot:before>
-            <TableView />
+            <TableView
+              :rightMenuSize="rightMenuSize"
+              @toggle-right-menu="toggleRightMenu"
+              ref="table"
+            />
           </template>
           <template v-slot:after>
-            <RightMenu />
+            <q-tabs
+              dense
+              indicator-color="transparent"
+              active-bg-color="primary"
+              model-value="metaInfoTab"
+            >
+              <q-tab
+                name="metaInfoTab"
+                icon="info"
+                :ripple="false"
+              />
+            </q-tabs>
+            <!-- q-tab height 36px -->
+            <q-tab-panels
+              style="height: calc(100% - 36px)"
+              model-value="metaInfoTab"
+            >
+              <q-tab-panel name="metaInfoTab">
+                <MetaInfoTab
+                  v-if="!!rightMenuSize"
+                  :projectId="stateStore.selectedProjectId"
+                  @updateProject="updateProject"
+                />
+              </q-tab-panel>
+            </q-tab-panels>
           </template>
         </q-splitter>
       </template>
@@ -34,7 +62,7 @@
 import { useStateStore } from "src/stores/appState";
 import TableView from "../components/TableView.vue";
 import TreeView from "../components/TreeView.vue";
-import RightMenu from "../components/RightMenu.vue";
+import MetaInfoTab from "src/components/MetaInfoTab.vue";
 
 export default {
   setup() {
@@ -43,15 +71,39 @@ export default {
   },
 
   components: {
+    // ActionBar,
     TableView,
     TreeView,
-    RightMenu,
+    MetaInfoTab,
   },
 
   data() {
     return {
-      leftMenuSize: 20,
+      treeViewSize: 20,
+
+      prvRightMenuSize: 25,
+      rightMenuSize: 0,
     };
+  },
+
+  methods: {
+    addProject(file) {
+      this.$refs.table.addProject(file);
+    },
+
+    updateProject(project) {
+      this.$refs.table.updateProject(project);
+    },
+
+    toggleRightMenu(visible) {
+      if (visible) {
+        this.rightMenuSize = this.prvRightMenuSize;
+      } else {
+        // record the rightmenu size for next use
+        this.prvRightMenuSize = this.rightMenuSize;
+        this.rightMenuSize = 0;
+      }
+    },
   },
 };
 </script>

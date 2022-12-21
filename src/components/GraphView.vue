@@ -86,7 +86,7 @@ export default {
         stateStore.workingItemId = this.data("parent");
         stateStore.workingItemId = this.data("id");
       }
-      stateStore.setCurrentPage("reader");
+      // stateStore.setCurrentPage("reader");
     });
   },
 

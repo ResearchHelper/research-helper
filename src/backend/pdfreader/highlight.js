@@ -77,8 +77,8 @@ function computePageOffset(annotationLayer) {
   };
 }
 
-function highlight(annot, fromDB = false) {
-  let annotationEditorLayer = document
+function highlight(container, annot, fromDB = false) {
+  let annotationEditorLayer = container
     .querySelector(`div.page[data-page-number='${annot.pageNumber}']`)
     .querySelector(".annotationEditorLayer");
 

@@ -1,6 +1,9 @@
 <template>
   <div>
-    <PDFReader :projectId="itemId" />
+    <PDFReader
+      :projectId="itemId"
+      :visible="visible"
+    />
   </div>
 </template>
 
@@ -8,7 +11,7 @@
 import PDFReader from "src/components/pdfreader/PDFReader.vue";
 
 export default {
-  props: { itemId: String },
+  props: { itemId: String, visible: Boolean },
 
   components: {
     PDFReader,

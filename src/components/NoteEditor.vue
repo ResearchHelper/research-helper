@@ -169,31 +169,44 @@ export default {
     },
 
     async clickLink(linkNode) {
+      console.log("clicking link");
       this.editor.blur(); // save the content before jumping
 
-      let link = linkNode.querySelector(
-        "span.vditor-ir__marker--link"
-      ).innerText;
+      // let link = linkNode.querySelector(
+      //   "span.vditor-ir__marker--link"
+      // ).innerText;
 
-      try {
-        new URL(link);
-        // valid external url, do nothing
-      } catch (error) {
-        // we just want the document, both getProject or getNote are good
-        let doc = await getProject(link);
-        if (doc.dataType == "note") {
-          this.stateStore.openProject(doc.projectId);
-          this.stateStore.workingItemId = doc._id;
-        } else if (doc.dataType == "project") {
-          this.stateStore.openProject(doc._id);
-        }
+      // try {
+      //   new URL(link);
+      //   // valid external url, do nothing
+      // } catch (error) {
+      //   // we just want the document, both getProject or getNote are good
+      //   let doc = await getProject(link);
+      //   if (doc.dataType == "note") {
+      //     this.stateStore.openProject(doc.projectId);
+      //     this.stateStore.workingItemId = doc._id;
+      //   } else if (doc.dataType == "project") {
+      //     this.stateStore.openProject(doc._id);
+      //   }
+      // }
+
+      let id = linkNode.href.split("/").at(-1);
+      // we just want the document, both getProject or getNote are good
+      let doc = await getProject(id);
+      if (doc.dataType == "note") {
+        // this.stateStore.openProject(doc.projectId);
+
+        this.stateStore.openItemId = doc._id;
+      } else if (doc.dataType == "project") {
+        this.stateStore.openProject(doc._id);
       }
     },
 
     changeLinks() {
       // let vditor = document.getElementById("vditor");
       let vditor = this.$refs.vditor;
-      let linkNodes = vditor.querySelectorAll("[data-type='a']");
+      // let linkNodes = vditor.querySelectorAll("[data-type='a']");
+      let linkNodes = vditor.querySelectorAll("a");
       for (let linkNode of linkNodes) {
         linkNode.onclick = () => this.clickLink(linkNode);
       }

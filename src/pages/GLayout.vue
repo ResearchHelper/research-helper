@@ -16,8 +16,10 @@
         @click="onClick(key)"
       >
         <component
+          v-if="initialized"
           :is="item.component"
           :itemId="item.id"
+          :visible="MapComponents[key]?.container?.visible"
         ></component>
       </GLComponent>
     </div>
@@ -57,9 +59,9 @@ const GLRoot = ref(null);
 let GLayout;
 const GlcKeyPrefix = readonly(ref("glc_"));
 
-var MapComponents = {};
-
 const AllComponents = ref({});
+let MapComponents = {};
+let ActiveComponents = {};
 let IdToRef = {};
 var UnusedIndexes = [];
 let CurIndex = 0;
@@ -91,7 +93,9 @@ const addComponent = (componentType, title, id) => {
   else CurIndex++;
 
   const component = markRaw(
-    defineAsyncComponent(() => import(props.glcPath + componentType + ".vue"))
+    defineAsyncComponent(() =>
+      import(/* @vite-ignore */ props.glcPath + componentType + ".vue")
+    )
   );
   AllComponents.value[index] = { component, id };
 
@@ -178,7 +182,8 @@ const focusById = (id) => {
 };
 
 const removeGLComponent = (removeId) => {
-  MapComponents[IdToRef[removeId]].container.close();
+  // delete AllComponents.value[IdToRef[removeId]];
+  delete MapComponents[IdToRef[removeId]].container.close();
 };
 
 /*******************
@@ -291,15 +296,8 @@ onMounted(() => {
 
     delete MapComponents[refId];
     delete AllComponents.value[refId];
-    UnusedIndexes.push(refId);
-
-    // closing the tab should change the current focus
-    // always set to the next tab if there is a tab after the deleted tab
-    let Ids = Object.keys(IdToRef);
-    let index = Ids.findIndex((id) => id == removeId);
-    let nxtIdx = index + 1 == Ids.length ? index - 1 : index + 1;
     delete IdToRef[removeId];
-    focusById(Ids[nxtIdx]);
+    UnusedIndexes.push(refId);
   };
 
   GLayout = new VirtualLayout(
@@ -311,6 +309,7 @@ onMounted(() => {
   GLayout.beforeVirtualRectingEvent = handleBeforeVirtualRectingEvent;
 
   GLayout.on("focus", (e) => {
+    console.log("focus");
     let state = e.target.container.state;
     emit("update:workingItemId", state.id);
     nextTick(() => {
@@ -325,6 +324,12 @@ onMounted(() => {
     let state = e.target.container.state;
     IdToRef[state.id] = state.refId;
   });
+
+  GLayout.on("activeContentItemChanged", (e) => {
+    console.log("active item changed", e);
+    let state = e.container.state;
+    emit("update:workingItemId", state.id);
+  });
 });
 
 /*******************
@@ -336,5 +341,6 @@ defineExpose({
   loadGLLayout,
   getLayoutConfig,
   resize,
+  initialized,
 });
 </script>

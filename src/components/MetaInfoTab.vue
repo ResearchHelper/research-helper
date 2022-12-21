@@ -2,11 +2,7 @@
   <!-- systembar: 32px, tab: 36px  -->
   <!-- show this after rightMenu is shown, 
     otherwise autogrow extends to full-height -->
-  <q-scroll-area
-    v-if="!!stateStore.rightMenuSize && !!project"
-    style="height: calc(100vh - 32px - 36px - 36px)"
-    class="q-mx-sm"
-  >
+  <div v-if="!!project">
     <q-input
       borderless
       autogrow
@@ -55,10 +51,7 @@
       v-model="project.isbn"
       @blur="modifyInfo()"
     />
-    <div
-      style="position: absolute; width: 98%"
-      class="column"
-    >
+    <div class="column">
       <q-input
         borderless
         dense
@@ -100,7 +93,7 @@
       >
       </q-chip>
     </div>
-  </q-scroll-area>
+  </div>
 </template>
 
 <script>
@@ -108,6 +101,9 @@ import { useStateStore } from "src/stores/appState";
 import { getProject, updateProject } from "src/backend/project/project";
 
 export default {
+  props: { projectId: String },
+  emits: ["updateProject"],
+
   setup() {
     const stateStore = useStateStore();
     return { stateStore };
@@ -123,24 +119,12 @@ export default {
   },
 
   mounted() {
-    let projectId = "";
-    // if (this.stateStore.currentPage == "library") {
-    //   projectId = this.stateStore.selectedProjectId;
-    // } else if (this.stateStore.currentPage == "reader") {
-    //   projectId = this.stateStore.workingItemId;
-    // }
-
-    if (this.stateStore.workingItemId == "library") {
-      projectId = this.stateStore.selectedProjectId;
-    } else {
-      projectId = this.stateStore.workingItemId;
-    }
-    this.getInfo(projectId);
+    this.getInfo(this.projectId);
   },
 
   watch: {
-    "stateStore.selectedProjectId"(projectId, _) {
-      this.getInfo(projectId);
+    projectId(id) {
+      this.getInfo(id);
     },
   },
 
@@ -163,7 +147,8 @@ export default {
       this.project = await updateProject(this.project);
 
       // update table data
-      this.stateStore.modifiedProject = this.project;
+      // this.stateStore.modifiedProject = this.project;
+      this.$emit("updateProject", this.project);
     },
 
     async addTag() {
@@ -172,7 +157,8 @@ export default {
       this.tag = ""; // remove text in input
 
       // update table data
-      this.stateStore.modifiedProject = this.project;
+      // this.stateStore.modifiedProject = this.project;
+      this.$emit("updateProject", this.project);
 
       // update db
       this.project = await updateProject(this.project);
@@ -183,7 +169,8 @@ export default {
       this.project.tags = this.project.tags.filter((t) => t != tag);
 
       // update table data
-      this.stateStore.modifiedProject = this.project;
+      // this.stateStore.modifiedProject = this.project;
+      this.$emit("updateProject", this.project);
 
       // update db
       this.project = await updateProject(this.project);
@@ -219,13 +206,15 @@ export default {
     },
 
     clickRelated(project) {
-      // in case the related projects are not in the same folder
-      // switch to library folder first
-      if (this.stateStore.currentPage != "library") {
-        this.stateStore.setCurrentPage("library");
+      if (this.stateStore.workingItemId == "library") {
+        // in case the related projects are not in the same folder
+        // switch to library folder first
+        this.stateStore.selectedFolderId = "library";
+        this.stateStore.selectedProjectId = project._id;
+      } else {
+        this.stateStore.openItemId = project._id;
+        this.stateStore.openProject(project._id);
       }
-      this.stateStore.selectedFolderId = "library";
-      this.stateStore.selectedProjectId = project._id;
     },
   },
 };

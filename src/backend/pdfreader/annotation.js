@@ -62,7 +62,14 @@ async function deleteAnnotation(annotId) {
   }
 }
 
-async function createAnnotation(annot, fromDB = false) {
+/**
+ * Create annotation in db and return its corresponding DOMs
+ * @param {HTMLElement} container
+ * @param {Object} annot
+ * @param {Boolean} fromDB
+ * @returns {Array} array of doms
+ */
+async function createAnnotation(container, annot, fromDB = false) {
   if (!fromDB) {
     if (annot.type === AnnotationType.NONE) return;
 
@@ -80,10 +87,10 @@ async function createAnnotation(annot, fromDB = false) {
   let type = annot.type;
   switch (type) {
     case AnnotationType.HIGHLIGHT:
-      result = highlight(annot, fromDB);
+      result = highlight(container, annot, fromDB);
       break;
     case AnnotationType.COMMENT:
-      result = comment(annot, fromDB);
+      result = comment(container, annot, fromDB);
       break;
   }
 

@@ -113,6 +113,26 @@ class PDFApplication {
     }, 400);
   }
 
+  changePageNumber(pageNumber) {
+    this.pdfViewer.currentPageNumber = parseInt(pageNumber);
+  }
+
+  changeSpreadMode(spreadMode) {
+    this.pdfViewer.spreadMode = parseInt(spreadMode);
+  }
+
+  /**
+   * params = {delta?: Number, scaleValue?: 'page-width'|'page-height', scale?: Number}
+   * @param {Object} params
+   */
+  changeScale(params) {
+    if (!!params.delta) this.pdfViewer.currentScale += params.delta;
+
+    if (!!params.scaleValue) this.pdfViewer.currentScaleValue = scaleValue;
+
+    if (!!params.scale) this.pdfViewer.currentScale = params.scale;
+  }
+
   handleCtrlScroll(e) {
     if (e.ctrlKey === true) {
       // this is not scrolling, so we need to
@@ -178,6 +198,54 @@ class PDFApplication {
       pageNumber = pageIndex + 1;
     }
     return pageNumber;
+  }
+
+  async clickTOC(node) {
+    let pageNumber = await this.getTOCPage(node);
+    this.changePageNumber(pageNumber);
+  }
+
+  /**
+   * search = {query: "", highlightAll: true, caseSensitive: false, entireWord: false}
+   * @param {Object} search
+   */
+  searchText(search) {
+    this.eventBus.dispatch("find", search);
+  }
+
+  changeMatch(delta) {
+    // delta can only be +1 (next) or -1 (prev)
+    // highlight the next/previous match
+    let findController = this.pdfFindController;
+
+    let currentMatch = findController.selected;
+    let pageIdx = currentMatch.pageIdx;
+    let newMatchIdx = currentMatch.matchIdx + delta;
+
+    let matches = findController.pageMatches;
+    let matchIdxList = matches[pageIdx];
+
+    while (newMatchIdx < 0 || newMatchIdx > matchIdxList.length - 1) {
+      pageIdx += delta;
+      let mod = pageIdx % this.pdfViewer.pagesCount; // mod can be negative
+      pageIdx = mod >= 0 ? mod : this.pdfViewer.pagesCount - Math.abs(mod);
+      // if next: select first match (delta-1 = 0) in the next available pages
+      // if prev: select last match (length-1) in the previous available pages
+      matchIdxList = matches[pageIdx];
+      newMatchIdx = delta > 0 ? 0 : matchIdxList.length - 1;
+    }
+
+    if (newMatchIdx < 0) newMatchIdx = 0;
+    if (newMatchIdx > matchIdxList.length)
+      newMatchIdx = matchIdxList.length - 1;
+
+    this.pdfFindController.selected.pageIdx = pageIdx;
+    this.pdfFindController.selected.matchIdx = newMatchIdx;
+    this.changePageNumber(pageIdx + 1);
+    this.eventBus.dispatch("updatetextlayermatches", {
+      source: findController,
+      pageIndex: pageIdx,
+    });
   }
 }
 

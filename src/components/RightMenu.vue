@@ -44,7 +44,10 @@
       v-if="stateStore.currentPage == 'reader'"
       name="annotationTab"
     >
-      <AnnotationList ref="annotationList" />
+      <AnnotationList
+        :selectedAnnotId="selectedAnnotId"
+        :annots="annots"
+      />
     </q-tab-panel>
   </q-tab-panels>
 </template>
@@ -56,9 +59,8 @@ import MetaInfoTab from "./MetaInfoTab.vue";
 import PDFTOC from "./pdfreader/PDFTOC.vue";
 
 export default {
-  props: { outline: Array },
-
-  emits: ["clickTOC"],
+  props: { outline: Array, annots: Array, selectedAnnotId: String },
+  emits: ["clickTOC", "update:selectedAnnotId"],
 
   components: {
     MetaInfoTab,

@@ -11,10 +11,10 @@
       dense
       no-transition
       no-selection-unset
-      selected-color="primary"
       no-nodes-label="No working projects"
       :nodes="projects"
       node-key="_id"
+      selected-color="primary"
       v-model:selected="stateStore.workingItemId"
       v-model:expanded="expanded"
     >
@@ -89,7 +89,7 @@
         </div>
         <q-icon
           v-if="prop.node.dataType == 'project'"
-          name="cancel"
+          name="close"
           @click="closeProject(prop.key)"
         />
       </template>
@@ -118,6 +118,8 @@ import {
 import { getProject } from "src/backend/project/project";
 
 export default {
+  emits: ["closeProject", "openProject"],
+
   components: { GraphView },
 
   setup() {
@@ -143,19 +145,18 @@ export default {
   },
 
   watch: {
-    "stateStore.workingItemId"(id) {
-      if (!!!id) return;
-      if (["library", "settings"].includes(id)) return;
-
-      let node = this.$refs.tree.getNodeByKey(id);
-      if (!!node) {
-        // if the id is in tree, then expand it if it has notes
-        if (node.children?.length > 0) this.expanded.push(id);
-      } else {
-        // if the id is not in the tree, then it must be new project
-        this.pushProjectNode(id);
-        this.stateStore.openedProjectIds.push(id);
-      }
+    "stateStore.openedProjectIds": {
+      handler(projectIds) {
+        if (projectIds.length == 0) return;
+        // the last one is the most recent added
+        let projectId = projectIds[projectIds.length - 1];
+        let node = this.$refs.tree.getNodeByKey(projectId);
+        if (!!!node) {
+          // if the id is not in the tree, then it must be new project
+          this.pushProjectNode(projectId);
+        }
+      },
+      deep: true,
     },
   },
 
@@ -188,28 +189,38 @@ export default {
         path: project.path,
       });
       this.expanded.push(projectId);
+
+      this.$emit("openProject", projectId);
     },
 
     selectItem(node) {
+      console.log("selecting Item", node._id);
       this.stateStore.workingItemId = node._id;
       if (node.children?.length > 0) this.expanded.push(node._id);
+
+      this.$emit("openProject", node._id);
     },
 
-    closeProject(projectId) {
-      // remove from opened projects
+    async closeProject(projectId) {
+      this.$emit("closeProject", projectId);
+
+      let selected = this.stateStore.workingItemId;
+      if (this.stateStore.workingItemId == projectId) {
+        let index = this.stateStore.openedProjectIds.indexOf(projectId);
+        index = index > 0 ? index - 1 : 0;
+        selected = "library";
+        if (this.stateStore.openedProjectIds.length > 1) {
+          selected = this.stateStore.openedProjectIds[index];
+        }
+      }
+
       this.stateStore.openedProjectIds =
         this.stateStore.openedProjectIds.filter((id) => id != projectId);
-
-      // remove from this.projects
       this.projects = this.projects.filter((p) => p._id != projectId);
 
-      // this.$emit("closeProject", projectId);
-      // IMPROVE
-      // have to wait sometime before removing from layout
-      // otherwise the project will be open again, weired
       setTimeout(() => {
-        this.$emit("closeProject", projectId);
-      }, 100);
+        this.stateStore.workingItemId = selected;
+      }, 50);
     },
 
     async addNote(node) {

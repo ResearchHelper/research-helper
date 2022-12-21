@@ -36,7 +36,7 @@
     <q-space />
 
     <q-btn-toggle
-      v-model="rightMenu"
+      v-model="showRightMenu"
       clearable
       flat
       dense
@@ -44,6 +44,7 @@
       :ripple="false"
       toggle-color="primary"
       :options="[{ value: true, icon: 'list' }]"
+      @update:model-value="$emit('toggleRightMenu', showRightMenu)"
     />
   </q-toolbar>
 </template>
@@ -53,6 +54,9 @@ import { useStateStore } from "src/stores/appState";
 import { addProject } from "src/backend/project/project";
 
 export default {
+  props: { rightMenuSize: Number },
+  emits: ["toggleRightMenu"],
+
   setup() {
     const stateStore = useStateStore();
     return { stateStore };
@@ -61,19 +65,14 @@ export default {
   data() {
     return {
       searchString: "",
+
+      showRightMenu: false,
     };
   },
 
-  computed: {
-    rightMenu: {
-      get() {
-        return this.stateStore.rightMenuSize > 0;
-      },
-
-      set(visible) {
-        this.stateStore.currentPage = "library";
-        this.stateStore.rightMenuSize = visible ? 25 : 0;
-      },
+  watch: {
+    rightMenuSize(size) {
+      this.showRightMenu = size > 0;
     },
   },
 
