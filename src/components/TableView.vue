@@ -186,6 +186,7 @@ export default {
 
     dblclickProject(row) {
       // this.stateStore.workingItemId = row._id;
+      this.stateStore.openItemId = row._id;
       this.stateStore.openProject(row._id);
     },
 

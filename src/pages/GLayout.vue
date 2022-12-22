@@ -61,7 +61,6 @@ const GlcKeyPrefix = readonly(ref("glc_"));
 
 const AllComponents = ref({});
 let MapComponents = {};
-let ActiveComponents = {};
 let IdToRef = {};
 var UnusedIndexes = [];
 let CurIndex = 0;
@@ -182,8 +181,7 @@ const focusById = (id) => {
 };
 
 const removeGLComponent = (removeId) => {
-  // delete AllComponents.value[IdToRef[removeId]];
-  delete MapComponents[IdToRef[removeId]].container.close();
+  MapComponents[IdToRef[removeId]]?.container.close();
 };
 
 /*******************
@@ -309,14 +307,8 @@ onMounted(() => {
   GLayout.beforeVirtualRectingEvent = handleBeforeVirtualRectingEvent;
 
   GLayout.on("focus", (e) => {
-    console.log("focus");
     let state = e.target.container.state;
     emit("update:workingItemId", state.id);
-    nextTick(() => {
-      // wait until layout is updated
-      // this is needed for closing component
-      emit("layoutchanged");
-    });
   });
 
   GLayout.on("componentCreated", (e) => {
@@ -326,9 +318,13 @@ onMounted(() => {
   });
 
   GLayout.on("activeContentItemChanged", (e) => {
-    console.log("active item changed", e);
     let state = e.container.state;
     emit("update:workingItemId", state.id);
+    nextTick(() => {
+      // wait until layout is updated
+      // this is needed for closing component
+      emit("layoutchanged");
+    });
   });
 });
 

@@ -19,7 +19,7 @@ import {
 import { getAllProjects, getProject } from "src/backend/project/project";
 
 export default {
-  props: { hasToolbar: Boolean },
+  props: { noteId: String, hasToolbar: Boolean },
 
   setup() {
     const stateStore = useStateStore();
@@ -38,11 +38,7 @@ export default {
   },
 
   async mounted() {
-    console.log("workingId:", this.stateStore.workingItemId);
-    this.$refs.vditor.setAttribute(
-      "id",
-      `vditor-${this.stateStore.workingItemId}`
-    );
+    this.$refs.vditor.setAttribute("id", `vditor-${this.noteId}`);
     this.showEditor = true;
     this.initEditor();
   },
@@ -72,7 +68,7 @@ export default {
           "fullscreen",
         ];
 
-      this.editor = new Vditor("vditor-" + this.stateStore.workingItemId, {
+      this.editor = new Vditor("vditor-" + this.noteId, {
         height: "100%",
         mode: "wysiwyg",
         toolbarConfig: {
@@ -103,7 +99,6 @@ export default {
           // dark theme, dark content theme, native code theme
           this.editor.setTheme("dark", "dark", "native");
           if (!!this.showEditor) this.setContent();
-          console.log(this.editor);
         },
         focus: () => {
           // used to filter stuff
@@ -120,7 +115,7 @@ export default {
           accept: "image/*",
           handler: (files) => {
             for (let file of files) {
-              getNote(this.stateStore.workingItemId).then((note) => {
+              getNote(this.noteId).then((note) => {
                 uploadImage(note.projectId, file).then((uploaded) => {
                   this.editor.insertValue(
                     `![${uploaded.imgName}](${uploaded.imgPath})`
@@ -134,7 +129,7 @@ export default {
     },
 
     async setContent() {
-      let content = await loadNote(this.stateStore.workingItemId);
+      let content = await loadNote(this.noteId);
       this.editor.setValue(content);
       this.changeLinks();
     },
@@ -143,12 +138,12 @@ export default {
       // save the content when it's blur
       // this will be called before unmount
       let content = this.editor.getValue();
-      await saveNote(this.stateStore.workingItemId, content);
+      await saveNote(this.noteId, content);
       await this.saveLinks();
     },
 
     async saveLinks() {
-      let note = await getNote(this.stateStore.workingItemId);
+      let note = await getNote(this.noteId);
       note.links = [];
       let parser = new DOMParser();
       let html = parser.parseFromString(this.editor.getHTML(), "text/html");
@@ -165,47 +160,28 @@ export default {
           }
         }
       }
-      updateNote(this.stateStore.workingItemId, { links: note.links });
+      updateNote(this.noteId, { links: note.links });
     },
 
     async clickLink(linkNode) {
-      console.log("clicking link");
+      console.log("clicking link", linkNode);
       this.editor.blur(); // save the content before jumping
-
-      // let link = linkNode.querySelector(
-      //   "span.vditor-ir__marker--link"
-      // ).innerText;
-
-      // try {
-      //   new URL(link);
-      //   // valid external url, do nothing
-      // } catch (error) {
-      //   // we just want the document, both getProject or getNote are good
-      //   let doc = await getProject(link);
-      //   if (doc.dataType == "note") {
-      //     this.stateStore.openProject(doc.projectId);
-      //     this.stateStore.workingItemId = doc._id;
-      //   } else if (doc.dataType == "project") {
-      //     this.stateStore.openProject(doc._id);
-      //   }
-      // }
 
       let id = linkNode.href.split("/").at(-1);
       // we just want the document, both getProject or getNote are good
       let doc = await getProject(id);
       if (doc.dataType == "note") {
-        // this.stateStore.openProject(doc.projectId);
-
-        this.stateStore.openItemId = doc._id;
+        this.stateStore.openProject(doc.projectId);
       } else if (doc.dataType == "project") {
         this.stateStore.openProject(doc._id);
       }
+      setTimeout(() => {
+        this.stateStore.openItemId = doc._id;
+      }, 100);
     },
 
     changeLinks() {
-      // let vditor = document.getElementById("vditor");
       let vditor = this.$refs.vditor;
-      // let linkNodes = vditor.querySelectorAll("[data-type='a']");
       let linkNodes = vditor.querySelectorAll("a");
       for (let linkNode of linkNodes) {
         linkNode.onclick = () => this.clickLink(linkNode);

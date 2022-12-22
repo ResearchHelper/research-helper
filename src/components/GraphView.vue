@@ -1,6 +1,6 @@
 <template>
   <div
-    style="height: calc(100vh - 32px)"
+    style="height: 500px; background-color: #333333"
     id="cy"
   ></div>
 </template>
@@ -79,14 +79,13 @@ export default {
       // we cannot use this to access this.stateStore now
       let type = this.data("type");
       if (type == "project") {
-        // stateStore.openProject(this.data("id"));
-        stateStore.workingItemId = this.data("id");
+        stateStore.openProject(this.data("id"));
       } else if (type == "note") {
-        // stateStore.openProject(this.data("parent"));
-        stateStore.workingItemId = this.data("parent");
-        stateStore.workingItemId = this.data("id");
+        stateStore.openProject(this.data("parent"));
       }
-      // stateStore.setCurrentPage("reader");
+      setTimeout(() => {
+        stateStore.openItemId = this.data("id");
+      }, 100);
     });
   },
 

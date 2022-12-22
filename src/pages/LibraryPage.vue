@@ -60,8 +60,8 @@
 
 <script>
 import { useStateStore } from "src/stores/appState";
-import TableView from "../components/TableView.vue";
-import TreeView from "../components/TreeView.vue";
+import TableView from "src/components/TableView.vue";
+import TreeView from "src/components/TreeView.vue";
 import MetaInfoTab from "src/components/MetaInfoTab.vue";
 
 export default {

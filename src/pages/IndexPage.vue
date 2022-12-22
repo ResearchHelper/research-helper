@@ -26,6 +26,7 @@
             :ripple="false"
             clearable
             :options="[{ icon: 'account_tree', value: true }]"
+            @update:model-value="stateStore.saveState()"
           />
         </div>
         <q-btn
@@ -39,13 +40,15 @@
     </template>
     <template v-slot:after>
       <q-splitter
-        :limits="[0, 30]"
+        :limits="[0, 60]"
         emit-immediately
         v-model="leftMenuSize"
-        @update:model-value="$refs.GLayoutRoot.resize()"
+        @update:model-value="(size) => resizeLeftMenu(size)"
       >
         <template v-slot:before>
           <ProjectTree
+            style="height: calc(100vh - 32px)"
+            v-if="stateStore.ready"
             @openProject="(projectId) => setComponent(projectId)"
             @closeProject="(projectId) => removeComponent(projectId)"
             ref="tree"
@@ -53,6 +56,7 @@
         </template>
         <template v-slot:after>
           <GLayout
+            v-if="stateStore.ready"
             ref="GLayoutRoot"
             glc-path="./"
             style="width: 100%; height: calc(100vh - 32px)"
@@ -70,13 +74,19 @@ import { useQuasar } from "quasar";
 
 import ProjectTree from "src/components/ProjectTree.vue";
 
-import GLayout from "./GLayout.vue";
+import GLayout from "src/pages/GLayout.vue";
 import "golden-layout/dist/css/goldenlayout-base.css";
 import "golden-layout/dist/css/themes/goldenlayout-dark-theme.css";
 
 import { useStateStore } from "src/stores/appState";
 import { getProject } from "src/backend/project/project";
-import { getLayout, updateLayout } from "src/backend/layout";
+import { getNotes } from "src/backend/project/note";
+import {
+  getLayout,
+  updateLayout,
+  getAppState,
+  updateAppState,
+} from "src/backend/appState";
 
 export default {
   components: {
@@ -102,7 +112,7 @@ export default {
   computed: {
     leftMenu: {
       get() {
-        return this.leftMenuSize > 0 || this.stateStore.showLeftMenu;
+        return this.leftMenuSize > 0;
       },
 
       set(visible) {
@@ -127,18 +137,27 @@ export default {
   },
 
   async mounted() {
+    let state = await getAppState();
+    this.stateStore.loadState(state);
+    this.leftMenuSize = state.leftMenuSize;
     const layout = await getLayout();
     await this.$refs.GLayoutRoot.loadGLLayout(layout.config);
   },
 
   methods: {
+    async resizeLeftMenu(size) {
+      this.$refs.GLayoutRoot.resize();
+      this.stateStore.leftMenuSize = size > 10 ? size : 10;
+      await this.saveLayout();
+      await this.saveAppState();
+    },
+
     /**
      * Set focus to component with specified id
      * create it if it doesn't exist
      * @param {String} id
      */
     async setComponent(id) {
-      console.log("setting component:", id);
       let componentType = "";
       let title = "";
       if (id == "library") {
@@ -158,17 +177,32 @@ export default {
         }
       }
 
-      this.$refs.GLayoutRoot.addGLComponent(componentType, title, id);
+      await this.$refs.GLayoutRoot.addGLComponent(componentType, title, id);
+      await this.saveLayout();
+      await this.saveAppState();
     },
 
-    removeComponent(id) {
+    async removeComponent(id) {
       this.$refs.GLayoutRoot.removeGLComponent(id);
+      let item = await getProject(id);
+      if (item.dataType == "project") {
+        let notes = await getNotes(id);
+        for (let note of notes) {
+          this.$refs.GLayoutRoot.removeGLComponent(note._id);
+        }
+      }
     },
 
     async saveLayout() {
       if (!this.$refs.GLayoutRoot.initialized) return;
       let config = this.$refs.GLayoutRoot.getLayoutConfig();
       await updateLayout(config);
+    },
+
+    async saveAppState() {
+      if (!this.stateStore.ready) return;
+      let state = this.stateStore.saveState();
+      await updateAppState(state);
     },
   },
 };

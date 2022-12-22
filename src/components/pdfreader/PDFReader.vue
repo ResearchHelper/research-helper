@@ -146,7 +146,6 @@ export default {
       // if visible is undefined then it is newly added, it defaults to true
       let visible = this.visible === undefined ? true : this.visible;
       if (visible) {
-        console.log("setting state for:", this.projectId);
         this.changePageNumber(this.pdfState.currentPageNumber);
         this.changeSpreadMode(this.pdfState.spreadMode);
         this.changeScale({ scale: this.pdfState.currentScale });

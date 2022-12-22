@@ -9,6 +9,9 @@ FIXME:
 [x] split readers is not loading after focusing
 [x] cannot close projects properly
 [x] clickRelated flashes between two workingItem. I think it's the same problem as the not closing component issue. Maybe we need to set the program to rest after setting workingItemId.
+[x] switch from notes to project at start
+[x] fixed graphview links
+[x] note editor link is not working now since we've change that to wysiwyg editor
 
 TODO:
 [x] try golden layout
@@ -29,8 +32,8 @@ TODO:
 [x] 1. change all pdfState to local variables
 [x] 2. separate the search and matchCounts from states and deal with them separately
 [x] 3. do not use annotStore, maintain the annotList in PDFReader.vue
-[ ] able to save appState, especially the openedProjects
-[ ] refactor the code related to layout
+[x] able to save appState, especially the openedProjects
+[ ] test the node link in production mode
 
 IMPROVE:
 leftmenu
