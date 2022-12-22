@@ -58,7 +58,6 @@
           <GLayout
             v-if="stateStore.ready"
             ref="GLayoutRoot"
-            glc-path="./"
             style="width: 100%; height: calc(100vh - 32px)"
             v-model:workingItemId="stateStore.workingItemId"
             @layoutchanged="saveLayout"

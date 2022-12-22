@@ -47,7 +47,6 @@ import GLComponent from "./GLComponent.vue";
  * Props and Emits
  *******************/
 const props = defineProps({
-  glcPath: String,
   workingItemId: String,
 });
 const emit = defineEmits(["update:workingItemId", "layoutchanged"]);
@@ -91,10 +90,11 @@ const addComponent = (componentType, title, id) => {
   if (UnusedIndexes.length > 0) index = UnusedIndexes.pop();
   else CurIndex++;
 
+  // for vite's dynamic import, see the following page
+  // https://github.com/rollup/plugins/tree/master/packages/dynamic-import-vars#limitations
+  // when building the app, vite will automatically take care the imports for us
   const component = markRaw(
-    defineAsyncComponent(() =>
-      import(/* @vite-ignore */ props.glcPath + componentType + ".vue")
-    )
+    defineAsyncComponent(() => import(`./dynamicPages/${componentType}.vue`))
   );
   AllComponents.value[index] = { component, id };
 

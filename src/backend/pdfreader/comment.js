@@ -43,7 +43,7 @@ function comment(container, annot, fromDB = false) {
   section.classList.add("textAnnotation");
 
   let img = document.createElement("img");
-  img.src = "src/assets/annotation-note.svg";
+  img.src = "node_modules/pdfjs-dist/web/images/annotation-note.svg";
   img.style.position = "absolute";
   img.style.left = `0px`;
   img.style.top = `0px`;
