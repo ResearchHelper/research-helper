@@ -33,11 +33,11 @@ TODO:
 [x] 2. separate the search and matchCounts from states and deal with them separately
 [x] 3. do not use annotStore, maintain the annotList in PDFReader.vue
 [x] able to save appState, especially the openedProjects
-[ ] test the node link in production mode
+[x] test the node link in production mode
 
 IMPROVE:
 leftmenu
-[ ] closing project needs to wait some time
+[x] closing project needs to wait some time
 
 vditor
 [ ] able to open it in a separate window, like zotero
@@ -51,6 +51,3 @@ pdfreader
 
 UI
 [ ] set global var systembarheight, toolbarheight, and tabsheight. So we can refer them more quickly
-
-extractor
-[ ] the filepath must start from projects/...
