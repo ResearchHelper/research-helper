@@ -147,7 +147,6 @@ export default {
       this.project = await updateProject(this.project);
 
       // update table data
-      // this.stateStore.modifiedProject = this.project;
       this.$emit("updateProject", this.project);
     },
 
@@ -157,7 +156,6 @@ export default {
       this.tag = ""; // remove text in input
 
       // update table data
-      // this.stateStore.modifiedProject = this.project;
       this.$emit("updateProject", this.project);
 
       // update db
@@ -169,7 +167,6 @@ export default {
       this.project.tags = this.project.tags.filter((t) => t != tag);
 
       // update table data
-      // this.stateStore.modifiedProject = this.project;
       this.$emit("updateProject", this.project);
 
       // update db

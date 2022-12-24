@@ -184,6 +184,11 @@ const removeGLComponent = (removeId) => {
   MapComponents[IdToRef[removeId]]?.container.close();
 };
 
+const createGLDragSource = () => {
+  // TODO: learn how to do this
+  GLayout.createDragSource();
+};
+
 /*******************
  * Mount
  *******************/
@@ -336,6 +341,7 @@ defineExpose({
   removeGLComponent,
   loadGLLayout,
   getLayoutConfig,
+  createGLDragSource,
   resize,
   initialized,
 });

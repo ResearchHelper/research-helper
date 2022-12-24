@@ -51,16 +51,23 @@
             v-if="stateStore.ready"
             @openProject="(projectId) => setComponent(projectId)"
             @closeProject="(projectId) => removeComponent(projectId)"
+            @treedragstart="
+              (node) => {
+                draggingNode = node;
+              }
+            "
             ref="tree"
           />
         </template>
         <template v-slot:after>
           <GLayout
             v-if="stateStore.ready"
-            ref="GLayoutRoot"
+            ref="layout"
             style="width: 100%; height: calc(100vh - 32px)"
             v-model:workingItemId="stateStore.workingItemId"
             @layoutchanged="saveLayout"
+            @dragover="onDragOver"
+            @drop="onDrop"
           ></GLayout>
         </template>
       </q-splitter>
@@ -79,7 +86,6 @@ import "golden-layout/dist/css/themes/goldenlayout-dark-theme.css";
 
 import { useStateStore } from "src/stores/appState";
 import { getProject } from "src/backend/project/project";
-import { getNotes } from "src/backend/project/note";
 import {
   getLayout,
   updateLayout,
@@ -105,6 +111,8 @@ export default {
   data() {
     return {
       leftMenuSize: 0,
+
+      draggingNode: null,
     };
   },
 
@@ -123,7 +131,9 @@ export default {
           this.leftMenuSize = 0;
         }
         this.$nextTick(() => {
-          this.$refs.GLayoutRoot.resize();
+          this.$refs.layout.resize();
+          this.saveLayout();
+          this.saveAppState();
         });
       },
     },
@@ -133,19 +143,26 @@ export default {
     "stateStore.openItemId"(id) {
       this.setComponent(id);
     },
+
+    "stateStore.openedProjectIds": {
+      handler(projectIds) {
+        this.saveAppState();
+      },
+      deep: true,
+    },
   },
 
   async mounted() {
     let state = await getAppState();
     this.stateStore.loadState(state);
-    this.leftMenuSize = state.leftMenuSize;
+    if (this.stateStore.showLeftMenu) this.leftMenuSize = state.leftMenuSize;
     const layout = await getLayout();
-    await this.$refs.GLayoutRoot.loadGLLayout(layout.config);
+    await this.$refs.layout.loadGLLayout(layout.config);
   },
 
   methods: {
     async resizeLeftMenu(size) {
-      this.$refs.GLayoutRoot.resize();
+      this.$refs.layout.resize();
       this.stateStore.leftMenuSize = size > 10 ? size : 10;
       await this.saveLayout();
       await this.saveAppState();
@@ -176,25 +193,24 @@ export default {
         }
       }
 
-      await this.$refs.GLayoutRoot.addGLComponent(componentType, title, id);
+      await this.$refs.layout.addGLComponent(componentType, title, id);
       await this.saveLayout();
       await this.saveAppState();
     },
 
     async removeComponent(id) {
-      this.$refs.GLayoutRoot.removeGLComponent(id);
+      this.$refs.layout.removeGLComponent(id);
       let item = await getProject(id);
       if (item.dataType == "project") {
-        let notes = await getNotes(id);
-        for (let note of notes) {
-          this.$refs.GLayoutRoot.removeGLComponent(note._id);
+        for (let noteId of item.notes) {
+          this.$refs.layout.removeGLComponent(noteId);
         }
       }
     },
 
     async saveLayout() {
-      if (!this.$refs.GLayoutRoot.initialized) return;
-      let config = this.$refs.GLayoutRoot.getLayoutConfig();
+      if (!this.$refs.layout.initialized) return;
+      let config = this.$refs.layout.getLayoutConfig();
       await updateLayout(config);
     },
 
@@ -202,6 +218,20 @@ export default {
       if (!this.stateStore.ready) return;
       let state = this.stateStore.saveState();
       await updateAppState(state);
+    },
+
+    /*******************************************
+     * Drag and drop to GLayout to add component
+     *******************************************/
+
+    onDragOver(e) {
+      e.preventDefault();
+    },
+
+    onDrop(e) {
+      console.log("drop", e);
+      console.log("dragnode", this.draggingNode);
+      // this.$refs.layout.createDragSource();
     },
   },
 };

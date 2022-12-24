@@ -1,4 +1,5 @@
 import { db } from "../database";
+import { updateProject } from "./project";
 import { useStateStore } from "src/stores/appState";
 import { v4 as uuidv4 } from "uuid";
 import { Buffer } from "buffer";
@@ -20,18 +21,46 @@ async function addNote(projectId) {
   let note = {
     _id: noteId,
     dataType: "note",
-    projectId: projectId,
     links: [],
     label: "New Note",
     path: filePath,
   };
   await db.put(note);
+
+  // update note list in project
+  let project = await db.get(projectId);
+  project.notes.push(noteId);
+  await updateProject(project);
+
+  // return note
   return await db.get(noteId);
 }
 
+async function getParentProject(noteId) {
+  try {
+    let result = await db.find({
+      selector: {
+        dataType: "project",
+        notes: { $in: [noteId] },
+      },
+    });
+
+    // there is a unique project containing the note
+    return result.docs[0];
+  } catch (error) {
+    console.log(error);
+  }
+}
+
 async function deleteNote(noteId) {
+  // delete note entry from db
   let note = await db.get(noteId);
   await db.remove(note);
+
+  // update project's note list
+  let project = getParentProject(noteId);
+  project.children = project.children.filter((id) => id != noteId);
+  await updateProject(project);
 }
 
 async function updateNote(noteId, data) {
@@ -44,17 +73,6 @@ async function updateNote(noteId, data) {
 
 async function getNote(noteId) {
   return await db.get(noteId);
-}
-
-async function getNotes(projectId) {
-  let result = await db.find({
-    selector: {
-      dataType: "note",
-      projectId: projectId,
-    },
-  });
-
-  return result.docs;
 }
 
 async function getAllNotes() {
@@ -73,11 +91,9 @@ async function getAllNotes() {
  * @returns {string} content
  */
 async function loadNote(noteId) {
-  let note = await db.get(noteId);
-  let projectPath = path.join(storagePath, "projects", note.projectId);
-  let notePath = path.join(projectPath, noteId + ".md");
   let content = "";
-  if (fs.existsSync(notePath)) content = fs.readFileSync(notePath, "utf8");
+  let note = await db.get(noteId);
+  if (fs.existsSync(note.path)) content = fs.readFileSync(note.path, "utf8");
   return content;
 }
 
@@ -88,23 +104,23 @@ async function loadNote(noteId) {
  */
 async function saveNote(noteId, content) {
   let note = await db.get(noteId);
-  let projectPath = path.join(storagePath, "projects", note.projectId);
-  let notePath = path.join(projectPath, noteId + ".md");
-  fs.writeFileSync(notePath, content);
+  fs.writeFileSync(note.path, content);
 }
 
 /**
- * Upload image and save it under the same project folder
- * @param {String} projectId
+ * Upload image and save it under the same folder
+ * @param {String} noteId
  * @param {File} file
  */
-async function uploadImage(projectId, file) {
+async function uploadImage(noteId, file) {
   if (!file.type.includes("image")) return;
 
   try {
+    let note = await getNote(noteId);
     let imgType = path.extname(file.name); // .png
-    let imgName = uuidv4() + imgType;
-    let imgFolder = path.join(storagePath, "projects", projectId, "img");
+    let imgName = uuidv4() + imgType; // use uuid as img name
+    // let imgFolder = path.join(storagePath, "projects", projectId, "img");
+    let imgFolder = path.join(path.dirname(note.path), "img");
     let imgPath = path.join(imgFolder, imgName);
     if (!fs.existsSync(imgFolder)) fs.mkdirSync(imgFolder);
 
@@ -116,14 +132,62 @@ async function uploadImage(projectId, file) {
   }
 }
 
+/**
+ * Drop note into another project, and put it as the last note
+ * @param {String} dragNoteId
+ * @param {String} dropProjectId
+ */
+async function moveNoteInto(dragNoteId, dropProjectId) {
+  try {
+    // remove from the parent project
+    let dragParentProject = await getParentProject(dragNoteId);
+    console.log(dragParentProject);
+    dragParentProject.notes = dragParentProject.notes.filter(
+      (id) => id != dragNoteId
+    );
+    await updateProject(dragParentProject);
+
+    // add to the target project
+    let dropProject = await db.get(dropProjectId);
+    dropProject.notes.push(dragNoteId);
+    await updateProject(dropProject);
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+/**
+ * Drop note below another note, reorder within the same project
+ * @param {String} dragNoteId
+ * @param {String} dropNoteId
+ */
+async function moveNoteBelow(dragNoteId, dropNoteId) {
+  try {
+    let dragParentProject = await getParentProject(dragNoteId);
+    let dropParentProject = await getParentProject(dropNoteId);
+
+    if (dragParentProject._id != dropParentProject._id) return;
+
+    let notes = dragParentProject.notes;
+    let from = notes.findIndex((id) => id == dragNoteId);
+    let to = notes.findIndex((id) => id == dropNoteId);
+    notes.splice(parseInt(to) + 1, 0, notes.splice(from, 1)[0]);
+    dragParentProject.notes = notes;
+    await updateProject(dragParentProject);
+  } catch (error) {
+    console.log(error);
+  }
+}
+
 export {
   addNote,
   deleteNote,
   updateNote,
   getNote,
-  getNotes,
   getAllNotes,
   loadNote,
   saveNote,
   uploadImage,
+  moveNoteInto,
+  moveNoteBelow,
 };

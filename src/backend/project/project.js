@@ -33,8 +33,9 @@ async function addProject(file) {
     project.dataType = "project";
     project.type = "paper";
     project.path = dstPath;
-    project.related = [];
+    project.related = []; // related projectIds
     project.tags = [];
+    project.notes = []; // noteIds
     // the folders containing the project
     project.folderIds = ["library"];
     if (stateStore.selectedFolderId != "library")
@@ -71,7 +72,6 @@ async function deleteProject(projectId, deleteFromDB) {
       }
 
       // remove the acutual files
-      console.log("removing", path.dirname(project.path));
       fs.rmSync(path.dirname(project.path), { recursive: true, force: true });
     } else {
       let folderId = stateStore.selectedFolderId;

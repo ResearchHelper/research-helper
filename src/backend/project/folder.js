@@ -9,7 +9,19 @@ async function getFolderTree() {
     });
     let docs = result.docs;
 
-    if (docs.length == 0) return [];
+    // no folders in db yet
+    if (docs.length == 0) {
+      // create library folder for user if there is none
+      let library = {
+        _id: "library",
+        label: "Library",
+        icon: "home",
+        children: [],
+        dataType: "folder",
+      };
+      await db.put(library);
+      return [library];
+    }
 
     // create a dict for later use
     let folders = {};
@@ -46,7 +58,7 @@ async function addFolder(parentId) {
     // push to children of parent Node
     let parentNode = await db.get(parentId);
     parentNode.children.push(node._id);
-    await updateFolder(parentNode);
+    updateFolder(parentId, { children: parentNode.children });
 
     return node;
   } catch (err) {
@@ -54,18 +66,20 @@ async function addFolder(parentId) {
   }
 }
 
-function updateFolder(node) {
-  return db.put(node);
+async function updateFolder(folderId, props) {
+  try {
+    let folder = await db.get(folderId);
+    for (let key in props) {
+      folder[key] = props[key];
+    }
+    await db.put(folder);
+  } catch (error) {
+    console.log(error);
+  }
 }
 
 async function deleteFolder(folderId) {
   try {
-    // await db.createIndex({
-    //   index: {
-    //     fields: ["children"],
-    //   },
-    // });
-
     // delete from children of parent folder
     let result = await db.find({
       selector: { children: { $in: [folderId] } },
@@ -101,4 +115,90 @@ async function deleteFolder(folderId) {
   }
 }
 
-export { getFolderTree, addFolder, updateFolder, deleteFolder };
+/**
+ * Get the parent folder of a given folder
+ * @param {String} folderId
+ */
+async function getParentFolder(folderId) {
+  try {
+    let result = await db.find({
+      selector: {
+        dataType: "folder",
+        children: { $in: [folderId] },
+      },
+    });
+    // the parent folder is unique
+    return result.docs[0];
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+/**
+ * Move the dragFolder into the dropFolder
+ * @param {String} dragFolderId
+ * @param {String} dropFolderId
+ */
+async function moveFolderInto(dragFolderId, dropFolderId) {
+  try {
+    // remove from dragFolder's parent folder first
+    let dragParentFolder = await getParentFolder(dragFolderId);
+    dragParentFolder.children = dragParentFolder.children.filter(
+      (id) => id != dragFolderId
+    );
+    await updateFolder(dragParentFolder._id, {
+      children: dragParentFolder.children,
+    });
+
+    // add to dropFolder after the dragParentFolder is modified
+    let dropFolder = await db.get(dropFolderId);
+    dropFolder.children.push(dragFolderId);
+    await updateFolder(dropFolderId, { children: dropFolder.children });
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+/**
+ * Move the dragFolder below the dropFolder
+ * @param {String} dragFolderId
+ * @param {String} dropFolderId
+ */
+async function moveFolderBelow(dragFolderId, dropFolderId) {
+  try {
+    let dragParentFolder = await getParentFolder(dragFolderId);
+    // remove dragFolder from its parent folder
+    dragParentFolder.children = dragParentFolder.children.filter(
+      (id) => id != dragFolderId
+    );
+    await updateFolder(dragParentFolder._id, {
+      children: dragParentFolder.children,
+    });
+
+    // insert into dropFolder's parent Folder
+    let dropParentFolder = await getParentFolder(dropFolderId);
+    for (let i in dropParentFolder.children) {
+      if (dropParentFolder.children[i] == dropFolderId) {
+        // must convert i to integer!!!
+        // insert draggingNode at the drop node bottom (at position i+1)
+        dropParentFolder.children.splice(parseInt(i) + 1, 0, dragFolderId);
+        break;
+      }
+    }
+    await updateFolder(dropParentFolder._id, {
+      children: dropParentFolder.children,
+    });
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+export {
+  getFolderTree,
+  addFolder,
+  updateFolder,
+  deleteFolder,
+  moveFolderInto,
+  moveFolderBelow,
+  getParentFolder,
+};

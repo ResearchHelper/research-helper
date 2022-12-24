@@ -34,12 +34,20 @@ TODO:
 [x] 3. do not use annotStore, maintain the annotList in PDFReader.vue
 [x] able to save appState, especially the openedProjects
 [x] test the node link in production mode
+[x] draggable treeView
+[x] draggable projectTree
+[x] reorder projects
+[x] reorder notes
+[x] insert note into another project
+[ ] do I need to move the actual notes to different folders???
+[ ] drag from tree and drop to glayout to create new component
 
 IMPROVE:
 leftmenu
 [x] closing project needs to wait some time
 
 vditor
+[ ] debounce save for input
 [ ] able to open it in a separate window, like zotero
 [ ] figure out how vditor gets the image in dev mode, the base_url http://localhost:9300 is getting in the way. In production mode it is okay.
 

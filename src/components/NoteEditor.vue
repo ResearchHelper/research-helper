@@ -115,12 +115,10 @@ export default {
           accept: "image/*",
           handler: (files) => {
             for (let file of files) {
-              getNote(this.noteId).then((note) => {
-                uploadImage(note.projectId, file).then((uploaded) => {
-                  this.editor.insertValue(
-                    `![${uploaded.imgName}](${uploaded.imgPath})`
-                  );
-                });
+              uploadImage(this.noteId, file).then((uploaded) => {
+                this.editor.insertValue(
+                  `![${uploaded.imgName}](${uploaded.imgPath})`
+                );
               });
             }
           },

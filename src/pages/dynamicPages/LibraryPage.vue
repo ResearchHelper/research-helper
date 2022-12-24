@@ -71,7 +71,6 @@ export default {
   },
 
   components: {
-    // ActionBar,
     TableView,
     TreeView,
     MetaInfoTab,
