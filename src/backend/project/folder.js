@@ -1,4 +1,5 @@
 import { db } from "../database";
+import { sortTree } from "./utils";
 
 async function getFolderTree() {
   try {
@@ -37,7 +38,10 @@ async function getFolderTree() {
       return root;
     }
 
-    return [_dfs(folders["library"])];
+    let tree = _dfs(folders["library"]);
+    sortTree(tree);
+
+    return [tree];
   } catch (err) {
     console.log(err);
   }
@@ -159,46 +163,11 @@ async function moveFolderInto(dragFolderId, dropFolderId) {
   }
 }
 
-/**
- * Move the dragFolder below the dropFolder
- * @param {String} dragFolderId
- * @param {String} dropFolderId
- */
-async function moveFolderBelow(dragFolderId, dropFolderId) {
-  try {
-    let dragParentFolder = await getParentFolder(dragFolderId);
-    // remove dragFolder from its parent folder
-    dragParentFolder.children = dragParentFolder.children.filter(
-      (id) => id != dragFolderId
-    );
-    await updateFolder(dragParentFolder._id, {
-      children: dragParentFolder.children,
-    });
-
-    // insert into dropFolder's parent Folder
-    let dropParentFolder = await getParentFolder(dropFolderId);
-    for (let i in dropParentFolder.children) {
-      if (dropParentFolder.children[i] == dropFolderId) {
-        // must convert i to integer!!!
-        // insert draggingNode at the drop node bottom (at position i+1)
-        dropParentFolder.children.splice(parseInt(i) + 1, 0, dragFolderId);
-        break;
-      }
-    }
-    await updateFolder(dropParentFolder._id, {
-      children: dropParentFolder.children,
-    });
-  } catch (error) {
-    console.log(error);
-  }
-}
-
 export {
   getFolderTree,
   addFolder,
   updateFolder,
   deleteFolder,
   moveFolderInto,
-  moveFolderBelow,
   getParentFolder,
 };

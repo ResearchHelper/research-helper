@@ -1,5 +1,6 @@
 <template>
   <NoteEditor
+    v-if="visible"
     :has-toolbar="true"
     :noteId="itemId"
   />
@@ -7,7 +8,7 @@
 <script>
 import NoteEditor from "src/components/NoteEditor.vue";
 export default {
-  props: { itemId: String },
+  props: { itemId: String, visible: Boolean },
 
   components: { NoteEditor },
 };

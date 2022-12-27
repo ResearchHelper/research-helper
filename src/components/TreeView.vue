@@ -17,7 +17,9 @@
           class="row full-width"
           :class="{
             dragover:
-              dragoverNode == prop.node && draggingNode != prop.node && !below,
+              !!dragoverNode &&
+              dragoverNode == prop.node &&
+              draggingNode != prop.node,
           }"
           draggable="true"
           @dragstart="(e) => onDragStart(e, prop.node)"
@@ -75,15 +77,6 @@
           </div>
         </div>
       </template>
-      <template v-slot:default-body="prop">
-        <div
-          v-if="dragoverNode == prop.node && this.draggingNode != prop.node"
-          style="height: 10px"
-          :class="{ dragover: below }"
-          @dragover="(e) => onDragOverBelow(e, prop.node)"
-          @drop="(e) => onDropBelow(e, prop.node)"
-        ></div>
-      </template>
     </q-tree>
   </div>
 </template>
@@ -96,11 +89,14 @@ import {
   updateFolder,
   deleteFolder,
   moveFolderInto,
-  moveFolderBelow,
   getParentFolder,
 } from "src/backend/project/folder";
+import { sortTree } from "src/backend/project/utils";
+import { getProject, updateProject } from "src/backend/project/project";
 
 export default {
+  props: { draggingProjectId: String },
+
   setup() {
     const stateStore = useStateStore();
     return { stateStore };
@@ -117,7 +113,6 @@ export default {
       dragoverNode: null,
 
       enterTime: 0,
-      below: false,
     };
   },
 
@@ -127,6 +122,14 @@ export default {
   },
 
   methods: {
+    /**************************
+     * Add, delete, update
+     **************************/
+
+    /**
+     * Add folder to selected node
+     * @param {Object} parentNode
+     */
     async addFolder(parentNode) {
       // add to database
       let node = await addFolder(parentNode._id);
@@ -134,8 +137,15 @@ export default {
       // add to UI and expand the parent folder
       parentNode.children.push(node);
       this.expandedKeys.push(parentNode._id);
+
+      // then rename it
+      this.setRenameFolder(node);
     },
 
+    /**
+     * Delete selected folder
+     * @param {Object} node
+     */
     deleteFolder(node) {
       if (this.specialFolderIds.includes(node._id)) return;
 
@@ -162,6 +172,10 @@ export default {
       deleteFolder(node._id);
     },
 
+    /**
+     * Reveal input to rename for selected folder
+     * @param {Object} node
+     */
     setRenameFolder(node) {
       this.renamingFolderId = node._id;
 
@@ -174,6 +188,9 @@ export default {
       }, 100);
     },
 
+    /**
+     * Hide input and update db and ui
+     */
     renameFolder() {
       if (!!!this.renamingFolderId) return;
 
@@ -183,19 +200,35 @@ export default {
 
       // update ui
       this.renamingFolderId = null;
+
+      // sort the tree
+      sortTree(this.folders[0]);
     },
 
+    /****************
+     * Drag and Drop
+     ****************/
+
+    /**
+     * On dragstart, set the dragging folder
+     * @param {DragEvent} e
+     * @param {Object} node
+     */
     onDragStart(e, node) {
       this.draggingNode = node;
     },
 
+    /**
+     * When dragging node is over the folder, highlight and expand it.
+     * @param {DragEvent} e
+     * @param {Object} node
+     */
     onDragOver(e, node) {
       // enable drop on the node
       e.preventDefault();
 
       // hightlight the dragover folder
       this.dragoverNode = node;
-      this.below = false;
 
       // expand the node if this function is called over many times
       this.enterTime++;
@@ -205,58 +238,56 @@ export default {
       }
     },
 
+    /**
+     * When the dragging node leaves the folders, reset the timer
+     * @param {DragEvent} e
+     * @param {Object} node
+     */
     onDragLeave(e, node) {
       this.enterTime = 0;
     },
 
-    onDragOverBelow(e, node) {
-      e.preventDefault();
-      this.below = true;
-    },
-
+    /**
+     * If draggingProjectId is not empty, then we are dropping project into folder
+     * Otherwise we are dropping folder into another folder
+     * @param {DragEvent} e
+     * @param {Object} node
+     */
     async onDrop(e, node) {
       if (this.draggingNode == node) return;
       // record this first otherwise dragend events makes it null
       let draggingNode = this.draggingNode;
+      let dragoverNode = this.dragoverNode;
+      let draggingProjectId = this.draggingProjectId;
 
-      // update ui (do this first since parentfolder will change)
-      let dragParentFolder = await getParentFolder(draggingNode._id);
-      let dragParentNode = this.$refs.tree.getNodeByKey(dragParentFolder._id);
-      dragParentNode.children = dragParentNode.children.filter(
-        (folder) => folder._id != draggingNode._id
-      );
-      node.children.push(draggingNode);
-
-      // update db
-      await moveFolderInto(draggingNode._id, node._id);
-    },
-
-    async onDropBelow(e, node) {
-      if (this.draggingNode == node) return;
-      let draggingNode = this.draggingNode;
-
-      // update ui
-      let dragParentFolder = await getParentFolder(draggingNode._id);
-      let dropParentFolder = await getParentFolder(node._id);
-      let dragParentNode = this.$refs.tree.getNodeByKey(dragParentFolder._id);
-      let dropParentNode = this.$refs.tree.getNodeByKey(dropParentFolder._id);
-      dragParentNode.children = dragParentNode.children.filter(
-        (n) => n._id != draggingNode._id
-      );
-
-      for (let i in dropParentNode.children) {
-        if (dropParentNode.children[i]._id == node._id) {
-          // must convert i to integer!!!
-          // insert draggingNode at the drop node bottom (at position i+1)
-          dropParentNode.children.splice(parseInt(i) + 1, 0, draggingNode);
-          break;
+      if (!!draggingProjectId) {
+        // drag and drop project into folder
+        let project = await getProject(draggingProjectId);
+        if (!project.folderIds.includes(dragoverNode._id)) {
+          project.folderIds.push(dragoverNode._id);
+          await updateProject(project);
         }
-      }
 
-      // update db
-      moveFolderBelow(draggingNode._id, node._id);
+        this.onDragEnd();
+      } else {
+        // drag folder into another folder
+        // update ui (do this first since parentfolder will change)
+        let dragParentFolder = await getParentFolder(draggingNode._id);
+        let dragParentNode = this.$refs.tree.getNodeByKey(dragParentFolder._id);
+        dragParentNode.children = dragParentNode.children.filter(
+          (folder) => folder._id != draggingNode._id
+        );
+        node.children.push(draggingNode);
+
+        // update db
+        await moveFolderInto(draggingNode._id, node._id);
+      }
     },
 
+    /**
+     * Remove highlights
+     * @param {DragEvent} e
+     */
     onDragEnd(e) {
       this.draggingNode = null;
       this.dragoverNode = null;

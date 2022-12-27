@@ -55,7 +55,7 @@ import { addProject } from "src/backend/project/project";
 
 export default {
   props: { rightMenuSize: Number },
-  emits: ["toggleRightMenu"],
+  emits: ["toggleRightMenu", "addProject"],
 
   setup() {
     const stateStore = useStateStore();

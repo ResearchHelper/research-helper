@@ -35,7 +35,7 @@ async function addProject(file) {
     project.path = dstPath;
     project.related = []; // related projectIds
     project.tags = [];
-    project.notes = []; // noteIds
+    // project.notes = []; // noteIds
     // the folders containing the project
     project.folderIds = ["library"];
     if (stateStore.selectedFolderId != "library")
@@ -89,7 +89,11 @@ async function updateProject(project) {
 }
 
 function getProject(projectId) {
-  return db.get(projectId);
+  try {
+    return db.get(projectId);
+  } catch (error) {
+    console.log(error);
+  }
 }
 
 async function getAllProjects() {

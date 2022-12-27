@@ -21,46 +21,24 @@ async function addNote(projectId) {
   let note = {
     _id: noteId,
     dataType: "note",
+    projectId: projectId,
     links: [],
     label: "New Note",
     path: filePath,
   };
   await db.put(note);
 
-  // update note list in project
-  let project = await db.get(projectId);
-  project.notes.push(noteId);
-  await updateProject(project);
-
-  // return note
   return await db.get(noteId);
 }
 
-async function getParentProject(noteId) {
+async function deleteNote(noteId) {
   try {
-    let result = await db.find({
-      selector: {
-        dataType: "project",
-        notes: { $in: [noteId] },
-      },
-    });
-
-    // there is a unique project containing the note
-    return result.docs[0];
+    // delete note entry from db
+    let note = await db.get(noteId);
+    await db.remove(note);
   } catch (error) {
     console.log(error);
   }
-}
-
-async function deleteNote(noteId) {
-  // delete note entry from db
-  let note = await db.get(noteId);
-  await db.remove(note);
-
-  // update project's note list
-  let project = getParentProject(noteId);
-  project.children = project.children.filter((id) => id != noteId);
-  await updateProject(project);
 }
 
 async function updateNote(noteId, data) {
@@ -72,7 +50,27 @@ async function updateNote(noteId, data) {
 }
 
 async function getNote(noteId) {
-  return await db.get(noteId);
+  try {
+    return await db.get(noteId);
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+async function getNotes(projectId) {
+  try {
+    let result = await db.find({
+      selector: {
+        dataType: "note",
+        projectId: projectId,
+      },
+    });
+
+    return result.docs;
+  } catch (error) {
+    console.log(error);
+    return [];
+  }
 }
 
 async function getAllNotes() {
@@ -91,10 +89,15 @@ async function getAllNotes() {
  * @returns {string} content
  */
 async function loadNote(noteId) {
-  let content = "";
-  let note = await db.get(noteId);
-  if (fs.existsSync(note.path)) content = fs.readFileSync(note.path, "utf8");
-  return content;
+  try {
+    let content = "";
+    let note = await db.get(noteId);
+    if (fs.existsSync(note.path)) content = fs.readFileSync(note.path, "utf8");
+    return content;
+  } catch (error) {
+    console.log(error);
+    return "";
+  }
 }
 
 /**
@@ -103,8 +106,12 @@ async function loadNote(noteId) {
  * @param {string} content
  */
 async function saveNote(noteId, content) {
-  let note = await db.get(noteId);
-  fs.writeFileSync(note.path, content);
+  try {
+    let note = await db.get(noteId);
+    fs.writeFileSync(note.path, content);
+  } catch (error) {
+    console.log(error);
+  }
 }
 
 /**
@@ -139,22 +146,31 @@ async function uploadImage(noteId, file) {
  */
 async function moveNoteInto(dragNoteId, dropProjectId) {
   try {
-    // remove from the parent project
-    let dragParentProject = await getParentProject(dragNoteId);
-    console.log(dragParentProject);
-    dragParentProject.notes = dragParentProject.notes.filter(
-      (id) => id != dragNoteId
-    );
-    await updateProject(dragParentProject);
-
-    // add to the target project
-    let dropProject = await db.get(dropProjectId);
-    dropProject.notes.push(dragNoteId);
-    await updateProject(dropProject);
+    let note = await db.get(dragNoteId);
+    note.projectId = dropProjectId;
+    await db.put(note);
   } catch (error) {
     console.log(error);
   }
 }
+// async function moveNoteInto(dragNoteId, dropProjectId) {
+//   try {
+//     // remove from the parent project
+//     let dragParentProject = await getParentProject(dragNoteId);
+//     console.log(dragParentProject);
+//     dragParentProject.notes = dragParentProject.notes.filter(
+//       (id) => id != dragNoteId
+//     );
+//     await updateProject(dragParentProject);
+
+//     // add to the target project
+//     let dropProject = await db.get(dropProjectId);
+//     dropProject.notes.push(dragNoteId);
+//     await updateProject(dropProject);
+//   } catch (error) {
+//     console.log(error);
+//   }
+// }
 
 /**
  * Drop note below another note, reorder within the same project
@@ -184,10 +200,9 @@ export {
   deleteNote,
   updateNote,
   getNote,
+  getNotes,
   getAllNotes,
   loadNote,
   saveNote,
   uploadImage,
-  moveNoteInto,
-  moveNoteBelow,
 };

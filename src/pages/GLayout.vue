@@ -30,6 +30,7 @@
 import {
   onMounted,
   ref,
+  toRaw,
   markRaw,
   readonly,
   defineExpose,
@@ -41,7 +42,7 @@ import {
   watch,
 } from "vue";
 import { VirtualLayout, LayoutConfig } from "golden-layout";
-import GLComponent from "./GLComponent.vue";
+import GLComponent from "./dynamicPages/GLComponent.vue";
 
 /*******************
  * Props and Emits
@@ -49,7 +50,11 @@ import GLComponent from "./GLComponent.vue";
 const props = defineProps({
   workingItemId: String,
 });
-const emit = defineEmits(["update:workingItemId", "layoutchanged"]);
+const emit = defineEmits([
+  "update:workingItemId",
+  "layoutchanged",
+  "itemdestroyed",
+]);
 
 /*******************
  * Data
@@ -59,7 +64,7 @@ let GLayout;
 const GlcKeyPrefix = readonly(ref("glc_"));
 
 const AllComponents = ref({});
-let MapComponents = {};
+const MapComponents = ref({});
 let IdToRef = {};
 var UnusedIndexes = [];
 let CurIndex = 0;
@@ -167,26 +172,56 @@ const resize = () => {
   let width = dom ? dom.offsetWidth : 0;
   let height = dom ? dom.offsetHeight : 0;
   GLayout.setSize(width, height);
+  emit("layoutchanged");
 };
 
 const onClick = (refId) => {
-  MapComponents[refId].container.focus();
+  MapComponents.value[refId].container.focus();
 };
 
 const focusById = (id) => {
   if (id in IdToRef) {
     let refId = IdToRef[id];
-    MapComponents[refId].container.focus();
+    MapComponents.value[refId].container.focus();
   }
 };
 
 const removeGLComponent = (removeId) => {
-  MapComponents[IdToRef[removeId]]?.container.close();
+  MapComponents.value[IdToRef[removeId]]?.container.close();
 };
 
-const createGLDragSource = () => {
-  // TODO: learn how to do this
-  GLayout.createDragSource();
+/**
+ * Add drag source to the entries in projectTree.
+ * After a window is closed, if the entry is still in projectTree, then add component only.
+ * @param {HTMLElement} element
+ * @param {Map} componentType
+ * @param {Map} componentState
+ * @param {String} title
+ */
+const addGLDragSource = async (
+  element,
+  componentType,
+  componentState,
+  title,
+  addComponentOnly = false
+) => {
+  componentState.refId = addComponent(componentType, title, componentState.id);
+  await nextTick(); // wait 1 tick for vue to add the dom
+
+  if (addComponentOnly) return;
+
+  GLayout.newDragSource(element, () => {
+    return {
+      type: "component",
+      title,
+      componentType,
+      componentState,
+    };
+  });
+};
+
+const renameGLComponent = async (id, title) => {
+  MapComponents.value[IdToRef[id]].container.setTitle(title);
 };
 
 /*******************
@@ -207,7 +242,7 @@ onMounted(() => {
     width,
     height
   ) => {
-    const component = MapComponents[container.state.refId];
+    const component = MapComponents.value[container.state.refId];
     if (!component || !component?.glc) {
       throw new Error(
         "handleContainerVirtualRectingRequiredEvent: Component not found"
@@ -225,7 +260,7 @@ onMounted(() => {
     container,
     visible
   ) => {
-    const component = MapComponents[container.state.refId];
+    const component = MapComponents.value[container.state.refId];
     if (!component || !component?.glc) {
       throw new Error(
         "handleContainerVirtualVisibilityChangeRequiredEvent: Component not found"
@@ -239,7 +274,7 @@ onMounted(() => {
     logicalZIndex,
     defaultZIndex
   ) => {
-    const component = MapComponents[container.state.refId];
+    const component = MapComponents.value[container.state.refId];
     if (!component || !component?.glc) {
       throw new Error(
         "handleContainerVirtualZIndexChangeRequiredEvent: Component not found"
@@ -261,7 +296,8 @@ onMounted(() => {
 
     let ref = GlcKeyPrefix.value + refId;
     const component = instance?.refs[ref];
-    MapComponents[container.state.refId] = {
+
+    MapComponents.value[container.state.refId] = {
       container: container,
       glc: component[0],
     };
@@ -292,15 +328,17 @@ onMounted(() => {
   const unbindComponentEventListener = (container) => {
     let refId = container.state.refId;
     let removeId = container.state.id;
-    const component = MapComponents[refId];
+    const component = MapComponents.value[refId];
     if (!component || !component?.glc) {
       throw new Error("handleUnbindComponentEvent: Component not found");
     }
 
-    delete MapComponents[refId];
+    delete MapComponents.value[refId];
     delete AllComponents.value[refId];
     delete IdToRef[removeId];
     UnusedIndexes.push(refId);
+
+    emit("layoutchanged");
   };
 
   GLayout = new VirtualLayout(
@@ -314,6 +352,7 @@ onMounted(() => {
   GLayout.on("focus", (e) => {
     let state = e.target.container.state;
     emit("update:workingItemId", state.id);
+    emit("layoutchanged");
   });
 
   GLayout.on("componentCreated", (e) => {
@@ -331,6 +370,15 @@ onMounted(() => {
       emit("layoutchanged");
     });
   });
+
+  // itemDestroyed
+  GLayout.on("beforeItemDestroyed", (e) => {
+    if (e.target.type != "component") return;
+  });
+  GLayout.on("itemDestroyed", (e) => {
+    if (e.target.type != "component") return;
+    emit("itemdestroyed", e.target.container.state.id);
+  });
 });
 
 /*******************
@@ -339,10 +387,12 @@ onMounted(() => {
 defineExpose({
   addGLComponent,
   removeGLComponent,
+  renameGLComponent,
   loadGLLayout,
   getLayoutConfig,
-  createGLDragSource,
+  addGLDragSource,
   resize,
   initialized,
+  AllComponents,
 });
 </script>

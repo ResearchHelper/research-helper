@@ -8,7 +8,10 @@
       v-model="treeViewSize"
     >
       <template v-slot:before>
-        <TreeView />
+        <TreeView
+          :draggingProjectId="draggingProjectId"
+          ref="tree"
+        />
       </template>
       <template v-slot:after>
         <q-splitter
@@ -22,6 +25,7 @@
             <TableView
               :rightMenuSize="rightMenuSize"
               @toggle-right-menu="toggleRightMenu"
+              @drag-project="(key) => onDragProject(key)"
               ref="table"
             />
           </template>
@@ -82,6 +86,8 @@ export default {
 
       prvRightMenuSize: 25,
       rightMenuSize: 0,
+
+      draggingProjectId: "",
     };
   },
 
@@ -102,6 +108,11 @@ export default {
         this.prvRightMenuSize = this.rightMenuSize;
         this.rightMenuSize = 0;
       }
+    },
+
+    onDragProject(key) {
+      this.draggingProjectId = key;
+      if (!!!key) this.$refs.tree.onDragEnd(null);
     },
   },
 };

@@ -49,13 +49,10 @@
           <ProjectTree
             style="height: calc(100vh - 32px)"
             v-if="stateStore.ready"
+            @addNode="(element) => addDragSource(element)"
+            @renameNode="(node) => editComponentState(node)"
             @openProject="(projectId) => setComponent(projectId)"
             @closeProject="(projectId) => removeComponent(projectId)"
-            @treedragstart="
-              (node) => {
-                draggingNode = node;
-              }
-            "
             ref="tree"
           />
         </template>
@@ -65,9 +62,8 @@
             ref="layout"
             style="width: 100%; height: calc(100vh - 32px)"
             v-model:workingItemId="stateStore.workingItemId"
-            @layoutchanged="saveLayout"
-            @dragover="onDragOver"
-            @drop="onDrop"
+            @layoutchanged="onLayoutChanged"
+            @itemdestroyed="onItemDestroyed"
           ></GLayout>
         </template>
       </q-splitter>
@@ -86,6 +82,7 @@ import "golden-layout/dist/css/themes/goldenlayout-dark-theme.css";
 
 import { useStateStore } from "src/stores/appState";
 import { getProject } from "src/backend/project/project";
+import { getNotes } from "src/backend/project/note";
 import {
   getLayout,
   updateLayout,
@@ -112,7 +109,7 @@ export default {
     return {
       leftMenuSize: 0,
 
-      draggingNode: null,
+      dragover: false,
     };
   },
 
@@ -141,7 +138,10 @@ export default {
 
   watch: {
     "stateStore.openItemId"(id) {
-      this.setComponent(id);
+      if (!!!id) return;
+      this.setComponent(id).then(() => {
+        this.stateStore.openItemId = null;
+      });
     },
 
     "stateStore.openedProjectIds": {
@@ -164,8 +164,6 @@ export default {
     async resizeLeftMenu(size) {
       this.$refs.layout.resize();
       this.stateStore.leftMenuSize = size > 10 ? size : 10;
-      await this.saveLayout();
-      await this.saveAppState();
     },
 
     /**
@@ -202,10 +200,15 @@ export default {
       this.$refs.layout.removeGLComponent(id);
       let item = await getProject(id);
       if (item.dataType == "project") {
-        for (let noteId of item.notes) {
-          this.$refs.layout.removeGLComponent(noteId);
+        let notes = await getNotes(id);
+        for (let note of notes) {
+          this.$refs.layout.removeGLComponent(note._id);
         }
       }
+    },
+
+    async editComponentState(node) {
+      this.$refs.layout.renameGLComponent(node._id, node.label);
     },
 
     async saveLayout() {
@@ -220,18 +223,37 @@ export default {
       await updateAppState(state);
     },
 
+    async onLayoutChanged() {
+      await this.$nextTick();
+      await this.saveLayout();
+      await this.saveAppState();
+    },
+
     /*******************************************
      * Drag and drop to GLayout to add component
      *******************************************/
 
-    onDragOver(e) {
-      e.preventDefault();
+    addDragSource(element, addComponentOnly = false) {
+      if (!!!element) return;
+
+      let type = element.getAttribute("type");
+      let id = element.getAttribute("item-id");
+      let componentType = type == "project" ? "ReaderPage" : "NotePage";
+      this.$refs.layout.addGLDragSource(
+        element,
+        componentType,
+        { id: id },
+        element.innerText,
+        addComponentOnly
+      );
     },
 
-    onDrop(e) {
-      console.log("drop", e);
-      console.log("dragnode", this.draggingNode);
-      // this.$refs.layout.createDragSource();
+    onItemDestroyed(id) {
+      setTimeout(() => {
+        let treeEl = this.$refs.tree.$el;
+        let element = treeEl.querySelector(`[item-id='${id}']`);
+        this.addDragSource(element, true);
+      }, 100);
     },
   },
 };

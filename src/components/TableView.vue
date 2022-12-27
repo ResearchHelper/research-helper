@@ -25,9 +25,12 @@
           :class="{
             'bg-primary': props.key == stateStore.selectedProjectId,
           }"
+          draggable="true"
           @click="clickProject(props.row, props.rowIndex)"
           @dblclick="dblclickProject(props.row)"
           @contextmenu="toggleContextMenu(props.row)"
+          @dragstart="onDragStart(props.key)"
+          @dragend="onDragEnd"
         >
           <q-td
             v-for="col in props.cols"
@@ -107,7 +110,7 @@ import {
 
 export default {
   props: { rightMenuSize: Number },
-  emits: ["toggleRightMenu"],
+  emits: ["toggleRightMenu", "dragProject"],
 
   components: {
     ActionBar,
@@ -187,7 +190,7 @@ export default {
     dblclickProject(row) {
       // this.stateStore.workingItemId = row._id;
       this.stateStore.openItemId = row._id;
-      this.stateStore.openProject(row._id);
+      // this.stateStore.openProject(row._id);
     },
 
     toggleContextMenu(row) {
@@ -233,6 +236,14 @@ export default {
       });
       this.showExpansion = true;
       return filtered;
+    },
+
+    onDragStart(key) {
+      this.$emit("dragProject", key);
+    },
+
+    onDragEnd() {
+      this.$emit("dragProject", "");
     },
   },
 };

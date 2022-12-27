@@ -132,6 +132,7 @@ export default {
   },
 
   async mounted() {
+    await this.$nextTick();
     this.pdfApp = new PDFApplication(
       this.$refs.viewerContainer,
       this.$refs.peekContainer
@@ -144,8 +145,11 @@ export default {
     this.pdfApp.eventBus.on("pagesinit", (e) => {
       // set state if the component is visible.
       // if visible is undefined then it is newly added, it defaults to true
-      let visible = this.visible === undefined ? true : this.visible;
-      if (visible) {
+      console.log("mounted");
+      console.log("visible:", this.visible, "ready:", this.ready);
+      // let visible = this.visible === undefined ? true : this.visible;
+      // if (visible) {
+      if (this.visible) {
         this.changePageNumber(this.pdfState.currentPageNumber);
         this.changeSpreadMode(this.pdfState.spreadMode);
         this.changeScale({ scale: this.pdfState.currentScale });
@@ -216,14 +220,12 @@ export default {
       }
     });
 
-    // await this.loadPDF(this.stateStore.workingItemId);
-    setTimeout(() => {
-      this.loadPDF(this.projectId);
-    }, 100);
+    if (this.visible) this.loadPDF(this.projectId);
   },
 
   watch: {
     async visible(v) {
+      console.log("visible:", v, "ready:", this.ready);
       if (this.visible && !this.ready) {
         await this.loadPDF(this.projectId);
       }

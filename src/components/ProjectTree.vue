@@ -26,19 +26,7 @@
           <div
             style="width: calc(100% - 23px)"
             class="row"
-            :class="{
-              dragover:
-                dragoverNode == prop.node &&
-                draggingNode != prop.node &&
-                draggingNode.dataType == 'note' &&
-                prop.node.dataType == 'project',
-            }"
-            draggable="true"
             @click="selectItem(prop.node)"
-            @dragstart="(e) => onDragStart(e, prop.node)"
-            @dragover="(e) => onDragOver(e, prop.node)"
-            @drop="(e) => onDrop(e, prop.node)"
-            @dragend="(e) => onDragEnd(e)"
           >
             <q-menu
               touch-position
@@ -88,13 +76,6 @@
                 </q-item>
               </q-list>
             </q-menu>
-            <input
-              v-if="prop.node == renamingNote"
-              ref="renameInput"
-              v-model="prop.node.label"
-              @keydown.enter="renameNote"
-              @blur="renameNote"
-            />
 
             <q-icon
               v-if="prop.node.dataType == 'note'"
@@ -104,12 +85,24 @@
               v-else
               name="import_contacts"
             />
+            <input
+              v-if="prop.node == renamingNote"
+              style="width: calc(100% - 21px)"
+              v-model="prop.node.label"
+              @keydown.enter="renameNote"
+              @blur="renameNote"
+              ref="renameInput"
+            />
+            <!-- add item-id and type for access of drag source -->
             <div
+              v-else
               style="width: calc(100% - 23px)"
               class="ellipsis"
+              :item-id="prop.key"
+              :type="prop.node.dataType"
             >
               {{ prop.node.label }}
-              <!-- <q-tooltip>{{ prop.key }}</q-tooltip> -->
+              <q-tooltip>id: {{ prop.key }}</q-tooltip>
             </div>
           </div>
           <q-icon
@@ -120,21 +113,6 @@
           >
             <q-tooltip>Close project</q-tooltip>
           </q-icon>
-        </template>
-
-        <template v-slot:default-body="prop">
-          <!-- only nodes with same type can be reordered -->
-          <div
-            v-if="
-              dragoverNode == prop.node &&
-              draggingNode != prop.node &&
-              draggingNode.dataType == prop.node.dataType
-            "
-            style="height: 10px"
-            class="dragover"
-            @dragover="(e) => onDragOverBelow(e, prop.node)"
-            @drop="(e) => onDropBelow(e, prop.node)"
-          ></div>
         </template>
       </q-tree>
     </q-expansion-item>
@@ -155,16 +133,22 @@ import GraphView from "./GraphView.vue";
 import { useStateStore } from "src/stores/appState";
 import {
   getNote,
+  getNotes,
   addNote,
   deleteNote,
   updateNote,
-  moveNoteInto,
-  moveNoteBelow,
 } from "src/backend/project/note";
+import { sortTree } from "src/backend/project/utils";
 import { getProject } from "src/backend/project/project";
 
 export default {
-  emits: ["closeProject", "openProject", "treedragstart"],
+  emits: [
+    "addNode",
+    "renameNode",
+    "closeProject",
+    "openProject",
+    "treedragstart",
+  ],
 
   components: { GraphView },
 
@@ -196,6 +180,7 @@ export default {
 
   watch: {
     "stateStore.openItemId"(id) {
+      if (!!!id) return;
       this.stateStore.openProject(id);
       let node = this.$refs.tree.getNodeByKey(id);
       if (!!!node) {
@@ -220,18 +205,16 @@ export default {
       for (let projectId of this.stateStore.openedProjectIds) {
         await this.pushProjectNode(projectId);
       }
+
+      // sort notes in each project
+      for (let i in this.projects) {
+        sortTree(this.projects[i]);
+      }
     },
 
     async pushProjectNode(projectId) {
       let project = await getProject(projectId);
-      let notes = [];
-      for (let noteId of project.notes) {
-        let note = await getNote(noteId);
-        // for convenience, we add projectId to notes
-        note.projectId = projectId;
-        notes.push(note);
-      }
-
+      let notes = await getNotes(projectId);
       this.projects.push({
         _id: project._id,
         dataType: project.dataType,
@@ -240,6 +223,19 @@ export default {
         path: project.path,
       });
       this.expanded.push(projectId);
+
+      await this.$nextTick();
+      let element = this.$refs.tree.$el.querySelector(
+        `[item-id='${projectId}']`
+      );
+      this.$emit("addNode", element);
+
+      for (let note of notes) {
+        this.$emit(
+          "addNode",
+          this.$refs.tree.$el.querySelector(`[item-id='${note._id}']`)
+        );
+      }
     },
 
     selectItem(node) {
@@ -311,133 +307,18 @@ export default {
     },
 
     renameNote() {
-      if (!!!this.renamingNote) return;
+      let renamingNote = this.renamingNote;
+      if (!!!renamingNote) return;
       // update db
-      updateNote(this.renamingNote._id, { label: this.renamingNote.label });
+      updateNote(renamingNote._id, { label: renamingNote.label });
 
       // update ui
       this.renamingNote = null;
-    },
+      let projectNode = this.$refs.tree.getNodeByKey(renamingNote.projectId);
+      sortTree(projectNode); // sort notes
 
-    onDragStart(e, node) {
-      // e.dataTranfser not working, have to use this work around
-      this.$emit("treedragstart", node);
-
-      this.draggingNode = node;
-
-      setTimeout(() => {
-        // collapse all projects to prevent dropping into notes
-        if (node.dataType == "project") {
-          this.prvExpanded = this.expanded;
-          this.expanded = [];
-        }
-      }, 100);
-    },
-
-    onDragOver(e, node) {
-      if (this.draggingNode.dataType == "note") e.preventDefault();
-      this.dragoverNode = node;
-    },
-
-    /**
-     * Drop note into another project. Last argument is optional,
-     * pass the draggingNode is this.draggingNode is null
-     * @param {DragEvent} e
-     * @param {Map} node - project
-     * @param {Map} draggingNode - note
-     */
-    async onDrop(e, node, draggingNode = null) {
-      draggingNode = this.draggingNode || draggingNode;
-      // drop note into another project and put it to last one
-      if (draggingNode == node) return;
-      if (node.dataType != "project") return; // can only drop into project
-      if (draggingNode.projectId == node._id) return;
-
-      // update ui
-      // remove from parent project
-      let parentNode = this.$refs.tree.getNodeByKey(draggingNode.projectId);
-      parentNode.children = parentNode.children.filter(
-        (note) => note._id != draggingNode._id
-      );
-
-      // add to target project
-      draggingNode.projectId = node._id;
-      node.children.push(draggingNode);
-
-      // upadate db
-      await moveNoteInto(draggingNode._id, node._id);
-    },
-
-    onDragOverBelow(e, node) {
-      e.preventDefault();
-    },
-
-    /**
-     * Drop item below another item. Last argument is optional,
-     * pass the draggingNode if this.draggingNode has null.
-     * @param {DragEvent} e
-     * @param {Map} node - project | note
-     * @param {Map} draggingNode - project | note
-     */
-    async onDropBelow(e, node, draggingNode = null) {
-      draggingNode = this.draggingNode || draggingNode;
-      // do nothing if place at the same place
-      if (draggingNode == node) return;
-      // only nodes with same type can be reordered
-      if (draggingNode.dataType != node.dataType) return;
-
-      if (draggingNode.dataType == "project") {
-        // reorder projects
-        // update ui
-        let from = this.projects.findIndex((p) => p._id == draggingNode._id);
-        let to = this.projects.findIndex((p) => p._id == node._id);
-        this.projects.splice(to, 0, this.projects.splice(from, 1)[0]);
-
-        // update db
-        this.stateStore.openedProjectIds = this.projects.map((p) => p._id);
-      } else {
-        // reorder notes
-        if (draggingNode.projectId == node.projectId) {
-          // reorder within the same project
-          // update ui
-          let parent = this.$refs.tree.getNodeByKey(draggingNode.projectId);
-          let from = parent.children.findIndex(
-            (p) => p._id == draggingNode._id
-          );
-          let to = parent.children.findIndex((p) => p._id == node._id);
-          parent.children.splice(
-            parseInt(to) + 1,
-            0,
-            parent.children.splice(from, 1)[0]
-          );
-
-          // update db
-          await moveNoteBelow(draggingNode._id, node._id);
-        } else {
-          // reorder notes across projects
-          let dropParentNode = this.$refs.tree.getNodeByKey(node.projectId);
-          await this.onDrop(null, dropParentNode, draggingNode);
-          await this.onDropBelow(null, node, draggingNode);
-        }
-      }
-    },
-
-    /**
-     * When dragevent ends, clear all data
-     * @param {DragEvent} e
-     */
-    onDragEnd(e) {
-      if (this.draggingNode.dataType == "project")
-        this.expanded = this.prvExpanded;
-      this.draggingNode = null;
-      this.dragoverNode = null;
+      this.$emit("renameNode", renamingNote);
     },
   },
 };
 </script>
-<style lang="scss">
-.dragover {
-  border: 1px solid aqua;
-  background-color: rgba(0, 255, 255, 0.5);
-}
-</style>

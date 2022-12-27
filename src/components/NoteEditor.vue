@@ -17,6 +17,7 @@ import {
   uploadImage,
 } from "src/backend/project/note";
 import { getAllProjects, getProject } from "src/backend/project/project";
+import { debounce } from "quasar";
 
 export default {
   props: { noteId: String, hasToolbar: Boolean },
@@ -109,6 +110,7 @@ export default {
           this.saveContent();
         },
         input: () => {
+          this.saveContent();
           this.changeLinks();
         },
         upload: {
@@ -132,7 +134,7 @@ export default {
       this.changeLinks();
     },
 
-    async saveContent() {
+    async _saveContent() {
       // save the content when it's blur
       // this will be called before unmount
       let content = this.editor.getValue();
@@ -178,7 +180,7 @@ export default {
       }, 100);
     },
 
-    changeLinks() {
+    _changeLinks() {
       let vditor = this.$refs.vditor;
       let linkNodes = vditor.querySelectorAll("a");
       for (let linkNode of linkNodes) {
@@ -199,6 +201,11 @@ export default {
       }
       return this.hints;
     },
+  },
+
+  created() {
+    this.saveContent = debounce(this._saveContent, 100);
+    this.changeLinks = debounce(this._changeLinks, 50);
   },
 };
 </script>

@@ -12,6 +12,7 @@ FIXME:
 [x] switch from notes to project at start
 [x] fixed graphview links
 [x] note editor link is not working now since we've change that to wysiwyg editor
+[x] component is deleted after the window is closed, hence the next drag and drop to open is not possible.
 
 TODO:
 [x] try golden layout
@@ -39,16 +40,19 @@ TODO:
 [x] reorder projects
 [x] reorder notes
 [x] insert note into another project
-[ ] do I need to move the actual notes to different folders???
-[ ] drag from tree and drop to glayout to create new component
+[x] drag from tree and drop to glayout to create new component
+[x] revert the folder and project related code to before
+[x] sort folders by their labels
+[x] sort the active projects and folder by their labels
+[x] drag and drop to move project between different folders
+[x] rename window title after notes
 
 IMPROVE:
 leftmenu
 [x] closing project needs to wait some time
 
 vditor
-[ ] debounce save for input
-[ ] able to open it in a separate window, like zotero
+[x] debounce save for input
 [ ] figure out how vditor gets the image in dev mode, the base_url http://localhost:9300 is getting in the way. In production mode it is okay.
 
 highlight annotation
