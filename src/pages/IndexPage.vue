@@ -207,8 +207,11 @@ export default {
       }
     },
 
-    async editComponentState(node) {
-      this.$refs.layout.renameGLComponent(node._id, node.label);
+    async editComponentState(element) {
+      let id = element.getAttribute("item-id");
+      let title = element.innerText;
+      this.$refs.layout.renameGLComponent(id, title);
+      this.addDragSource(element);
     },
 
     async saveLayout() {

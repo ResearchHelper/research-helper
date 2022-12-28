@@ -210,7 +210,6 @@ export default {
         this.stateStore.selectedProjectId = project._id;
       } else {
         this.stateStore.openItemId = project._id;
-        this.stateStore.openProject(project._id);
       }
     },
   },

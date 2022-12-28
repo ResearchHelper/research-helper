@@ -221,7 +221,8 @@ const addGLDragSource = async (
 };
 
 const renameGLComponent = async (id, title) => {
-  MapComponents.value[IdToRef[id]].container.setTitle(title);
+  let container = MapComponents.value[IdToRef[id]]?.container;
+  if (!!container) container.setTitle(title);
 };
 
 /*******************

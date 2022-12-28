@@ -100,9 +100,9 @@
 </template>
 
 <script>
-import ActionBar from "../components/ActionBar.vue";
+import ActionBar from "./ActionBar.vue";
 import { copyToClipboard } from "quasar";
-import { useStateStore } from "../stores/appState";
+import { useStateStore } from "src/stores/appState";
 import {
   getProjectsByFolderId,
   deleteProject,
@@ -188,9 +188,7 @@ export default {
     },
 
     dblclickProject(row) {
-      // this.stateStore.workingItemId = row._id;
       this.stateStore.openItemId = row._id;
-      // this.stateStore.openProject(row._id);
     },
 
     toggleContextMenu(row) {

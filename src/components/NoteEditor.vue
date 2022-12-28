@@ -168,15 +168,8 @@ export default {
       this.editor.blur(); // save the content before jumping
 
       let id = linkNode.href.split("/").at(-1);
-      // we just want the document, both getProject or getNote are good
-      let doc = await getProject(id);
-      if (doc.dataType == "note") {
-        this.stateStore.openProject(doc.projectId);
-      } else if (doc.dataType == "project") {
-        this.stateStore.openProject(doc._id);
-      }
       setTimeout(() => {
-        this.stateStore.openItemId = doc._id;
+        this.stateStore.openItemId = id;
       }, 100);
     },
 

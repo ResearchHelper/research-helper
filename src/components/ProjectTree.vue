@@ -117,12 +117,16 @@
       </q-tree>
     </q-expansion-item>
     <q-expansion-item
+      v-model="showGraph"
       dense
       dense-toggle
       expand-separator
       label="Graph view"
     >
-      <GraphView />
+      <GraphView
+        v-if="showGraph"
+        :itemId="stateStore.workingItemId"
+      />
     </q-expansion-item>
   </div>
 </template>
@@ -165,6 +169,10 @@ export default {
       prvExpanded: [],
       renamingNote: null,
 
+      // graphview
+      showGraph: false,
+
+      // drag and drop
       draggingNode: null,
       dragoverNode: null,
     };
@@ -179,12 +187,18 @@ export default {
   },
 
   watch: {
-    "stateStore.openItemId"(id) {
+    async "stateStore.openItemId"(id) {
       if (!!!id) return;
-      this.stateStore.openProject(id);
       let node = this.$refs.tree.getNodeByKey(id);
-      if (!!!node) {
+      if (!!node) return;
+
+      let item = await getProject(id);
+      if (item.dataType == "project") {
+        this.stateStore.openProject(id);
         this.pushProjectNode(id);
+      } else if (item.dataType == "note") {
+        this.stateStore.openProject(item.projectId);
+        this.pushProjectNode(item.projectId);
       }
     },
   },
@@ -224,7 +238,7 @@ export default {
       });
       this.expanded.push(projectId);
 
-      await this.$nextTick();
+      await this.$nextTick(); // wait until ui updates
       let element = this.$refs.tree.$el.querySelector(
         `[item-id='${projectId}']`
       );
@@ -273,6 +287,9 @@ export default {
 
       // update ui
       node.children.push(note);
+
+      await this.$nextTick(); // wait until ui updates
+      this.setRenameNote(note);
     },
 
     async deleteNote(node) {
@@ -306,7 +323,7 @@ export default {
       }, 100);
     },
 
-    renameNote() {
+    async renameNote() {
       let renamingNote = this.renamingNote;
       if (!!!renamingNote) return;
       // update db
@@ -317,7 +334,11 @@ export default {
       let projectNode = this.$refs.tree.getNodeByKey(renamingNote.projectId);
       sortTree(projectNode); // sort notes
 
-      this.$emit("renameNode", renamingNote);
+      await this.$nextTick();
+      this.$emit(
+        "renameNode",
+        this.$refs.tree.$el.querySelector(`[item-id='${renamingNote._id}']`)
+      );
     },
   },
 };
