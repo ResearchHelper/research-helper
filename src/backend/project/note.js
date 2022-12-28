@@ -1,7 +1,7 @@
 import { db } from "../database";
 import { updateProject } from "./project";
 import { useStateStore } from "src/stores/appState";
-import { v4 as uuidv4 } from "uuid";
+import { uid } from "quasar";
 import { Buffer } from "buffer";
 
 const fs = window.fs;
@@ -11,7 +11,7 @@ const stateStore = useStateStore();
 const storagePath = stateStore.storagePath;
 
 async function addNote(projectId) {
-  let noteId = uuidv4();
+  let noteId = uid();
   let filePath = path.join(storagePath, "projects", projectId, noteId + ".md");
 
   // create actual file
@@ -125,8 +125,7 @@ async function uploadImage(noteId, file) {
   try {
     let note = await getNote(noteId);
     let imgType = path.extname(file.name); // .png
-    let imgName = uuidv4() + imgType; // use uuid as img name
-    // let imgFolder = path.join(storagePath, "projects", projectId, "img");
+    let imgName = uid() + imgType; // use uuid as img name
     let imgFolder = path.join(path.dirname(note.path), "img");
     let imgPath = path.join(imgFolder, imgName);
     if (!fs.existsSync(imgFolder)) fs.mkdirSync(imgFolder);

@@ -6,7 +6,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc =
 import { PeekManager } from "./pdfpeek";
 import { AnnotationType } from "./annotation";
 import { db } from "../database";
-import debounce from "lodash/debounce";
+import { debounce } from "quasar";
 
 class PDFApplication {
   constructor(container, peekContainer) {

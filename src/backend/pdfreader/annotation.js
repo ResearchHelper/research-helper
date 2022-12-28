@@ -1,4 +1,4 @@
-import { v4 as uuidv4 } from "uuid";
+import { uid } from "quasar";
 import { db } from "../database";
 import { comment } from "./comment";
 import { highlight } from "./highlight";
@@ -74,7 +74,7 @@ async function createAnnotation(container, annot, fromDB = false) {
     if (annot.type === AnnotationType.NONE) return;
 
     // some necessary attributes
-    annot._id = uuidv4();
+    annot._id = uid();
     annot.dataType = "pdf_annotation";
     annot.content = "";
   }

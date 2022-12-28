@@ -1,7 +1,7 @@
 import { db } from "../database";
 import axios from "axios";
 import { useStateStore } from "src/stores/appState";
-import { v4 as uuidv4 } from "uuid";
+import { uid } from "quasar";
 
 const stateStore = useStateStore();
 const storagePath = stateStore.storagePath;
@@ -15,7 +15,7 @@ async function extractContent(data) {
 
 async function addProject(file) {
   try {
-    let projectId = uuidv4();
+    let projectId = uid();
 
     // copy the actual file to user data
     let fileName = path.basename(file.path);
