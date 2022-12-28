@@ -5,10 +5,11 @@ pdfjsLib.GlobalWorkerOptions.workerSrc =
 
 import { PeekManager } from "./pdfpeek";
 import { AnnotationType } from "./annotation";
+import { db } from "../database";
+import { debounce } from "quasar";
 
 class PDFApplication {
-  constructor() {
-    const container = document.getElementById("viewerContainer");
+  constructor(container, peekContainer) {
     const eventBus = new pdfjsViewer.EventBus();
     const pdfLinkService = new pdfjsViewer.PDFLinkService({
       eventBus,
@@ -28,11 +29,12 @@ class PDFApplication {
     pdfLinkService.setViewer(pdfViewer);
 
     this.container = container;
+    this.peekContainer = peekContainer;
     this.eventBus = eventBus;
     this.pdfLinkService = pdfLinkService;
     this.pdfFindController = pdfFindController;
     this.pdfViewer = pdfViewer;
-    this.peekManager = new PeekManager();
+    this.peekManager = new PeekManager(container, peekContainer);
 
     // install internal event listener
     eventBus.on("pagesinit", (e) => {
@@ -46,6 +48,10 @@ class PDFApplication {
       let links = this.container.querySelectorAll("a.internalLink");
       for (let link of links) this.peekManager.peak(link);
     });
+
+    // make saveState a debounce function
+    // it ignores the signals 500ms after each call
+    this.saveState = debounce(this._saveState, 500);
   }
 
   async loadPDF(filePath) {
@@ -54,6 +60,77 @@ class PDFApplication {
     this.pdfLinkService.setDocument(this.pdfDocument, null);
     this.pdfViewer.setDocument(this.pdfDocument);
     this.peekManager.loadPDF(filePath);
+  }
+
+  async loadState(projectId) {
+    try {
+      let result = await db.find({
+        selector: { dataType: "pdf_state", projectId: projectId },
+      });
+
+      let state = result.docs[0];
+      if (!!!state) {
+        state = {
+          dataType: "pdf_state",
+          projectId: projectId,
+          pagesCount: 0,
+          currentPageNumber: 1,
+          currentScale: 1,
+          currentScaleValue: "1",
+          spreadMode: 0,
+          tool: "cursor",
+          color: "#FFFF00",
+          scrollLeft: 0,
+          scrollTop: 0,
+        };
+      }
+      return state;
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  async _saveState(state) {
+    // also save the scroll position
+    state.scrollLeft = this.container.scrollLeft;
+    state.scrollTop = this.container.scrollTop;
+
+    try {
+      if (!!state._id) {
+        let oldState = await db.get(state._id);
+        state._rev = oldState._rev;
+        await db.put(state);
+      } else {
+        await db.post(state);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+
+    // cancel debounce after 400ms
+    setTimeout(() => {
+      this.saveState.cancel();
+    }, 400);
+  }
+
+  changePageNumber(pageNumber) {
+    this.pdfViewer.currentPageNumber = parseInt(pageNumber);
+  }
+
+  changeSpreadMode(spreadMode) {
+    this.pdfViewer.spreadMode = parseInt(spreadMode);
+  }
+
+  /**
+   * params = {delta?: Number, scaleValue?: 'page-width'|'page-height', scale?: Number}
+   * @param {Object} params
+   */
+  changeScale(params) {
+    if (!!params.delta) this.pdfViewer.currentScale += params.delta;
+
+    if (!!params.scaleValue) this.pdfViewer.currentScaleValue = scaleValue;
+
+    if (!!params.scale) this.pdfViewer.currentScale = params.scale;
   }
 
   handleCtrlScroll(e) {
@@ -65,7 +142,7 @@ class PDFApplication {
         let oldScale = this.pdfViewer.currentScale;
         this.pdfViewer.currentScale += 0.1;
         let newScale = this.pdfViewer.currentScale;
-        let container = document.getElementById("viewerContainer");
+        let container = this.container;
         let oldX = container.scrollLeft + e.pageX;
         let oldY = container.scrollTop + e.pageY;
 
@@ -116,20 +193,59 @@ class PDFApplication {
       let ref = dest[0];
       let pageIndex = await this.pdfDocument.getPageIndex(ref);
       pageNumber = pageIndex + 1;
-      // this.pdfDocument.getDestination(node.dest).then((dest) => {
-      //   let ref = dest[0];
-      //   this.pdfDocument.getPageIndex(ref).then((pageIndex) => {
-      //     this.$emit("clickTOC", pageIndex + 1);
-      //   });
-      // });
     } else {
       let pageIndex = await this.pdfDocument.getPageIndex(node.ref);
       pageNumber = pageIndex + 1;
-      // this.pdfDocument.getPageIndex(node.ref).then((pageIndex) => {
-      // this.$emit("clickTOC", pageIndex + 1);
-      // });
     }
     return pageNumber;
+  }
+
+  async clickTOC(node) {
+    let pageNumber = await this.getTOCPage(node);
+    this.changePageNumber(pageNumber);
+  }
+
+  /**
+   * search = {query: "", highlightAll: true, caseSensitive: false, entireWord: false}
+   * @param {Object} search
+   */
+  searchText(search) {
+    this.eventBus.dispatch("find", search);
+  }
+
+  changeMatch(delta) {
+    // delta can only be +1 (next) or -1 (prev)
+    // highlight the next/previous match
+    let findController = this.pdfFindController;
+
+    let currentMatch = findController.selected;
+    let pageIdx = currentMatch.pageIdx;
+    let newMatchIdx = currentMatch.matchIdx + delta;
+
+    let matches = findController.pageMatches;
+    let matchIdxList = matches[pageIdx];
+
+    while (newMatchIdx < 0 || newMatchIdx > matchIdxList.length - 1) {
+      pageIdx += delta;
+      let mod = pageIdx % this.pdfViewer.pagesCount; // mod can be negative
+      pageIdx = mod >= 0 ? mod : this.pdfViewer.pagesCount - Math.abs(mod);
+      // if next: select first match (delta-1 = 0) in the next available pages
+      // if prev: select last match (length-1) in the previous available pages
+      matchIdxList = matches[pageIdx];
+      newMatchIdx = delta > 0 ? 0 : matchIdxList.length - 1;
+    }
+
+    if (newMatchIdx < 0) newMatchIdx = 0;
+    if (newMatchIdx > matchIdxList.length)
+      newMatchIdx = matchIdxList.length - 1;
+
+    this.pdfFindController.selected.pageIdx = pageIdx;
+    this.pdfFindController.selected.matchIdx = newMatchIdx;
+    this.changePageNumber(pageIdx + 1);
+    this.eventBus.dispatch("updatetextlayermatches", {
+      source: findController,
+      pageIndex: pageIdx,
+    });
   }
 }
 

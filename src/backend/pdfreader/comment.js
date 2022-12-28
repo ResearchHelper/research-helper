@@ -21,8 +21,8 @@ function computePageOffset(annotationLayer) {
   };
 }
 
-function comment(annot, fromDB = false) {
-  let annotationEditorLayer = document
+function comment(container, annot, fromDB = false) {
+  let annotationEditorLayer = container
     .querySelector(`div.page[data-page-number='${annot.pageNumber}']`)
     .querySelector(".annotationEditorLayer");
   // let pdfViewer = annotClass.pdfViewer;
@@ -43,7 +43,7 @@ function comment(annot, fromDB = false) {
   section.classList.add("textAnnotation");
 
   let img = document.createElement("img");
-  img.src = "src/assets/annotation-note.svg";
+  img.src = "node_modules/pdfjs-dist/web/images/annotation-note.svg";
   img.style.position = "absolute";
   img.style.left = `0px`;
   img.style.top = `0px`;

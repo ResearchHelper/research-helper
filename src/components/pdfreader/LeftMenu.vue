@@ -24,7 +24,7 @@
 
 <script>
 import PDFTOC from "./PDFTOC.vue";
-import ProjectTree from "./ProjectTree.vue";
+import ProjectTree from "../ProjectTree.vue";
 
 export default {
   components: { PDFTOC, ProjectTree },

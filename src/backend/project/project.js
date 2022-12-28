@@ -1,7 +1,7 @@
 import { db } from "../database";
 import axios from "axios";
 import { useStateStore } from "src/stores/appState";
-import { v4 as uuidv4 } from "uuid";
+import { uid } from "quasar";
 
 const stateStore = useStateStore();
 const storagePath = stateStore.storagePath;
@@ -15,7 +15,7 @@ async function extractContent(data) {
 
 async function addProject(file) {
   try {
-    let projectId = uuidv4();
+    let projectId = uid();
 
     // copy the actual file to user data
     let fileName = path.basename(file.path);
@@ -33,8 +33,9 @@ async function addProject(file) {
     project.dataType = "project";
     project.type = "paper";
     project.path = dstPath;
-    project.related = [];
+    project.related = []; // related projectIds
     project.tags = [];
+    // project.notes = []; // noteIds
     // the folders containing the project
     project.folderIds = ["library"];
     if (stateStore.selectedFolderId != "library")
@@ -71,7 +72,6 @@ async function deleteProject(projectId, deleteFromDB) {
       }
 
       // remove the acutual files
-      console.log("removing", path.dirname(project.path));
       fs.rmSync(path.dirname(project.path), { recursive: true, force: true });
     } else {
       let folderId = stateStore.selectedFolderId;
@@ -89,7 +89,11 @@ async function updateProject(project) {
 }
 
 function getProject(projectId) {
-  return db.get(projectId);
+  try {
+    return db.get(projectId);
+  } catch (error) {
+    console.log(error);
+  }
 }
 
 async function getAllProjects() {

@@ -1,4 +1,4 @@
-import { v4 as uuidv4 } from "uuid";
+import { uid } from "quasar";
 import { db } from "../database";
 import { comment } from "./comment";
 import { highlight } from "./highlight";
@@ -62,12 +62,19 @@ async function deleteAnnotation(annotId) {
   }
 }
 
-async function createAnnotation(annot, fromDB = false) {
+/**
+ * Create annotation in db and return its corresponding DOMs
+ * @param {HTMLElement} container
+ * @param {Object} annot
+ * @param {Boolean} fromDB
+ * @returns {Array} array of doms
+ */
+async function createAnnotation(container, annot, fromDB = false) {
   if (!fromDB) {
     if (annot.type === AnnotationType.NONE) return;
 
     // some necessary attributes
-    annot._id = uuidv4();
+    annot._id = uid();
     annot.dataType = "pdf_annotation";
     annot.content = "";
   }
@@ -80,10 +87,10 @@ async function createAnnotation(annot, fromDB = false) {
   let type = annot.type;
   switch (type) {
     case AnnotationType.HIGHLIGHT:
-      result = highlight(annot, fromDB);
+      result = highlight(container, annot, fromDB);
       break;
     case AnnotationType.COMMENT:
-      result = comment(annot, fromDB);
+      result = comment(container, annot, fromDB);
       break;
   }
 

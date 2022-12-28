@@ -1,351 +1,340 @@
 <template>
   <q-splitter
-    style="height: calc(100vh - 32px)"
-    v-model="stateStore.leftMenuSize"
-    :limits="[0, 30]"
+    style="position: absolute; width: 100%; height: 100%"
+    v-model="rightMenuSize"
+    reverse
+    :limits="[0, 60]"
   >
     <template v-slot:before>
-      <LeftMenu />
+      <PDFToolBar
+        style="position: absolute; top: 0"
+        v-model:pdfState="pdfState"
+        :rightMenuSize="rightMenuSize"
+        :matchesCount="matchesCount"
+        @changePageNumber="changePageNumber"
+        @changeScale="changeScale"
+        @changeSpreadMode="changeSpreadMode"
+        @searchText="searchText"
+        @changeMatch="changeMatch"
+        @toggleRightMenu="toggleRightMenu"
+      />
+      <div
+        ref="viewerContainer"
+        class="viewerContainer"
+      >
+        <div
+          ref="viewer"
+          class="pdfViewer"
+        ></div>
+      </div>
+      <div
+        ref="peekContainer"
+        class="peekContainer"
+      >
+        <div
+          ref="peakViewer"
+          class="pdfViewer"
+        ></div>
+      </div>
     </template>
     <template v-slot:after>
-      <q-splitter
-        v-model="stateStore.rightMenuSize"
-        reverse
-        :limits="[0, 60]"
+      <q-tabs
+        v-model="rightMenuTab"
+        dense
+        align="justify"
+        indicator-color="transparent"
+        active-bg-color="primary"
       >
-        <template v-slot:before>
-          <PDFToolBar
-            style="position: absolute; top: 0"
-            @changePageNumber="changePageNumber"
-            @changeScale="changeScale"
-            @searchText="searchText"
-            @changeMatch="changeMatch"
+        <q-tab
+          name="metaInfoTab"
+          icon="info"
+          :ripple="false"
+        />
+        <q-tab
+          name="tocTab"
+          icon="toc"
+          :ripple="false"
+        />
+        <q-tab
+          name="annotationTab"
+          icon="edit"
+          :ripple="false"
+        />
+      </q-tabs>
+      <!-- q-tab height: 36px -->
+      <q-tab-panels
+        style="height: calc(100% - 36px)"
+        v-model="rightMenuTab"
+      >
+        <q-tab-panel name="metaInfoTab">
+          <MetaInfoTab
+            v-if="!!rightMenuSize"
+            :project-id="projectId"
           />
+        </q-tab-panel>
 
-          <div id="viewerContainer">
-            <div
-              id="viewer"
-              class="pdfViewer"
-            ></div>
-          </div>
-          <div id="peekContainer">
-            <div
-              id="peakViewer"
-              class="pdfViewer"
-            ></div>
-          </div>
-        </template>
-        <template v-slot:after>
-          <RightMenu />
-        </template>
-      </q-splitter>
+        <q-tab-panel name="tocTab">
+          <PDFTOC
+            :outline="outline"
+            @clickTOC="(node) => clickTOC(node)"
+          />
+        </q-tab-panel>
+
+        <q-tab-panel name="annotationTab">
+          <AnnotationList
+            ref="annotList"
+            v-model:selectedAnnotId="selectedAnnotId"
+            :annots="annots"
+            @update="updateAnnot"
+            @delete="deleteAnnot"
+          />
+        </q-tab-panel>
+      </q-tab-panels>
     </template>
   </q-splitter>
 </template>
 
 <script>
 import PDFToolBar from "./PDFToolBar.vue";
-import LeftMenu from "./LeftMenu.vue";
-import RightMenu from "../RightMenu.vue";
+import MetaInfoTab from "../MetaInfoTab.vue";
+import PDFTOC from "./PDFTOC.vue";
+import AnnotationList from "./AnnotationList.vue";
 
-import {
-  PDFApplication,
-  AnnotationType,
-} from "src/backend/pdfreader/pdfreader";
-import { usePDFStateStore } from "src/stores/pdfState";
+import { PDFApplication } from "src/backend/pdfreader/pdfreader";
 import { useStateStore } from "src/stores/appState";
-import { useAnnotStore } from "src/stores/annotStore";
 import { getProject } from "src/backend/project/project";
+import { AnnotManager } from "src/backend/pdfreader/annotManager";
 
 export default {
-  components: { PDFToolBar, LeftMenu, RightMenu },
+  props: { projectId: String, visible: Boolean },
+
+  components: { PDFToolBar, MetaInfoTab, PDFTOC, AnnotationList },
 
   setup() {
     const stateStore = useStateStore();
-    const annotStore = useAnnotStore();
-    const pdfState = usePDFStateStore();
-    return { stateStore, annotStore, pdfState };
+    return { stateStore };
   },
 
   data() {
     return {
       ready: false,
+
+      prvRightMenuSize: 25,
+      rightMenuSize: 0,
+      rightMenuTab: "metaInfoTab",
+
+      matchesCount: { current: -1, total: 0 },
+      outline: [],
+      pdfState: {},
+      annots: [],
+      selectedAnnotId: "",
     };
   },
 
   async mounted() {
-    this.pdfApp = new PDFApplication();
+    await this.$nextTick();
+    this.pdfApp = new PDFApplication(
+      this.$refs.viewerContainer,
+      this.$refs.peekContainer
+    );
+    this.annotManager = new AnnotManager(
+      this.projectId,
+      this.$refs.viewerContainer
+    );
 
-    // reactive events
     this.pdfApp.eventBus.on("pagesinit", (e) => {
-      // set pdf state when pages inited
-      this.changePageNumber(this.pdfState.currentPageNumber);
-      this.changeSpreadMode(this.pdfState.spreadMode);
-      this.changeScale({ scaleValue: this.pdfState.currentScaleValue });
-
-      if (this.pdfState.pagesCount == 0) {
+      // set state if the component is visible.
+      // if visible is undefined then it is newly added, it defaults to true
+      console.log("mounted");
+      console.log("visible:", this.visible, "ready:", this.ready);
+      // let visible = this.visible === undefined ? true : this.visible;
+      // if (visible) {
+      if (this.visible) {
+        this.changePageNumber(this.pdfState.currentPageNumber);
+        this.changeSpreadMode(this.pdfState.spreadMode);
+        this.changeScale({ scale: this.pdfState.currentScale });
         this.pdfState.pagesCount = this.pdfApp.pdfViewer.pagesCount;
+        this.$refs.viewerContainer.scrollTo(
+          this.pdfState.scrollLeft,
+          this.pdfState.scrollTop
+        );
+        this.ready = true;
       }
-      this.ready = true;
     });
 
     this.pdfApp.eventBus.on("annotationeditorlayerrendered", (e) => {
       // draw annotations from db
-      this.drawAnnotations(e.pageNumber);
+      this.annotManager.drawAnnots(e.pageNumber);
 
       // draw annotations when mouse is up
-      e.source.div.onmouseup = (ev) => this.createAnnotation(e.pageNumber, ev);
+      e.source.div.onmouseup = async (ev) => {
+        await this.annotManager.createAnnot(
+          e.pageNumber,
+          ev.clientX,
+          ev.clientY,
+          this.pdfState.tool,
+          this.pdfState.color
+        );
+        if (this.pdfState.tool == "comment") this.pdfState.tool = "cursor";
+        setTimeout(() => {
+          this.selectedAnnotId = this.annotManager.selected;
+          // don't know why, although this.annots has already been updated
+          // but the annot list is not updated when some activity happened
+          // so use forceUpdate
+          if (!!this.$refs.annotList) this.$refs.annotList.$forceUpdate();
+        }, 50);
+      };
 
       // highlight any active annotation (wait until annot layer is ready)
-      this.setActiveAnnotation(this.annotStore.selectedAnnotId);
+      this.annotManager.setActiveAnnot(this.selectedAnnotId);
     });
 
     this.pdfApp.eventBus.on("pagechanging", (e) => {
       this.pdfState.currentPageNumber = e.pageNumber;
     });
 
+    this.pdfApp.eventBus.on("scalechanging", (e) => {
+      this.pdfState.currentScale = e.scale;
+      this.pdfState.currentScaleValue = e.presetValue;
+    });
+
     // find controller
     this.pdfApp.eventBus.on("updatefindmatchescount", (e) => {
       // update the current/total founded during searching
       // this will only fired when something found
-      this.pdfState.matchesCount = e.matchesCount;
+      this.matchesCount = e.matchesCount;
     });
     this.pdfApp.eventBus.on("updatetextlayermatches", (e) => {
       // if not found, set the matchesCount.total to 0
       let findController = e.source;
       let selected = findController.selected;
       if (selected.matchIdx == -1 && selected.pageIdx == -1) {
-        this.pdfState.matchesCount = { current: -1, total: 0 };
+        this.matchesCount = { current: -1, total: 0 };
       } else {
         let pageIdx = selected.pageIdx;
         let current = selected.matchIdx + 1;
         for (let i = 0; i < pageIdx; i++) {
           current += findController.pageMatches[i].length;
         }
-        this.pdfState.matchesCount.current = current;
+        this.matchesCount.current = current;
       }
     });
 
-    let project = await getProject(this.stateStore.workingProjectId);
-    await this.pdfState.getPDFState(project._id);
-    await this.annotStore.init(project._id);
-    await this.pdfApp.loadPDF(project.path);
-    this.pdfState.outline = await this.pdfApp.getTOC();
+    if (this.visible) this.loadPDF(this.projectId);
   },
 
   watch: {
-    "stateStore.workingProjectId": {
-      async handler(projectId, _) {
-        if (this.ready) {
-          this.ready = false; // don't save things until the document is loaded
-          let project = await getProject(this.stateStore.workingProjectId);
-          await this.pdfState.getPDFState(project._id);
-          await this.annotStore.init(project._id);
-          await this.pdfApp.loadPDF(project.path);
-          this.pdfState.outline = await this.pdfApp.getTOC();
-        }
-      },
-      deep: true,
+    async visible(v) {
+      console.log("visible:", v, "ready:", this.ready);
+      if (this.visible && !this.ready) {
+        await this.loadPDF(this.projectId);
+      }
     },
 
-    "pdfState.pagesCount"(pagesCount, oldPagesCount) {
-      if (!this.ready) return;
-      this.pdfState.savePDFState();
-    },
-
-    "pdfState.currentPageNumber"(pageNumber, _) {
-      if (!this.ready) return;
-      this.pdfState.savePDFState();
-    },
-
-    "pdfState.spreadMode"(spreadMode, _) {
-      if (!this.ready) return;
-      this.changeSpreadMode(spreadMode);
-      this.pdfState.savePDFState();
-    },
-
-    "pdfState.tool"(tool, _) {
-      if (!this.ready) return;
-      this.pdfState.savePDFState();
-    },
-
-    "pdfState.color"(color, _) {
-      if (!this.ready) return;
-      this.pdfState.savePDFState();
-    },
-
-    "pdfState.search": {
-      handler(search) {
+    pdfState: {
+      handler(state) {
         if (!this.ready) return;
-        this.searchText(search);
+        this.pdfApp.saveState(state);
       },
       deep: true,
     },
 
-    "pdfState.selectedOutlineNode"(node, _) {
-      this.pdfApp.getTOCPage(node).then((pageNumber) => {
-        this.changePageNumber(pageNumber);
-      });
+    search: {
+      handler(newSearch) {
+        if (!this.ready) return;
+        this.searchText(newSearch);
+      },
+      deep: true,
     },
 
-    "annotStore.selectedAnnotId"(annotId, _) {
-      console.log(annotId);
-      // remove active class
-      this.setActiveAnnotation(null);
-
+    selectedAnnotId(annotId) {
+      this.annotManager.setActiveAnnot("");
       if (!!!annotId) return;
-      this.annotStore.getAnnotById(annotId).then((annot) => {
-        let dom = document.querySelector(`section[annotation-id="${annotId}"]`);
-        if (!!dom) {
-          // highlight it if we can find they directly
-          this.setActiveAnnotation(annotId);
-          // scroll into view
-          dom.scrollIntoView({
-            behavior: "smooth",
-            block: "nearest",
-            inline: "nearest",
-          });
-        } else {
-          this.changePageNumber(annot.pageNumber);
-        }
-      });
+
+      // scroll to the selected annot
+      let annot = this.annotManager.getAnnotById(annotId);
+      let dom = this.$refs.viewerContainer.querySelector(
+        `section[annotation-id="${annotId}"]`
+      );
+      if (!!dom) {
+        // if the dom is already there, scroll into view
+        dom.scrollIntoView({
+          behavior: "smooth",
+          block: "nearest",
+          inline: "nearest",
+        });
+        this.annotManager.setActiveAnnot(annotId);
+      } else {
+        // otherwise change the page first
+        this.changePageNumber(annot.pageNumber);
+      }
     },
   },
 
   methods: {
+    async loadPDF(id) {
+      if (id != this.projectId) return;
+
+      let project = await getProject(id);
+      if (project.dataType != "project") return;
+      // load state before loading pdf
+      this.pdfState = await this.pdfApp.loadState(project._id);
+      await this.annotManager.init();
+      this.annots = this.annotManager.annots;
+      await this.pdfApp.loadPDF(project.path);
+      this.outline = await this.pdfApp.getTOC();
+    },
+
+    /**********************************
+     * PDFApplication - PdfViewer
+     **********************************/
     changePageNumber(pageNumber) {
-      this.pdfApp.pdfViewer.currentPageNumber = parseInt(pageNumber);
+      this.pdfApp.changePageNumber(pageNumber);
     },
-
-    changeSpreadMode(spreadMode) {
-      this.pdfApp.pdfViewer.spreadMode = parseInt(spreadMode);
-    },
-
     changeScale(params) {
-      // change scale
-      if (params.delta) {
-        this.pdfApp.pdfViewer.currentScale += params.delta;
-      } else if (params.scaleValue) {
-        this.pdfApp.pdfViewer.currentScaleValue = params.scaleValue;
-      }
-
-      // save the state
-      let scale = this.pdfApp.pdfViewer.currentScale;
-      let scaleValue = this.pdfApp.pdfViewer.currentScaleValue;
-      this.pdfState.currentScale = scale;
-      this.pdfState.currentScaleValue = scaleValue;
-
-      if (this.ready) {
-        this.pdfState.savePDFState();
-      }
+      this.pdfApp.changeScale(params);
     },
-
+    changeSpreadMode(spreadMode) {
+      this.pdfApp.changeSpreadMode(spreadMode);
+    },
+    /**********************************
+     * PDFApplication - Find Controller
+     **********************************/
     searchText(search) {
-      // search = {query: "", highlightAll: true, caseSensitive: false, entireWord: false}
-      this.pdfApp.eventBus.dispatch("find", search);
+      this.pdfApp.searchText(search);
     },
-
     changeMatch(delta) {
-      // delta can only be +1 (next) or -1 (prev)
-      // highlight the next/previous match
-      let findController = this.pdfApp.pdfFindController;
-
-      let currentMatch = findController.selected;
-      let pageIdx = currentMatch.pageIdx;
-      let newMatchIdx = currentMatch.matchIdx + delta;
-
-      let matches = findController.pageMatches;
-      let matchIdxList = matches[pageIdx];
-
-      while (newMatchIdx < 0 || newMatchIdx > matchIdxList.length - 1) {
-        pageIdx += delta;
-        let mod = pageIdx % this.pdfState.pagesCount; // mod can be negative
-        pageIdx = mod >= 0 ? mod : this.pdfState.pagesCount - Math.abs(mod);
-        // if next: select first match (delta-1 = 0) in the next available pages
-        // if prev: select last match (length-1) in the previous available pages
-        matchIdxList = matches[pageIdx];
-        newMatchIdx = delta > 0 ? 0 : matchIdxList.length - 1;
-      }
-
-      if (newMatchIdx < 0) newMatchIdx = 0;
-      if (newMatchIdx > matchIdxList.length)
-        newMatchIdx = matchIdxList.length - 1;
-
-      this.pdfApp.pdfFindController.selected.pageIdx = pageIdx;
-      this.pdfApp.pdfFindController.selected.matchIdx = newMatchIdx;
-      this.changePageNumber(pageIdx + 1);
-      this.pdfApp.eventBus.dispatch("updatetextlayermatches", {
-        source: findController,
-        pageIndex: pageIdx,
-      });
+      this.pdfApp.changeMatch(delta);
+    },
+    /**********************************
+     * PDFApplication - TOC
+     **********************************/
+    clickTOC(node) {
+      this.pdfApp.clickTOC(node);
     },
 
-    drawAnnotations(pageNumber) {
-      let annots = this.annotStore.getAnnotsByPage(pageNumber);
-      for (let annot of annots) {
-        this.annotStore.create(annot, true).then((doms) => {
-          // bind function to dom
-          for (let dom of doms) dom.onclick = () => this.clickAnnotation(dom);
-        });
-      }
+    /**********************************
+     * AnnotManager
+     **********************************/
+    async updateAnnot(params) {
+      await this.annotManager.update(params.id, params.data);
+      this.annots = this.annotManager.annots;
+    },
+    async deleteAnnot(params) {
+      await this.annotManager.delete(params.id);
+      this.annots = this.annotManager.annots;
     },
 
-    createAnnotation(pageNumber, mouseEvent) {
-      let rect = null;
-      if (this.pdfState.tool == AnnotationType.COMMENT)
-        rect = {
-          left: mouseEvent.clientX,
-          top: mouseEvent.clientY,
-          width: 40,
-          height: 40,
-        };
-      this.annotStore
-        .create({
-          type: this.pdfState.tool,
-          rect: rect, // only for comment annotation
-          color: this.pdfState.color,
-          pageNumber: pageNumber,
-        })
-        .then((doms) => {
-          // if no doms, that means we are just clicking the page
-          if (doms.length == 0) this.annotStore.selectedAnnotId = null;
-
-          // bind function to dom
-          for (let dom of doms) {
-            dom.onclick = () => this.clickAnnotation(dom);
-            if (this.pdfState.tool == AnnotationType.COMMENT) {
-              dom.click(); // open the annotation list
-              this.pdfState.tool = "cursor"; // prevent adding note ontop of note
-            }
-          }
-        });
-    },
-
-    clickAnnotation(dom) {
-      // open info pane
-      this.stateStore.openRightMenu("infoPane");
-      this.stateStore.setRightMenuTab("annotationTab");
-      setTimeout(() => {
-        // IMPROVE: improve wait until the annotation list is ready
-        this.annotStore.selectedAnnotId = dom.getAttribute("annotation-id");
-      }, 100);
-    },
-
-    setActiveAnnotation(annotId) {
-      if (!!annotId) {
-        // highlight it
-        let doms = document.querySelectorAll(
-          `section[annotation-id="${annotId}"]`
-        );
-        for (let dom of doms) {
-          dom.classList.add("activeAnnotation");
-        }
+    /**********************************
+     * RightMenu
+     **********************************/
+    toggleRightMenu(visible) {
+      if (visible) {
+        this.rightMenuSize = this.prvRightMenuSize;
       } else {
-        // deselect annotation
-        let doms = document.querySelectorAll(".activeAnnotation");
-        for (let dom of doms) {
-          dom.classList.remove("activeAnnotation");
-        }
+        // record the rightmenu size for next use
+        this.prvRightMenuSize = this.rightMenuSize;
+        this.rightMenuSize = 0;
       }
     },
   },
@@ -354,17 +343,17 @@ export default {
 
 <style lang="scss">
 @import "pdfjs-dist/web/pdf_viewer.css";
-#viewerContainer {
+.viewerContainer {
   position: absolute;
   overflow: auto;
-  // systembar: 32px toolbar: 36px
-  height: calc(100vh - 68px);
+  // toolbar: 36px
+  height: calc(100% - 36px);
   top: 36px;
   width: 99%; // so the right scroll bar does not touch right edge
   margin-right: 10px;
 }
 
-#peekContainer {
+.peekContainer {
   position: absolute;
   overflow: auto;
   background: grey;

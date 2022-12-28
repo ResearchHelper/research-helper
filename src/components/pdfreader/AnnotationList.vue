@@ -3,15 +3,15 @@
   <q-scroll-area style="height: calc(100vh - 68px)">
     <q-list
       class="q-mx-sm"
-      id="annotationList"
+      ref="annotationList"
     >
       <q-card
-        v-for="annot in annotStore.annots"
+        v-for="annot in annots"
         :key="annot._id"
         bordered
         class="q-my-sm"
         :class="{
-          activeAnnotationCard: annot._id == annotStore.selectedAnnotId,
+          activeAnnotationCard: annot._id == selectedAnnotId,
         }"
         @click="clickAnnotCard(annot._id)"
         @dblclick="editAnnotation(annot._id)"
@@ -51,7 +51,10 @@
                   ]"
                   v-model="annot.color"
                   @update:model-value="
-                    annotStore.update(annot._id, { color: annot.color })
+                    $emit('update', {
+                      id: annot._id,
+                      data: { color: annot.color },
+                    })
                   "
                 />
                 <div class="row justify-end">
@@ -60,7 +63,7 @@
                     unelevated
                     :ripple="false"
                     icon="delete"
-                    @click="annotStore.delete(annot._id)"
+                    @click="$emit('delete', { id: annot._id })"
                   />
                   <q-btn
                     class="col-1"
@@ -118,13 +121,39 @@
 import renderMathInElement from "katex/dist/contrib/auto-render";
 import "katex/dist/katex.min.css";
 import { useStateStore } from "src/stores/appState";
-import { useAnnotStore } from "src/stores/annotStore";
+import debounce from "lodash/debounce";
 
 export default {
+  props: { selectedAnnotId: String, annots: Array },
+  emits: ["update:selectedAnnotId", "update", "delete"],
+
   setup() {
     const stateStore = useStateStore();
-    const annotStore = useAnnotStore();
-    return { stateStore, annotStore };
+    const debounceRender = debounce((dom) => {
+      console.log(dom);
+      renderMathInElement(dom, {
+        delimiters: [
+          { left: "$$", right: "$$", display: true },
+          { left: "$", right: "$", display: false },
+          { left: "\\(", right: "\\)", display: false },
+          { left: "\\[", right: "\\]", display: true },
+        ],
+        ignoredTags: [
+          "script",
+          "noscript",
+          "style",
+          "textarea",
+          "code",
+          "option",
+        ],
+        throwOnError: false,
+      });
+
+      setTimeout(() => {
+        debounceRender.cancel();
+      }, 150);
+    }, 200);
+    return { stateStore, debounceRender };
   },
 
   mounted() {
@@ -136,22 +165,8 @@ export default {
 
   data() {
     return {
-      editor: null,
       editingAnnotId: "",
     };
-  },
-
-  watch: {
-    "annotStore.selectedAnnotId"(annotId, _) {
-      if (!!annotId) {
-        // AnnotationList scrollIntoView
-        let card = document.querySelector(`div[annot-card-id="${annotId}"]`);
-        card.scrollIntoView({
-          behavior: "smooth",
-          block: "nearest",
-        });
-      }
-    },
   },
 
   methods: {
@@ -177,30 +192,26 @@ export default {
 
     liveRender(e, annot) {
       annot.content = e.target.innerText;
+      // this.debounceRender(this.renderingDOM);
       this.$nextTick(() => {
         this.renderMath(this.renderingDOM);
       });
     },
 
     clickAnnotCard(annotId) {
-      // a weird trick to trigger the watch in PDFReader.vue
-      // so we can click on the already selected card to scroll into view
-      this.annotStore.selectedAnnotId = null;
-      this.$nextTick(() => {
-        this.annotStore.selectedAnnotId = annotId;
-      });
+      this.$emit("update:selectedAnnotId", annotId);
     },
 
     editAnnotation(annotId) {
       this.editingAnnotId = annotId;
-      this.renderingDOM = document.querySelector(
+      this.renderingDOM = this.$refs.annotationList.$el.querySelector(
         `[annot-content-id='${annotId}']`
       );
     },
 
     confirmAnnotation(annot) {
       // backend
-      this.annotStore.update(annot._id, { content: annot.content });
+      this.$emit("update", { id: annot._id, data: { content: annot.content } });
 
       // update ui
       this.editingAnnotId = "";

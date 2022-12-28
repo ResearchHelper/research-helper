@@ -1,12 +1,13 @@
 <template>
   <q-tree
-    v-if="!!pdfState.outline"
+    v-if="!!outline"
     dense
     no-connectors
     default-expand-all
     no-selection-unset
     selected-color="primary"
-    :nodes="pdfState.outline"
+    no-nodes-label="No outline is available"
+    :nodes="outline"
     node-key="label"
     v-model:selected="selected"
     @update:selected="clickTOC"
@@ -19,13 +20,8 @@
 </template>
 
 <script>
-import { usePDFStateStore } from "src/stores/pdfState";
-
 export default {
-  setup() {
-    const pdfState = usePDFStateStore();
-    return { pdfState };
-  },
+  props: { outline: Array },
 
   data() {
     return {
@@ -36,7 +32,7 @@ export default {
   methods: {
     clickTOC(nodeKey) {
       let node = this.$refs.tree.getNodeByKey(nodeKey);
-      this.pdfState.selectedOutlineNode = node;
+      this.$emit("clickTOC", node);
     },
   },
 };

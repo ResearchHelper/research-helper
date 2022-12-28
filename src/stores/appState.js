@@ -1,4 +1,3 @@
-import { v4 as uuidv4 } from "uuid";
 import { defineStore } from "pinia";
 
 const path = window.path;
@@ -6,75 +5,54 @@ const fs = window.fs;
 
 export const useStateStore = defineStore("stateStore", {
   state: () => ({
+    ready: false,
+
     // user data path
     storagePath:
       "/home/huntfeng/projects/research-helper-quasar/backend/storage",
 
-    // page
-    currentPage: "library",
-
     // layout
     leftMenuSize: 20,
-    rightMenuSize: 0,
+    showLeftMenu: false,
 
     // tree view
     selectedFolderId: "",
 
-    // rightMenu
-    rightMenuTab: "metaInfoTab",
-    rightMenuMode: null, // "infoPane" or "noteEditor"
-
     // projects
     selectedProjectId: "", // select from tableview
-    workingProjectId: "", // select from projectTree
-    openedProjectIds: [], //for projectTree
-
-    modifiedProject: null, // data send from metainfo pane to table
-    selectedProjectIndex: null, // for faster modification
-
-    // note
-    workingNoteId: null,
+    workingItemId: "library", // workingItem
+    openedProjectIds: [], // for projectTree
+    openItemId: "", // communicate between layout and deep vue component
   }),
 
   actions: {
-    // main layout related
-    toggleLeftMenu() {
-      this.leftMenuSize = this.leftMenuSize > 0 ? 0 : 20;
-    },
-
-    toggleRightMenu(mode) {
-      this.rightMenuSize = this.rightMenuSize > 0 ? 0 : 25;
-      this.rightMenuMode = this.rightMenuSize > 0 ? mode : null;
-    },
-
-    openRightMenu(mode) {
-      this.rightMenuSize = 25;
-      this.rightMenuMode = mode;
-    },
-
-    closeRightMenu() {
-      this.rightMenuSize = 0;
-      this.rightMenuMode = null;
-    },
-
-    setRightMenuMode(mode) {
-      // mode can be "infoPane" or "noteEditor"
-      this.rightMenuMode = mode;
-    },
-
-    setRightMenuTab(tab) {
-      this.rightMenuTab = tab;
-    },
-
-    setCurrentPage(page) {
-      if (page == this.currentPage) this.toggleLeftMenu();
-      this.currentPage = page;
-    },
-
     openProject(projectId) {
-      this.workingProjectId = projectId;
       if (!this.openedProjectIds.includes(projectId))
         this.openedProjectIds.push(projectId);
+    },
+
+    async loadState(state) {
+      this.storagePath = state.storagePath;
+      this.leftMenuSize = state.leftMenuSize;
+      this.showLeftMenu = state.showLeftMenu;
+      this.selectedFolderId = state.selectedFolderId;
+      this.workingItemId = state.workingItemId;
+      this.openedProjectIds = state.openedProjectIds;
+
+      this.ready = true;
+    },
+
+    saveState() {
+      let state = {
+        _id: "app_state",
+        storagePath: this.storagePath,
+        leftMenuSize: this.leftMenuSize,
+        showLeftMenu: this.showLeftMenu,
+        selectedFolderId: this.selectedFolderId,
+        workingItemId: this.workingItemId,
+        openedProjectIds: this.openedProjectIds,
+      };
+      return state;
     },
   },
 });

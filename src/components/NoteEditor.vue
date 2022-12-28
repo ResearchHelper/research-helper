@@ -1,15 +1,8 @@
 <template>
   <div
     v-show="showEditor"
-    id="vditor"
+    ref="vditor"
   ></div>
-  <div
-    v-if="!!!stateStore.workingNoteId"
-    :ripple="false"
-    @click="initEditor"
-  >
-    Add/Select a note in project navigator!
-  </div>
 </template>
 <script>
 import Vditor from "vditor";
@@ -24,9 +17,10 @@ import {
   uploadImage,
 } from "src/backend/project/note";
 import { getAllProjects, getProject } from "src/backend/project/project";
+import { debounce } from "quasar";
 
 export default {
-  props: { hasToolbar: Boolean },
+  props: { noteId: String, hasToolbar: Boolean },
 
   setup() {
     const stateStore = useStateStore();
@@ -45,19 +39,9 @@ export default {
   },
 
   async mounted() {
-    if (!!this.stateStore.workingNoteId) this.showEditor = true;
+    this.$refs.vditor.setAttribute("id", `vditor-${this.noteId}`);
+    this.showEditor = true;
     this.initEditor();
-  },
-
-  watch: {
-    "stateStore.workingNoteId"(noteId, _) {
-      if (!!noteId) {
-        if (!!!this.showEditor) this.showEditor = true;
-        this.setContent();
-      } else {
-        if (!!this.showEditor) this.showEditor = false;
-      }
-    },
   },
 
   methods: {
@@ -85,8 +69,9 @@ export default {
           "fullscreen",
         ];
 
-      this.editor = new Vditor("vditor", {
-        height: 500,
+      this.editor = new Vditor("vditor-" + this.noteId, {
+        height: "100%",
+        mode: "wysiwyg",
         toolbarConfig: {
           pin: true,
         },
@@ -115,7 +100,6 @@ export default {
           // dark theme, dark content theme, native code theme
           this.editor.setTheme("dark", "dark", "native");
           if (!!this.showEditor) this.setContent();
-          console.log(this.editor);
         },
         focus: () => {
           // used to filter stuff
@@ -126,18 +110,17 @@ export default {
           this.saveContent();
         },
         input: () => {
+          this.saveContent();
           this.changeLinks();
         },
         upload: {
           accept: "image/*",
           handler: (files) => {
             for (let file of files) {
-              getNote(this.stateStore.workingNoteId).then((note) => {
-                uploadImage(note.projectId, file).then((uploaded) => {
-                  this.editor.insertValue(
-                    `![${uploaded.imgName}](${uploaded.imgPath})`
-                  );
-                });
+              uploadImage(this.noteId, file).then((uploaded) => {
+                this.editor.insertValue(
+                  `![${uploaded.imgName}](${uploaded.imgPath})`
+                );
               });
             }
           },
@@ -146,21 +129,21 @@ export default {
     },
 
     async setContent() {
-      let content = await loadNote(this.stateStore.workingNoteId);
+      let content = await loadNote(this.noteId);
       this.editor.setValue(content);
       this.changeLinks();
     },
 
-    async saveContent() {
+    async _saveContent() {
       // save the content when it's blur
       // this will be called before unmount
       let content = this.editor.getValue();
-      await saveNote(this.stateStore.workingNoteId, content);
+      await saveNote(this.noteId, content);
       await this.saveLinks();
     },
 
     async saveLinks() {
-      let note = await getNote(this.stateStore.workingNoteId);
+      let note = await getNote(this.noteId);
       note.links = [];
       let parser = new DOMParser();
       let html = parser.parseFromString(this.editor.getHTML(), "text/html");
@@ -177,34 +160,22 @@ export default {
           }
         }
       }
-      updateNote(this.stateStore.workingNoteId, { links: note.links });
+      updateNote(this.noteId, { links: note.links });
     },
 
     async clickLink(linkNode) {
+      console.log("clicking link", linkNode);
       this.editor.blur(); // save the content before jumping
 
-      let link = linkNode.querySelector(
-        "span.vditor-ir__marker--link"
-      ).innerText;
-
-      try {
-        new URL(link);
-        // valid external url, do nothing
-      } catch (error) {
-        // we just want the document, both getProject or getNote are good
-        let doc = await getProject(link);
-        if (doc.dataType == "note") {
-          this.stateStore.openProject(doc.projectId);
-          this.stateStore.workingNoteId = doc._id;
-        } else if (doc.dataType == "project") {
-          this.stateStore.openProject(doc._id);
-        }
-      }
+      let id = linkNode.href.split("/").at(-1);
+      setTimeout(() => {
+        this.stateStore.openItemId = id;
+      }, 100);
     },
 
-    changeLinks() {
-      let vditor = document.getElementById("vditor");
-      let linkNodes = vditor.querySelectorAll("[data-type='a']");
+    _changeLinks() {
+      let vditor = this.$refs.vditor;
+      let linkNodes = vditor.querySelectorAll("a");
       for (let linkNode of linkNodes) {
         linkNode.onclick = () => this.clickLink(linkNode);
       }
@@ -223,6 +194,11 @@ export default {
       }
       return this.hints;
     },
+  },
+
+  created() {
+    this.saveContent = debounce(this._saveContent, 100);
+    this.changeLinks = debounce(this._changeLinks, 50);
   },
 };
 </script>

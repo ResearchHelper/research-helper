@@ -42,4 +42,6 @@ db.createIndex({
   },
 });
 
+window.destroyDB = destroyDB;
+
 export { db, remotedb, destroyDB };

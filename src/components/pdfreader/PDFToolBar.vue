@@ -5,7 +5,13 @@
       <input
         style="width: 3em"
         :value="pdfState.currentPageNumber"
-        @keydown.enter="(e) => $emit('changePageNumber', e.target.value)"
+        @keydown.enter="
+          (e) => {
+            state.currentPageNumber = e.target.value;
+            $emit('update:pdfState', state);
+            $emit('changePageNumber', e.target.value);
+          }
+        "
       />
       {{ "of " + pdfState.pagesCount }}
     </div>
@@ -14,7 +20,8 @@
 
     <!-- tools -->
     <q-btn-toggle
-      v-model="pdfState.tool"
+      v-model="state.tool"
+      @update:model-value="$emit('update:pdfState', state)"
       :ripple="false"
       size="sm"
       padding="xs"
@@ -32,21 +39,30 @@
       size="xs"
     >
       <q-menu>
-        <q-color
-          v-model="pdfState.color"
-          no-header
-          no-footer
-          bordered
-          default-view="palette"
-          :palette="[
-            '#FFFF00',
-            '#019A9D',
-            '#D9B801',
-            '#E8045A',
-            '#B2028A',
-            '#2A0449',
-          ]"
-        />
+        <div class="row justify-between">
+          <q-btn
+            v-for="color in [
+              '#FFFF00',
+              '#019A9D',
+              '#D9B801',
+              '#E8045A',
+              '#B2028A',
+            ]"
+            :key="color"
+            :style="`background: ${color}; width:25px; height:25px;`"
+            flat
+            square
+            :ripple="false"
+            v-close-popup
+            padding="none"
+            @click="
+              () => {
+                state.color = color;
+                $emit('update:pdfState', state);
+              }
+            "
+          />
+        </div>
       </q-menu>
     </q-btn>
     <q-btn-dropdown
@@ -57,40 +73,46 @@
       padding="xs"
     >
       <q-list dense>
-        <q-item class="items-center">
+        <q-item class="row justify-center items-center">
           <q-btn
             dense
+            flat
             :ripple="false"
+            icon="expand"
+            class="rotate-90"
             @click="$emit('changeScale', { scaleValue: 'page-width' })"
-          >
-            Page Width
-          </q-btn>
+          />
           <q-btn
             dense
+            flat
             :ripple="false"
+            icon="expand"
             @click="$emit('changeScale', { scaleValue: 'page-height' })"
-          >
-            Page Height
-          </q-btn>
+          />
+        </q-item>
+        <q-separator />
+        <q-item class="row justify-center items-center">
           <q-btn
+            dense
+            flat
             :ripple="false"
+            icon="remove"
             @click="$emit('changeScale', { delta: -0.1 })"
-          >
-            -
-          </q-btn>
+          />
           <div>
             {{ Math.trunc(pdfState.currentScale * 100) + "%" }}
           </div>
           <q-btn
+            dense
             :ripple="false"
+            icon="add"
             @click="$emit('changeScale', { delta: 0.1 })"
-          >
-            +
-          </q-btn>
+          />
         </q-item>
         <q-separator />
         <q-item>
           <q-btn-toggle
+            class="column"
             stack
             dense
             :ripple="false"
@@ -100,7 +122,13 @@
               { label: 'Odd Spread', value: 1 },
               { label: 'Even Spread', value: 2 },
             ]"
-            v-model="pdfState.spreadMode"
+            v-model="state.spreadMode"
+            @update:model-value="
+              () => {
+                $emit('update:pdfState', state);
+                $emit('changeSpreadMode', state.spreadMode);
+              }
+            "
           />
         </q-item>
       </q-list>
@@ -115,6 +143,7 @@
     >
       <q-menu
         persistent
+        @show="$emit('searchText', search)"
         @hide="clearSearch"
       >
         <q-item dense>
@@ -123,7 +152,7 @@
             outlined
             hide-bottom-space
             placeholder="Search"
-            v-model="pdfState.search.query"
+            v-model="search.query"
             @keydown.enter="$emit('changeMatch', 1)"
           ></q-input>
           <q-btn
@@ -145,17 +174,17 @@
           <q-checkbox
             dense
             label="Highlight All"
-            v-model="pdfState.search.highlightAll"
+            v-model="search.highlightAll"
           />
           <q-checkbox
             dense
             label="Match Case"
-            v-model="pdfState.search.caseSensitive"
+            v-model="search.caseSensitive"
           />
           <q-checkbox
             dense
             label="Whole Words"
-            v-model="pdfState.search.entireWord"
+            v-model="search.entireWord"
           />
         </q-item>
         <q-item>
@@ -166,53 +195,80 @@
 
     <q-space />
 
-    <!-- comment and note -->
+    <!-- right menu -->
     <q-btn-toggle
-      v-model="rightMenuMode"
+      v-model="showRightMenu"
       clearable
       unelevated
       :ripple="false"
       size="sm"
       padding="xs"
       toggle-color="primary"
-      :options="[
-        { value: 'infoPane', icon: 'list' },
-        { value: 'noteEditor', icon: 'sticky_note_2' },
-      ]"
+      :options="[{ value: true, icon: 'list' }]"
+      @update:model-value="$emit('toggleRightMenu', showRightMenu)"
     />
   </q-toolbar>
 </template>
 
 <script>
-import { usePDFStateStore } from "src/stores/pdfState";
 import { useStateStore } from "src/stores/appState";
 import { AnnotationType } from "src/backend/pdfreader/annotation";
+import { set } from "vue-demi";
 
 export default {
+  props: { pdfState: Object, matchesCount: Object, rightMenuSize: Number },
+  emits: [
+    "update:pdfState",
+    "changePageNumber",
+    "changeScale",
+    "changeSpreadMode",
+    "searchText",
+    "changeMatch",
+    "toggleRightMenu",
+  ],
+
   setup() {
-    const pdfState = usePDFStateStore();
     const stateStore = useStateStore();
-    return { pdfState, stateStore, AnnotationType };
+    return { stateStore, AnnotationType };
+  },
+
+  data() {
+    return {
+      search: {
+        query: "",
+        highlightAll: true,
+        caseSensitive: false,
+        entireWord: false,
+      },
+      state: {},
+      showRightMenu: false,
+    };
+  },
+
+  watch: {
+    rightMenuSize(size) {
+      this.showRightMenu = size > 0;
+    },
+
+    pdfState: {
+      handler(state) {
+        this.state = state;
+      },
+      deep: true,
+    },
+
+    search: {
+      handler(newSearch) {
+        this.$emit("searchText", newSearch);
+      },
+      deep: true,
+    },
   },
 
   computed: {
-    rightMenuMode: {
-      get() {
-        return this.stateStore.rightMenuMode;
-      },
-
-      set(mode) {
-        if (!!mode) {
-          this.stateStore.openRightMenu(mode);
-        } else {
-          this.stateStore.closeRightMenu();
-        }
-      },
-    },
-
     searchSummary() {
       let text = "";
-      let matchesCount = this.pdfState.matchesCount;
+      let matchesCount = this.matchesCount;
       if (!!matchesCount) {
         if (matchesCount.total != 0) {
           text = `${matchesCount.current} of ${matchesCount.total} matches`;
@@ -223,6 +279,10 @@ export default {
 
       return text;
     },
+  },
+
+  mounted() {
+    this.state = JSON.parse(JSON.stringify(this.pdfState));
   },
 
   methods: {

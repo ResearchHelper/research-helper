@@ -1,76 +1,101 @@
 <template>
-  <div>
-    <SystemBar />
-    <!-- do not pass in the model Value because we want it fixed -->
-    <q-splitter :separator-style="{ cursor: 'default' }">
-      <template v-slot:before>
-        <q-tabs
-          v-model="stateStore.currentPage"
-          vertical
-        >
-          <div>
-            <q-tab
-              name="library"
-              icon="library_books"
-              :ripple="false"
-              @click="stateStore.setCurrentPage('library')"
-            />
-            <q-tab
-              name="reader"
-              icon="auto_stories"
-              :ripple="false"
-              :disable="!!!stateStore.workingProjectId"
-              @click="stateStore.setCurrentPage('reader')"
-            />
-          </div>
-          <div>
-            <q-tab
-              name="graphview"
-              icon="hub"
-              :ripple="false"
-              @click="stateStore.setCurrentPage('graphview')"
-            />
-            <q-tab
-              name="settings"
-              icon="settings"
-              :ripple="false"
-              @click="stateStore.setCurrentPage('settings')"
-            />
-          </div>
-        </q-tabs>
-      </template>
-      <template v-slot:after>
-        <q-tab-panels
-          v-model="stateStore.currentPage"
-          vertical
-          transition-duration="0"
-          class="fit"
-        >
-          <q-tab-panel name="library">
-            <LibraryPage />
-          </q-tab-panel>
-
-          <q-tab-panel name="reader">
-            <ReaderPage />
-          </q-tab-panel>
-
-          <q-tab-panel name="graphview"> <GraphView /> </q-tab-panel>
-          <q-tab-panel name="settings"> Settings Page </q-tab-panel>
-        </q-tab-panels>
-      </template>
-    </q-splitter>
-  </div>
+  <q-splitter
+    :model-value="56"
+    unit="px"
+    :separator-style="{ cursor: 'default' }"
+  >
+    <template v-slot:before>
+      <div
+        style="height: calc(100vh - 32px)"
+        class="column justify-between"
+      >
+        <div>
+          <q-btn
+            icon="home"
+            class="bg-secondary"
+            :ripple="false"
+            square
+            @click="setComponent('library')"
+          >
+            <q-tooltip>Show Library Page</q-tooltip>
+          </q-btn>
+          <q-btn-toggle
+            v-model="leftMenu"
+            unelevated
+            square
+            :ripple="false"
+            clearable
+            :options="[{ icon: 'account_tree', value: true }]"
+            @update:model-value="stateStore.saveState()"
+          />
+        </div>
+        <q-btn
+          unelevated
+          square
+          :ripple="false"
+          icon="settings"
+          @click="setComponent('settings')"
+        />
+      </div>
+    </template>
+    <template v-slot:after>
+      <q-splitter
+        :limits="[0, 60]"
+        emit-immediately
+        v-model="leftMenuSize"
+        @update:model-value="(size) => resizeLeftMenu(size)"
+      >
+        <template v-slot:before>
+          <ProjectTree
+            style="height: calc(100vh - 32px)"
+            v-if="stateStore.ready"
+            @addNode="(element) => addDragSource(element)"
+            @renameNode="(node) => editComponentState(node)"
+            @openProject="(projectId) => setComponent(projectId)"
+            @closeProject="(projectId) => removeComponent(projectId)"
+            ref="tree"
+          />
+        </template>
+        <template v-slot:after>
+          <GLayout
+            v-if="stateStore.ready"
+            ref="layout"
+            style="width: 100%; height: calc(100vh - 32px)"
+            v-model:workingItemId="stateStore.workingItemId"
+            @layoutchanged="onLayoutChanged"
+            @itemdestroyed="onItemDestroyed"
+          ></GLayout>
+        </template>
+      </q-splitter>
+    </template>
+  </q-splitter>
 </template>
 
 <script>
-import { useStateStore } from "src/stores/appState";
 import { useQuasar } from "quasar";
-import SystemBar from "../components/SystemBar.vue";
-import LibraryPage from "./LibraryPage.vue";
-import ReaderPage from "./ReaderPage.vue";
-import GraphView from "src/components/GraphView.vue";
+
+import ProjectTree from "src/components/ProjectTree.vue";
+
+import GLayout from "src/pages/GLayout.vue";
+import "golden-layout/dist/css/goldenlayout-base.css";
+import "golden-layout/dist/css/themes/goldenlayout-dark-theme.css";
+
+import { useStateStore } from "src/stores/appState";
+import { getProject } from "src/backend/project/project";
+import { getNotes } from "src/backend/project/note";
+import {
+  getLayout,
+  updateLayout,
+  getAppState,
+  updateAppState,
+} from "src/backend/appState";
 
 export default {
+  components: {
+    GLayout,
+    ProjectTree,
+  },
+
   setup() {
     const $q = useQuasar();
     $q.dark.set(true); // or false or "auto"
@@ -80,26 +105,191 @@ export default {
     return { stateStore };
   },
 
-  components: {
-    SystemBar,
-    LibraryPage,
-    ReaderPage,
-    GraphView,
+  data() {
+    return {
+      leftMenuSize: 0,
+
+      dragover: false,
+    };
+  },
+
+  computed: {
+    leftMenu: {
+      get() {
+        return this.leftMenuSize > 0;
+      },
+
+      set(visible) {
+        this.stateStore.showLeftMenu = visible;
+        if (visible) {
+          this.leftMenuSize = this.stateStore.leftMenuSize;
+        } else {
+          this.stateStore.leftMenuSize = this.leftMenuSize;
+          this.leftMenuSize = 0;
+        }
+        this.$nextTick(() => {
+          this.$refs.layout.resize();
+          this.saveLayout();
+          this.saveAppState();
+        });
+      },
+    },
+  },
+
+  watch: {
+    "stateStore.openItemId"(id) {
+      if (!!!id) return;
+      this.setComponent(id).then(() => {
+        this.stateStore.openItemId = null;
+      });
+    },
+
+    "stateStore.openedProjectIds": {
+      handler(projectIds) {
+        this.saveAppState();
+      },
+      deep: true,
+    },
+  },
+
+  async mounted() {
+    let state = await getAppState();
+    this.stateStore.loadState(state);
+    if (this.stateStore.showLeftMenu) this.leftMenuSize = state.leftMenuSize;
+    const layout = await getLayout();
+    await this.$refs.layout.loadGLLayout(layout.config);
+  },
+
+  methods: {
+    async resizeLeftMenu(size) {
+      this.$refs.layout.resize();
+      this.stateStore.leftMenuSize = size > 10 ? size : 10;
+    },
+
+    /**
+     * Set focus to component with specified id
+     * create it if it doesn't exist
+     * @param {String} id
+     */
+    async setComponent(id) {
+      let componentType = "";
+      let title = "";
+      if (id == "library") {
+        componentType = "LibraryPage";
+        title = "Library";
+      } else if (id == "settings") {
+        componentType = "SettingPage";
+        title = "Settings";
+      } else {
+        let item = await getProject(id);
+        if (item.dataType == "project") {
+          componentType = "ReaderPage";
+          title = item.title;
+        } else if (item.dataType == "note") {
+          componentType = "NotePage";
+          title = item.label;
+        }
+      }
+
+      await this.$refs.layout.addGLComponent(componentType, title, id);
+      await this.saveLayout();
+      await this.saveAppState();
+    },
+
+    async removeComponent(id) {
+      this.$refs.layout.removeGLComponent(id);
+      let item = await getProject(id);
+      if (item.dataType == "project") {
+        let notes = await getNotes(id);
+        for (let note of notes) {
+          this.$refs.layout.removeGLComponent(note._id);
+        }
+      }
+    },
+
+    async editComponentState(element) {
+      let id = element.getAttribute("item-id");
+      let title = element.innerText;
+      this.$refs.layout.renameGLComponent(id, title);
+      this.addDragSource(element);
+    },
+
+    async saveLayout() {
+      if (!this.$refs.layout.initialized) return;
+      let config = this.$refs.layout.getLayoutConfig();
+      await updateLayout(config);
+    },
+
+    async saveAppState() {
+      if (!this.stateStore.ready) return;
+      let state = this.stateStore.saveState();
+      await updateAppState(state);
+    },
+
+    async onLayoutChanged() {
+      await this.$nextTick();
+      await this.saveLayout();
+      await this.saveAppState();
+    },
+
+    /*******************************************
+     * Drag and drop to GLayout to add component
+     *******************************************/
+
+    addDragSource(element, addComponentOnly = false) {
+      if (!!!element) return;
+
+      let type = element.getAttribute("type");
+      let id = element.getAttribute("item-id");
+      let componentType = type == "project" ? "ReaderPage" : "NotePage";
+      this.$refs.layout.addGLDragSource(
+        element,
+        componentType,
+        { id: id },
+        element.innerText,
+        addComponentOnly
+      );
+    },
+
+    onItemDestroyed(id) {
+      setTimeout(() => {
+        let treeEl = this.$refs.tree.$el;
+        let element = treeEl.querySelector(`[item-id='${id}']`);
+        this.addDragSource(element, true);
+      }, 100);
+    },
   },
 };
 </script>
 
-<style>
+<style lang="scss">
 /* hide the global scrollbar */
 html {
   overflow: hidden;
 }
-/* remove padding of tab panel */
-.q-tab-panel {
-  padding: 0;
+.lm_close {
+  // we don't need this button, but we must keep it due to some bug
+  visibility: hidden;
 }
-/* remove scrollbar for q-tab-panel */
-.q-panel.scroll {
-  overflow: hidden;
+.lm_tab {
+  height: 36px !important;
+  min-width: 100px;
+  max-width: 150px;
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+}
+.lm_close_tab {
+  top: unset !important;
+}
+.lm_active {
+  background-color: #222222 !important;
+  box-shadow: 2px -2px 2px rgb(0 0 0 / 30%) !important;
+}
+.lm_header {
+  background: rgb(48, 48, 48);
+}
+.lm_header [class^="lm_"] {
+  box-sizing: inherit !important;
 }
 </style>
