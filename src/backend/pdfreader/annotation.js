@@ -92,6 +92,9 @@ async function createAnnotation(container, annot, fromDB = false) {
     case AnnotationType.COMMENT:
       result = comment(container, annot, fromDB);
       break;
+    case AnnotationType.NONE:
+      result = { annot: {}, doms: [] };
+      break;
   }
 
   // return the annots and corresponding doms

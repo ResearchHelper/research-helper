@@ -18,6 +18,7 @@
         @changeMatch="changeMatch"
         @toggleRightMenu="toggleRightMenu"
       />
+
       <div
         ref="viewerContainer"
         class="viewerContainer"
@@ -26,6 +27,34 @@
           ref="viewer"
           class="pdfViewer"
         ></div>
+
+        <AnnotCard
+          v-if="showAnnotCard"
+          :style="style"
+          :annotId="selectedAnnotId"
+          @close="showAnnotCard = false"
+          @update="(params) => updateAnnot(params)"
+          @delete="(params) => deleteAnnot(params)"
+        />
+
+        <div
+          v-if="showColorPicker"
+          :style="style"
+          class="q-px-sm q-py-xs"
+        >
+          <ColorPicker
+            @selected="
+              (color) =>
+                createAnnot({
+                  pageNumber: selectionPage,
+                  left: null,
+                  top: null,
+                  tool: 'highlight',
+                  color: color,
+                })
+            "
+          />
+        </div>
       </div>
       <div
         ref="peekContainer"
@@ -99,6 +128,8 @@ import PDFToolBar from "./PDFToolBar.vue";
 import MetaInfoTab from "../MetaInfoTab.vue";
 import PDFTOC from "./PDFTOC.vue";
 import AnnotationList from "./AnnotationList.vue";
+import AnnotCard from "./AnnotCard.vue";
+import ColorPicker from "./ColorPicker.vue";
 
 import { PDFApplication } from "src/backend/pdfreader/pdfreader";
 import { useStateStore } from "src/stores/appState";
@@ -106,9 +137,16 @@ import { getProject } from "src/backend/project/project";
 import { AnnotManager } from "src/backend/pdfreader/annotManager";
 
 export default {
-  props: { projectId: String, visible: Boolean },
+  props: { projectId: String },
 
-  components: { PDFToolBar, MetaInfoTab, PDFTOC, AnnotationList },
+  components: {
+    PDFToolBar,
+    MetaInfoTab,
+    PDFTOC,
+    AnnotationList,
+    AnnotCard,
+    ColorPicker,
+  },
 
   setup() {
     const stateStore = useStateStore();
@@ -119,15 +157,23 @@ export default {
     return {
       ready: false,
 
+      // right menu
       prvRightMenuSize: 25,
       rightMenuSize: 0,
       rightMenuTab: "metaInfoTab",
 
+      // pdf related
+      pdfState: {},
       matchesCount: { current: -1, total: 0 },
       outline: [],
-      pdfState: {},
       annots: [],
       selectedAnnotId: "",
+
+      // annot card & colorpicker
+      showAnnotCard: false,
+      showColorPicker: false,
+      selectionPage: 0,
+      style: "",
     };
   },
 
@@ -143,23 +189,15 @@ export default {
     );
 
     this.pdfApp.eventBus.on("pagesinit", (e) => {
-      // set state if the component is visible.
-      // if visible is undefined then it is newly added, it defaults to true
-      console.log("mounted");
-      console.log("visible:", this.visible, "ready:", this.ready);
-      // let visible = this.visible === undefined ? true : this.visible;
-      // if (visible) {
-      if (this.visible) {
-        this.changePageNumber(this.pdfState.currentPageNumber);
-        this.changeSpreadMode(this.pdfState.spreadMode);
-        this.changeScale({ scale: this.pdfState.currentScale });
-        this.pdfState.pagesCount = this.pdfApp.pdfViewer.pagesCount;
-        this.$refs.viewerContainer.scrollTo(
-          this.pdfState.scrollLeft,
-          this.pdfState.scrollTop
-        );
-        this.ready = true;
-      }
+      this.changePageNumber(this.pdfState.currentPageNumber);
+      this.changeSpreadMode(this.pdfState.spreadMode);
+      this.changeScale({ scale: this.pdfState.currentScale });
+      this.pdfState.pagesCount = this.pdfApp.pdfViewer.pagesCount;
+      this.$refs.viewerContainer.scrollTo(
+        this.pdfState.scrollLeft,
+        this.pdfState.scrollTop
+      );
+      this.ready = true;
     });
 
     this.pdfApp.eventBus.on("annotationeditorlayerrendered", (e) => {
@@ -167,23 +205,14 @@ export default {
       this.annotManager.drawAnnots(e.pageNumber);
 
       // draw annotations when mouse is up
-      e.source.div.onmouseup = async (ev) => {
-        await this.annotManager.createAnnot(
-          e.pageNumber,
-          ev.clientX,
-          ev.clientY,
-          this.pdfState.tool,
-          this.pdfState.color
-        );
-        if (this.pdfState.tool == "comment") this.pdfState.tool = "cursor";
-        setTimeout(() => {
-          this.selectedAnnotId = this.annotManager.selected;
-          // don't know why, although this.annots has already been updated
-          // but the annot list is not updated when some activity happened
-          // so use forceUpdate
-          if (!!this.$refs.annotList) this.$refs.annotList.$forceUpdate();
-        }, 50);
-      };
+      e.source.div.onmouseup = async (ev) =>
+        await this.createAnnot({
+          pageNumber: e.pageNumber,
+          left: ev.clientX,
+          top: ev.clientY,
+          tool: this.pdfState.tool,
+          color: this.pdfState.color,
+        });
 
       // highlight any active annotation (wait until annot layer is ready)
       this.annotManager.setActiveAnnot(this.selectedAnnotId);
@@ -220,17 +249,10 @@ export default {
       }
     });
 
-    if (this.visible) this.loadPDF(this.projectId);
+    this.loadPDF(this.projectId);
   },
 
   watch: {
-    async visible(v) {
-      console.log("visible:", v, "ready:", this.ready);
-      if (this.visible && !this.ready) {
-        await this.loadPDF(this.projectId);
-      }
-    },
-
     pdfState: {
       handler(state) {
         if (!this.ready) return;
@@ -316,13 +338,93 @@ export default {
     /**********************************
      * AnnotManager
      **********************************/
+    async createAnnot(annot) {
+      await this.annotManager.createAnnot(
+        annot.pageNumber,
+        annot.left,
+        annot.top,
+        annot.tool,
+        annot.color
+      );
+      if (this.pdfState.tool == "comment") this.pdfState.tool = "cursor";
+
+      setTimeout(() => {
+        this.selectedAnnotId = this.annotManager.selected;
+        this.selectionPage = annot.pageNumber; // for colorpicker
+        this.toggleMenu();
+      }, 50);
+    },
+
     async updateAnnot(params) {
       await this.annotManager.update(params.id, params.data);
       this.annots = this.annotManager.annots;
+      if (!!this.$refs.annotList) this.$refs.annotList.updateList();
     },
+
     async deleteAnnot(params) {
       await this.annotManager.delete(params.id);
       this.annots = this.annotManager.annots;
+      this.showAnnotCard = false;
+    },
+
+    /*******************************
+     * AnnotCard & ColorPicker
+     *******************************/
+    async toggleMenu() {
+      // close all menus first
+      this.showAnnotCard = false;
+      this.showColorPicker = false;
+      await this.$nextTick();
+
+      let hasSelection = false;
+      let selection = window.getSelection();
+      let rects = [];
+      if (!!selection.focusNode) {
+        rects = selection.getRangeAt(0).getClientRects();
+        if (rects.length > 1) {
+          hasSelection = true;
+        } else if (rects.length == 1 && rects[0].width > 1) {
+          hasSelection = true;
+        } else {
+          hasSelection = false;
+        }
+      }
+
+      if (!!this.selectedAnnotId) {
+        // show annot card
+        let doms = document.querySelectorAll(
+          `section[annotation-id="${this.selectedAnnotId}"]`
+        );
+        rects = [];
+        for (let dom of doms) rects.push(dom.getBoundingClientRect());
+        this.showAnnotCard = true;
+        this.setStyle(rects);
+      } else if (hasSelection) {
+        // if user has selection, show colorpicker
+        this.showColorPicker = true;
+        this.setStyle(rects);
+      }
+    },
+
+    setStyle(rects) {
+      let bgRect = this.$refs.viewer.getBoundingClientRect();
+
+      // unit: px
+      let top = 0;
+      let mid = 0;
+      let n = rects.length;
+      for (let rect of rects) {
+        top = Math.max(top, rect.bottom);
+        mid += (rect.left + rect.right) / 2 / n;
+      }
+
+      this.style = `
+      background: var(--q-dark-page);
+      position: absolute;
+      left: ${mid - bgRect.left - 75}px;
+      top: ${top - bgRect.top + 10}px;
+      min-width: 150px;
+      `;
     },
 
     /**********************************
@@ -372,7 +474,8 @@ export default {
 }
 
 .activeAnnotation {
-  border: dashed 2px cyan;
+  outline-offset: 3px;
+  outline: dashed 2px cyan;
 }
 
 .q-splitter__after {

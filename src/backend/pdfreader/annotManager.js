@@ -166,13 +166,14 @@ class AnnotManager {
       pageNumber: pageNumber,
     });
 
-    if (doms.length == 0) this.setActiveAnnot("");
-
     for (let dom of doms) {
       dom.onclick = () => {
         this.setActiveAnnot(dom.getAttribute("annotation-id"));
       };
     }
+
+    if (doms.length == 0) this.setActiveAnnot("");
+    else this.setActiveAnnot(doms[0].getAttribute("annotation-id"));
   }
 
   setActiveAnnot(annotId) {

@@ -27,42 +27,57 @@
       padding="xs"
       toggle-color="primary"
       :options="[
-        { value: AnnotationType.NONE, icon: 'navigation' },
-        { value: AnnotationType.HIGHLIGHT, icon: 'border_color' },
-        { value: AnnotationType.COMMENT, icon: 'comment' },
+        {
+          value: AnnotationType.NONE,
+          icon: 'navigation',
+          slot: AnnotationType.NONE,
+        },
+        {
+          value: AnnotationType.HIGHLIGHT,
+          icon: 'border_color',
+          slot: AnnotationType.HIGHLIGHT,
+        },
+        {
+          value: AnnotationType.COMMENT,
+          icon: 'comment',
+          slot: AnnotationType.COMMENT,
+        },
       ]"
-    />
+    >
+      <template v-slot:cursor>
+        <q-tooltip>cursor</q-tooltip>
+      </template>
+      <template v-slot:highlight>
+        <q-tooltip>highlight</q-tooltip>
+      </template>
+      <template v-slot:comment>
+        <q-tooltip>comment</q-tooltip>
+      </template>
+    </q-btn-toggle>
     <q-btn
       :style="`background: ${pdfState.color}`"
       unelevated
       :ripple="false"
       size="xs"
     >
-      <q-menu>
-        <div class="row justify-between">
-          <q-btn
-            v-for="color in [
-              '#FFFF00',
-              '#019A9D',
-              '#D9B801',
-              '#E8045A',
-              '#B2028A',
-            ]"
-            :key="color"
-            :style="`background: ${color}; width:25px; height:25px;`"
-            flat
-            square
-            :ripple="false"
-            v-close-popup
-            padding="none"
-            @click="
-              () => {
+      <q-tooltip>highlight color</q-tooltip>
+      <q-menu
+        anchor="bottom middle"
+        self="top middle"
+      >
+        <q-item
+          dense
+          style="width: 150px"
+        >
+          <ColorPicker
+            @selected="
+              (color) => {
                 state.color = color;
                 $emit('update:pdfState', state);
               }
             "
           />
-        </div>
+        </q-item>
       </q-menu>
     </q-btn>
     <q-btn-dropdown
@@ -72,6 +87,7 @@
       size="sm"
       padding="xs"
     >
+      <template v-slot:label><q-tooltip>view</q-tooltip></template>
       <q-list dense>
         <q-item class="row justify-center items-center">
           <q-btn
@@ -141,6 +157,7 @@
       size="sm"
       padding="xs"
     >
+      <q-tooltip>search</q-tooltip>
       <q-menu
         persistent
         @show="$emit('searchText', search)"
@@ -206,14 +223,18 @@
       toggle-color="primary"
       :options="[{ value: true, icon: 'list' }]"
       @update:model-value="$emit('toggleRightMenu', showRightMenu)"
-    />
+    >
+      <template v-slot:default
+        ><q-tooltip>toogle right menu</q-tooltip></template
+      >
+    </q-btn-toggle>
   </q-toolbar>
 </template>
 
 <script>
 import { useStateStore } from "src/stores/appState";
 import { AnnotationType } from "src/backend/pdfreader/annotation";
-import { set } from "vue-demi";
+import ColorPicker from "./ColorPicker.vue";
 
 export default {
   props: { pdfState: Object, matchesCount: Object, rightMenuSize: Number },
@@ -226,6 +247,10 @@ export default {
     "changeMatch",
     "toggleRightMenu",
   ],
+
+  components: {
+    ColorPicker,
+  },
 
   setup() {
     const stateStore = useStateStore();

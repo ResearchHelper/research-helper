@@ -1,8 +1,8 @@
 <template>
   <div>
     <PDFReader
+      v-if="visible"
       :projectId="itemId"
-      :visible="visible"
     />
   </div>
 </template>
