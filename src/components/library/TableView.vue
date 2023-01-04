@@ -163,6 +163,10 @@ export default {
   },
 
   methods: {
+    /**
+     * Add an entry to table
+     * @param {Object} project
+     */
     addProject(project) {
       // update db has been done in action bar
       // update ui

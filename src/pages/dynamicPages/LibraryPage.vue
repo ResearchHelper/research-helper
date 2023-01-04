@@ -9,8 +9,14 @@
     >
       <template v-slot:before>
         <TreeView
-          :draggingProjectId="draggingProjectId"
           ref="tree"
+          :draggingProjectId="draggingProjectId"
+          @exportFolder="
+            (folder) => {
+              this.folder = folder;
+              this.showDialog = true;
+            }
+          "
         />
       </template>
       <template v-slot:after>
@@ -24,8 +30,8 @@
           <template v-slot:before>
             <TableView
               :rightMenuSize="rightMenuSize"
-              @toggle-right-menu="toggleRightMenu"
-              @drag-project="(key) => onDragProject(key)"
+              @toggleRightMenu="(visible) => toggleRightMenu(visible)"
+              @dragProject="(key) => onDragProject(key)"
               ref="table"
             />
           </template>
@@ -59,14 +65,24 @@
         </q-splitter>
       </template>
     </q-splitter>
+
+    <ExportDialog
+      v-model:show="showDialog"
+      @confirm="exportFolder"
+    />
   </div>
 </template>
 
 <script>
-import { useStateStore } from "src/stores/appState";
 import TableView from "src/components/library/TableView.vue";
 import TreeView from "src/components/library/TreeView.vue";
+import ExportDialog from "src/components/library/ExportDialog.vue";
 import MetaInfoTab from "src/components/MetaInfoTab.vue";
+
+import { getProjectsByFolderId } from "src/backend/project/project";
+import { useStateStore } from "src/stores/appState";
+import { exportFile } from "quasar";
+import Cite from "citation-js";
 
 export default {
   setup() {
@@ -77,29 +93,45 @@ export default {
   components: {
     TableView,
     TreeView,
+    ExportDialog,
     MetaInfoTab,
   },
 
   data() {
     return {
       treeViewSize: 20,
-
-      prvRightMenuSize: 25,
       rightMenuSize: 0,
+      prvRightMenuSize: 25,
 
       draggingProjectId: "",
+
+      showDialog: false,
+      folder: null,
     };
   },
 
   methods: {
-    addProject(file) {
-      this.$refs.table.addProject(file);
-    },
-
+    /**
+     * Update an entry in TableView
+     * @param {Object} project
+     */
     updateProject(project) {
       this.$refs.table.updateProject(project);
     },
 
+    /**
+     * As a bridge to notify TreeView about the drag event
+     * @param {string} key
+     */
+    onDragProject(key) {
+      this.draggingProjectId = key;
+      if (!!!key) this.$refs.tree.onDragEnd(null);
+    },
+
+    /**
+     * Toggle RightMenu and record its size
+     * @param {boolean} visible
+     */
     toggleRightMenu(visible) {
       if (visible) {
         this.rightMenuSize = this.prvRightMenuSize;
@@ -110,9 +142,20 @@ export default {
       }
     },
 
-    onDragProject(key) {
-      this.draggingProjectId = key;
-      if (!!!key) this.$refs.tree.onDragEnd(null);
+    /**
+     * Export a folder as a collection of references
+     * @param {Object} folder
+     */
+    async exportFolder() {
+      if (!!!this.folder) return;
+
+      let projects = await getProjectsByFolderId(this.folder._id);
+      const data = await Cite.async(projects.map((p) => p.doi));
+      let bibtex = data.format("bibtex");
+      let status = exportFile(`${this.folder.label}.bib`, bibtex, {
+        mimeType: "text/plain",
+      });
+      console.log(status);
     },
   },
 };

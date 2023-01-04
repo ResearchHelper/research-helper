@@ -5,9 +5,9 @@ FIXME:
 
 TODO:
 [x] remove visible prop and ready prop from PDFReader.vue
-[ ] implement API for content-extractor
+[x] implement API for content-extractor
+[x] export collection of references
 [ ] able to add reference entry only
-[ ] export collection of references
 
 IMPROVE:
 vditor
@@ -19,6 +19,8 @@ highlight annotation
 pdfreader
 [x] opens comment editor directly without opening right menu
 [x] tooltips for buttons
+[ ] full screen reading
+[ ] drag to move comment and comment editor
 
 UI
 [ ] set global var systembarheight, toolbarheight, and tabsheight. So we can refer them more quickly

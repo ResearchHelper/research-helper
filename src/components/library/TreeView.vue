@@ -49,6 +49,13 @@
                 <q-item-section>Rename</q-item-section>
               </q-item>
               <q-item
+                clickable
+                v-close-popup
+                @click="exportFolder(prop.node)"
+              >
+                <q-item-section>Export References</q-item-section>
+              </q-item>
+              <q-item
                 v-if="!specialFolderIds.includes(prop.node._id)"
                 clickable
                 v-close-popup
@@ -111,7 +118,6 @@ export default {
       renamingFolderId: null,
       draggingNode: null,
       dragoverNode: null,
-
       enterTime: 0,
     };
   },
@@ -123,7 +129,7 @@ export default {
 
   methods: {
     /**************************
-     * Add, delete, update
+     * Add, delete, update, export
      **************************/
 
     /**
@@ -203,6 +209,14 @@ export default {
 
       // sort the tree
       sortTree(this.folders[0]);
+    },
+
+    /**
+     * Export a collection of references
+     * @param {Object} folder
+     */
+    exportFolder(folder) {
+      this.$emit("exportFolder", folder);
     },
 
     /****************
