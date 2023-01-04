@@ -339,7 +339,7 @@ export default {
      * AnnotManager
      **********************************/
     async createAnnot(annot) {
-      await this.annotManager.createAnnot(
+      await this.annotManager.create(
         annot.pageNumber,
         annot.left,
         annot.top,

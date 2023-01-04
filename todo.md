@@ -19,8 +19,7 @@ highlight annotation
 pdfreader
 [x] opens comment editor directly without opening right menu
 [x] tooltips for buttons
-[ ] full screen reading
-[ ] drag to move comment and comment editor
+[x] drag to move comment and comment editor
 
 UI
 [ ] set global var systembarheight, toolbarheight, and tabsheight. So we can refer them more quickly

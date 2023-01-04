@@ -23,6 +23,7 @@
       v-model="state.tool"
       @update:model-value="$emit('update:pdfState', state)"
       :ripple="false"
+      flat
       size="sm"
       padding="xs"
       toggle-color="primary"
@@ -56,7 +57,7 @@
     </q-btn-toggle>
     <q-btn
       :style="`background: ${pdfState.color}`"
-      unelevated
+      flat
       :ripple="false"
       size="xs"
     >
@@ -82,6 +83,7 @@
     </q-btn>
     <q-btn-dropdown
       dense
+      flat
       :ripple="false"
       icon="visibility"
       size="sm"
@@ -151,7 +153,27 @@
     </q-btn-dropdown>
 
     <q-btn
+      v-if="!fullscreen"
+      dense
       square
+      flat
+      :ripple="false"
+      icon="fullscreen"
+      @click="requestFullscreen"
+    />
+    <q-btn
+      v-else
+      dense
+      square
+      flat
+      :ripple="false"
+      icon="fullscreen_exit"
+      @click="exitFullscreen"
+    />
+
+    <q-btn
+      square
+      flat
       :ripple="false"
       icon="search"
       size="sm"
@@ -232,6 +254,7 @@
 </template>
 
 <script>
+import { useQuasar } from "quasar";
 import { useStateStore } from "src/stores/appState";
 import { AnnotationType } from "src/backend/pdfreader/annotation";
 import ColorPicker from "./ColorPicker.vue";
@@ -253,6 +276,8 @@ export default {
   },
 
   setup() {
+    const $q = useQuasar();
+    // const requestFullScreen = $q.fullscreen.request;
     const stateStore = useStateStore();
     return { stateStore, AnnotationType };
   },
@@ -267,6 +292,8 @@ export default {
       },
       state: {},
       showRightMenu: false,
+
+      fullscreen: false,
     };
   },
 
@@ -314,6 +341,19 @@ export default {
     clearSearch() {
       this.readyForSearch = false;
       this.$emit("searchText", { query: "" });
+    },
+
+    // TODO: make better full screen mode
+    async requestFullscreen() {
+      await this.$q.fullscreen.request();
+      // after successfully fullscreened, remove systembar
+      this.fullscreen = true;
+    },
+
+    async exitFullscreen() {
+      await this.$q.fullscreen.exit();
+      // after exit fullscreen, show systembar again
+      this.fullscreen = false;
     },
   },
 };

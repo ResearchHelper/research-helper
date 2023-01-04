@@ -43,15 +43,3 @@ contextBridge.exposeInMainWorld("myWindowAPI", {
 // inject these libraries in preload, otherwise they are externalized
 contextBridge.exposeInMainWorld("fs", fs);
 contextBridge.exposeInMainWorld("path", path);
-
-// export file browser
-contextBridge.exposeInMainWorld("saveDialog", {
-  /**
-   * Opens the saveDialog for exporting files
-   * @param {Object} options
-   * @returns {string | undefined} the path of the file chosen by the user; if the dialog is cancelled it returns undefined
-   */
-  show(options = {}) {
-    return dialog.showSaveDialogSync(BrowserWindow, options);
-  },
-});

@@ -1,10 +1,7 @@
 import { ref } from "vue";
 import {
-  createIndex,
   getAnnotations,
-  getAnnotationsByPage,
   getAnnotationById,
-  addAnnotation,
   updateAnnotation,
   deleteAnnotation,
   createAnnotation,
@@ -19,6 +16,10 @@ class AnnotManager {
     this.selected = "";
   }
 
+  /**
+   * Get all annotation of the project
+   * @public
+   */
   async init() {
     try {
       this.annots = await getAnnotations(this.projectId);
@@ -31,6 +32,7 @@ class AnnotManager {
    * Return an array of annots on specified page
    * @param {Number} pageNumber
    * @returns {Array} annots
+   * @public
    */
   getAnnotsByPage(pageNumber) {
     let annots = [];
@@ -46,6 +48,7 @@ class AnnotManager {
    * Search annotation in current annot list
    * @param {String} annotId
    * @returns Annotation
+   * @public
    */
   getAnnotById(annotId) {
     let target = null;
@@ -59,39 +62,25 @@ class AnnotManager {
   }
 
   /**
-   * add to DB and return the corresponding doms (for PDFReader UI)
-   * @param {Object} rawAnnot
-   * @param {Boolean} fromDB
-   * @returns {Array} Array of DOMs
+   * Update properties of an annotation with specific id
+   * @param {string} id
+   * @param {Object} props
+   * @public
    */
-  async create(rawAnnot, fromDB = false) {
-    // update db
-    rawAnnot.projectId = this.projectId;
-    let result = await createAnnotation(this.container, rawAnnot, fromDB);
-    if (!!!result) return []; // return empty doms if just clicking
-
-    // update AnnotationList UI
-    if (!fromDB && !!result.doms.length) {
-      this.annots.push(result.annot);
-    }
-
-    return result.doms;
-  }
-
-  async update(id, newPropDict) {
+  async update(id, props) {
     try {
       let annot = await getAnnotationById(id);
-      for (let key in newPropDict) {
-        annot[key] = newPropDict[key];
+      for (let key in props) {
+        annot[key] = props[key];
       }
       updateAnnotation(annot);
 
       // update PDFReader UI
-      if ("color" in newPropDict) {
+      if ("color" in props) {
         for (let dom of document.querySelectorAll(
           `section[annotation-id="${id}"]`
         )) {
-          dom.style.background = newPropDict.color;
+          dom.style.background = props.color;
         }
       }
 
@@ -106,6 +95,11 @@ class AnnotManager {
     }
   }
 
+  /**
+   * Delete an annotation with specific id
+   * @param {string} annotId
+   * @public
+   */
   async delete(annotId) {
     try {
       await deleteAnnotation(annotId);
@@ -125,30 +119,55 @@ class AnnotManager {
   }
 
   /**
+   * add to DB and return the corresponding doms (for PDFReader UI)
+   * @param {Object} rawAnnot
+   * @param {boolean} fromDB
+   * @returns {Array} Array of DOMs
+   * @private
+   */
+  async _create(rawAnnot, fromDB = false) {
+    // update db
+    rawAnnot.projectId = this.projectId;
+    let result = await createAnnotation(this.container, rawAnnot, fromDB);
+    if (!!!result) return []; // return empty doms if just clicking
+
+    // update AnnotationList UI
+    if (!fromDB && !!result.doms.length) {
+      this.annots.push(result.annot);
+    }
+
+    return result.doms;
+  }
+
+  /**
    * Draw annots on specified page
-   * @param {Number} pageNumber
+   * @param {number} pageNumber
+   * @public
    */
   async drawAnnots(pageNumber) {
     let annots = this.getAnnotsByPage(pageNumber);
     for (let annot of annots) {
-      let doms = await this.create(annot, true);
+      let doms = await this._create(annot, true);
       // bind function to dom
-      for (let dom of doms)
+      for (let dom of doms) {
         dom.onclick = () => {
           this.setActiveAnnot(dom.getAttribute("annotation-id"));
         };
+      }
+      if (annot.type === "comment") this._enableDragToMove(doms[0]);
     }
   }
 
   /**
    * Create annot on specified page and coordinate
-   * @param {Number} pageNumber
-   * @param {Number} clientX
-   * @param {Number} clientY
-   * @param {String} tool
-   * @param {String} color
+   * @param {number} pageNumber
+   * @param {number} clientX
+   * @param {number} clientY
+   * @param {string} tool
+   * @param {string} color
+   * @public
    */
-  async createAnnot(pageNumber, clientX, clientY, tool, color) {
+  async create(pageNumber, clientX, clientY, tool, color) {
     let rect = null;
     if (tool == AnnotationType.COMMENT) {
       rect = {
@@ -159,7 +178,7 @@ class AnnotManager {
       };
     }
 
-    let doms = await this.create({
+    let doms = await this._create({
       type: tool,
       rect: rect, // only for comment annotation
       color: color,
@@ -172,10 +191,16 @@ class AnnotManager {
       };
     }
 
+    if (tool === "comment") this._enableDragToMove(doms[0]);
+
     if (doms.length == 0) this.setActiveAnnot("");
     else this.setActiveAnnot(doms[0].getAttribute("annotation-id"));
   }
 
+  /**
+   * Set an annotation active
+   * @param {string} annotId
+   */
   setActiveAnnot(annotId) {
     this.selected = annotId;
 
@@ -194,6 +219,47 @@ class AnnotManager {
         dom.classList.remove("activeAnnotation");
       }
     }
+  }
+
+  _enableDragToMove(dom) {
+    let annotLayerRect = null;
+    let domRect = null;
+    let offsetX = 0;
+    let offsetY = 0;
+    let shiftX = 0;
+    let shiftY = 0;
+    dom.ondragstart = (e) => {
+      annotLayerRect = dom.parentElement.getBoundingClientRect();
+      domRect = dom.getBoundingClientRect();
+      offsetX = annotLayerRect.left;
+      offsetY = annotLayerRect.top;
+      shiftX = e.clientX - domRect.left;
+      shiftY = e.clientY - domRect.top;
+    };
+
+    dom.ondragend = (e) => {
+      let left = e.pageX - offsetX - shiftX;
+      let top = e.pageY - offsetY - shiftY;
+
+      if (left < 0) left = 0;
+      if (left + domRect.width > annotLayerRect.width)
+        left = annotLayerRect.width - domRect.width;
+      if (top < 0) top = 0;
+      if (top + domRect.height > annotLayerRect.height)
+        top = annotLayerRect.height - domRect.height;
+
+      left = (left / annotLayerRect.width) * 100;
+      top = (top / annotLayerRect.height) * 100;
+
+      dom.style.left = `${left}%`;
+      dom.style.top = `${top}%`;
+
+      // left and top are in percentage
+      // width and height are in px
+      this.update(dom.getAttribute("annotation-id"), {
+        rect: { left: left, top: top, width: 40, height: 40 },
+      });
+    };
   }
 }
 
