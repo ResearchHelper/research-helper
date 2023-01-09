@@ -222,6 +222,11 @@ export default {
 
     async saveAppState() {
       if (!this.stateStore.ready) return;
+      // if folders are not created yet
+      // selectedFolderId is ""
+      if (!!!this.stateStore.selectedFolderId) {
+        this.stateStore.selectedFolderId = "library";
+      }
       let state = this.stateStore.saveState();
       await updateAppState(state);
     },

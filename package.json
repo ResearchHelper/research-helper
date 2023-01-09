@@ -21,6 +21,7 @@
     "events": "^3.3.0",
     "golden-layout": "^2.6.0",
     "katex": "^0.16.4",
+    "pdf-lib": "^1.17.1",
     "pdfjs-dist": "2.15.349",
     "pinia": "^2.0.11",
     "pouchdb": "^7.3.1",

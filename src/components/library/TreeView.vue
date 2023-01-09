@@ -8,6 +8,7 @@
       node-key="_id"
       v-model:expanded="expandedKeys"
       v-model:selected="stateStore.selectedFolderId"
+      @update:selected="saveState"
       :no-selection-unset="true"
       selected-color="primary"
       ref="tree"
@@ -100,6 +101,7 @@ import {
 } from "src/backend/project/folder";
 import { sortTree } from "src/backend/project/utils";
 import { getProject, updateProject } from "src/backend/project/project";
+import { updateAppState } from "src/backend/appState";
 
 export default {
   props: { draggingProjectId: String },
@@ -124,10 +126,15 @@ export default {
 
   async mounted() {
     this.folders = await getFolderTree();
-    this.stateStore.selectedFolderId = "library";
   },
 
   methods: {
+    async saveState() {
+      if (!this.stateStore.ready) return;
+      let state = this.stateStore.saveState();
+      await updateAppState(state);
+    },
+
     /**************************
      * Add, delete, update, export
      **************************/

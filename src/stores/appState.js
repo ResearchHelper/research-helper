@@ -8,36 +8,30 @@ export const useStateStore = defineStore("stateStore", {
     ready: false,
 
     // user data path
-    storagePath:
-      "/home/huntfeng/projects/research-helper-quasar/backend/storage",
+    storagePath: "/home/huntfeng/projects/research-helper-quasar/storage",
 
     // layout
     leftMenuSize: 20,
     showLeftMenu: false,
 
     // tree view
-    selectedFolderId: "",
+    selectedFolderId: "library",
 
     // projects
     selectedProjectId: "", // select from tableview
     workingItemId: "library", // workingItem
-    openedProjectIds: [], // for projectTree
+    openedProjectIds: new Set(), // for projectTree
     openItemId: "", // communicate between layout and deep vue component
   }),
 
   actions: {
-    openProject(projectId) {
-      if (!this.openedProjectIds.includes(projectId))
-        this.openedProjectIds.push(projectId);
-    },
-
     async loadState(state) {
       this.storagePath = state.storagePath;
       this.leftMenuSize = state.leftMenuSize;
       this.showLeftMenu = state.showLeftMenu;
       this.selectedFolderId = state.selectedFolderId;
       this.workingItemId = state.workingItemId;
-      this.openedProjectIds = state.openedProjectIds;
+      this.openedProjectIds = new Set(state.openedProjectIds); // convert to Set after loading
 
       this.ready = true;
     },
@@ -50,7 +44,7 @@ export const useStateStore = defineStore("stateStore", {
         showLeftMenu: this.showLeftMenu,
         selectedFolderId: this.selectedFolderId,
         workingItemId: this.workingItemId,
-        openedProjectIds: this.openedProjectIds,
+        openedProjectIds: [...this.openedProjectIds], // convert to Array for saving
       };
       return state;
     },

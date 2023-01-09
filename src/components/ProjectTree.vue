@@ -79,10 +79,12 @@
 
             <q-icon
               v-if="prop.node.dataType == 'note'"
-              name="note"
+              size="xs"
+              name="bi-file-earmark-text"
             />
             <q-icon
               v-else
+              size="xs"
               name="import_contacts"
             />
             <input
@@ -107,7 +109,7 @@
           </div>
           <q-icon
             v-if="prop.node.dataType == 'project'"
-            style="color: red"
+            style="color: white"
             name="close"
             @click="closeProject(prop.key)"
           >
@@ -179,6 +181,8 @@ export default {
   },
 
   async mounted() {
+    this.$bus.on("deleteProject", (projectId) => this.closeProject(projectId));
+
     await this.getProjectTree();
     let selected = this.stateStore.workingItemId;
     let selectedNode = this.$refs.tree.getNodeByKey(selected);
@@ -194,10 +198,10 @@ export default {
 
       let item = await getProject(id);
       if (item.dataType == "project") {
-        this.stateStore.openProject(id);
+        this.stateStore.openedProjectIds.add(id);
         this.pushProjectNode(id);
       } else if (item.dataType == "note") {
-        this.stateStore.openProject(item.projectId);
+        this.stateStore.openedProjectIds.add(item.projectId);
         this.pushProjectNode(item.projectId);
       }
     },
@@ -216,7 +220,7 @@ export default {
 
     async getProjectTree() {
       this.projects = [];
-      for (let projectId of this.stateStore.openedProjectIds) {
+      for (let projectId of this.stateStore.openedProjectIds.values()) {
         await this.pushProjectNode(projectId);
       }
 
@@ -264,16 +268,11 @@ export default {
 
       let selected = this.stateStore.workingItemId;
       if (this.stateStore.workingItemId == projectId) {
-        let index = this.stateStore.openedProjectIds.indexOf(projectId);
-        index = index > 0 ? index - 1 : 0;
-        selected = "library";
-        if (this.stateStore.openedProjectIds.length > 1) {
-          selected = this.stateStore.openedProjectIds[index];
-        }
+        selected = this.stateStore.openedProjectIds.has(projectId)
+          ? projectId
+          : "library";
       }
-
-      this.stateStore.openedProjectIds =
-        this.stateStore.openedProjectIds.filter((id) => id != projectId);
+      this.stateStore.openedProjectIds.delete(projectId);
       this.projects = this.projects.filter((p) => p._id != projectId);
 
       setTimeout(() => {

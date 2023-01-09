@@ -1,58 +1,62 @@
 import { db } from "../database";
-import axios from "axios";
-import { useStateStore } from "src/stores/appState";
 import { uid } from "quasar";
+import { createProjectFolder, deleteProjectFolder } from "./file";
 
-const stateStore = useStateStore();
-const storagePath = stateStore.storagePath;
-const path = window.path;
-const fs = window.fs;
+/**
+ * Project data
+ * @typedef {Object} Project
+ * @property {string} _id - unique id
+ * @property {string} _rev - data version handled by database
+ * @property {string} dataType - "project" (used for database search)
+ * @property {string} type - article / book / conference-paper ...
+ * @property {string} title - article / book title
+ * @property {Array} author - array of authors [{family: "Feng", given: "Feng"}, {literal: "John"}]
+ * @property {string} abstract - article abstract
+ * @property {string} DOI - Digital Object Identity
+ * @property {string} URL - URL to this article/book
+ * @property {Array} tags - user defined keywords for easier search
+ * @property {Array} related - array of related projectIDs
+ * @property {Array} folderIds - array of folderIDs containing this project
+ */
 
-async function extractContent(data) {
-  let res = await axios.post("http://localhost:5000/extract", data);
-  return res.data;
-}
-
-async function addProject(file) {
+/**
+ * Add empty projet to database, creates project folder and returns the project
+ * The project is added to folder with folderId
+ * @param {string} folderId
+ * @returns {Project} project
+ */
+async function addProject(folderId) {
   try {
-    let projectId = uid();
-
-    // copy the actual file to user data
-    let fileName = path.basename(file.path);
-    let srcPath = file.path;
-    let dstDir = path.join(storagePath, "projects", projectId);
-    let dstPath = path.join(dstDir, fileName);
-    fs.mkdirSync(dstDir);
-    fs.copyFileSync(srcPath, dstPath);
-
-    // add project to db
-    let project = await extractContent({
-      path: dstPath,
-    });
-    project._id = projectId;
+    // create empty project entry
+    let project = {};
+    project._id = uid();
+    project.title = "New Project";
     project.dataType = "project";
-    project.type = "paper";
-    project.path = dstPath;
+    project.type = "";
     project.related = []; // related projectIds
     project.tags = [];
-    // project.notes = []; // noteIds
-    // the folders containing the project
-    project.folderIds = ["library"];
-    if (stateStore.selectedFolderId != "library")
-      project.folderIds.push(stateStore.selectedFolderId);
-    await db.put(project);
+    project.folderIds = ["library"]; // the folders containing the project
+    if (folderId != "library") project.folderIds.push(folderId);
 
-    // return the project
-    return await db.get(projectId);
+    // create actual folder for containing its files
+    createProjectFolder(project._id);
+
+    // put entry to database
+    let result = await db.put(project);
+    project._rev = result.rev;
+
+    return project; // return the project
   } catch (err) {
     console.log(err);
   }
 }
 
 /**
- *
- * @param {String} projectId
- * @param {Boolean} deleteFromDB
+ * Delete project from a folder.
+ * If deleteFromDB is true, delete the project from all folders
+ * and remove the actual folder containing the project files in storage path
+ * @param {string} projectId
+ * @param {boolean} deleteFromDB
  */
 async function deleteProject(projectId, deleteFromDB) {
   try {
@@ -61,7 +65,7 @@ async function deleteProject(projectId, deleteFromDB) {
       // remove from db
       await db.remove(project);
 
-      // remove related pdf_state and pdf_annotations on db
+      // remove related pdf_state, pdf_annotations and notes on db
       let result = await db.find({
         selector: {
           projectId: project._id,
@@ -72,7 +76,10 @@ async function deleteProject(projectId, deleteFromDB) {
       }
 
       // remove the acutual files
-      fs.rmSync(path.dirname(project.path), { recursive: true, force: true });
+      // (do not rely on project.path because it might be empty)
+      // let dirPath = path.join(storagePath, "projects", projectId);
+      // fs.rmSync(dirPath, { recursive: true, force: true });
+      deleteProjectFolder(projectId);
     } else {
       let folderId = stateStore.selectedFolderId;
       project.folderIds = project.folderIds.filter((id) => id != folderId);
@@ -83,11 +90,21 @@ async function deleteProject(projectId, deleteFromDB) {
   }
 }
 
+/**
+ * Update project in database and returns the updated project
+ * @param {Project} project
+ * @returns {Project} updated project
+ */
 async function updateProject(project) {
   let result = await db.put(project);
   return await db.get(result.id);
 }
 
+/**
+ * Get project from database by projectId
+ * @param {string} projectId
+ * @returns {Project} project
+ */
 function getProject(projectId) {
   try {
     return db.get(projectId);
@@ -96,6 +113,10 @@ function getProject(projectId) {
   }
 }
 
+/**
+ * Get all projects from database
+ * @returns {Array} array of projects
+ */
 async function getAllProjects() {
   let result = await db.find({
     selector: {
@@ -106,9 +127,9 @@ async function getAllProjects() {
 }
 
 /**
- * Get corresponding projects given their ids
- * @param {String} folderId
- * @returns {Array} projects
+ * Get corresponding projects given the ID of folder containing them
+ * @param {string} folderId
+ * @returns {Array} array of projects
  */
 async function getProjectsByFolderId(folderId) {
   let result = await db.find({
