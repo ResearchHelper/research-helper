@@ -240,6 +240,7 @@ export default {
     },
 
     dblclickProject(row) {
+      if (!!!row.path) return; // if no files, do nothing
       this.stateStore.openItemId = row._id;
     },
 
