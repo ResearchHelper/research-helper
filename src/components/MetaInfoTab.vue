@@ -261,7 +261,6 @@ export default {
         // in case the related projects are not in the same folder
         // switch to library folder first
         this.stateStore.selectedFolderId = "library";
-        // this.stateStore.selectedProjectId = project._id;
         this.stateStore.selectedItemId = project._id;
       } else {
         this.stateStore.openItemId = project._id;

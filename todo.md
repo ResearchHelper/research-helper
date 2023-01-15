@@ -31,7 +31,8 @@ TODO:
 [x] vditor theme
 [x] able to search notes in tableview as well
 [x] improve table row ui
-[ ] able to write something to .bib file even if when the project has no DOI stuff
+[x] able to search ISBN as well
+[x] able to write something to .bib file even if when the project has no DOI stuff
 
 IMPROVE:
 library page

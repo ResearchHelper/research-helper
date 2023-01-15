@@ -72,7 +72,6 @@
               model-value="metaInfoTab"
             >
               <q-tab-panel name="metaInfoTab">
-                <!-- :projectId="stateStore.selectedProjectId" -->
                 <MetaInfoTab
                   v-if="!!rightMenuSize"
                   :projectId="stateStore.selectedItemId"
@@ -97,15 +96,15 @@ import IdentifierDialog from "src/components/library/IdentifierDialog.vue";
 import DeleteDialog from "src/components/library/DeleteDialog.vue";
 
 import {
-  getProjectsByFolderId,
   addProject,
   updateProject,
+  updateProjectByMeta,
   getProject,
 } from "src/backend/project/project";
 import { useStateStore } from "src/stores/appState";
 import { exportFile } from "quasar";
-import Cite from "citation-js";
-import { getMeta } from "src/backend/project/meta";
+// import Cite from "citation-js";
+import { getMeta, exportMeta } from "src/backend/project/meta";
 import { copyFile } from "src/backend/project/file";
 
 export default {
@@ -206,22 +205,23 @@ export default {
       }
     },
 
-    /**
-     * Modify the meta of a project object
-     * @param {Object} project
-     * @param {Object} meta
-     * @returns {Object} modifiedProject
-     */
-    modifyProjectByMeta(project, meta) {
-      project.type = meta.type || "";
-      project.title = meta.title || "";
-      project.author = meta.author || [];
-      project.abstract = meta.abstract || "";
-      project.DOI = meta.DOI || "";
-      project.URL = meta.URL || "";
-      project.publisher = meta.publisher || "";
-      return project;
-    },
+    // /**
+    //  * Modify the meta of a project object
+    //  * @param {Object} project
+    //  * @param {Object} meta
+    //  * @returns {Object} modifiedProject
+    //  */
+    // modifyProjectByMeta(project, meta) {
+    //   project.type = meta.type || "";
+    //   project.title = meta.title || "";
+    //   project.author = meta.author || [];
+    //   project.abstract = meta.abstract || "";
+    //   project.year = meta.year || null;
+    //   project.DOI = meta.DOI || "";
+    //   project.URL = meta.URL || "";
+    //   project.publisher = meta.publisher || "";
+    //   return project;
+    // },
 
     async processIdentifier(identifier) {
       if (!identifier) return;
@@ -232,16 +232,14 @@ export default {
       if (this.createProject) {
         // add a new project to db and update it with meta
         let project = await addProject(this.stateStore.selectedFolderId);
-        project = this.modifyProjectByMeta(project, meta);
-        project = await updateProject(project);
+        project = await updateProjectByMeta(project, meta);
 
         // update ui
         this.$refs.table.addProject(project);
       } else {
         // update an existing project meta
-        let project = await getProject(this.stateStore.selectedProjectId);
-        project = this.modifyProjectByMeta(project, meta);
-        project = await updateProject(project);
+        let project = await getProject(this.stateStore.selectedItemId);
+        project = await updateProjectByMeta(project, meta);
 
         // update ui
         this.updateProjectUI(project);
@@ -307,13 +305,10 @@ export default {
     async exportFolder() {
       if (!!!this.folder) return;
 
-      let projects = await getProjectsByFolderId(this.folder._id);
-      const data = await Cite.async(projects.map((p) => p.DOI));
-      let bibtex = data.format("bibtex");
+      let bibtex = await exportMeta(this.folder._id, "bibtex");
       let status = exportFile(`${this.folder.label}.bib`, bibtex, {
         mimeType: "text/plain",
       });
-      console.log(status);
     },
   },
 };

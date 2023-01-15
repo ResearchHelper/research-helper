@@ -12,6 +12,7 @@ import { createProjectFolder, deleteProjectFolder } from "./file";
  * @property {string} title - article / book title
  * @property {Array} author - array of authors [{family: "Feng", given: "Feng"}, {literal: "John"}]
  * @property {string} abstract - article abstract
+ * @property {number | string} year - year of published
  * @property {string} DOI - Digital Object Identity
  * @property {string} ISBN - ISBN of a book
  * @property {string} URL - URL to this article/book
@@ -37,6 +38,7 @@ async function addProject(folderId) {
     project.title = "New Project";
     project.author = [];
     project.abstract = "";
+    project.year = "";
     project.DOI = "";
     project.URL = "";
     project.ISBN = "";
@@ -102,8 +104,31 @@ async function deleteProject(projectId, deleteFromDB) {
  * @returns {Project} updated project
  */
 async function updateProject(project) {
-  let result = await db.put(project);
-  return await db.get(result.id);
+  try {
+    let result = await db.put(project);
+    return await db.get(result.id);
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+/**
+ * Modify the meta of a project
+ * @param {Project} project
+ * @param {Object} meta
+ * @returns {Project} modifiedProject
+ */
+async function updateProjectByMeta(project, meta) {
+  project.type = meta.type || "";
+  project.title = meta.title || "";
+  project.author = meta.author || [];
+  project.abstract = meta.abstract || "";
+  project.year = meta.year || "";
+  project.DOI = meta.DOI || "";
+  project.URL = meta.URL || "";
+  project.publisher = meta.publisher || "";
+
+  return await updateProject(project);
 }
 
 /**
@@ -151,6 +176,7 @@ export {
   addProject,
   deleteProject,
   updateProject,
+  updateProjectByMeta,
   getProjectsByFolderId,
   getProject,
   getAllProjects,

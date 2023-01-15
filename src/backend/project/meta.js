@@ -1,13 +1,36 @@
 import Cite from "citation-js";
+import "@citation-js/plugin-isbn"; // must import this so we can use isbn as identifier
+import { getProjectsByFolderId } from "./project";
 
 /**
  * Get artible/book info given an identifier using citation.js
  * @param {string} identifier
- * @returns {Object} json data
+ * @param {string | null} format
+ * @returns {any} citation data
  */
-async function getMeta(identifier) {
-  const data = await Cite.async(identifier);
-  return data.data;
+async function getMeta(identifier, format = null) {
+  try {
+    const data = await Cite.async(identifier);
+    if (!format) return data.data;
+    else return data.format(format);
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+/**
+ * Export a folder of references to a specific format
+ * @param {string} folderId
+ * @param {string} format
+ * @returns {any} result
+ */
+async function exportMeta(folderId, format) {
+  try {
+    let projects = await getProjectsByFolderId(folderId);
+    return await getMeta(projects, format);
+  } catch (error) {
+    console.log(error);
+  }
 }
 
 /**
@@ -52,4 +75,4 @@ async function extractFormulas() {
   // TODO
 }
 
-export { getMeta };
+export { getMeta, exportMeta };

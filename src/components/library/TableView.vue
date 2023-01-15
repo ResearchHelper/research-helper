@@ -30,12 +30,6 @@
         </q-tr>
       </template>
       <template v-slot:body="props">
-        <!-- :class="{
-            'bg-primary': props.key === stateStore.selectedProjectId,
-            'bg-dark-grey':
-              props.rowIndex % 2 === 0 &&
-              props.key !== stateStore.selectedProjectId,
-          }" -->
         <q-tr
           no-hover
           style="cursor: pointer"
@@ -331,7 +325,6 @@ export default {
      */
     clickProject(row, rowIndex) {
       console.log(row);
-      // this.stateStore.selectedProjectId = row._id;
       this.stateStore.selectedItemId = row._id;
       this.selectedProjectIndex = rowIndex;
     },
@@ -358,7 +351,6 @@ export default {
      * Copy the project ID
      */
     async copyProjectId() {
-      // await copyToClipboard(this.stateStore.selectedProjectId);
       await copyToClipboard(this.stateStore.selectedItemId);
     },
 

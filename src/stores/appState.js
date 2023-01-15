@@ -18,8 +18,7 @@ export const useStateStore = defineStore("stateStore", {
     selectedFolderId: "library",
 
     // projects
-    // selectedProjectId: "", // select from tableview
-    selectedItemId: "",
+    selectedItemId: "", // select from tableview
     workingItemId: "library", // workingItem
     openedProjectIds: new Set(), // for projectTree
     openItemId: "", // communicate between layout and deep vue component
