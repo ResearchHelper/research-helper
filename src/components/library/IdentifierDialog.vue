@@ -11,7 +11,7 @@
           dense
           autofocus
           class="full-width"
-          placeholder="DOI, ISBN, Arxiv ID, etc ..."
+          placeholder="DOI, ISBN, Wikidata, Ris, etc ..."
           v-model="identifier"
         />
       </q-card-section>
