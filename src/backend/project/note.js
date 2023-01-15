@@ -1,54 +1,92 @@
 import { db } from "../database";
-import { updateProject } from "./project";
-import { useStateStore } from "src/stores/appState";
 import { uid } from "quasar";
 import { Buffer } from "buffer";
+import { createFile, deleteFile } from "./file";
 
 const fs = window.fs;
 const path = window.path;
 
-const stateStore = useStateStore();
-const storagePath = stateStore.storagePath;
+/**
+ * Note data
+ * @typedef {Object} Note
+ * @property {string} _id - unique id handled by database
+ * @property {string} _rev - rev handled by database
+ * @property {string} dataType - for database search
+ * @property {string} projectId - the project it belongs to
+ * @property {string} path - path to actual markdown file
+ * @property {string} label - markdown file name
+ * @property {Array} links - array of ids link to other notes/projects
+ */
 
+/**
+ * Add a note to database
+ * and creates the actual markdown file in project folder
+ * @param {string} projectId
+ * @returns {Note} note
+ */
 async function addNote(projectId) {
-  let noteId = uid();
-  let filePath = path.join(storagePath, "projects", projectId, noteId + ".md");
-
-  // create actual file
-  fs.closeSync(fs.openSync(filePath, "w")); // create empty file
-
-  // add to db
-  let note = {
-    _id: noteId,
-    dataType: "note",
-    projectId: projectId,
-    links: [],
-    label: "New Note",
-    path: filePath,
-  };
-  await db.put(note);
-
-  return await db.get(noteId);
-}
-
-async function deleteNote(noteId) {
   try {
-    // delete note entry from db
-    let note = await db.get(noteId);
-    await db.remove(note);
+    let noteId = uid();
+
+    // create actual file
+    let filePath = await createFile(projectId, noteId + ".md");
+
+    // add to db
+    let note = {
+      _id: noteId,
+      dataType: "note",
+      projectId: projectId,
+      links: [],
+      label: "New Note",
+      path: filePath,
+    };
+    await db.put(note);
+
+    return await db.get(noteId);
   } catch (error) {
     console.log(error);
   }
 }
 
-async function updateNote(noteId, data) {
-  let note = await db.get(noteId);
-  for (let prop in data) {
-    note[prop] = data[prop];
+/**
+ * Delete a note from database and from disk
+ * @param {string} noteId
+ */
+async function deleteNote(noteId) {
+  try {
+    // delete note entry from db
+    let note = await db.get(noteId);
+    await db.remove(note);
+    console.log(note);
+    // delete actual file
+    await deleteFile(note.path);
+  } catch (error) {
+    console.log(error);
   }
-  await db.put(note);
 }
 
+/**
+ * Update information of a note in database
+ * @param {string} noteId
+ * @param {Object} data
+ */
+async function updateNote(noteId, data) {
+  try {
+    let note = await db.get(noteId);
+    for (let prop in data) {
+      note[prop] = data[prop];
+    }
+    await db.put(note);
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+/**
+ * Get a note by its ID
+ * @param {string} noteId
+ * @returns {Note} note
+ */
 async function getNote(noteId) {
   try {
     return await db.get(noteId);
@@ -57,6 +95,11 @@ async function getNote(noteId) {
   }
 }
 
+/**
+ * Get all notes belong to specific project
+ * @param {string} projectId
+ * @returns {Array} array of notes
+ */
 async function getNotes(projectId) {
   try {
     let result = await db.find({
@@ -73,6 +116,10 @@ async function getNotes(projectId) {
   }
 }
 
+/**
+ * Get all notes in database
+ * @returns {Array} array of notes
+ */
 async function getAllNotes() {
   let result = await db.find({
     selector: {
@@ -84,7 +131,7 @@ async function getAllNotes() {
 }
 
 /**
- * Load note content as markdown string
+ * Load note content from disk as markdown string
  * @param {string} noteId
  * @returns {string} content
  */
@@ -115,7 +162,8 @@ async function saveNote(noteId, content) {
 }
 
 /**
- * Upload image and save it under the same folder
+ * Upload image and save it under the project folder
+ * If /img doesn't exist, it will create this folder
  * @param {String} noteId
  * @param {File} file
  */
@@ -133,62 +181,6 @@ async function uploadImage(noteId, file) {
     let arrayBuffer = await file.arrayBuffer();
     fs.writeFileSync(imgPath, Buffer.from(arrayBuffer));
     return { imgName: imgName, imgPath: imgPath };
-  } catch (error) {
-    console.log(error);
-  }
-}
-
-/**
- * Drop note into another project, and put it as the last note
- * @param {String} dragNoteId
- * @param {String} dropProjectId
- */
-async function moveNoteInto(dragNoteId, dropProjectId) {
-  try {
-    let note = await db.get(dragNoteId);
-    note.projectId = dropProjectId;
-    await db.put(note);
-  } catch (error) {
-    console.log(error);
-  }
-}
-// async function moveNoteInto(dragNoteId, dropProjectId) {
-//   try {
-//     // remove from the parent project
-//     let dragParentProject = await getParentProject(dragNoteId);
-//     console.log(dragParentProject);
-//     dragParentProject.notes = dragParentProject.notes.filter(
-//       (id) => id != dragNoteId
-//     );
-//     await updateProject(dragParentProject);
-
-//     // add to the target project
-//     let dropProject = await db.get(dropProjectId);
-//     dropProject.notes.push(dragNoteId);
-//     await updateProject(dropProject);
-//   } catch (error) {
-//     console.log(error);
-//   }
-// }
-
-/**
- * Drop note below another note, reorder within the same project
- * @param {String} dragNoteId
- * @param {String} dropNoteId
- */
-async function moveNoteBelow(dragNoteId, dropNoteId) {
-  try {
-    let dragParentProject = await getParentProject(dragNoteId);
-    let dropParentProject = await getParentProject(dropNoteId);
-
-    if (dragParentProject._id != dropParentProject._id) return;
-
-    let notes = dragParentProject.notes;
-    let from = notes.findIndex((id) => id == dragNoteId);
-    let to = notes.findIndex((id) => id == dropNoteId);
-    notes.splice(parseInt(to) + 1, 0, notes.splice(from, 1)[0]);
-    dragParentProject.notes = notes;
-    await updateProject(dragParentProject);
   } catch (error) {
     console.log(error);
   }

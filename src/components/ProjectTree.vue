@@ -181,6 +181,8 @@ export default {
   },
 
   async mounted() {
+    // events emited from other components (TableView.vuew)
+    this.$bus.on("updateProject", (project) => this.updateProject(project));
     this.$bus.on("deleteProject", (projectId) => this.closeProject(projectId));
 
     await this.getProjectTree();
@@ -188,6 +190,12 @@ export default {
     let selectedNode = this.$refs.tree.getNodeByKey(selected);
     if (!!selectedNode && selectedNode?.children?.length > 0)
       this.expanded.push(selected);
+  },
+
+  beforeUnmount() {
+    // not necessary for this component, but a good habit
+    this.$bus.off("updateProject");
+    this.$bus.off("deleteProject");
   },
 
   watch: {
@@ -254,6 +262,21 @@ export default {
           this.$refs.tree.$el.querySelector(`[item-id='${note._id}']`)
         );
       }
+    },
+
+    /**
+     * Receive updated project from other component and update the projectTree
+     * @param {Object} project
+     */
+    updateProject(project) {
+      let idx = this.projects.findIndex((p) => p._id == project._id);
+      this.projects[idx] = {
+        _id: project._id,
+        dataType: project.dataType,
+        label: project.title,
+        children: project.children,
+        path: project.path,
+      };
     },
 
     selectItem(node) {

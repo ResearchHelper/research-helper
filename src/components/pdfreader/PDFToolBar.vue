@@ -1,5 +1,5 @@
 <template>
-  <q-toolbar style="min-height: unset; height: 36px">
+  <q-toolbar style="min-height: unset; height: 36px; background: #222222">
     <!-- navigation -->
     <div>
       <input

@@ -1,8 +1,8 @@
 <template>
-  <q-menu>
+  <q-menu square>
     <q-list dense>
       <q-item clickable>
-        <q-item-section> Preferences </q-item-section>
+        <q-item-section> Settings </q-item-section>
       </q-item>
     </q-list>
   </q-menu>

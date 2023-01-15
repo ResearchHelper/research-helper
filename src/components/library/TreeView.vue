@@ -105,6 +105,7 @@ import { updateAppState } from "src/backend/appState";
 
 export default {
   props: { draggingProjectId: String },
+  emits: ["exportFolder"],
 
   setup() {
     const stateStore = useStateStore();

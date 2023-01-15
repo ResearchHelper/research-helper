@@ -52,6 +52,7 @@ async function getLayout() {
     // cannot get layout
     let layout = {
       _id: "layout",
+      dataType: "layout",
       config: {
         settings: {
           showPopoutIcon: false,

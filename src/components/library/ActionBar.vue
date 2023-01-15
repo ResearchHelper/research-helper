@@ -8,39 +8,6 @@
       @update:model-value="(files) => addByFiles(files)"
       ref="filePicker"
     />
-    <q-dialog v-model="showDialog">
-      <q-card square>
-        <q-card-section>
-          <div class="text-h6">Create Entry By Identifier</div>
-        </q-card-section>
-        <q-card-section class="q-pt-none">
-          <q-input
-            outlined
-            square
-            dense
-            autofocus
-            class="full-width"
-            placeholder="DOI, ISBN, Arxiv ID, etc ..."
-            v-model="identifier"
-          />
-        </q-card-section>
-        <q-card-actions align="right">
-          <q-btn
-            flat
-            v-close-popup
-            :ripple="false"
-            label="Cancel"
-          />
-          <q-btn
-            flat
-            v-close-popup
-            :ripple="false"
-            label="Confirm"
-            @click="addByID"
-          />
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
 
     <q-btn
       flat
@@ -53,14 +20,14 @@
           <q-item
             clickable
             v-close-popup
-            @click="addProject()"
+            @click="addEmpty"
           >
             <q-item-section>Create Empty Entry</q-item-section>
           </q-item>
           <q-item
             clickable
             v-close-popup
-            @click="showDialog = true"
+            @click="addByID"
           >
             <q-item-section>Create Entry By Identifier</q-item-section>
           </q-item>
@@ -81,7 +48,12 @@
       outlined
       dense
       placeholder="Search"
-      v-model="searchString"
+      :model-value="searchString"
+      @update:model-value="
+        (text) => {
+          $emit('update:searchString', text);
+        }
+      "
     >
       <template v-slot:append>
         <q-icon
@@ -109,13 +81,16 @@
 
 <script>
 import { useStateStore } from "src/stores/appState";
-import { addProject, updateProject } from "src/backend/project/project";
-import { copyFile } from "src/backend/project/file";
-import { getMeta } from "src/backend/project/meta";
 
 export default {
-  props: { rightMenuSize: Number },
-  emits: ["toggleRightMenu", "addProject"],
+  props: { rightMenuSize: Number, searchString: String },
+  emits: [
+    "update:searchString",
+    "toggleRightMenu",
+    "addEmptyProject",
+    "addByFiles",
+    "showIdentifierDialog",
+  ],
 
   setup() {
     const stateStore = useStateStore();
@@ -124,12 +99,7 @@ export default {
 
   data() {
     return {
-      searchString: "",
-
       showRightMenu: false,
-
-      showDialog: false,
-      identifier: "",
     };
   },
 
@@ -140,36 +110,16 @@ export default {
   },
 
   methods: {
-    async addProject() {
-      this.$emit(
-        "addProject",
-        await addProject(this.stateStore.selectedFolderId)
-      );
+    addEmpty() {
+      this.$emit("addEmptyProject");
     },
 
-    async addByFiles(files) {
-      for (let file of files) {
-        let project = await addProject(this.stateStore.selectedFolderId);
-        project.path = copyFile(file.path, project._id);
-        project = await updateProject(project);
-        this.$emit("addProject", project);
-      }
+    addByFiles(files) {
+      this.$emit("addByFiles", files);
     },
 
-    async addByID() {
-      let project = await addProject(this.stateStore.selectedFolderId);
-      let metas = await getMeta(this.identifier);
-      let meta = metas[0];
-      project.type = meta.type || "";
-      project.title = meta.title || "";
-      project.author = meta.author || [];
-      project.abstract = meta.abstract || "";
-      project.DOI = meta.DOI || "";
-      project.URL = meta.URL || "";
-      project.publisher = meta.publisher || "";
-      project = await updateProject(project);
-
-      this.$emit("addProject", project);
+    addByID() {
+      this.$emit("showIdentifierDialog");
     },
   },
 };

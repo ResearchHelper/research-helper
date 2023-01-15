@@ -1,6 +1,6 @@
 <template>
   <q-bar class="q-electron-drag">
-    <div class="cursor-pointer q-electron-drag--exception">
+    <!-- <div class="cursor-pointer q-electron-drag--exception">
       File
       <FileMenu />
     </div>
@@ -18,10 +18,11 @@
     <div class="cursor-pointer q-electron-drag--exception">
       Help
       <HelpMenu />
-    </div>
+    </div> -->
 
     <q-space />
 
+    <q-icon name="img:src/assets/logo.svg" />
     Research Helper v1.0
 
     <q-space />
@@ -48,18 +49,18 @@
 </template>
 
 <script>
-import FileMenu from "./FileMenu.vue";
-import EditMenu from "./EditMenu.vue";
-import ViewMenu from "./ViewMenu.vue";
-import HelpMenu from "./HelpMenu.vue";
+// import FileMenu from "./FileMenu.vue";
+// import EditMenu from "./EditMenu.vue";
+// import ViewMenu from "./ViewMenu.vue";
+// import HelpMenu from "./HelpMenu.vue";
 
 export default {
-  components: {
-    FileMenu,
-    EditMenu,
-    ViewMenu,
-    HelpMenu,
-  },
+  // components: {
+  //   FileMenu,
+  //   EditMenu,
+  //   ViewMenu,
+  //   HelpMenu,
+  // },
 
   setup() {
     function minimize() {

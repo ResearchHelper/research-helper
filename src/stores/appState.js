@@ -8,7 +8,7 @@ export const useStateStore = defineStore("stateStore", {
     ready: false,
 
     // user data path
-    storagePath: "/home/huntfeng/projects/research-helper-quasar/storage",
+    storagePath: "",
 
     // layout
     leftMenuSize: 20,
@@ -18,7 +18,8 @@ export const useStateStore = defineStore("stateStore", {
     selectedFolderId: "library",
 
     // projects
-    selectedProjectId: "", // select from tableview
+    // selectedProjectId: "", // select from tableview
+    selectedItemId: "",
     workingItemId: "library", // workingItem
     openedProjectIds: new Set(), // for projectTree
     openItemId: "", // communicate between layout and deep vue component

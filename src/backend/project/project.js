@@ -13,7 +13,9 @@ import { createProjectFolder, deleteProjectFolder } from "./file";
  * @property {Array} author - array of authors [{family: "Feng", given: "Feng"}, {literal: "John"}]
  * @property {string} abstract - article abstract
  * @property {string} DOI - Digital Object Identity
+ * @property {string} ISBN - ISBN of a book
  * @property {string} URL - URL to this article/book
+ * @property {string} publisher - publisher
  * @property {Array} tags - user defined keywords for easier search
  * @property {Array} related - array of related projectIDs
  * @property {Array} folderIds - array of folderIDs containing this project
@@ -30,16 +32,22 @@ async function addProject(folderId) {
     // create empty project entry
     let project = {};
     project._id = uid();
-    project.title = "New Project";
     project.dataType = "project";
     project.type = "";
+    project.title = "New Project";
+    project.author = [];
+    project.abstract = "";
+    project.DOI = "";
+    project.URL = "";
+    project.ISBN = "";
+    project.publisher = "";
     project.related = []; // related projectIds
     project.tags = [];
     project.folderIds = ["library"]; // the folders containing the project
     if (folderId != "library") project.folderIds.push(folderId);
 
     // create actual folder for containing its files
-    createProjectFolder(project._id);
+    await createProjectFolder(project._id);
 
     // put entry to database
     let result = await db.put(project);
@@ -77,9 +85,7 @@ async function deleteProject(projectId, deleteFromDB) {
 
       // remove the acutual files
       // (do not rely on project.path because it might be empty)
-      // let dirPath = path.join(storagePath, "projects", projectId);
-      // fs.rmSync(dirPath, { recursive: true, force: true });
-      deleteProjectFolder(projectId);
+      await deleteProjectFolder(projectId);
     } else {
       let folderId = stateStore.selectedFolderId;
       project.folderIds = project.folderIds.filter((id) => id != folderId);

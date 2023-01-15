@@ -1,8 +1,13 @@
 <template>
   <q-menu>
-    <q-list dense>
-      <q-item clickable> Tutorial </q-item>
-      <q-item clickable> About Research Helper </q-item>
+    <q-list
+      dense
+      square
+    >
+      <q-item clickable> <q-item-section> Tutorial </q-item-section> </q-item>
+      <q-item clickable>
+        <q-item-section> About Research Helper</q-item-section>
+      </q-item>
     </q-list>
   </q-menu>
 </template>

@@ -299,6 +299,7 @@ export default {
 
       let project = await getProject(id);
       if (project.dataType != "project") return;
+      if (!project.path) return; // if no attached file
       // load state before loading pdf
       this.pdfState = await this.pdfApp.loadState(project._id);
       await this.annotManager.init();
@@ -451,8 +452,9 @@ export default {
   // toolbar: 36px
   height: calc(100% - 36px);
   top: 36px;
-  width: 99%; // so the right scroll bar does not touch right edge
+  width: 100%; // so the right scroll bar does not touch right edge
   margin-right: 10px;
+  background-color: $dark;
 }
 
 .peekContainer {
@@ -492,10 +494,10 @@ export default {
 
 /* handle */
 ::-webkit-scrollbar-thumb {
-  background: rgb(75, 75, 75);
-  border-radius: 10px;
+  background: rgb(75, 75, 75, 75%);
+  border-radius: 5px;
   &:hover {
-    background: #005cb3;
+    background: $primary;
   }
 }
 
