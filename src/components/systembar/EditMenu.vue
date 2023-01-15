@@ -1,0 +1,12 @@
+<template>
+  <q-menu square>
+    <q-list dense>
+      <q-item clickable>
+        <q-item-section> Settings </q-item-section>
+      </q-item>
+    </q-list>
+  </q-menu>
+</template>
+<script>
+export default {};
+</script>

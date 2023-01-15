@@ -42,6 +42,8 @@ db.createIndex({
   },
 });
 
+// for debug use
+window.db = db;
 window.destroyDB = destroyDB;
 
-export { db, remotedb, destroyDB };
+export { db, remotedb };

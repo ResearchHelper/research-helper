@@ -7,6 +7,14 @@
       borderless
       autogrow
       dense
+      label="Type"
+      v-model="project.type"
+      @blur="modifyInfo()"
+    />
+    <q-input
+      borderless
+      autogrow
+      dense
       label="Title"
       v-model="project.title"
       @blur="modifyInfo()"
@@ -16,7 +24,7 @@
       autogrow
       dense
       label="Author(s)"
-      v-model="project.author"
+      v-model="author"
       @blur="modifyInfo()"
     />
     <q-input
@@ -31,16 +39,8 @@
       borderless
       autogrow
       dense
-      label="ArxivID"
-      v-model="project.arxiv_id"
-      @blur="modifyInfo()"
-    />
-    <q-input
-      borderless
-      autogrow
-      dense
       label="DOI"
-      v-model="project.doi"
+      v-model="project.DOI"
       @blur="modifyInfo()"
     />
     <q-input
@@ -51,6 +51,16 @@
       v-model="project.isbn"
       @blur="modifyInfo()"
     />
+
+    <q-input
+      borderless
+      autogrow
+      dense
+      label="File"
+      v-model="project.path"
+      @blur="modifyInfo()"
+    />
+
     <div class="column">
       <q-input
         borderless
@@ -118,6 +128,47 @@ export default {
     };
   },
 
+  computed: {
+    author: {
+      get() {
+        let authors = this.project.author;
+        if (!!!authors?.length) return "";
+
+        let names = [];
+        for (let author of authors) {
+          if (!!!author) continue;
+          if (!!author.literal) names.push(author.literal);
+          else names.push(`${author.given} ${author.family}`);
+        }
+        return names.join("\n");
+      },
+      set(text) {
+        this.project.author = [];
+        let names = text.split("\n");
+        for (let i in names) {
+          let name = names[i];
+          if (name.trim() === "") continue;
+
+          let author = {};
+          if (name.includes(",")) {
+            [author.family, author.given] = name
+              .split(",")
+              .map((item) => item.trim());
+          } else {
+            let truncks = name.split(" ");
+            if (truncks.length === 1) {
+              author.literal = name;
+            } else {
+              author.family = truncks.pop();
+              author.given = truncks.join("");
+            }
+          }
+          this.project.author[i] = author;
+        }
+      },
+    },
+  },
+
   mounted() {
     this.getInfo(this.projectId);
   },
@@ -130,8 +181,11 @@ export default {
 
   methods: {
     async getInfo(projectId) {
+      this.project = null;
       if (!!!projectId) return;
-      this.project = await getProject(projectId);
+      let item = await getProject(projectId);
+      if (item.dataType !== "project") return;
+      this.project = item;
       await this.getRelatedProjects(this.project.related);
     },
 
@@ -207,7 +261,7 @@ export default {
         // in case the related projects are not in the same folder
         // switch to library folder first
         this.stateStore.selectedFolderId = "library";
-        this.stateStore.selectedProjectId = project._id;
+        this.stateStore.selectedItemId = project._id;
       } else {
         this.stateStore.openItemId = project._id;
       }

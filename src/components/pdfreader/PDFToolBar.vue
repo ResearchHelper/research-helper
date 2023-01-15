@@ -1,5 +1,5 @@
 <template>
-  <q-toolbar style="min-height: unset; height: 36px">
+  <q-toolbar style="min-height: unset; height: 36px; background: #222222">
     <!-- navigation -->
     <div>
       <input
@@ -23,55 +23,73 @@
       v-model="state.tool"
       @update:model-value="$emit('update:pdfState', state)"
       :ripple="false"
+      flat
       size="sm"
       padding="xs"
       toggle-color="primary"
       :options="[
-        { value: AnnotationType.NONE, icon: 'navigation' },
-        { value: AnnotationType.HIGHLIGHT, icon: 'border_color' },
-        { value: AnnotationType.COMMENT, icon: 'comment' },
+        {
+          value: AnnotationType.NONE,
+          icon: 'navigation',
+          slot: AnnotationType.NONE,
+        },
+        {
+          value: AnnotationType.HIGHLIGHT,
+          icon: 'border_color',
+          slot: AnnotationType.HIGHLIGHT,
+        },
+        {
+          value: AnnotationType.COMMENT,
+          icon: 'comment',
+          slot: AnnotationType.COMMENT,
+        },
       ]"
-    />
+    >
+      <template v-slot:cursor>
+        <q-tooltip>cursor</q-tooltip>
+      </template>
+      <template v-slot:highlight>
+        <q-tooltip>highlight</q-tooltip>
+      </template>
+      <template v-slot:comment>
+        <q-tooltip>comment</q-tooltip>
+      </template>
+    </q-btn-toggle>
     <q-btn
       :style="`background: ${pdfState.color}`"
-      unelevated
+      flat
       :ripple="false"
       size="xs"
     >
-      <q-menu>
-        <div class="row justify-between">
-          <q-btn
-            v-for="color in [
-              '#FFFF00',
-              '#019A9D',
-              '#D9B801',
-              '#E8045A',
-              '#B2028A',
-            ]"
-            :key="color"
-            :style="`background: ${color}; width:25px; height:25px;`"
-            flat
-            square
-            :ripple="false"
-            v-close-popup
-            padding="none"
-            @click="
-              () => {
+      <q-tooltip>highlight color</q-tooltip>
+      <q-menu
+        anchor="bottom middle"
+        self="top middle"
+      >
+        <q-item
+          dense
+          style="width: 150px"
+        >
+          <ColorPicker
+            @selected="
+              (color) => {
                 state.color = color;
                 $emit('update:pdfState', state);
               }
             "
           />
-        </div>
+        </q-item>
       </q-menu>
     </q-btn>
     <q-btn-dropdown
       dense
+      flat
       :ripple="false"
       icon="visibility"
       size="sm"
       padding="xs"
     >
+      <template v-slot:label><q-tooltip>view</q-tooltip></template>
       <q-list dense>
         <q-item class="row justify-center items-center">
           <q-btn
@@ -135,12 +153,33 @@
     </q-btn-dropdown>
 
     <q-btn
+      v-if="!fullscreen"
+      dense
       square
+      flat
+      :ripple="false"
+      icon="fullscreen"
+      @click="requestFullscreen"
+    />
+    <q-btn
+      v-else
+      dense
+      square
+      flat
+      :ripple="false"
+      icon="fullscreen_exit"
+      @click="exitFullscreen"
+    />
+
+    <q-btn
+      square
+      flat
       :ripple="false"
       icon="search"
       size="sm"
       padding="xs"
     >
+      <q-tooltip>search</q-tooltip>
       <q-menu
         persistent
         @show="$emit('searchText', search)"
@@ -206,14 +245,19 @@
       toggle-color="primary"
       :options="[{ value: true, icon: 'list' }]"
       @update:model-value="$emit('toggleRightMenu', showRightMenu)"
-    />
+    >
+      <template v-slot:default
+        ><q-tooltip>toogle right menu</q-tooltip></template
+      >
+    </q-btn-toggle>
   </q-toolbar>
 </template>
 
 <script>
+import { useQuasar } from "quasar";
 import { useStateStore } from "src/stores/appState";
 import { AnnotationType } from "src/backend/pdfreader/annotation";
-import { set } from "vue-demi";
+import ColorPicker from "./ColorPicker.vue";
 
 export default {
   props: { pdfState: Object, matchesCount: Object, rightMenuSize: Number },
@@ -227,7 +271,13 @@ export default {
     "toggleRightMenu",
   ],
 
+  components: {
+    ColorPicker,
+  },
+
   setup() {
+    const $q = useQuasar();
+    // const requestFullScreen = $q.fullscreen.request;
     const stateStore = useStateStore();
     return { stateStore, AnnotationType };
   },
@@ -242,6 +292,8 @@ export default {
       },
       state: {},
       showRightMenu: false,
+
+      fullscreen: false,
     };
   },
 
@@ -289,6 +341,19 @@ export default {
     clearSearch() {
       this.readyForSearch = false;
       this.$emit("searchText", { query: "" });
+    },
+
+    // TODO: make better full screen mode
+    async requestFullscreen() {
+      await this.$q.fullscreen.request();
+      // after successfully fullscreened, remove systembar
+      this.fullscreen = true;
+    },
+
+    async exitFullscreen() {
+      await this.$q.fullscreen.exit();
+      // after exit fullscreen, show systembar again
+      this.fullscreen = false;
     },
   },
 };

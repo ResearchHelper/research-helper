@@ -1,98 +1,137 @@
 <template>
   <div>
-    <ActionBar
-      :rightMenuSize="rightMenuSize"
-      @toggle-right-menu="(show) => $emit('toggleRightMenu', show)"
-      @addProject="addProject"
-      ref="actionBar"
-    />
     <q-table
-      class="stickyDynamic"
+      v-if="ready"
+      style="position: absolute; height: calc(100% - 50px); width: 100%"
+      class="stickyHeader"
       virtual-scroll
       dense
       hide-bottom
+      separator="none"
+      :rows-per-page-options="[0]"
       :columns="headers"
       :rows="projects"
       row-key="_id"
       :wrap-cells="true"
-      :filter="$refs.actionBar ? $refs.actionBar.searchString : ''"
+      :filter="searchString"
       :filter-method="searchProject"
+      ref="table"
     >
-      <template v-slot:body="props">
-        <q-tr
-          style="cursor: pointer"
-          :props="props"
-          :class="{
-            'bg-primary': props.key == stateStore.selectedProjectId,
-          }"
-          draggable="true"
-          @click="clickProject(props.row, props.rowIndex)"
-          @dblclick="dblclickProject(props.row)"
-          @contextmenu="toggleContextMenu(props.row)"
-          @dragstart="onDragStart(props.key)"
-          @dragend="onDragEnd"
-        >
-          <q-td
+      <template v-slot:header="props">
+        <q-tr :props="props">
+          <q-th auto-width></q-th>
+          <q-th
             v-for="col in props.cols"
             :key="col.name"
             :props="props"
           >
+            <div class="text-subtitle1 text-bold">{{ col.label }}</div>
+          </q-th>
+        </q-tr>
+      </template>
+      <template v-slot:body="props">
+        <q-tr
+          no-hover
+          style="cursor: pointer"
+          :props="props"
+          :class="{
+            'bg-primary': props.key === stateStore.selectedItemId,
+            'bg-dark-grey':
+              props.rowIndex % 2 === 0 &&
+              props.key !== stateStore.selectedItemId,
+          }"
+          draggable="true"
+          @dragstart="onDragStart(props.key)"
+          @dragend="onDragEnd"
+        >
+          <q-td auto-width>
+            <q-icon
+              v-if="!!props.row.path || props.row.children?.length > 0"
+              size="sm"
+              :name="props.expand ? 'arrow_drop_down' : 'arrow_right'"
+              @click="props.expand = !props.expand"
+            />
+          </q-td>
+          <q-td
+            v-for="col in props.cols"
+            :key="col.name"
+            :props="props"
+            @click="clickProject(props.row, props.rowIndex)"
+            @dblclick="dblclickProject(props.row)"
+            @contextmenu="toggleContextMenu(props.row, props.rowIndex)"
+          >
             <div
+              v-if="col.name === 'author'"
               style="width: 20em"
+              class="ellipsis"
+            >
+              {{ authorString(col.value) }}
+            </div>
+            <div
+              v-else
+              style="width: 30em"
               class="ellipsis"
             >
               {{ col.value }}
             </div>
           </q-td>
-
-          <q-menu
-            touch-position
-            context-menu
-          >
-            <q-list dense>
-              <q-item
-                clickable
-                v-close-popup
-                @click="dblclickProject"
-              >
-                <q-item-section>Open</q-item-section>
-              </q-item>
-              <q-separator />
-              <q-item
-                clickable
-                v-close-popup
-                @click="copyProjectId"
-              >
-                <q-item-section>Copy Project ID</q-item-section>
-              </q-item>
-              <q-separator />
-              <q-item
-                v-if="stateStore.selectedFolderId != 'library'"
-                clickable
-                v-close-popup
-                @click="deleteProject(false)"
-              >
-                <q-item-section>Delete From Folder</q-item-section>
-              </q-item>
-              <q-item
-                clickable
-                v-close-popup
-                @click="deleteProject(true)"
-              >
-                <q-item-section>Delete From DataBase</q-item-section>
-              </q-item>
-            </q-list>
-          </q-menu>
+          <TableProjectMenu
+            :row="props.row"
+            @openItem="(row) => dblclickProject(row)"
+            @deleteItem="(row) => deleteProject(row, false)"
+            @deleteItemFromDB="(row) => deleteProject(row, true)"
+            @attachFile="(row) => updateProject(row)"
+            @addNote="(row) => addNote(row._id)"
+          />
         </q-tr>
+
+        <!-- PDF -->
+        <TableItemRow
+          v-if="props.expand && !!props.row.path"
+          :item="props.row"
+          :class="{
+            'bg-primary': props.key === stateStore.selectedItemId,
+            'bg-dark-grey':
+              props.rowIndex % 2 === 0 &&
+              props.key !== stateStore.selectedItemId,
+          }"
+          @clickPDF="selectedProjectIndex = props.rowIndex"
+        />
+        <!-- Notes -->
+        <TableItemRow
+          v-show="props.expand"
+          v-for="note in props.row.children"
+          :key="note._id"
+          :item="note"
+          :class="{
+            'bg-primary': note._id === stateStore.selectedItemId,
+            'bg-dark-grey':
+              props.rowIndex % 2 === 0 &&
+              note._id !== stateStore.selectedItemId,
+          }"
+          @renameNote="(note) => renameNote(note)"
+          @deleteNote="(note) => deleteNote(note)"
+        />
+
         <q-tr
-          v-show="!!$refs.actionBar.searchString"
+          v-show="!!searchString"
           :props="props"
+          :class="{
+            'bg-primary': props.key === stateStore.selectedItemId,
+            'bg-dark-grey':
+              props.rowIndex % 2 === 0 &&
+              props.key !== stateStore.selectedItemId,
+          }"
         >
-          <div
-            style="position: absolute; width: 100%"
-            class="q-px-md ellipsis"
-            v-html="expansionText[props.rowIndex]"
-          ></div>
+          <q-td colspan="100%">
+            <div
+              :style="`width: ${
+                $refs.table.$el.getBoundingClientRect().width * 0.8
+              }px;`"
+              class="q-px-lg ellipsis text-grey text-capitalize"
+              v-html="expansionText[props.rowIndex]"
+            ></div>
+          </q-td>
         </q-tr>
       </template>
     </q-table>
@@ -100,35 +139,57 @@
 </template>
 
 <script>
-import ActionBar from "./ActionBar.vue";
+// import ActionBar from "./ActionBar.vue";
+import TableProjectMenu from "./TableProjectMenu.vue";
+import TableItemRow from "./TableItemRow.vue";
+
 import { copyToClipboard } from "quasar";
 import { useStateStore } from "src/stores/appState";
 import {
   getProjectsByFolderId,
   deleteProject,
 } from "src/backend/project/project";
+import {
+  getNotes,
+  addNote,
+  deleteNote,
+  updateNote,
+} from "src/backend/project/note";
 
 export default {
-  props: { rightMenuSize: Number },
-  emits: ["toggleRightMenu", "dragProject"],
+  // props: { rightMenuSize: Number },
+  props: { searchString: String },
+  emits: ["dragProject"],
 
   components: {
-    ActionBar,
+    // ActionBar,
+    TableProjectMenu,
+    TableItemRow,
   },
 
   setup() {
     const stateStore = useStateStore();
-    return { stateStore };
+    const basename = window.path.basename;
+    return { stateStore, basename };
   },
 
   async mounted() {
     this.projects = await getProjectsByFolderId(
       this.stateStore.selectedFolderId
     );
+
+    for (let i in this.projects) {
+      // notes are the children of project
+      this.projects[i].children = await getNotes(this.projects[i]._id);
+    }
+
+    this.ready = true;
   },
 
   data() {
     return {
+      ready: false,
+
       headers: [
         {
           name: "title",
@@ -163,83 +224,231 @@ export default {
   },
 
   methods: {
+    /*********************************************************
+     * Notes (Add, delete, rename)
+     *********************************************************/
+
+    /**
+     * Add note to a project
+     * @param {string} projectId
+     */
+    async addNote(projectId) {
+      // update db
+      let note = await addNote(projectId);
+
+      // update ui
+      let project = this.projects[this.selectedProjectIndex];
+      project.children.push(note);
+      this.$bus.emit("updateProject", project); // to update ui of projectTree
+    },
+
+    /**
+     * Delete note from a project
+     * @param {Object} note
+     */
+    async deleteNote(note) {
+      // update db
+      await deleteNote(note._id);
+
+      // update ui
+      let project = this.projects.find((p) => p._id == note.projectId);
+      project.children = project.children.filter((n) => n._id != note._id);
+      this.$bus.emit("updateProject", project); // to update ui of projectTree
+    },
+
+    /**
+     * Rename a note from table
+     * @param {Object} note
+     */
+    async renameNote(note) {
+      // update db
+      await updateNote(note._id, { label: note.label });
+
+      // update ui
+      let project = this.projects.find((p) => p._id == note.projectId);
+      this.$bus.emit("updateProject", project); // to update ui of projectTree
+    },
+
+    /***********************************************
+     * Projects (Add, update, delete)
+     **********************************************/
+
+    /**
+     * Add an entry to table
+     * @param {Object} project
+     */
     addProject(project) {
       // update db has been done in action bar
+
       // update ui
+      project.children = []; // for displaying the note list
       this.projects.push(project);
     },
 
+    /**
+     * Update the UI of a project object in the table
+     * @param {Object} project
+     */
     updateProject(project) {
-      this.projects[this.selectedProjectIndex] = project;
-    },
-
-    deleteProject(deleteFromDB) {
-      // update db
-      deleteProject(this.stateStore.selectedProjectId, deleteFromDB);
       // update ui
-      this.projects = this.projects.filter(
-        (p) => p._id != this.stateStore.selectedProjectId
-      );
+      let children = this.projects[this.selectedProjectIndex].children;
+      project.children = children;
+      this.projects[this.selectedProjectIndex] = project;
+
+      // update projectTree ui
+      this.$bus.emit("updateProject", project);
     },
 
+    /**
+     * Delete a project from the current folder,
+     * if deleteFromDB is true, delete the project from database and remove the actual files
+     * @param {Object} project
+     * @param {boolean} deleteFromDB
+     */
+    deleteProject(project, deleteFromDB) {
+      // update db
+      deleteProject(project._id, deleteFromDB);
+      // update ui
+      this.projects = this.projects.filter((p) => p._id != project._id);
+      // update projectTree ui
+      this.$bus.emit("deleteProject", project._id);
+    },
+
+    /**
+     * Table UI (click, double-click, context menu, author string, copyID, filter method)
+     */
+
+    /**
+     * Select a row in the table
+     * @param {Object} row
+     * @param {number} rowIndex
+     */
     clickProject(row, rowIndex) {
-      this.stateStore.selectedProjectId = row._id;
+      console.log(row);
+      this.stateStore.selectedItemId = row._id;
       this.selectedProjectIndex = rowIndex;
     },
 
+    /**
+     * Double-click a row in the table
+     * @param {Object} row
+     */
     dblclickProject(row) {
       this.stateStore.openItemId = row._id;
     },
 
-    toggleContextMenu(row) {
+    /**
+     * Select the row and show context menu
+     * @param {Object} row
+     * @param {number} rowIndex
+     */
+    toggleContextMenu(row, rowIndex) {
       this.showContextMenu = true;
-      this.clickProject(row);
+      this.clickProject(row, rowIndex);
     },
 
+    /**
+     * Copy the project ID
+     */
     async copyProjectId() {
-      await copyToClipboard(this.stateStore.selectedProjectId);
+      await copyToClipboard(this.stateStore.selectedItemId);
     },
 
+    /**
+     * Filter method for the table
+     * @param {Array} rows - array of projects
+     * @param {String | Object} terms - terms to filter with (is essentially the 'filter' prop value)
+     * @param {Array} cols - array of columns
+     * @param {Function} getCellValue - optional function to get a cell value
+     */
     searchProject(rows, terms, cols, getCellValue) {
       this.expansionText = [];
       let text = "";
       let re = RegExp(terms, "i"); // case insensitive
       let filtered = rows.filter((row) => {
-        for (let prop in row) {
-          if (prop == "tags") {
-            for (let tag of row.tags) {
-              if (tag.search(re) != -1) {
-                text = tag.replace(
-                  re,
-                  `<span class="bg-primary">${terms}</span>`
-                );
-                this.expansionText.push("tag: " + text);
-                return true;
-              }
-            }
-          } else if (prop != "related" && prop != "folderIds") {
-            if (prop == "year") row[prop] = String(row[prop]);
-
-            if (row[prop].search(re) != -1) {
-              text = row[prop].replace(
-                re,
-                `<span class="bg-primary">${terms}</span>`
-              );
-              this.expansionText.push(`${prop}: ${text}`);
-              return true;
-            }
+        // search title, abstract, and year
+        for (let prop of ["title", "abstract", "DOI", "publisher"]) {
+          if (row[prop] === undefined) continue;
+          if (row[prop].search(re) != -1) {
+            text = row[prop].replace(
+              re,
+              `<span class="bg-primary">${terms}</span>`
+            );
+            this.expansionText.push(`${prop}: ${text}`);
+            return true;
           }
         }
+
+        // search tags
+        for (let tag of row.tags) {
+          if (tag.search(re) != -1) {
+            text = tag.replace(re, `<span class="bg-primary">${terms}</span>`);
+            this.expansionText.push("tag: " + text);
+            return true;
+          }
+        }
+
+        // search authors
+        let authors = this.authorString(row.author);
+        if (authors.search(re) != -1) {
+          text = authors.replace(
+            re,
+            `<span class="bg-primary">${terms}</span>`
+          );
+          this.expansionText.push(`authors: ${text}`);
+          return true;
+        }
+
+        // search notes
+        for (let note of row.children) {
+          if (note.label.search(re) != -1) {
+            text = note.label.replace(
+              re,
+              `<span class="bg-primary">${terms}</span>`
+            );
+            this.expansionText.push(`note: ${text}`);
+            return true;
+          }
+        }
+
         return false;
       });
       this.showExpansion = true;
       return filtered;
     },
 
-    onDragStart(key) {
-      this.$emit("dragProject", key);
+    /**
+     * Convert array of author objects to string
+     * authors = [{family: "Feng", given: "Hunt"}, {literal: "Hunt Feng"}, ...]
+     * @param {Array} authors
+     */
+    authorString(authors) {
+      if (!!!authors?.length) return "";
+
+      let names = [];
+      for (let author of authors) {
+        if (!!!author) continue;
+        if (!!author.literal) names.push(author.literal);
+        else names.push(`${author.given} ${author.family}`);
+      }
+      return names.join(", ");
     },
 
+    /**********************************************************
+     * Drag and Drop
+     **********************************************************/
+
+    /**
+     * Drag event starts and set draggingProject
+     * @param {string} projectId
+     */
+    onDragStart(projectId) {
+      this.$emit("dragProject", projectId);
+    },
+
+    /**
+     * Drag event ends and set draggingProjectId to ""
+     */
     onDragEnd() {
       this.$emit("dragProject", "");
     },
@@ -248,7 +457,7 @@ export default {
 </script>
 
 <style lang="scss">
-.stickyDynamic {
+.stickyHeader {
   /* height or max-height is important */
   height: 100%;
 

@@ -8,14 +8,13 @@
 </template>
 
 <script>
-import { defineComponent, ref } from "vue";
-import SystemBar from "src/components/SystemBar.vue";
+import SystemBar from "src/components/systembar/SystemBar.vue";
 
-export default defineComponent({
+export default {
   name: "MainLayout",
 
   components: {
     SystemBar,
   },
-});
+};
 </script>

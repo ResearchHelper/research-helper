@@ -79,10 +79,12 @@
 
             <q-icon
               v-if="prop.node.dataType == 'note'"
-              name="note"
+              size="xs"
+              name="bi-file-earmark-text"
             />
             <q-icon
               v-else
+              size="xs"
               name="import_contacts"
             />
             <input
@@ -107,7 +109,7 @@
           </div>
           <q-icon
             v-if="prop.node.dataType == 'project'"
-            style="color: red"
+            style="color: white"
             name="close"
             @click="closeProject(prop.key)"
           >
@@ -179,11 +181,21 @@ export default {
   },
 
   async mounted() {
+    // events emited from other components (TableView.vuew)
+    this.$bus.on("updateProject", (project) => this.updateProject(project));
+    this.$bus.on("deleteProject", (projectId) => this.closeProject(projectId));
+
     await this.getProjectTree();
     let selected = this.stateStore.workingItemId;
     let selectedNode = this.$refs.tree.getNodeByKey(selected);
     if (!!selectedNode && selectedNode?.children?.length > 0)
       this.expanded.push(selected);
+  },
+
+  beforeUnmount() {
+    // not necessary for this component, but a good habit
+    this.$bus.off("updateProject");
+    this.$bus.off("deleteProject");
   },
 
   watch: {
@@ -194,10 +206,10 @@ export default {
 
       let item = await getProject(id);
       if (item.dataType == "project") {
-        this.stateStore.openProject(id);
+        this.stateStore.openedProjectIds.add(id);
         this.pushProjectNode(id);
       } else if (item.dataType == "note") {
-        this.stateStore.openProject(item.projectId);
+        this.stateStore.openedProjectIds.add(item.projectId);
         this.pushProjectNode(item.projectId);
       }
     },
@@ -216,7 +228,7 @@ export default {
 
     async getProjectTree() {
       this.projects = [];
-      for (let projectId of this.stateStore.openedProjectIds) {
+      for (let projectId of this.stateStore.openedProjectIds.values()) {
         await this.pushProjectNode(projectId);
       }
 
@@ -252,6 +264,21 @@ export default {
       }
     },
 
+    /**
+     * Receive updated project from other component and update the projectTree
+     * @param {Object} project
+     */
+    updateProject(project) {
+      let idx = this.projects.findIndex((p) => p._id == project._id);
+      this.projects[idx] = {
+        _id: project._id,
+        dataType: project.dataType,
+        label: project.title,
+        children: project.children,
+        path: project.path,
+      };
+    },
+
     selectItem(node) {
       this.stateStore.workingItemId = node._id;
       if (node.children?.length > 0) this.expanded.push(node._id);
@@ -264,16 +291,11 @@ export default {
 
       let selected = this.stateStore.workingItemId;
       if (this.stateStore.workingItemId == projectId) {
-        let index = this.stateStore.openedProjectIds.indexOf(projectId);
-        index = index > 0 ? index - 1 : 0;
-        selected = "library";
-        if (this.stateStore.openedProjectIds.length > 1) {
-          selected = this.stateStore.openedProjectIds[index];
-        }
+        selected = this.stateStore.openedProjectIds.has(projectId)
+          ? projectId
+          : "library";
       }
-
-      this.stateStore.openedProjectIds =
-        this.stateStore.openedProjectIds.filter((id) => id != projectId);
+      this.stateStore.openedProjectIds.delete(projectId);
       this.projects = this.projects.filter((p) => p._id != projectId);
 
       setTimeout(() => {

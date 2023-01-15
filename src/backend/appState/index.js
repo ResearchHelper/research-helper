@@ -14,8 +14,7 @@ async function getAppState() {
     let state = {
       _id: "app_state",
       // user data path
-      storagePath:
-        "/home/huntfeng/projects/research-helper-quasar/backend/storage",
+      storagePath: "/home/huntfeng/projects/research-helper-quasar/storage",
 
       // layout
       leftMenuSize: 20,
@@ -26,7 +25,7 @@ async function getAppState() {
 
       // projects
       workingItemId: "library", // workingItem
-      openedProjectIds: [], // for projectTree
+      openedProjectIds: new Set(), // for projectTree
     };
 
     await db.put(state);
@@ -53,6 +52,7 @@ async function getLayout() {
     // cannot get layout
     let layout = {
       _id: "layout",
+      dataType: "layout",
       config: {
         settings: {
           showPopoutIcon: false,

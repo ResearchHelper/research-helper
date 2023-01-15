@@ -8,6 +8,7 @@
       node-key="_id"
       v-model:expanded="expandedKeys"
       v-model:selected="stateStore.selectedFolderId"
+      @update:selected="saveState"
       :no-selection-unset="true"
       selected-color="primary"
       ref="tree"
@@ -47,6 +48,13 @@
                 @click="setRenameFolder(prop.node)"
               >
                 <q-item-section>Rename</q-item-section>
+              </q-item>
+              <q-item
+                clickable
+                v-close-popup
+                @click="exportFolder(prop.node)"
+              >
+                <q-item-section>Export References</q-item-section>
               </q-item>
               <q-item
                 v-if="!specialFolderIds.includes(prop.node._id)"
@@ -93,9 +101,11 @@ import {
 } from "src/backend/project/folder";
 import { sortTree } from "src/backend/project/utils";
 import { getProject, updateProject } from "src/backend/project/project";
+import { updateAppState } from "src/backend/appState";
 
 export default {
   props: { draggingProjectId: String },
+  emits: ["exportFolder"],
 
   setup() {
     const stateStore = useStateStore();
@@ -111,19 +121,23 @@ export default {
       renamingFolderId: null,
       draggingNode: null,
       dragoverNode: null,
-
       enterTime: 0,
     };
   },
 
   async mounted() {
     this.folders = await getFolderTree();
-    this.stateStore.selectedFolderId = "library";
   },
 
   methods: {
+    async saveState() {
+      if (!this.stateStore.ready) return;
+      let state = this.stateStore.saveState();
+      await updateAppState(state);
+    },
+
     /**************************
-     * Add, delete, update
+     * Add, delete, update, export
      **************************/
 
     /**
@@ -203,6 +217,14 @@ export default {
 
       // sort the tree
       sortTree(this.folders[0]);
+    },
+
+    /**
+     * Export a collection of references
+     * @param {Object} folder
+     */
+    exportFolder(folder) {
+      this.$emit("exportFolder", folder);
     },
 
     /****************

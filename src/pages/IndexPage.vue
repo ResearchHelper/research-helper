@@ -1,4 +1,8 @@
 <template>
+  <WelcomeCarousel
+    v-if="welcomeCarousel"
+    @selectPath="(path) => setStoragePath(path)"
+  />
   <q-splitter
     :model-value="56"
     unit="px"
@@ -10,15 +14,6 @@
         class="column justify-between"
       >
         <div>
-          <q-btn
-            icon="home"
-            class="bg-secondary"
-            :ripple="false"
-            square
-            @click="setComponent('library')"
-          >
-            <q-tooltip>Show Library Page</q-tooltip>
-          </q-btn>
           <q-btn-toggle
             v-model="leftMenu"
             unelevated
@@ -27,15 +22,31 @@
             clearable
             :options="[{ icon: 'account_tree', value: true }]"
             @update:model-value="stateStore.saveState()"
-          />
+          >
+            <q-tooltip>Active Projects</q-tooltip>
+          </q-btn-toggle>
         </div>
-        <q-btn
-          unelevated
-          square
-          :ripple="false"
-          icon="settings"
-          @click="setComponent('settings')"
-        />
+
+        <div>
+          <q-btn
+            flat
+            square
+            icon="home"
+            :ripple="false"
+            @click="setComponent('library')"
+          >
+            <q-tooltip>Library</q-tooltip>
+          </q-btn>
+          <q-btn
+            flat
+            square
+            :ripple="false"
+            icon="info"
+            @click="setComponent('info')"
+          >
+            <q-tooltip>Info</q-tooltip>
+          </q-btn>
+        </div>
       </div>
     </template>
     <template v-slot:after>
@@ -51,7 +62,7 @@
             v-if="stateStore.ready"
             @addNode="(element) => addDragSource(element)"
             @renameNode="(node) => editComponentState(node)"
-            @openProject="(projectId) => setComponent(projectId)"
+            @openProject="(projectId) => (stateStore.openItemId = projectId)"
             @closeProject="(projectId) => removeComponent(projectId)"
             ref="tree"
           />
@@ -75,6 +86,7 @@
 import { useQuasar } from "quasar";
 
 import ProjectTree from "src/components/ProjectTree.vue";
+import WelcomeCarousel from "src/components/WelcomeCarousel.vue";
 
 import GLayout from "src/pages/GLayout.vue";
 import "golden-layout/dist/css/goldenlayout-base.css";
@@ -94,6 +106,7 @@ export default {
   components: {
     GLayout,
     ProjectTree,
+    WelcomeCarousel,
   },
 
   setup() {
@@ -107,6 +120,8 @@ export default {
 
   data() {
     return {
+      welcomeCarousel: false,
+
       leftMenuSize: 0,
 
       dragover: false,
@@ -137,8 +152,14 @@ export default {
   },
 
   watch: {
-    "stateStore.openItemId"(id) {
+    async "stateStore.openItemId"(id) {
       if (!!!id) return;
+      let item = await getProject(id);
+      if (item.dataType === "project" && !item.path) {
+        // although no window will be open, but still set ti as workingItem
+        this.stateStore.workingItemId = id;
+        return;
+      }
       this.setComponent(id).then(() => {
         this.stateStore.openItemId = null;
       });
@@ -156,15 +177,30 @@ export default {
     let state = await getAppState();
     this.stateStore.loadState(state);
     if (this.stateStore.showLeftMenu) this.leftMenuSize = state.leftMenuSize;
+    if (!this.stateStore.storagePath) this.welcomeCarousel = true;
+
     const layout = await getLayout();
     await this.$refs.layout.loadGLLayout(layout.config);
   },
 
   methods: {
+    async setStoragePath(path) {
+      // update db
+      this.stateStore.storagePath = path;
+      await this.saveAppState();
+
+      // update ui
+      this.welcomeCarousel = false;
+    },
+
     async resizeLeftMenu(size) {
       this.$refs.layout.resize();
       this.stateStore.leftMenuSize = size > 10 ? size : 10;
     },
+
+    /*****************************************************************
+     * GoldenLayout (set, rename, remove component)
+     *****************************************************************/
 
     /**
      * Set focus to component with specified id
@@ -177,9 +213,9 @@ export default {
       if (id == "library") {
         componentType = "LibraryPage";
         title = "Library";
-      } else if (id == "settings") {
-        componentType = "SettingPage";
-        title = "Settings";
+      } else if (id == "info") {
+        componentType = "InfoPage";
+        title = "Info";
       } else {
         let item = await getProject(id);
         if (item.dataType == "project") {
@@ -196,6 +232,10 @@ export default {
       await this.saveAppState();
     },
 
+    /**
+     * Closing the project need to close the related windows
+     * @param {string} id
+     */
     async removeComponent(id) {
       this.$refs.layout.removeGLComponent(id);
       let item = await getProject(id);
@@ -207,11 +247,39 @@ export default {
       }
     },
 
+    /**
+     * After renaming a row in projectTree, we need to rename the window title.
+     * And we need to add dragsource again
+     * @param {HTMLElement} element
+     */
     async editComponentState(element) {
       let id = element.getAttribute("item-id");
       let title = element.innerText;
       this.$refs.layout.renameGLComponent(id, title);
       this.addDragSource(element);
+    },
+
+    /***************************************************
+     * Layout and AppState
+     ***************************************************/
+
+    /**
+     * When layout is changed, save layout and appstate
+     */
+    async onLayoutChanged() {
+      await this.$nextTick();
+
+      // if the last window is closed, open library page
+      // this is to prevent the undefined root problem
+      let config = this.$refs.layout.getLayoutConfig();
+      if (config.root === undefined) {
+        this.setComponent("library");
+        await this.$nextTick();
+      }
+
+      // save layouts and appstate
+      await this.saveLayout();
+      await this.saveAppState();
     },
 
     async saveLayout() {
@@ -222,20 +290,24 @@ export default {
 
     async saveAppState() {
       if (!this.stateStore.ready) return;
+      // if folders are not created yet
+      // selectedFolderId is ""
+      if (!!!this.stateStore.selectedFolderId) {
+        this.stateStore.selectedFolderId = "library";
+      }
       let state = this.stateStore.saveState();
       await updateAppState(state);
-    },
-
-    async onLayoutChanged() {
-      await this.$nextTick();
-      await this.saveLayout();
-      await this.saveAppState();
     },
 
     /*******************************************
      * Drag and drop to GLayout to add component
      *******************************************/
 
+    /**
+     * Add dragSource to the rows in projectTree
+     * @param {HTMLElement} element
+     * @param {boolean} addComponentOnly
+     */
     addDragSource(element, addComponentOnly = false) {
       if (!!!element) return;
 
@@ -251,6 +323,11 @@ export default {
       );
     },
 
+    /**
+     * After a window is closed (but the project is not closed yet,
+     * we need to add a void component so we can drag that project to open window again
+     * @param {string} id
+     */
     onItemDestroyed(id) {
       setTimeout(() => {
         let treeEl = this.$refs.tree.$el;
@@ -283,6 +360,7 @@ html {
   top: unset !important;
 }
 .lm_active {
+  border-top: 0.2rem solid $primary;
   background-color: #222222 !important;
   box-shadow: 2px -2px 2px rgb(0 0 0 / 30%) !important;
 }

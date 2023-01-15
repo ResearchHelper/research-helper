@@ -16,7 +16,7 @@
  *   })
  */
 import { contextBridge } from "electron";
-import { BrowserWindow } from "@electron/remote";
+import { BrowserWindow, dialog } from "@electron/remote";
 import fs from "fs";
 import path from "path";
 
@@ -43,3 +43,12 @@ contextBridge.exposeInMainWorld("myWindowAPI", {
 // inject these libraries in preload, otherwise they are externalized
 contextBridge.exposeInMainWorld("fs", fs);
 contextBridge.exposeInMainWorld("path", path);
+
+contextBridge.exposeInMainWorld("folderPicker", {
+  show() {
+    let result = dialog.showOpenDialogSync(BrowserWindow.getFocusedWindow(), {
+      properties: ["openDirectory", "createDirectory"],
+    });
+    return result;
+  },
+});

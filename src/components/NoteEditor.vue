@@ -49,29 +49,26 @@ export default {
       let toolbar = [];
       if (this.hasToolbar)
         toolbar = [
-          "outline",
+          {
+            name: "outline",
+            tipPosition: "s",
+          },
           "|",
-          "headings",
-          "bold",
-          "italic",
-          "link",
+          { name: "headings", tipPosition: "s" },
+          { name: "bold", tipPosition: "s" },
+          { name: "italic", tipPosition: "s" },
           "|",
-          "quote",
-          "list",
-          "ordered-list",
-          "table",
-          "inline-code",
-          "code",
+          { name: "table", tipPosition: "s" },
           "|",
-          "upload",
-          "export",
+          { name: "upload", tipPosition: "s", tip: "upload image" },
+          { name: "export", tipPosition: "s" },
           "|",
-          "fullscreen",
+          { name: "help", tipPosition: "s" },
         ];
 
       this.editor = new Vditor("vditor-" + this.noteId, {
         height: "100%",
-        mode: "wysiwyg",
+        mode: "ir",
         toolbarConfig: {
           pin: true,
         },
@@ -80,6 +77,9 @@ export default {
         preview: {
           math: {
             inlineDigit: true,
+          },
+          hljs: {
+            style: "native",
           },
         },
         placeholder: "Live Markdown editor + Latex supported!",
@@ -97,8 +97,6 @@ export default {
           ],
         },
         after: () => {
-          // dark theme, dark content theme, native code theme
-          this.editor.setTheme("dark", "dark", "native");
           if (!!this.showEditor) this.setContent();
         },
         focus: () => {
@@ -167,15 +165,27 @@ export default {
       console.log("clicking link", linkNode);
       this.editor.blur(); // save the content before jumping
 
-      let id = linkNode.href.split("/").at(-1);
-      setTimeout(() => {
-        this.stateStore.openItemId = id;
-      }, 100);
+      // let id = linkNode.href.split("/").at(-1);
+      // setTimeout(() => {
+      //   this.stateStore.openItemId = id;
+      // }, 100);
+
+      let link = linkNode.querySelector(
+        "span.vditor-ir__marker--link"
+      ).innerText;
+      try {
+        new URL(link);
+        // valid external url, do nothing
+      } catch (error) {
+        // we just want the document, both getProject or getNote are good
+        this.stateStore.openItemId = link;
+      }
     },
 
     _changeLinks() {
       let vditor = this.$refs.vditor;
-      let linkNodes = vditor.querySelectorAll("a");
+      // let linkNodes = vditor.querySelectorAll("a");
+      let linkNodes = vditor.querySelectorAll("[data-type='a']");
       for (let linkNode of linkNodes) {
         linkNode.onclick = () => this.clickLink(linkNode);
       }
@@ -202,3 +212,7 @@ export default {
   },
 };
 </script>
+<style>
+@import "src/css/vditor/vscode-dark-editor.css";
+@import "src/css/vditor/vscode-dark-content.css";
+</style>
