@@ -22,8 +22,14 @@
 
     <q-space />
 
-    <q-icon name="img:src/assets/logo.svg" />
-    Research Helper v1.0
+    <q-icon>
+      <!-- must use img.src so that vite can resolve it -->
+      <img
+        src="~assets/logo.svg"
+        alt="logo"
+      />
+    </q-icon>
+    Research Helper
 
     <q-space />
 

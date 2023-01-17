@@ -9,10 +9,12 @@
     >
       <h2>
         Welcome to Research Helper
-        <q-icon
-          class="q-ml-lg"
-          name="img:src/assets/logo.svg"
-        />
+        <q-icon class="q-ml-lg">
+          <img
+            src="~assets/logo.svg"
+            alt="logo"
+          />
+        </q-icon>
       </h2>
       <div></div>
 

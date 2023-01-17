@@ -45,8 +45,15 @@
     />
     <pre
       ref="content"
-      style="white-space: pre-wrap"
-      class="q-mx-sm q-my-xs"
+      style="
+        min-height: 5em;
+        max-width: 50vw;
+        max-height: 30vh;
+        white-space: pre-wrap;
+        overflow: auto;
+        border: 1px dashed grey;
+      "
+      class="q-mx-xs q-my-xs"
       >{{ annot.content }}</pre
     >
   </q-card>

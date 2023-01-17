@@ -1,8 +1,16 @@
 import PouchDB from "pouchdb";
 import Find from "pouchdb-find";
 PouchDB.plugin(Find);
-var db = new PouchDB("mydb");
-var remotedb = new PouchDB("http://localhost:3000/mydb");
+const db = new PouchDB("mydb");
+
+db.createIndex({
+  index: {
+    fields: ["dataType", "projectId", "pageNumber", "folderIds", "children"],
+  },
+});
+
+// for debug use
+const remotedb = new PouchDB("http://localhost:3000/mydb");
 PouchDB.sync("mydb", "http://localhost:3000/mydb", {
   live: true,
 })
@@ -33,17 +41,9 @@ PouchDB.sync("mydb", "http://localhost:3000/mydb", {
 
 function destroyDB() {
   remotedb.destroy();
-  return db.destroy();
+  db.destroy();
 }
-
-db.createIndex({
-  index: {
-    fields: ["dataType", "projectId", "pageNumber", "folderIds", "children"],
-  },
-});
-
-// for debug use
 window.db = db;
 window.destroyDB = destroyDB;
 
-export { db, remotedb };
+export { db };
