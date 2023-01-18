@@ -1,7 +1,7 @@
-<div style="font-size: 50px; text-align: center">
+<p align="center">
 <img src="src/assets/logo.svg" 
 style="width: 100px; vertical-align:middle">
-</div>
+</p>
 
 # Research Helper
 
