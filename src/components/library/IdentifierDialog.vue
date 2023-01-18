@@ -1,8 +1,14 @@
 <template>
-  <q-dialog :model-value="show">
-    <q-card square>
+  <q-dialog
+    :model-value="show"
+    @hide="cancel"
+  >
+    <q-card
+      square
+      style="min-width: 500px"
+    >
       <q-card-section>
-        <div class="text-h6">Create Entry By Identifier</div>
+        <div class="text-h6">Search Identifier</div>
       </q-card-section>
       <q-card-section class="q-pt-none">
         <q-input
@@ -13,6 +19,7 @@
           class="full-width"
           placeholder="DOI, ISBN, Wikidata, Ris, etc ..."
           v-model="identifier"
+          @keydown.enter="confirm"
         />
       </q-card-section>
       <q-card-actions align="right">

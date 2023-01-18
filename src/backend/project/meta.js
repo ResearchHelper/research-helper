@@ -15,6 +15,7 @@ async function getMeta(identifier, format = null) {
     else return data.format(format);
   } catch (error) {
     console.log(error);
+    throw error; // frontend needs display this
   }
 }
 
@@ -30,6 +31,7 @@ async function exportMeta(folderId, format) {
     return await getMeta(projects, format);
   } catch (error) {
     console.log(error);
+    throw error;
   }
 }
 

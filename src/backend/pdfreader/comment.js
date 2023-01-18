@@ -41,12 +41,11 @@ function comment(container, annot, fromDB = false) {
   section.style.height = `${annot.rect.height}px`;
   section.style.pointerEvents = "auto";
   section.style.cursor = "pointer";
-  // section.style.pointerEvents = "visible";
+  section.style.backgroundColor = annot.color;
   section.classList.add("textAnnotation");
 
   let img = document.createElement("img");
   img.src = commentIcon;
-  img.style.backgroundColor = annot.color;
   img.style.position = "absolute";
   img.style.left = `0px`;
   img.style.top = `0px`;

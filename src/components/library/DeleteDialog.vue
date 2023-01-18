@@ -1,7 +1,9 @@
 <template>
   <q-dialog
-    persistent
     :model-value="show"
+    persistent
+    no-shake
+    @hide="cancel"
   >
     <q-card>
       <q-card-section>

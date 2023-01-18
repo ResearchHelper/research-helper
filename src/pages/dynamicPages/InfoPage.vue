@@ -1,6 +1,14 @@
 <template>
-  <h3><q-icon name="img:src/assets/logo.svg" /> Research Helper</h3>
-  version: v1.0
+  <h3>
+    <q-icon>
+      <img
+        src="~assets/logo.svg"
+        alt="logo"
+      />
+    </q-icon>
+    Research Helper
+  </h3>
+  <a href="https://github.com/ResearchHelper/research-helper">Github Page</a>
 </template>
 <script>
 export default {

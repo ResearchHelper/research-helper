@@ -357,7 +357,10 @@ export default {
     },
 
     async updateAnnot(params) {
+      // update db
       await this.annotManager.update(params.id, params.data);
+
+      // update ui
       this.annots = this.annotManager.annots;
       if (!!this.$refs.annotList) this.$refs.annotList.updateList();
     },

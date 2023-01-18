@@ -1,89 +1,90 @@
 <template>
-  <div>
-    <!-- systembarheight: 32px, tab: 36px actionbarheight: 50px -->
-    <q-splitter
-      style="position: absolute; width: 100%; height: 100%"
-      :limits="[0, 30]"
-      separator-class="separator"
-      v-model="treeViewSize"
-    >
-      <template v-slot:before>
-        <TreeView
-          ref="tree"
-          :draggingProjectId="draggingProjectId"
-          @exportFolder="(folder) => showExportFolderDialog(folder)"
-        />
-      </template>
-      <template v-slot:after>
-        <q-splitter
-          style="overflow: hidden"
-          reverse
-          :limits="[0, 60]"
-          separator-class="separator"
-          v-model="rightMenuSize"
-        >
-          <template v-slot:before>
-            <ActionBar
-              v-model:searchString="searchString"
-              :rightMenuSize="rightMenuSize"
-              @toggleRightMenu="(visible) => toggleRightMenu(visible)"
-              @addEmptyProject="addEmptyProject"
-              @addByFiles="addProjectsByFiles"
-              @showIdentifierDialog="showIdentifierDialog(true)"
-              ref="actionBar"
-            />
-            <TableView
-              :searchString="searchString"
-              @dragProject="(key) => onDragProject(key)"
-              ref="table"
-            />
+  <ExportDialog
+    v-model:show="exportFolderDialog"
+    @confirm="exportFolder"
+  />
+  <IdentifierDialog
+    v-model:show="identifierDialog"
+    @confirm="(identifier) => processIdentifier(identifier)"
+  />
+  <DeleteDialog
+    v-model:show="deleteDialog"
+    :projectTitle="project?.title"
+    :deleteFromDB="deleteFromDB"
+    @confirm="deleteProject"
+  />
+  <ErrorDialog
+    v-model:show="errorDialog"
+    :error="error"
+  />
 
-            <ExportDialog
-              v-model:show="exportFolderDialog"
-              @confirm="exportFolder"
+  <q-splitter
+    style="position: absolute; width: 100%; height: 100%"
+    :limits="[0, 30]"
+    separator-class="separator"
+    v-model="treeViewSize"
+  >
+    <template v-slot:before>
+      <TreeView
+        ref="tree"
+        :draggingProjectId="draggingProjectId"
+        @exportFolder="(folder) => showExportFolderDialog(folder)"
+      />
+    </template>
+    <template v-slot:after>
+      <q-splitter
+        style="overflow: hidden"
+        reverse
+        :limits="[0, 60]"
+        separator-class="separator"
+        v-model="rightMenuSize"
+      >
+        <template v-slot:before>
+          <ActionBar
+            v-model:searchString="searchString"
+            :rightMenuSize="rightMenuSize"
+            @toggleRightMenu="(visible) => toggleRightMenu(visible)"
+            @addEmptyProject="addEmptyProject"
+            @addByFiles="addProjectsByFiles"
+            @showIdentifierDialog="showIdentifierDialog(true)"
+            ref="actionBar"
+          />
+          <TableView
+            :searchString="searchString"
+            @dragProject="(key) => onDragProject(key)"
+            ref="table"
+          />
+        </template>
+        <template v-slot:after>
+          <q-tabs
+            dense
+            indicator-color="transparent"
+            active-bg-color="primary"
+            model-value="metaInfoTab"
+          >
+            <q-tab
+              name="metaInfoTab"
+              icon="info"
+              :ripple="false"
             />
-            <IdentifierDialog
-              v-model:show="identifierDialog"
-              @confirm="(identifier) => processIdentifier(identifier)"
-            />
-            <DeleteDialog
-              v-model:show="deleteDialog"
-              :projectTitle="project?.title"
-              :deleteFromDB="deleteFromDB"
-              @confirm="deleteProject"
-            />
-          </template>
-          <template v-slot:after>
-            <q-tabs
-              dense
-              indicator-color="transparent"
-              active-bg-color="primary"
-              model-value="metaInfoTab"
-            >
-              <q-tab
-                name="metaInfoTab"
-                icon="info"
-                :ripple="false"
+          </q-tabs>
+          <!-- q-tab height 36px -->
+          <q-tab-panels
+            style="height: calc(100% - 36px)"
+            model-value="metaInfoTab"
+          >
+            <q-tab-panel name="metaInfoTab">
+              <MetaInfoTab
+                v-if="!!rightMenuSize"
+                :projectId="stateStore.selectedItemId"
+                @updateProject="updateProjectUI"
               />
-            </q-tabs>
-            <!-- q-tab height 36px -->
-            <q-tab-panels
-              style="height: calc(100% - 36px)"
-              model-value="metaInfoTab"
-            >
-              <q-tab-panel name="metaInfoTab">
-                <MetaInfoTab
-                  v-if="!!rightMenuSize"
-                  :projectId="stateStore.selectedItemId"
-                  @updateProject="updateProjectUI"
-                />
-              </q-tab-panel>
-            </q-tab-panels>
-          </template>
-        </q-splitter>
-      </template>
-    </q-splitter>
-  </div>
+            </q-tab-panel>
+          </q-tab-panels>
+        </template>
+      </q-splitter>
+    </template>
+  </q-splitter>
 </template>
 
 <script>
@@ -94,6 +95,7 @@ import MetaInfoTab from "src/components/MetaInfoTab.vue";
 import ExportDialog from "src/components/library/ExportDialog.vue";
 import IdentifierDialog from "src/components/library/IdentifierDialog.vue";
 import DeleteDialog from "src/components/library/DeleteDialog.vue";
+import ErrorDialog from "src/components/ErrorDialog.vue";
 
 import {
   addProject,
@@ -103,11 +105,13 @@ import {
 } from "src/backend/project/project";
 import { useStateStore } from "src/stores/appState";
 import { exportFile } from "quasar";
-// import Cite from "citation-js";
 import { getMeta, exportMeta } from "src/backend/project/meta";
 import { copyFile } from "src/backend/project/file";
 
 export default {
+  // every page should have two props
+  props: { itemId: String, visible: Boolean },
+
   setup() {
     const stateStore = useStateStore();
     return { stateStore };
@@ -121,6 +125,7 @@ export default {
     MetaInfoTab,
     IdentifierDialog,
     DeleteDialog,
+    ErrorDialog,
   },
 
   data() {
@@ -141,6 +146,9 @@ export default {
 
       identifierDialog: false,
       createProject: false,
+
+      errorDialog: false,
+      error: null,
     };
   },
 
@@ -173,7 +181,9 @@ export default {
      * @param {boolean} createProject
      */
     showIdentifierDialog(createProject) {
+      console.log("show dialog", this.identifierDialog);
       this.identifierDialog = true;
+      console.log("now show dialog", this.identifierDialog);
       this.createProject = createProject;
     },
 
@@ -194,55 +204,47 @@ export default {
      */
     async addProjectsByFiles(files) {
       for (let file of files) {
-        // update db
-        let project = await addProject(this.stateStore.selectedFolderId);
-        project.path = await copyFile(file.path, project._id);
-        project.title = window.path.basename(project.path, ".pdf");
-        project = await updateProject(project);
+        try {
+          // update db
+          let project = await addProject(this.stateStore.selectedFolderId);
+          project.path = await copyFile(file.path, project._id);
+          project.title = window.path.basename(project.path, ".pdf");
+          project = await updateProject(project);
 
-        // update ui
-        this.$refs.table.addProject(project);
+          // update ui
+          this.$refs.table.addProject(project);
+        } catch (error) {
+          this.error = error;
+          this.errorDialog = true;
+        }
       }
     },
-
-    // /**
-    //  * Modify the meta of a project object
-    //  * @param {Object} project
-    //  * @param {Object} meta
-    //  * @returns {Object} modifiedProject
-    //  */
-    // modifyProjectByMeta(project, meta) {
-    //   project.type = meta.type || "";
-    //   project.title = meta.title || "";
-    //   project.author = meta.author || [];
-    //   project.abstract = meta.abstract || "";
-    //   project.year = meta.year || null;
-    //   project.DOI = meta.DOI || "";
-    //   project.URL = meta.URL || "";
-    //   project.publisher = meta.publisher || "";
-    //   return project;
-    // },
 
     async processIdentifier(identifier) {
       if (!identifier) return;
 
-      let metas = await getMeta(identifier);
-      let meta = metas[0];
+      try {
+        let metas = await getMeta(identifier);
+        let meta = metas[0];
 
-      if (this.createProject) {
-        // add a new project to db and update it with meta
-        let project = await addProject(this.stateStore.selectedFolderId);
-        project = await updateProjectByMeta(project, meta);
+        if (this.createProject) {
+          // add a new project to db and update it with meta
+          let project = await addProject(this.stateStore.selectedFolderId);
+          project = await updateProjectByMeta(project, meta);
 
-        // update ui
-        this.$refs.table.addProject(project);
-      } else {
-        // update an existing project meta
-        let project = await getProject(this.stateStore.selectedItemId);
-        project = await updateProjectByMeta(project, meta);
+          // update ui
+          this.$refs.table.addProject(project);
+        } else {
+          // update an existing project meta
+          let project = await getProject(this.stateStore.selectedItemId);
+          project = await updateProjectByMeta(project, meta);
 
-        // update ui
-        this.updateProjectUI(project);
+          // update ui
+          this.updateProjectUI(project);
+        }
+      } catch (error) {
+        this.error = error;
+        this.errorDialog = true;
       }
     },
 

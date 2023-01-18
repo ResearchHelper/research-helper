@@ -10,7 +10,7 @@
   >
     <template v-slot:before>
       <div
-        style="height: calc(100vh - 32px)"
+        style="height: 100vh"
         class="column justify-between"
       >
         <div>
@@ -58,7 +58,7 @@
       >
         <template v-slot:before>
           <ProjectTree
-            style="height: calc(100vh - 32px)"
+            style="height: 100vh"
             v-if="stateStore.ready"
             @addNode="(element) => addDragSource(element)"
             @renameNode="(node) => editComponentState(node)"
@@ -71,7 +71,7 @@
           <GLayout
             v-if="stateStore.ready"
             ref="layout"
-            style="width: 100%; height: calc(100vh - 32px)"
+            style="width: 100%; height: 100vh"
             v-model:workingItemId="stateStore.workingItemId"
             @layoutchanged="onLayoutChanged"
             @itemdestroyed="onItemDestroyed"

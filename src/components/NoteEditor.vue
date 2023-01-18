@@ -162,13 +162,7 @@ export default {
     },
 
     async clickLink(linkNode) {
-      console.log("clicking link", linkNode);
       this.editor.blur(); // save the content before jumping
-
-      // let id = linkNode.href.split("/").at(-1);
-      // setTimeout(() => {
-      //   this.stateStore.openItemId = id;
-      // }, 100);
 
       let link = linkNode.querySelector(
         "span.vditor-ir__marker--link"

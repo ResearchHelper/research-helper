@@ -1,6 +1,32 @@
-# Research-Helper (research-helper-quasar)
+<p align="center" style="font-size: 50px">
+Research Helper
+<img src="src/assets/logo.svg" 
+style="width: 100px; vertical-align:middle">
+</p>
 
-A paper/textbook management tool
+# What is Research Helper
+
+Research helper is a paper/book management tool. It is a reference management tool with various useful functionalities such as: built-in PDF reader and live markdown.
+
+screenshots
+
+# Features
+
+## Built-in PDF reader
+
+![reader.gif](./gifs/reader.gif)
+
+## Drag & Drop Layout
+
+![layout.gif](./gifs/layout.gif)
+
+## Built-in Live Markdown editor
+
+![note.gif](./gifs/note.gif)
+
+# Contribute to Research-Helper
+
+Research Helper uses [QUASAR](https://quasar.dev) as framework. In this project, the combination of [Vue.js3](https://vuejs.org) and [Electron](https://www.electronjs.org) is used.
 
 ## Install the dependencies
 
@@ -10,40 +36,23 @@ yarn # strongly recommanded
 npm install
 ```
 
-### Start the electron app in development mode (hot-code reloading, error reporting, etc.)
+## Start the electron app in development mode (hot-code reloading, error reporting, etc.)
 
 ```bash
-quasar dev -m electron
+./dev.sh
 ```
 
-### Develope with Vue.js devtools
+# Acknowledgement
 
-First start the vue-devtools
+This project is made possible by the following open source projects.
 
-```bash
-yarn run vue-devtools
-# or
-npm run vue-devtools
-# or
-./node_modules/.bin/vue-devtools
-```
-
-Then start electron app in dev mode with extra flag
-
-```bash
-quasar dev -m electron --devtools
-```
-
-### Start the backend
-
-Install the necessary packages using pip
-
-```bash
-pip install flask flask-restful flask-cors arxiv pdfminer.six
-```
-
-Then we can start the backend server
-
-```bash
-python ./backend/app.py
-```
+- Quasar
+- Electron
+- Vue.js
+- citation-js
+- cytoscape
+- golden-layout
+- katex
+- pdf.js
+- vditor
+- Pouchdb

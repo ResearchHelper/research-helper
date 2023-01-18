@@ -1,7 +1,7 @@
 <template>
   <q-carousel
     model-value="start"
-    style="height: calc(100vh - 32px)"
+    style="height: 100vh"
   >
     <q-carousel-slide
       name="start"

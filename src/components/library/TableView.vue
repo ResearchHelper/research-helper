@@ -1,5 +1,6 @@
 <template>
   <div>
+    <!-- actionBar height 50px  -->
     <q-table
       v-if="ready"
       style="position: absolute; height: calc(100% - 50px); width: 100%"
