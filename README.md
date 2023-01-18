@@ -1,14 +1,11 @@
-<p align="center" style="font-size: 50px">
-Research Helper
+<div style="font-size: 50px; text-align: center">
 <img src="src/assets/logo.svg" 
 style="width: 100px; vertical-align:middle">
-</p>
+</div>
 
-# What is Research Helper
+# Research Helper
 
 Research helper is a paper/book management tool. It is a reference management tool with various useful functionalities such as: built-in PDF reader and live markdown.
-
-screenshots
 
 # Features
 
