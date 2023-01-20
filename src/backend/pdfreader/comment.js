@@ -1,3 +1,5 @@
+import commentIcon from "src/assets/annotation-note.svg"; // so vite can resolve it
+
 function clickCoordinates(rect, annotationLayer) {
   let ost = computePageOffset(annotationLayer);
   let x_1 = rect.left - ost.left;
@@ -39,13 +41,11 @@ function comment(container, annot, fromDB = false) {
   section.style.height = `${annot.rect.height}px`;
   section.style.pointerEvents = "auto";
   section.style.cursor = "pointer";
-  // section.style.pointerEvents = "visible";
+  section.style.backgroundColor = annot.color;
   section.classList.add("textAnnotation");
 
   let img = document.createElement("img");
-  // img.src = "node_modules/pdfjs-dist/web/images/annotation-note.svg";
-  img.src = "src/assets/annotation-note.svg";
-  img.style.backgroundColor = annot.color;
+  img.src = commentIcon;
   img.style.position = "absolute";
   img.style.left = `0px`;
   img.style.top = `0px`;

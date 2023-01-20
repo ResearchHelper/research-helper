@@ -1,136 +1,157 @@
 <template>
-  <div>
-    <q-expansion-item
-      dense
-      dense-toggle
-      expand-separator
-      default-opened
-      label="Active projects"
-    >
-      <q-tree
-        ref="tree"
+  <q-splitter
+    horizontal
+    emit-immediately
+    :limits="[36, maxHeight]"
+    unit="px"
+    :separator-class="{
+      'q-splitter-separator-horizontal': isGraphViewOpened && isTreeOpened,
+      'no-pointer-events': !isGraphViewOpened || !isTreeOpened,
+    }"
+    v-model="treeSize"
+  >
+    <template v-slot:before>
+      <!-- expansion item title height: 36px -->
+      <q-expansion-item
+        v-model="isTreeOpened"
         dense
-        no-transition
-        no-selection-unset
-        no-nodes-label="No working projects"
-        :nodes="projects"
-        node-key="_id"
-        selected-color="primary"
-        v-model:selected="stateStore.workingItemId"
-        v-model:expanded="expanded"
+        dense-toggle
+        expand-separator
+        default-opened
+        label="Active projects"
+        :duration="0"
       >
-        <template v-slot:default-header="prop">
-          <!-- use full-width so that click trailing empty space 
+        <div :style="`height: ${treeSize - 36}px; overflow-y: auto`">
+          <q-tree
+            ref="tree"
+            dense
+            no-transition
+            no-selection-unset
+            no-nodes-label="No working projects"
+            :nodes="projects"
+            node-key="_id"
+            selected-color="primary"
+            v-model:selected="stateStore.workingItemId"
+            v-model:expanded="expanded"
+          >
+            <template v-slot:default-header="prop">
+              <!-- use full-width so that click trailing empty space 
         of the node still fires click event -->
-          <!-- only note can drop into a project -->
-          <div
-            style="width: calc(100% - 23px)"
-            class="row"
-            @click="selectItem(prop.node)"
-          >
-            <q-menu
-              touch-position
-              context-menu
-              @before-show="menuSwitch(prop.node)"
-            >
-              <!-- menu for project -->
-              <q-list
-                dense
-                v-if="projectMenu"
+              <!-- only note can drop into a project -->
+              <div
+                style="width: calc(100% - 23px)"
+                class="row"
+                @click="selectItem(prop.node)"
               >
-                <q-item
-                  clickable
-                  v-close-popup
-                  @click="addNote(prop.node)"
+                <q-menu
+                  touch-position
+                  context-menu
+                  @before-show="menuSwitch(prop.node)"
                 >
-                  <q-item-section> Add Note </q-item-section>
-                </q-item>
-                <q-separator />
-                <q-item
-                  clickable
-                  v-close-popup
-                  @click="closeProject(prop.key)"
-                >
-                  <q-item-section> Close Project </q-item-section>
-                </q-item>
-              </q-list>
+                  <!-- menu for project -->
+                  <q-list
+                    dense
+                    v-if="projectMenu"
+                  >
+                    <q-item
+                      clickable
+                      v-close-popup
+                      @click="addNote(prop.node)"
+                    >
+                      <q-item-section> Add Note </q-item-section>
+                    </q-item>
+                    <q-separator />
+                    <q-item
+                      clickable
+                      v-close-popup
+                      @click="closeProject(prop.key)"
+                    >
+                      <q-item-section> Close Project </q-item-section>
+                    </q-item>
+                  </q-list>
 
-              <!-- menu for notes -->
-              <q-list
-                dense
-                v-else
+                  <!-- menu for notes -->
+                  <q-list
+                    dense
+                    v-else
+                  >
+                    <q-item
+                      clickable
+                      v-close-popup
+                      @click="setRenameNote(prop.node)"
+                    >
+                      <q-item-section> Rename </q-item-section>
+                    </q-item>
+                    <q-item
+                      clickable
+                      v-close-popup
+                      @click="deleteNote(prop.node)"
+                    >
+                      <q-item-section> Delete </q-item-section>
+                    </q-item>
+                  </q-list>
+                </q-menu>
+
+                <q-icon
+                  v-if="prop.node.dataType == 'note'"
+                  size="xs"
+                  name="bi-file-earmark-text"
+                />
+                <q-icon
+                  v-else
+                  size="xs"
+                  name="import_contacts"
+                />
+                <input
+                  v-if="prop.node == renamingNote"
+                  style="width: calc(100% - 21px)"
+                  v-model="prop.node.label"
+                  @keydown.enter="renameNote"
+                  @blur="renameNote"
+                  ref="renameInput"
+                />
+                <!-- add item-id and type for access of drag source -->
+                <div
+                  v-else
+                  style="width: calc(100% - 23px)"
+                  class="ellipsis"
+                  :item-id="prop.key"
+                  :type="prop.node.dataType"
+                >
+                  {{ prop.node.label }}
+                  <q-tooltip>id: {{ prop.key }}</q-tooltip>
+                </div>
+              </div>
+              <q-icon
+                v-if="prop.node.dataType == 'project'"
+                style="color: white"
+                name="close"
+                @click="closeProject(prop.key)"
               >
-                <q-item
-                  clickable
-                  v-close-popup
-                  @click="setRenameNote(prop.node)"
-                >
-                  <q-item-section> Rename </q-item-section>
-                </q-item>
-                <q-item
-                  clickable
-                  v-close-popup
-                  @click="deleteNote(prop.node)"
-                >
-                  <q-item-section> Delete </q-item-section>
-                </q-item>
-              </q-list>
-            </q-menu>
+                <q-tooltip>Close project</q-tooltip>
+              </q-icon>
+            </template>
+          </q-tree>
+        </div>
+      </q-expansion-item>
+    </template>
 
-            <q-icon
-              v-if="prop.node.dataType == 'note'"
-              size="xs"
-              name="bi-file-earmark-text"
-            />
-            <q-icon
-              v-else
-              size="xs"
-              name="import_contacts"
-            />
-            <input
-              v-if="prop.node == renamingNote"
-              style="width: calc(100% - 21px)"
-              v-model="prop.node.label"
-              @keydown.enter="renameNote"
-              @blur="renameNote"
-              ref="renameInput"
-            />
-            <!-- add item-id and type for access of drag source -->
-            <div
-              v-else
-              style="width: calc(100% - 23px)"
-              class="ellipsis"
-              :item-id="prop.key"
-              :type="prop.node.dataType"
-            >
-              {{ prop.node.label }}
-              <q-tooltip>id: {{ prop.key }}</q-tooltip>
-            </div>
-          </div>
-          <q-icon
-            v-if="prop.node.dataType == 'project'"
-            style="color: white"
-            name="close"
-            @click="closeProject(prop.key)"
-          >
-            <q-tooltip>Close project</q-tooltip>
-          </q-icon>
-        </template>
-      </q-tree>
-    </q-expansion-item>
-    <q-expansion-item
-      v-model="showGraph"
-      dense
-      dense-toggle
-      expand-separator
-      label="Graph view"
-    >
-      <GraphView
-        v-if="showGraph"
-        :itemId="stateStore.workingItemId"
-      />
-    </q-expansion-item>
-  </div>
+    <template v-slot:after>
+      <q-expansion-item
+        v-model="isGraphViewOpened"
+        dense
+        dense-toggle
+        expand-separator
+        label="Graph view"
+        :duration="0"
+      >
+        <GraphView
+          v-if="isGraphViewOpened"
+          :itemId="stateStore.workingItemId"
+        />
+      </q-expansion-item>
+    </template>
+  </q-splitter>
 </template>
 
 <script>
@@ -165,6 +186,11 @@ export default {
 
   data() {
     return {
+      maxHeight: 36,
+      maxWidth: 0,
+      treeSize: 36,
+      isTreeOpened: true,
+
       // tree
       projects: [],
       expanded: [],
@@ -172,7 +198,8 @@ export default {
       renamingNote: null,
 
       // graphview
-      showGraph: false,
+      loadingGraph: true,
+      isGraphViewOpened: false,
 
       // drag and drop
       draggingNode: null,
@@ -181,6 +208,10 @@ export default {
   },
 
   async mounted() {
+    this.maxWidth = this.$el.offsetWidth;
+    this.maxHeight = this.$el.offsetHeight - 36;
+    this.treeSize = this.maxHeight;
+
     // events emited from other components (TableView.vuew)
     this.$bus.on("updateProject", (project) => this.updateProject(project));
     this.$bus.on("deleteProject", (projectId) => this.closeProject(projectId));
@@ -211,6 +242,19 @@ export default {
       } else if (item.dataType == "note") {
         this.stateStore.openedProjectIds.add(item.projectId);
         this.pushProjectNode(item.projectId);
+      }
+    },
+
+    isTreeOpened(opened) {
+      if (!opened) this.treeSize = 36;
+      else if (opened && !this.isTreeOpened) this.treeSize = this.maxHeight;
+      else this.treeSize = this.maxHeight / 2;
+    },
+
+    isGraphViewOpened(opened) {
+      if (this.isTreeOpened) {
+        if (opened) this.treeSize = this.maxHeight / 2;
+        else this.treeSize = this.maxHeight;
       }
     },
   },
@@ -365,3 +409,8 @@ export default {
   },
 };
 </script>
+<style>
+.q-splitter__panel {
+  overflow: hidden;
+}
+</style>

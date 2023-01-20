@@ -1,5 +1,8 @@
 <template>
-  <q-dialog :model-value="show">
+  <q-dialog
+    :model-value="show"
+    @hide="cancel"
+  >
     <q-card style="min-width: 300px">
       <q-card-section> <div class="text-h6">Options</div> </q-card-section>
       <q-card-section class="q-pt-none">

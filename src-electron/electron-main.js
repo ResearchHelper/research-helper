@@ -1,4 +1,4 @@
-import { app, BrowserWindow, nativeTheme, shell } from "electron";
+import { app, BrowserWindow, nativeTheme, shell, Menu } from "electron";
 import { initialize, enable } from "@electron/remote/main";
 import path from "path";
 import os from "os";
@@ -26,12 +26,14 @@ function createWindow() {
     icon: path.resolve(__dirname, "icons/icon.png"), // tray icon
     width: 1600,
     height: 900,
-    frame: false,
+    // frame: false,
+    autoHideMenuBar: true,
     useContentSize: true,
     webPreferences: {
       contextIsolation: true,
       // More info: https://v2.quasar.dev/quasar-cli-vite/developing-electron-apps/electron-preload-script
       preload: path.resolve(__dirname, process.env.QUASAR_ELECTRON_PRELOAD),
+      webSecurity: false,
     },
   });
 

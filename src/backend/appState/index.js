@@ -14,7 +14,7 @@ async function getAppState() {
     let state = {
       _id: "app_state",
       // user data path
-      storagePath: "/home/huntfeng/projects/research-helper-quasar/storage",
+      storagePath: "",
 
       // layout
       leftMenuSize: 20,

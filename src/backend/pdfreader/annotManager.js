@@ -73,7 +73,7 @@ class AnnotManager {
       for (let key in props) {
         annot[key] = props[key];
       }
-      updateAnnotation(annot);
+      await updateAnnotation(annot);
 
       // update PDFReader UI
       if ("color" in props) {

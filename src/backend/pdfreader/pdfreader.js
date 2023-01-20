@@ -7,6 +7,7 @@ import { PeekManager } from "./pdfpeek";
 import { AnnotationType } from "./annotation";
 import { db } from "../database";
 import { debounce } from "quasar";
+import { openURL } from "quasar";
 
 class PDFApplication {
   constructor(container, peekContainer) {
@@ -26,7 +27,7 @@ class PDFApplication {
       findController: pdfFindController,
       annotationEditorMode: pdfjsLib.AnnotationEditorType.NONE,
     });
-    pdfLinkService.setViewer(pdfViewer);
+    // pdfLinkService.setViewer(pdfViewer);
 
     this.container = container;
     this.peekContainer = peekContainer;
@@ -43,10 +44,20 @@ class PDFApplication {
       );
     });
 
-    eventBus.on("annotationeditorlayerrendered", (e) => {
-      // peek hyperlinks
-      let links = this.container.querySelectorAll("a.internalLink");
-      for (let link of links) this.peekManager.peak(link);
+    eventBus.on("annotationlayerrendered", (e) => {
+      let links = this.container.querySelectorAll("a");
+      for (let link of links) {
+        if (link.classList.contains("internalLink")) {
+          // peek internal links
+          this.peekManager.peak(link);
+        } else {
+          // external links must open using default browser
+          link.onclick = (e) => {
+            e.preventDefault();
+            openURL(link.href);
+          };
+        }
+      }
     });
 
     // make saveState a debounce function

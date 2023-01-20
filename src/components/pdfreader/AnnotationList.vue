@@ -1,6 +1,6 @@
 <template>
   <!-- systembar: 32px, tab: 36px  -->
-  <q-scroll-area style="height: calc(100vh - 68px)">
+  <q-scroll-area style="height: 100%">
     <q-list
       ref="annotationList"
       dense

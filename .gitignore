@@ -1,9 +1,9 @@
 .DS_Store
 .thumbs.db
-node_modules
-/backend/linux-env
 .vscode
-/backend/extractor/__pycache__
+todo.md
+/node_modules
+/storage
 
 # couchdb server info
 log.txt

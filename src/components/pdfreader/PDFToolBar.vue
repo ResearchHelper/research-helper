@@ -160,7 +160,9 @@
       :ripple="false"
       icon="fullscreen"
       @click="requestFullscreen"
-    />
+    >
+      <q-tooltip>enter full screen</q-tooltip>
+    </q-btn>
     <q-btn
       v-else
       dense
@@ -169,7 +171,9 @@
       :ripple="false"
       icon="fullscreen_exit"
       @click="exitFullscreen"
-    />
+    >
+      <q-tooltip>exit full screen</q-tooltip>
+    </q-btn>
 
     <q-btn
       square
@@ -277,7 +281,6 @@ export default {
 
   setup() {
     const $q = useQuasar();
-    // const requestFullScreen = $q.fullscreen.request;
     const stateStore = useStateStore();
     return { stateStore, AnnotationType };
   },
@@ -343,16 +346,15 @@ export default {
       this.$emit("searchText", { query: "" });
     },
 
-    // TODO: make better full screen mode
     async requestFullscreen() {
       await this.$q.fullscreen.request();
-      // after successfully fullscreened, remove systembar
+      // after successfully fullscreened, remove leftmenu
       this.fullscreen = true;
     },
 
     async exitFullscreen() {
       await this.$q.fullscreen.exit();
-      // after exit fullscreen, show systembar again
+      // after exit fullscreen, show leftmenu again
       this.fullscreen = false;
     },
   },
