@@ -1,7 +1,13 @@
 <template>
+  <q-spinner-ios
+    v-show="!ready"
+    color="primary"
+    size="md"
+  />
   <div
-    style="height: 500px"
+    style="height: 100vh"
     id="cy"
+    ref="graph"
   ></div>
 </template>
 
@@ -24,6 +30,7 @@ export default {
 
   data() {
     return {
+      ready: false,
       nodes: [],
       edges: [],
     };
@@ -39,8 +46,12 @@ export default {
 
   async mounted() {
     if (!!!this.itemId) return;
+
     await this.getGraph();
     await this.drawGraph(this.stateStore);
+    setTimeout(() => {
+      this.ready = true;
+    }, 100);
   },
 
   methods: {
@@ -62,11 +73,20 @@ export default {
         // get projects and its notes
         projects.push(await getProject(projectId));
         notes = await getNotes(projectId);
+        let n = notes.length;
         // get related projects and their notes
         for (let relatedId of projects[0].related) {
           projects.push(await getProject(relatedId));
           let otherNotes = await getNotes(relatedId);
           notes = notes.concat(otherNotes);
+        }
+        // get linked projects/notes in the notes of current project
+        for (let note of notes.slice(0, n)) {
+          for (let link of note.links) {
+            let item = await getProject(link);
+            if (item.dataType === "project") projects.push(item);
+            else if (item.dataType === "note") notes.push(item);
+          }
         }
       }
 
@@ -74,7 +94,6 @@ export default {
       this.edges = [];
       for (let item of notes.concat(projects)) {
         let node = {};
-        let edge = {};
         if (item.dataType == "note") {
           node.data = {
             id: item._id,
@@ -86,6 +105,7 @@ export default {
           };
 
           for (let link of item.links) {
+            let edge = {};
             edge.data = {
               source: item._id,
               target: link,
@@ -103,6 +123,7 @@ export default {
           };
 
           for (let link of item.related) {
+            let edge = {};
             edge.data = {
               source: item._id,
               target: link,
@@ -163,6 +184,8 @@ export default {
         layout: {
           name: "cola",
           animate: false,
+          avoidOverlap: true,
+          nodeDimensionsIncludeLabels: true,
         },
       });
 

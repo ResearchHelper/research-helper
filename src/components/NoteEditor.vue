@@ -6,7 +6,9 @@
 </template>
 <script>
 import Vditor from "vditor";
-import "vditor/dist/index.css";
+// import "vditor/dist/index.css";
+import "src/css/vditor/vscode-dark-editor.css";
+import "src/css/vditor/vscode-dark-content.css";
 import { useStateStore } from "src/stores/appState";
 import {
   loadNote,
@@ -16,7 +18,7 @@ import {
   getNote,
   uploadImage,
 } from "src/backend/project/note";
-import { getAllProjects, getProject } from "src/backend/project/project";
+import { getAllProjects } from "src/backend/project/project";
 import { debounce } from "quasar";
 
 export default {
@@ -39,6 +41,11 @@ export default {
   },
 
   async mounted() {
+    let note = await getNote(this.noteId);
+    this.dirPath = window.path.dirname(note.path);
+    if (process.env.DEV) {
+      this.dirPath = "file://" + this.dirPath;
+    }
     this.$refs.vditor.setAttribute("id", `vditor-${this.noteId}`);
     this.showEditor = true;
     this.initEditor();
@@ -81,6 +88,9 @@ export default {
           hljs: {
             style: "native",
           },
+          markdown: {
+            linkBase: this.dirPath,
+          },
         },
         placeholder: "Live Markdown editor + Latex supported!",
         cache: {
@@ -116,8 +126,11 @@ export default {
           handler: (files) => {
             for (let file of files) {
               uploadImage(this.noteId, file).then((uploaded) => {
+                // this.editor.insertValue(
+                //   `![${uploaded.imgName}](${uploaded.imgPath})`
+                // );
                 this.editor.insertValue(
-                  `![${uploaded.imgName}](${uploaded.imgPath})`
+                  `![${uploaded.imgName}](./img/${uploaded.imgName})`
                 );
               });
             }
@@ -148,6 +161,7 @@ export default {
       let linkNodes = html.querySelectorAll("a");
       for (let node of linkNodes) {
         let link = node.getAttribute("href");
+        link = link.replace(this.dirPath + window.path.sep, "");
         try {
           new URL(link);
           // this is a valid url, do nothing
@@ -206,7 +220,3 @@ export default {
   },
 };
 </script>
-<style>
-@import "src/css/vditor/vscode-dark-editor.css";
-@import "src/css/vditor/vscode-dark-content.css";
-</style>

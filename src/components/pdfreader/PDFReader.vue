@@ -2,6 +2,7 @@
   <q-splitter
     style="position: absolute; width: 100%; height: 100%"
     v-model="rightMenuSize"
+    separator-class="q-splitter-separator"
     reverse
     :limits="[0, 60]"
   >

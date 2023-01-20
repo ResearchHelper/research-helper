@@ -21,7 +21,7 @@
   <q-splitter
     style="position: absolute; width: 100%; height: 100%"
     :limits="[0, 30]"
-    separator-class="separator"
+    separator-class="q-splitter-separator"
     v-model="treeViewSize"
   >
     <template v-slot:before>
@@ -36,7 +36,7 @@
         style="overflow: hidden"
         reverse
         :limits="[0, 60]"
-        separator-class="separator"
+        separator-class="q-splitter-separator"
         v-model="rightMenuSize"
       >
         <template v-slot:before>
@@ -315,16 +315,3 @@ export default {
   },
 };
 </script>
-
-<style lang="scss">
-.separator {
-  &:hover {
-    width: 5px;
-    background-color: $primary;
-  }
-  &:active {
-    width: 5px;
-    background-color: $primary;
-  }
-}
-</style>

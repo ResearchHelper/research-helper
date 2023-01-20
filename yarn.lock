@@ -7839,7 +7839,7 @@ vary@^1, vary@~1.1.2:
   resolved "https://registry.yarnpkg.com/vary/-/vary-1.1.2.tgz#2299f02c6ded30d4a5961b0b9f74524a18f634fc"
   integrity sha512-BNGbWLfd0eUPabhkXUVm0j8uuvREyTh5ovRa/dyow/BqAbZJyC+5fU+IzQOzmAKzYqYRAISoRhdQr3eIZ/PXqg==
 
-vditor@^3.8.17:
+vditor@3.8.17:
   version "3.8.17"
   resolved "https://registry.yarnpkg.com/vditor/-/vditor-3.8.17.tgz#13925dae3c70635bf70f28659915b5c523c00b29"
   integrity sha512-itaVyNwC/+xjOsTaDZKGy4BGhEcmZWkCDKaMyIH7rcbojw2H29Vg/FV1MNPcNyjZ6mvmcNlS6oZT1drDnAVFMQ==

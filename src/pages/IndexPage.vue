@@ -23,7 +23,7 @@
             :options="[{ icon: 'account_tree', value: true }]"
             @update:model-value="stateStore.saveState()"
           >
-            <q-tooltip>Active Projects</q-tooltip>
+            <q-tooltip>active projects</q-tooltip>
           </q-btn-toggle>
         </div>
 
@@ -35,16 +35,16 @@
             :ripple="false"
             @click="setComponent('library')"
           >
-            <q-tooltip>Library</q-tooltip>
+            <q-tooltip>library</q-tooltip>
           </q-btn>
           <q-btn
             flat
             square
             :ripple="false"
-            icon="info"
-            @click="setComponent('info')"
+            icon="help"
+            @click="setComponent('help')"
           >
-            <q-tooltip>Info</q-tooltip>
+            <q-tooltip>help</q-tooltip>
           </q-btn>
         </div>
       </div>
@@ -53,6 +53,7 @@
       <q-splitter
         :limits="[0, 60]"
         emit-immediately
+        separator-class="q-splitter-separator"
         v-model="leftMenuSize"
         @update:model-value="(size) => resizeLeftMenu(size)"
       >
@@ -213,9 +214,9 @@ export default {
       if (id == "library") {
         componentType = "LibraryPage";
         title = "Library";
-      } else if (id == "info") {
-        componentType = "InfoPage";
-        title = "Info";
+      } else if (id == "help") {
+        componentType = "HelpPage";
+        title = "Help";
       } else {
         let item = await getProject(id);
         if (item.dataType == "project") {

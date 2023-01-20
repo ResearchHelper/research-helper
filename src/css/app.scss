@@ -5,3 +5,25 @@
 .bg-dark-grey {
   background: #2a2a2a !important;
 }
+
+.q-splitter-separator {
+  &:hover {
+    width: 2px;
+    background-color: $primary;
+  }
+  &:active {
+    width: 2px;
+    background-color: $primary;
+  }
+}
+
+.q-splitter-separator-horizontal {
+  &:hover {
+    height: 2px;
+    background-color: $primary;
+  }
+  &:active {
+    height: 2px;
+    background-color: $primary;
+  }
+}
