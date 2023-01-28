@@ -96,6 +96,7 @@ import ExportDialog from "src/components/library/ExportDialog.vue";
 import IdentifierDialog from "src/components/library/IdentifierDialog.vue";
 import DeleteDialog from "src/components/library/DeleteDialog.vue";
 import ErrorDialog from "src/components/ErrorDialog.vue";
+import ErrorDialog from "src/components/ErrorDialog.vue";
 
 import {
   addProject,
@@ -113,6 +114,9 @@ export default {
   // every page should have two props
   props: { itemId: String, visible: Boolean },
 
+  // every page should have two props
+  props: { itemId: String, visible: Boolean },
+
   setup() {
     const stateStore = useStateStore();
     return { stateStore };
@@ -126,6 +130,7 @@ export default {
     MetaInfoTab,
     IdentifierDialog,
     DeleteDialog,
+    ErrorDialog,
     ErrorDialog,
   },
 
@@ -220,6 +225,24 @@ export default {
         }
       }
     },
+
+    // /**
+    //  * Modify the meta of a project object
+    //  * @param {Object} project
+    //  * @param {Object} meta
+    //  * @returns {Object} modifiedProject
+    //  */
+    // modifyProjectByMeta(project, meta) {
+    //   project.type = meta.type || "";
+    //   project.title = meta.title || "";
+    //   project.author = meta.author || [];
+    //   project.abstract = meta.abstract || "";
+    //   project.year = meta.year || null;
+    //   project.DOI = meta.DOI || "";
+    //   project.URL = meta.URL || "";
+    //   project.publisher = meta.publisher || "";
+    //   return project;
+    // },
 
     async processIdentifier(identifier) {
       if (!identifier) return;

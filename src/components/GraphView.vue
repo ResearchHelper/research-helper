@@ -1,23 +1,4 @@
 <template>
-  <q-spinner-ios
-    v-show="!ready && itemId !== 'library'"
-    color="primary"
-    size="md"
-  />
-  <div class="q-mx-xl q-my-sm row justify-between">
-    <div class="row items-center">
-      <div class="square"></div>
-      <div class="q-ml-xs">Project</div>
-    </div>
-    <div class="row items-center">
-      <div class="circle"></div>
-      <div class="q-ml-xs">Note</div>
-    </div>
-    <div class="row items-center">
-      <div class="triangle"></div>
-      <div class="q-ml-xs">Missing</div>
-    </div>
-  </div>
   <div
     :style="`height: ${height}px`"
     id="cy"

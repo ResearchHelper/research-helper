@@ -1,9 +1,7 @@
 .DS_Store
 .thumbs.db
 .vscode
-todo.md
 /node_modules
-/storage
 
 # couchdb server info
 log.txt
@@ -36,3 +34,5 @@ yarn-error.log*
 *.ntvs*
 *.njsproj
 *.sln
+todo.md
+/storage

@@ -54,6 +54,7 @@
         :limits="[0, 60]"
         emit-immediately
         separator-class="q-splitter-separator"
+        separator-class="q-splitter-separator"
         v-model="leftMenuSize"
         @update:model-value="(size) => resizeLeftMenu(size)"
       >
