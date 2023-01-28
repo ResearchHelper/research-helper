@@ -306,6 +306,11 @@ export default {
         else this.treeSize = this.maxHeight;
       }
     },
+
+    "$q.screen.height"(_) {
+      this.maxHeight = this.$el.offsetHeight - 36;
+      if (!this.isGraphViewOpened) this.treeSize = this.maxHeight;
+    },
   },
 
   methods: {
