@@ -103,7 +103,7 @@ import {
   updateProjectByMeta,
   getProject,
 } from "src/backend/project/project";
-import { createEdge } from "src/backend/project/graph";
+import { createEdge, updateEdge } from "src/backend/project/graph";
 import { useStateStore } from "src/stores/appState";
 import { exportFile } from "quasar";
 import { getMeta, exportMeta } from "src/backend/project/meta";
@@ -221,24 +221,6 @@ export default {
       }
     },
 
-    // /**
-    //  * Modify the meta of a project object
-    //  * @param {Object} project
-    //  * @param {Object} meta
-    //  * @returns {Object} modifiedProject
-    //  */
-    // modifyProjectByMeta(project, meta) {
-    //   project.type = meta.type || "";
-    //   project.title = meta.title || "";
-    //   project.author = meta.author || [];
-    //   project.abstract = meta.abstract || "";
-    //   project.year = meta.year || null;
-    //   project.DOI = meta.DOI || "";
-    //   project.URL = meta.URL || "";
-    //   project.publisher = meta.publisher || "";
-    //   return project;
-    // },
-
     async processIdentifier(identifier) {
       if (!identifier) return;
 
@@ -258,6 +240,12 @@ export default {
           // update an existing project meta
           let project = await getProject(this.stateStore.selectedItemId);
           project = await updateProjectByMeta(project, meta);
+          let sourceNode = {
+            id: project._id,
+            label: project.title,
+            type: "project",
+          };
+          await updateEdge(project._id, { sourceNode: sourceNode });
 
           // update ui
           this.updateProjectUI(project);
