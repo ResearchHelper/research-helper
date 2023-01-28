@@ -18,27 +18,9 @@
       <q-item
         clickable
         v-close-popup
-        @click="openItem"
-      >
-        <q-item-section>Open</q-item-section>
-      </q-item>
-      <q-separator />
-      <q-item
-        clickable
-        v-close-popup
         @click="copyItemId"
       >
-        <q-item-section>Copy Item ID</q-item-section>
-      </q-item>
-
-      <q-separator />
-
-      <q-item
-        clickable
-        v-close-popup
-        @click="showSearchMetaDialog"
-      >
-        <q-item-section>Search Item Meta</q-item-section>
+        <q-item-section>Copy Project ID</q-item-section>
       </q-item>
 
       <q-separator />
@@ -95,6 +77,22 @@
       </q-item>
 
       <q-separator />
+      <q-item
+        clickable
+        v-close-popup
+        @click="openItem"
+      >
+        <q-item-section>Open Project</q-item-section>
+      </q-item>
+
+      <q-item
+        clickable
+        v-close-popup
+        @click="showSearchMetaDialog"
+      >
+        <q-item-section>Search Meta Info</q-item-section>
+      </q-item>
+
       <q-item
         v-if="stateStore.selectedFolderId != 'library'"
         clickable

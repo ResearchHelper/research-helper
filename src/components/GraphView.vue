@@ -1,19 +1,13 @@
 <template>
-  <q-spinner-ios
-    v-show="!ready"
-    color="primary"
-    size="md"
-  />
   <div
-    style="height: 100vh"
+    :style="`height: ${height}px`"
     id="cy"
     ref="graph"
   ></div>
 </template>
 
 <script>
-import { getAllNotes, getNote, getNotes } from "src/backend/project/note";
-import { getAllProjects, getProject } from "src/backend/project/project";
+import { getOutEdge, getInEdges } from "src/backend/project/graph";
 import { useStateStore } from "src/stores/appState";
 
 import cytoscape from "cytoscape/dist/cytoscape.esm";
@@ -21,7 +15,7 @@ import cola from "cytoscape-cola";
 cytoscape.use(cola);
 
 export default {
-  props: { itemId: String },
+  props: { itemId: String, height: Number },
 
   setup() {
     const stateStore = useStateStore();
@@ -38,105 +32,89 @@ export default {
 
   watch: {
     async itemId(id) {
-      if (!!!id) return;
-      await this.getGraph();
-      await this.drawGraph(this.stateStore);
+      setTimeout(() => {
+        this.reload();
+      }, 100);
     },
   },
 
   async mounted() {
-    if (!!!this.itemId) return;
-
-    await this.getGraph();
-    await this.drawGraph(this.stateStore);
-    setTimeout(() => {
-      this.ready = true;
-    }, 100);
+    await this.reload();
   },
 
   methods: {
-    async getGraph() {
-      let notes = [];
-      let projects = [];
+    async reload() {
+      if (!!!this.itemId || this.itemId === "library") return;
+      this.ready = false;
+      await this.getGraph();
+      await this.drawGraph(this.stateStore);
+      this.ready = true;
+    },
 
-      if (!!!this.itemId || this.itemId == "library") {
-        notes = await getAllNotes();
-        projects = await getAllProjects();
-      } else {
-        let item = await getNote(this.itemId);
-        let projectId = "";
-        if (item.dataType == "project") {
-          projectId = item._id;
-        } else if (item.dataType == "note") {
-          projectId = item.projectId;
-        }
-        // get projects and its notes
-        projects.push(await getProject(projectId));
-        notes = await getNotes(projectId);
-        let n = notes.length;
-        // get related projects and their notes
-        for (let relatedId of projects[0].related) {
-          projects.push(await getProject(relatedId));
-          let otherNotes = await getNotes(relatedId);
-          notes = notes.concat(otherNotes);
-        }
-        // get linked projects/notes in the notes of current project
-        for (let note of notes.slice(0, n)) {
-          for (let link of note.links) {
-            let item = await getProject(link);
-            if (item.dataType === "project") projects.push(item);
-            else if (item.dataType === "note") notes.push(item);
-          }
-        }
-      }
+    async getGraph() {
+      if (!!!this.itemId || this.itemId == "library") return;
 
       this.nodes = [];
       this.edges = [];
-      for (let item of notes.concat(projects)) {
+
+      let outEdge = await getOutEdge(this.itemId);
+      let inEdges = await getInEdges(this.itemId);
+
+      // add source nodes
+      let sourceNode = {};
+      sourceNode.data = outEdge.sourceNode;
+      let type = sourceNode.data.type;
+      if (type === "project") sourceNode.data.shape = "rectangle";
+      else if (type === "note") sourceNode.data.shape = "ellipse";
+      else if (type === undefined) sourceNode.data.shape = "triangle";
+      sourceNode.data.bg =
+        this.itemId === sourceNode.data.id ? "#1976d2" : "white";
+      this.nodes.push(sourceNode);
+
+      for (let inEdge of inEdges) {
+        // add back linked nodes
         let node = {};
-        if (item.dataType == "note") {
-          node.data = {
-            id: item._id,
-            label: item.label,
-            parent: item.projectId,
-            shape: "ellipse",
-            type: "note",
-            bg: this.itemId == item._id ? "#1976d2" : "white",
-          };
+        node.data = inEdge.sourceNode;
+        if (node.data.type === "project") node.data.shape = "rectangle";
+        else if (node.data.type === "note") node.data.shape = "ellipse";
+        else if (node.data.type === undefined) node.data.shape = "triangle";
+        node.data.bg = this.itemId === node.data.id ? "#1976d2" : "white";
+        this.nodes.push(node);
 
-          for (let link of item.links) {
-            let edge = {};
-            edge.data = {
-              source: item._id,
-              target: link,
-            };
-            this.edges.push(edge);
-          }
-          this.nodes.push(node);
-        } else if (item.dataType == "project") {
-          node.data = {
-            id: item._id,
-            label: item.title,
-            shape: "rectangle",
-            type: "project",
-            bg: this.itemId == item._id ? "#1976d2" : "white",
-          };
+        // add in edges
+        let edge = {};
+        edge.data = {
+          source: inEdge.source,
+          target: sourceNode.data.id,
+        };
+        this.edges.push(edge);
+      }
 
-          for (let link of item.related) {
-            let edge = {};
-            edge.data = {
-              source: item._id,
-              target: link,
-            };
-            this.edges.push(edge);
-          }
-          this.nodes.push(node);
-        }
+      for (let i in outEdge.targetNodes) {
+        // add target nodes
+        let node = {};
+        node.data = outEdge.targetNodes[i];
+        if (outEdge.targetNodes[i].type === "project")
+          node.data.shape = "rectangle";
+        else if (outEdge.targetNodes[i].type === "note")
+          node.data.shape = "ellipse";
+        else if (outEdge.targetNodes[i].type === undefined)
+          node.data.shape = "triangle";
+        node.data.bg = this.itemId === node.data.id ? "#1976d2" : "white";
+        this.nodes.push(node);
+
+        // add out edges
+        let edge = {};
+        edge.data = {
+          source: outEdge.source,
+          target: outEdge.targets[i],
+        };
+        this.edges.push(edge);
       }
     },
 
     async drawGraph(stateStore) {
-      const cy = cytoscape({
+      let cy = cytoscape({
         container: document.getElementById("cy"),
 
         boxSelectionEnabled: false,
@@ -157,17 +135,6 @@ export default {
             css: {
               "text-valign": "top",
               "text-halign": "center",
-            },
-          },
-          {
-            selector: "node:parent",
-            css: {
-              "text-valign": "top",
-              "text-halign": "center",
-              "background-opacity": 0.1,
-              "background-color": function (ele) {
-                return ele.data("bg");
-              },
             },
           },
           {
@@ -201,3 +168,23 @@ export default {
   },
 };
 </script>
+<style scoped>
+.square {
+  width: 1em;
+  height: 1em;
+  background: white;
+}
+.circle {
+  width: 1em;
+  height: 1em;
+  background: white;
+  border-radius: 50%;
+}
+.triangle {
+  width: 0;
+  height: 0;
+  border-left: 0.7em solid transparent;
+  border-right: 0.7em solid transparent;
+  border-bottom: 1em solid white;
+}
+</style>

@@ -81,8 +81,18 @@
             @openItem="(row) => dblclickProject(row)"
             @deleteItem="(row) => deleteProject(row, false)"
             @deleteItemFromDB="(row) => deleteProject(row, true)"
-            @attachFile="(row) => updateProject(row)"
-            @addNote="(row) => addNote(row._id)"
+            @attachFile="
+              (row) => {
+                props.expand = true;
+                updateProject(row);
+              }
+            "
+            @addNote="
+              (row) => {
+                props.expand = true;
+                addNote(row._id);
+              }
+            "
           />
         </q-tr>
 
@@ -156,6 +166,14 @@ import {
   deleteNote,
   updateNote,
 } from "src/backend/project/note";
+import {
+  createEdge,
+  deleteEdge,
+  updateEdge,
+  appendEdgeTarget,
+  updateEdgeTarget,
+  deleteEdgeTarget,
+} from "src/backend/project/graph";
 
 export default {
   // props: { rightMenuSize: Number },
@@ -217,10 +235,15 @@ export default {
   },
 
   watch: {
-    "stateStore.selectedFolderId"(folderId, _) {
-      getProjectsByFolderId(folderId).then(
-        (projects) => (this.projects = projects)
+    async "stateStore.selectedFolderId"(folderId, _) {
+      this.projects = await getProjectsByFolderId(
+        this.stateStore.selectedFolderId
       );
+
+      for (let i in this.projects) {
+        // notes are the children of project
+        this.projects[i].children = await getNotes(this.projects[i]._id);
+      }
     },
   },
 
@@ -236,10 +259,14 @@ export default {
     async addNote(projectId) {
       // update db
       let note = await addNote(projectId);
+      await createEdge(note);
+      await appendEdgeTarget(note.projectId, note);
 
       // update ui
       let project = this.projects[this.selectedProjectIndex];
       project.children.push(note);
+      this.stateStore.selectedItemId = note._id;
+
       this.$bus.emit("updateProject", project); // to update ui of projectTree
     },
 
@@ -250,6 +277,8 @@ export default {
     async deleteNote(note) {
       // update db
       await deleteNote(note._id);
+      await deleteEdge(note._id);
+      await deleteEdgeTarget(note.projectId, note._id);
 
       // update ui
       let project = this.projects.find((p) => p._id == note.projectId);
@@ -264,6 +293,13 @@ export default {
     async renameNote(note) {
       // update db
       await updateNote(note._id, { label: note.label });
+      let sourceNode = {
+        id: note._id,
+        label: note.label,
+        type: note.dataType,
+      };
+      await updateEdge(note._id, { sourceNode: sourceNode });
+      await updateEdgeTarget(note.projectId, note);
 
       // update ui
       let project = this.projects.find((p) => p._id == note.projectId);
@@ -306,13 +342,22 @@ export default {
      * @param {Object} project
      * @param {boolean} deleteFromDB
      */
-    deleteProject(project, deleteFromDB) {
-      // update db
-      deleteProject(project._id, deleteFromDB);
+    async deleteProject(project, deleteFromDB) {
       // update ui
       this.projects = this.projects.filter((p) => p._id != project._id);
       // update projectTree ui
       this.$bus.emit("deleteProject", project._id);
+
+      // update db
+      await this.$nextTick(); // wait until the ui closes all windows
+      let notes = await getNotes(project._id);
+      await deleteProject(project._id, deleteFromDB);
+      if (deleteFromDB) {
+        await deleteEdge(project._id);
+        for (let note of notes) {
+          await deleteEdge(note._id);
+        }
+      }
     },
 
     /**

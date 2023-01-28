@@ -11,14 +11,6 @@ const AnnotationType = {
   INK: "ink",
 };
 
-function createIndex() {
-  return db.createIndex({
-    index: {
-      fields: ["dataType", "projectId", "pageNumber"],
-    },
-  });
-}
-
 async function getAnnotations(projectId) {
   try {
     let result = await db.find({
@@ -107,7 +99,6 @@ async function createAnnotation(container, annot, fromDB = false) {
 }
 
 export {
-  createIndex,
   getAnnotations,
   getAnnotationsByPage,
   getAnnotationById,

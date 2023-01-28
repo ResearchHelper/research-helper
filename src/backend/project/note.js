@@ -2,6 +2,7 @@ import { db } from "../database";
 import { uid } from "quasar";
 import { Buffer } from "buffer";
 import { createFile, deleteFile } from "./file";
+import { updateEdge } from "./graph";
 
 const fs = window.fs;
 const path = window.path;
@@ -15,7 +16,16 @@ const path = window.path;
  * @property {string} projectId - the project it belongs to
  * @property {string} path - path to actual markdown file
  * @property {string} label - markdown file name
- * @property {Array} links - array of ids link to other notes/projects
+ * @property {Array} forwardLinks - array of Links (link) to other notes/projects
+ * @property {Array} backwardLinks - array of backward Links (links) from other notes/projects
+ */
+
+/**
+ * Link object, equivalent to node object in graph (cytoscape)
+ * @typedef {Object} Link
+ * @property {string} id - id of the node
+ * @property {string} label - label of the node
+ * @property {string} type - "project" | "note"
  */
 
 /**
@@ -57,7 +67,7 @@ async function deleteNote(noteId) {
     // delete note entry from db
     let note = await db.get(noteId);
     await db.remove(note);
-    console.log(note);
+
     // delete actual file
     await deleteFile(note.path);
   } catch (error) {

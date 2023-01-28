@@ -19,6 +19,8 @@ async function getMeta(identifier, format = null) {
   }
 }
 
+window.getMeta = getMeta;
+
 /**
  * Export a folder of references to a specific format
  * @param {string} folderId

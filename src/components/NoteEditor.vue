@@ -6,7 +6,6 @@
 </template>
 <script>
 import Vditor from "vditor";
-// import "vditor/dist/index.css";
 import "src/css/vditor/vscode-dark-editor.css";
 import "src/css/vditor/vscode-dark-content.css";
 import { useStateStore } from "src/stores/appState";
@@ -18,6 +17,8 @@ import {
   getNote,
   uploadImage,
 } from "src/backend/project/note";
+
+import { updateEdge } from "src/backend/project/graph";
 import { getAllProjects } from "src/backend/project/project";
 import { debounce } from "quasar";
 
@@ -31,6 +32,7 @@ export default {
 
   data() {
     return {
+      currentNote: null,
       editor: "",
       showEditor: false,
 
@@ -41,8 +43,8 @@ export default {
   },
 
   async mounted() {
-    let note = await getNote(this.noteId);
-    this.dirPath = window.path.dirname(note.path);
+    this.currentNote = await getNote(this.noteId);
+    this.dirPath = window.path.dirname(this.currentNote.path);
     if (process.env.DEV) {
       this.dirPath = "file://" + this.dirPath;
     }
@@ -154,25 +156,47 @@ export default {
     },
 
     async saveLinks() {
-      let note = await getNote(this.noteId);
-      note.links = [];
+      // let note = await getNote(this.noteId);
+      // note.links = [];
+
+      let sourceNode = {
+        id: this.currentNote._id,
+        label: this.currentNote.label,
+        type: this.currentNote.dataType,
+      };
+      let targetNodes = [];
+
       let parser = new DOMParser();
       let html = parser.parseFromString(this.editor.getHTML(), "text/html");
       let linkNodes = html.querySelectorAll("a");
       for (let node of linkNodes) {
-        let link = node.getAttribute("href");
-        link = link.replace(this.dirPath + window.path.sep, "");
+        let href = node.getAttribute("href");
+        href = href.replace(this.dirPath + window.path.sep, "");
         try {
-          new URL(link);
+          new URL(href);
           // this is a valid url, do nothing
         } catch (error) {
           // this is an invalid url, might be an id
-          if (!link.includes(".")) {
-            note.links.push(link);
+          if (!href.includes(".")) {
+            // note.links.push(href);
+            let item = await getNote(href);
+            targetNodes.push({
+              id: href,
+              label: node.innerText,
+              type: item?.dataType,
+            });
           }
         }
       }
-      updateNote(this.noteId, { links: note.links });
+      // updateNote(this.noteId, { links: note.links });
+
+      let data = {
+        source: sourceNode.id,
+        targets: targetNodes.map((node) => node.id),
+        sourceNode: sourceNode,
+        targetNodes: targetNodes,
+      };
+      updateEdge(this.noteId, data);
     },
 
     async clickLink(linkNode) {
