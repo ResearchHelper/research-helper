@@ -81,7 +81,7 @@
       >
       </q-chip>
 
-      <q-input
+      <!-- <q-input
         borderless
         dense
         label="Related"
@@ -101,7 +101,7 @@
         @remove="removeRelated(project)"
         @click="clickRelated(project)"
       >
-      </q-chip>
+      </q-chip> -->
     </div>
   </div>
 </template>
@@ -186,7 +186,7 @@ export default {
       let item = await getProject(projectId);
       if (item.dataType !== "project") return;
       this.project = item;
-      await this.getRelatedProjects(this.project.related);
+      // await this.getRelatedProjects(this.project.related);
     },
 
     async getRelatedProjects(related) {
@@ -227,45 +227,45 @@ export default {
       this.project = await updateProject(this.project);
     },
 
-    async addRelated() {
-      // update related of current project
-      this.project.related.push(this.relatedProjectId);
-      this.project = await updateProject(this.project);
+    // async addRelated() {
+    //   // update related of current project
+    //   this.project.related.push(this.relatedProjectId);
+    //   this.project = await updateProject(this.project);
 
-      // update related of the related project
-      let relatedProject = await getProject(this.relatedProjectId);
-      relatedProject.related.push(this.project._id);
-      relatedProject = await updateProject(relatedProject);
+    //   // update related of the related project
+    //   let relatedProject = await getProject(this.relatedProjectId);
+    //   relatedProject.related.push(this.project._id);
+    //   relatedProject = await updateProject(relatedProject);
 
-      this.relatedProjectId = "";
-      await this.getRelatedProjects(this.project.related);
-    },
+    //   this.relatedProjectId = "";
+    //   await this.getRelatedProjects(this.project.related);
+    // },
 
-    async removeRelated(relatedProject) {
-      this.project.related = this.project.related.filter(
-        (id) => id != relatedProject._id
-      );
-      this.project = await updateProject(this.project);
+    // async removeRelated(relatedProject) {
+    //   this.project.related = this.project.related.filter(
+    //     (id) => id != relatedProject._id
+    //   );
+    //   this.project = await updateProject(this.project);
 
-      relatedProject = await getProject(relatedProject._id);
-      relatedProject.related = relatedProject.related.filter(
-        (id) => id != this.project._id
-      );
-      relatedProject = await updateProject(relatedProject);
+    //   relatedProject = await getProject(relatedProject._id);
+    //   relatedProject.related = relatedProject.related.filter(
+    //     (id) => id != this.project._id
+    //   );
+    //   relatedProject = await updateProject(relatedProject);
 
-      await this.getRelatedProjects(this.project.related);
-    },
+    //   await this.getRelatedProjects(this.project.related);
+    // },
 
-    clickRelated(project) {
-      if (this.stateStore.workingItemId == "library") {
-        // in case the related projects are not in the same folder
-        // switch to library folder first
-        this.stateStore.selectedFolderId = "library";
-        this.stateStore.selectedItemId = project._id;
-      } else {
-        this.stateStore.openItemId = project._id;
-      }
-    },
+    // clickRelated(project) {
+    //   if (this.stateStore.workingItemId == "library") {
+    //     // in case the related projects are not in the same folder
+    //     // switch to library folder first
+    //     this.stateStore.selectedFolderId = "library";
+    //     this.stateStore.selectedItemId = project._id;
+    //   } else {
+    //     this.stateStore.openItemId = project._id;
+    //   }
+    // },
   },
 };
 </script>

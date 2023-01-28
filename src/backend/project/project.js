@@ -134,11 +134,11 @@ async function updateProjectByMeta(project, meta) {
 /**
  * Get project from database by projectId
  * @param {string} projectId
- * @returns {Project} project
+ * @returns {Project|undefined} project
  */
-function getProject(projectId) {
+async function getProject(projectId) {
   try {
-    return db.get(projectId);
+    return await db.get(projectId);
   } catch (error) {
     console.log(error);
   }
@@ -165,6 +165,7 @@ async function getAllProjects() {
 async function getProjectsByFolderId(folderId) {
   let result = await db.find({
     selector: {
+      dataType: "project",
       folderIds: { $in: [folderId] },
     },
   });

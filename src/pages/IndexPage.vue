@@ -59,7 +59,7 @@
       >
         <template v-slot:before>
           <ProjectTree
-            style="height: 100vh"
+            style="height: 100vh; background-color: #222222"
             v-if="stateStore.ready"
             @addNode="(element) => addDragSource(element)"
             @renameNode="(node) => editComponentState(node)"
@@ -156,7 +156,7 @@ export default {
     async "stateStore.openItemId"(id) {
       if (!!!id) return;
       let item = await getProject(id);
-      if (item.dataType === "project" && !item.path) {
+      if (item?.dataType === "project" && !item?.path) {
         // although no window will be open, but still set ti as workingItem
         this.stateStore.workingItemId = id;
         return;
@@ -178,10 +178,13 @@ export default {
     let state = await getAppState();
     this.stateStore.loadState(state);
     if (this.stateStore.showLeftMenu) this.leftMenuSize = state.leftMenuSize;
-    if (!this.stateStore.storagePath) this.welcomeCarousel = true;
 
-    const layout = await getLayout();
-    await this.$refs.layout.loadGLLayout(layout.config);
+    if (!this.stateStore.storagePath) {
+      this.welcomeCarousel = true;
+    } else {
+      const layout = await getLayout();
+      await this.$refs.layout.loadGLLayout(layout.config);
+    }
   },
 
   methods: {
@@ -192,6 +195,8 @@ export default {
 
       // update ui
       this.welcomeCarousel = false;
+      const layout = await getLayout();
+      await this.$refs.layout.loadGLLayout(layout.config);
     },
 
     async resizeLeftMenu(size) {
@@ -240,7 +245,8 @@ export default {
     async removeComponent(id) {
       this.$refs.layout.removeGLComponent(id);
       let item = await getProject(id);
-      if (item.dataType == "project") {
+      // item might be undefined, use ?.
+      if (item?.dataType === "project") {
         let notes = await getNotes(id);
         for (let note of notes) {
           this.$refs.layout.removeGLComponent(note._id);

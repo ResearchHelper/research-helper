@@ -9,6 +9,7 @@
       'no-pointer-events': !isGraphViewOpened || !isTreeOpened,
     }"
     v-model="treeSize"
+    style="background: dark"
   >
     <template v-slot:before>
       <!-- expansion item title height: 36px -->
@@ -18,9 +19,22 @@
         dense-toggle
         expand-separator
         default-opened
-        label="Active projects"
+        hide-expand-icon
+        header-class="q-pa-none q-ma-none shadow-1 bg-dark"
+        header-style="height: 36px"
         :duration="0"
       >
+        <template v-slot:header="props">
+          <q-item-section
+            side
+            class="q-pa-none"
+          >
+            <q-icon
+              :name="props.expanded ? 'arrow_drop_down' : 'arrow_right'"
+            />
+          </q-item-section>
+          <q-item-section> Active Projects </q-item-section>
+        </template>
         <div :style="`height: ${treeSize - 36}px; overflow-y: auto`">
           <q-tree
             ref="tree"
@@ -141,13 +155,41 @@
         v-model="isGraphViewOpened"
         dense
         dense-toggle
+        switch-toggle-side
         expand-separator
-        label="Graph view"
+        hide-expand-icon
+        header-class="q-pa-none q-ma-none shadow-1 bg-dark"
         :duration="0"
       >
+        <template v-slot:header="props">
+          <q-item-section
+            side
+            class="q-pa-none"
+          >
+            <q-icon
+              :name="props.expanded ? 'arrow_drop_down' : 'arrow_right'"
+            />
+          </q-item-section>
+          <q-item-section> Related Items </q-item-section>
+          <q-item-section side>
+            <q-btn
+              flat
+              :ripple="false"
+              size="sm"
+              padding="none"
+              class="q-mr-xs"
+              icon="refresh"
+              @click.stop="$refs.graphview.reload()"
+            >
+              <q-tooltip>refresh graphview</q-tooltip>
+            </q-btn>
+          </q-item-section>
+        </template>
         <GraphView
           v-if="isGraphViewOpened"
           :itemId="stateStore.workingItemId"
+          :height="treeSize"
+          ref="graphview"
         />
       </q-expansion-item>
     </template>
@@ -159,7 +201,6 @@ import GraphView from "./GraphView.vue";
 
 import { useStateStore } from "src/stores/appState";
 import {
-  getNote,
   getNotes,
   addNote,
   deleteNote,
@@ -167,6 +208,14 @@ import {
 } from "src/backend/project/note";
 import { sortTree } from "src/backend/project/utils";
 import { getProject } from "src/backend/project/project";
+import {
+  createEdge,
+  deleteEdge,
+  updateEdge,
+  appendEdgeTarget,
+  deleteEdgeTarget,
+  updateEdgeTarget,
+} from "src/backend/project/graph";
 
 export default {
   emits: [
@@ -233,13 +282,13 @@ export default {
     async "stateStore.openItemId"(id) {
       if (!!!id) return;
       let node = this.$refs.tree.getNodeByKey(id);
-      if (!!node) return;
+      if (!!node) return; // if project is active already, return
 
       let item = await getProject(id);
-      if (item.dataType == "project") {
+      if (item?.dataType == "project") {
         this.stateStore.openedProjectIds.add(id);
         this.pushProjectNode(id);
-      } else if (item.dataType == "note") {
+      } else if (item?.dataType == "note") {
         this.stateStore.openedProjectIds.add(item.projectId);
         this.pushProjectNode(item.projectId);
       }
@@ -324,6 +373,7 @@ export default {
     },
 
     selectItem(node) {
+      console.log(node);
       this.stateStore.workingItemId = node._id;
       if (node.children?.length > 0) this.expanded.push(node._id);
 
@@ -350,6 +400,8 @@ export default {
     async addNote(node) {
       // update db
       let note = await addNote(node._id);
+      await createEdge(note);
+      await appendEdgeTarget(note.projectId, note);
 
       // update ui
       node.children.push(note);
@@ -361,6 +413,8 @@ export default {
     async deleteNote(node) {
       // update db
       await deleteNote(node._id);
+      await deleteEdge(node._id); // delete edge of note
+      await deleteEdgeTarget(node.projectId, node._id); // delete target from project's edge
 
       // update ui
       let index = this.projects.findIndex((p) => p.children.indexOf(node) > -1);
@@ -393,7 +447,14 @@ export default {
       let renamingNote = this.renamingNote;
       if (!!!renamingNote) return;
       // update db
-      updateNote(renamingNote._id, { label: renamingNote.label });
+      await updateNote(renamingNote._id, { label: renamingNote.label });
+      let sourceNode = {
+        id: renamingNote._id,
+        label: renamingNote.label,
+        type: renamingNote.dataType,
+      };
+      await updateEdge(renamingNote._id, { sourceNode, sourceNode });
+      await updateEdgeTarget(renamingNote.projectId, renamingNote);
 
       // update ui
       this.renamingNote = null;

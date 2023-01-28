@@ -103,6 +103,7 @@ import {
   updateProjectByMeta,
   getProject,
 } from "src/backend/project/project";
+import { createEdge } from "src/backend/project/graph";
 import { useStateStore } from "src/stores/appState";
 import { exportFile } from "quasar";
 import { getMeta, exportMeta } from "src/backend/project/meta";
@@ -181,9 +182,7 @@ export default {
      * @param {boolean} createProject
      */
     showIdentifierDialog(createProject) {
-      console.log("show dialog", this.identifierDialog);
       this.identifierDialog = true;
-      console.log("now show dialog", this.identifierDialog);
       this.createProject = createProject;
     },
 
@@ -193,6 +192,7 @@ export default {
     async addEmptyProject() {
       // udpate db
       let project = await addProject(this.stateStore.selectedFolderId);
+      await createEdge(project);
 
       // update ui
       this.$refs.table.addProject(project);
@@ -210,6 +210,7 @@ export default {
           project.path = await copyFile(file.path, project._id);
           project.title = window.path.basename(project.path, ".pdf");
           project = await updateProject(project);
+          await createEdge(project);
 
           // update ui
           this.$refs.table.addProject(project);
@@ -231,6 +232,7 @@ export default {
           // add a new project to db and update it with meta
           let project = await addProject(this.stateStore.selectedFolderId);
           project = await updateProjectByMeta(project, meta);
+          await createEdge(project);
 
           // update ui
           this.$refs.table.addProject(project);

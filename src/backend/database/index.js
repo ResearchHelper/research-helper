@@ -3,9 +3,19 @@ import Find from "pouchdb-find";
 PouchDB.plugin(Find);
 const db = new PouchDB("mydb");
 
+console.log(db.info());
+
 db.createIndex({
   index: {
-    fields: ["dataType", "projectId", "pageNumber", "folderIds", "children"],
+    fields: [
+      "dataType",
+      "projectId",
+      "pageNumber",
+      "folderIds",
+      "children",
+      "source",
+      "targets",
+    ],
   },
 });
 

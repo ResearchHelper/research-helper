@@ -48,7 +48,6 @@ export default {
     },
 
     deleteAnnot() {
-      console.log("delete", this.annotId);
       this.$emit("delete", { id: this.annotId });
     },
   },
