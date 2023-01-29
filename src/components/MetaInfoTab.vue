@@ -80,6 +80,28 @@
         @remove="removeTag(tag)"
       >
       </q-chip>
+
+      <!-- <q-input
+        borderless
+        dense
+        label="Related"
+        v-model.trim="relatedProjectId"
+        placeholder="projectID"
+        @keydown.enter="addRelated"
+      />
+      <q-chip
+        v-for="(project, index) in relatedProjects"
+        :key="index"
+        :ripple="false"
+        dense
+        :label="project.title"
+        icon="article"
+        clickable
+        removable
+        @remove="removeRelated(project)"
+        @click="clickRelated(project)"
+      >
+      </q-chip> -->
     </div>
   </div>
 </template>
@@ -87,7 +109,6 @@
 <script>
 import { useStateStore } from "src/stores/appState";
 import { getProject, updateProject } from "src/backend/project/project";
-import { updateEdge } from "src/backend/project/graph";
 
 export default {
   props: { projectId: String },
@@ -165,6 +186,7 @@ export default {
       let item = await getProject(projectId);
       if (item.dataType !== "project") return;
       this.project = item;
+      // await this.getRelatedProjects(this.project.related);
     },
 
     async getRelatedProjects(related) {
@@ -177,12 +199,6 @@ export default {
     async modifyInfo() {
       // update db and also update rev in this.project
       this.project = await updateProject(this.project);
-      let sourceNode = {
-        id: project._id,
-        label: project.title,
-        type: "project",
-      };
-      await updateEdge(this.project._id, { sourceNode: sourceNode });
 
       // update table data
       this.$emit("updateProject", this.project);
@@ -210,6 +226,46 @@ export default {
       // update db
       this.project = await updateProject(this.project);
     },
+
+    // async addRelated() {
+    //   // update related of current project
+    //   this.project.related.push(this.relatedProjectId);
+    //   this.project = await updateProject(this.project);
+
+    //   // update related of the related project
+    //   let relatedProject = await getProject(this.relatedProjectId);
+    //   relatedProject.related.push(this.project._id);
+    //   relatedProject = await updateProject(relatedProject);
+
+    //   this.relatedProjectId = "";
+    //   await this.getRelatedProjects(this.project.related);
+    // },
+
+    // async removeRelated(relatedProject) {
+    //   this.project.related = this.project.related.filter(
+    //     (id) => id != relatedProject._id
+    //   );
+    //   this.project = await updateProject(this.project);
+
+    //   relatedProject = await getProject(relatedProject._id);
+    //   relatedProject.related = relatedProject.related.filter(
+    //     (id) => id != this.project._id
+    //   );
+    //   relatedProject = await updateProject(relatedProject);
+
+    //   await this.getRelatedProjects(this.project.related);
+    // },
+
+    // clickRelated(project) {
+    //   if (this.stateStore.workingItemId == "library") {
+    //     // in case the related projects are not in the same folder
+    //     // switch to library folder first
+    //     this.stateStore.selectedFolderId = "library";
+    //     this.stateStore.selectedItemId = project._id;
+    //   } else {
+    //     this.stateStore.openItemId = project._id;
+    //   }
+    // },
   },
 };
 </script>
