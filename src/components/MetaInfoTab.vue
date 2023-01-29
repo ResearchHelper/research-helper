@@ -178,8 +178,8 @@ export default {
       // update db and also update rev in this.project
       this.project = await updateProject(this.project);
       let sourceNode = {
-        id: project._id,
-        label: project.title,
+        id: this.project._id,
+        label: this.project.title,
         type: "project",
       };
       await updateEdge(this.project._id, { sourceNode: sourceNode });
