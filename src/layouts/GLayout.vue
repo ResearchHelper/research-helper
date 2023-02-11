@@ -42,7 +42,7 @@ import {
   watch,
 } from "vue";
 import { VirtualLayout, LayoutConfig } from "golden-layout";
-import GLComponent from "./dynamicPages/GLComponent.vue";
+import GLComponent from "src/pages/GLComponent.vue";
 
 /*******************
  * Props and Emits
@@ -99,7 +99,7 @@ const addComponent = (componentType, title, id) => {
   // https://github.com/rollup/plugins/tree/master/packages/dynamic-import-vars#limitations
   // when building the app, vite will automatically take care the imports for us
   const component = markRaw(
-    defineAsyncComponent(() => import(`./dynamicPages/${componentType}.vue`))
+    defineAsyncComponent(() => import(`../pages/${componentType}.vue`))
   );
   AllComponents.value[index] = { component, id };
 

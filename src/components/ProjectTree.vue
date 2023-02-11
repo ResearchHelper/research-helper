@@ -133,7 +133,7 @@
                   :type="prop.node.dataType"
                 >
                   {{ prop.node.label }}
-                  <q-tooltip> id: {{ prop.key }} </q-tooltip>
+                  <q-tooltip> ID: {{ prop.key }} </q-tooltip>
                 </div>
               </div>
               <q-icon
