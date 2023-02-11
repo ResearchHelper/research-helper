@@ -1,33 +1,28 @@
 .vditor {
-  --border-color: #252526;
-  /* --second-color: #4e9773; */
-  --second-color: #1976d2;
-  /* --panel-background-color: #252526; */
-  --panel-background-color: #1d1d1d;
+  --border-color: #f3f3f3;
+  --second-color: #000000;
+  --panel-background-color: #ffffff;
   --panel-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-  /* --toolbar-background-color: #323233; */
-  --toolbar-background-color: #222222;
-  --toolbar-icon-color: #85837a;
-  --toolbar-icon-hover-color: #ffffff;
+  --toolbar-background-color: #dddddd;
+  --toolbar-icon-color: #595959;
+  --toolbar-icon-hover-color: #000000;
   --toolbar-height: 35px;
   --toolbar-divider-margin-top: 8px;
-  /* --textarea-background-color: #1e1e1e; */
-  --textarea-background-color: #1d1d1d;
-  --textarea-text-color: #cccccc;
+  --textarea-background-color: #ffffff;
+  --textarea-text-color: #000000;
   --resize-icon-color: var(--toolbar-icon-color);
   --resize-background-color: var(--toolbar-background-color);
   --resize-hover-icon-color: var(--panel-background-color);
   --resize-hover-background-color: var(--toolbar-icon-hover-color);
   --count-background-color: rgba(27, 31, 35, 0.05);
   --heading-border-color: #eaecef;
-  --blockquote-color: #cccccc;
-  --ir-heading-color: #569cd6;
+  --blockquote-color: #595959;
+  --ir-heading-color: #800000;
   --ir-title-color: grey;
-  --ir-bi-color: #569cd6;
-  --ir-link-color: #ce9160;
-  /* --ir-bracket-color: #ce9160; */
-  --ir-bracket-color: #1976d2;
-  --ir-paren-color: #ffd710;
+  --ir-bi-color: #000080;
+  --ir-link-color: #a31515;
+  --ir-bracket-color: #a31515;
+  --ir-paren-color: #ffd784;
 }
 @-webkit-keyframes tooltip-appear {
   0% {
@@ -56,7 +51,7 @@
   font-size: 0.8rem;
   font-weight: 400;
   -webkit-font-smoothing: subpixel-antialiased;
-  color: #fff;
+  color: #000000;
   text-align: center;
   text-decoration: none;
   text-shadow: none;
@@ -65,7 +60,7 @@
   word-wrap: break-word;
   white-space: pre;
   content: attr(aria-label);
-  background: #3b3e43;
+  background: #ffffff;
   border-radius: 3px;
   line-height: 16px;
 }
@@ -80,7 +75,7 @@
   z-index: 1000001;
   width: 0;
   height: 0;
-  color: #3b3e43;
+  color: #ffffff;
   content: "";
   border: 5px solid transparent;
 }
@@ -117,7 +112,7 @@
   right: 50%;
   bottom: -5px;
   margin-right: -5px;
-  border-bottom-color: #3b3e43;
+  border-bottom-color: #ffffff;
 }
 .vditor-tooltipped__se:after {
   right: auto;
@@ -141,7 +136,7 @@
   right: 50%;
   bottom: auto;
   margin-right: -5px;
-  border-top-color: #3b3e43;
+  border-top-color: #ffffff;
 }
 .vditor-tooltipped__ne:after {
   right: auto;
@@ -166,7 +161,7 @@
   bottom: 50%;
   left: -5px;
   margin-top: -5px;
-  border-left-color: #3b3e43;
+  border-left-color: #ffffff;
 }
 .vditor-tooltipped__e:after {
   bottom: 50%;
@@ -179,7 +174,7 @@
   right: -5px;
   bottom: 50%;
   margin-top: -5px;
-  border-right-color: #3b3e43;
+  border-right-color: #ffffff;
 }
 @media screen and (max-width: 520px) {
   .vditor-tooltipped:after,
@@ -368,7 +363,7 @@
   color: var(--toolbar-icon-hover-color) !important;
 }
 .vditor-menu--disabled {
-  color: #8c8c8c !important;
+  color: #c0c0c0 !important;
   cursor: not-allowed !important;
 }
 .vditor-emojis {
@@ -754,8 +749,8 @@
 }
 .vditor-hint--current,
 .vditor-hint button:not(.vditor-menu--disabled):hover {
-  background-color: #094771 !important;
-  color: var(--toolbar-icon-hover-color) !important;
+  background-color: #0060c0 !important;
+  color: white !important;
 }
 .vditor-hint__emoji {
   font-size: 16px;
@@ -777,7 +772,7 @@
   word-wrap: break-word;
   overflow: auto;
   line-height: 1.5;
-  font-size: 1rem;
+  font-size: 16px;
   word-break: break-word;
 }
 .vditor-reset--anchor {
@@ -877,7 +872,7 @@
   margin-bottom: 16px;
 }
 .vditor-reset p a {
-  color: #358aeb;
+  color: #006ab1;
   text-decoration: none;
 }
 .vditor-reset p a:hover {
@@ -886,9 +881,9 @@
 .vditor-reset blockquote {
   font-size: 0.9em;
   padding: 0.5em 1em;
-  color: #cacaca;
-  border-left: 0.25em solid #135079;
-  background-color: #282828;
+  color: #000000;
+  border-left: 0.25em solid #78b5de;
+  background-color: #f2f2f2;
   margin: 0 0 16px;
 }
 .vditor-reset blockquote > :first-child {

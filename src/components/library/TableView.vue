@@ -4,10 +4,11 @@
     <q-table
       v-if="ready"
       style="position: absolute; height: calc(100% - 50px); width: 100%"
-      class="stickyHeader"
+      class="stickyHeader no-shadow"
       virtual-scroll
       dense
       hide-bottom
+      square
       separator="none"
       :rows-per-page-options="[0]"
       :columns="headers"
@@ -37,7 +38,7 @@
           :props="props"
           :class="{
             'bg-primary': props.key === stateStore.selectedItemId,
-            'bg-dark-grey':
+            'bg-grey':
               props.rowIndex % 2 === 0 &&
               props.key !== stateStore.selectedItemId,
           }"
@@ -70,7 +71,7 @@
             </div>
             <div
               v-else
-              style="width: 30em"
+              style="font-size: 1rem; width: 30rem"
               class="ellipsis"
             >
               {{ col.value }}
@@ -511,7 +512,7 @@ export default {
   .q-table__bottom,
   thead tr:first-child th {
     /* bg color is important for th; just specify one */
-    background-color: $dark;
+    background-color: transparent;
   }
 
   thead tr th {

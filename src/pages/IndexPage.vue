@@ -35,7 +35,7 @@
             :ripple="false"
             @click="setComponent('library')"
           >
-            <q-tooltip>library</q-tooltip>
+            <q-tooltip>{{ $t("library") }}</q-tooltip>
           </q-btn>
           <q-btn
             flat
@@ -45,6 +45,15 @@
             @click="setComponent('help')"
           >
             <q-tooltip>help</q-tooltip>
+          </q-btn>
+          <q-btn
+            flat
+            square
+            :ripple="false"
+            icon="settings"
+            @click="setComponent('settings')"
+          >
+            <q-tooltip>settings</q-tooltip>
           </q-btn>
         </div>
       </div>
@@ -59,7 +68,7 @@
       >
         <template v-slot:before>
           <ProjectTree
-            style="height: 100vh; background-color: #222222"
+            style="height: 100vh"
             v-if="stateStore.ready"
             @addNode="(element) => addDragSource(element)"
             @renameNode="(node) => editComponentState(node)"
@@ -84,15 +93,13 @@
 </template>
 
 <script>
-import { useQuasar } from "quasar";
-
 import ProjectTree from "src/components/ProjectTree.vue";
 import WelcomeCarousel from "src/components/WelcomeCarousel.vue";
-
 import GLayout from "src/pages/GLayout.vue";
-import "golden-layout/dist/css/goldenlayout-base.css";
-import "golden-layout/dist/css/themes/goldenlayout-dark-theme.css";
+import "src/css/goldenlayout/base.scss";
+import "src/css/goldenlayout/theme.scss";
 
+import { useQuasar } from "quasar";
 import { useStateStore } from "src/stores/appState";
 import { getProject } from "src/backend/project/project";
 import { getNotes } from "src/backend/project/note";
@@ -112,10 +119,36 @@ export default {
 
   setup() {
     const $q = useQuasar();
-    $q.dark.set(true); // or false or "auto"
-    // $q.dark.toggle();
-
     const stateStore = useStateStore();
+
+    let theme = "dark";
+    switch (theme) {
+      case "dark":
+        $q.dark.set(true);
+        break;
+      case "light":
+        $q.dark.set(false);
+        break;
+    }
+
+    // let link = document.createElement("link");
+    // link.id = "layout-style";
+    // link.rel = "stylesheet";
+    // link.type = "text/css";
+    // document.head.append(link);
+    // let theme = "dark"; // get this from stateStore
+    // switch (theme) {
+    //   case "dark":
+    //     $q.dark.set(true);
+    //     link.href = "src/css/goldenlayout/goldenlayout-dark-theme.scss";
+    //     break;
+
+    //   case "light":
+    //     $q.dark.set(false);
+    //     link.href = "src/css/goldenlayout/goldenlayout-light-theme.scss";
+    //     break;
+    // }
+
     return { stateStore };
   },
 
@@ -216,21 +249,29 @@ export default {
     async setComponent(id) {
       let componentType = "";
       let title = "";
-      if (id == "library") {
-        componentType = "LibraryPage";
-        title = "Library";
-      } else if (id == "help") {
-        componentType = "HelpPage";
-        title = "Help";
-      } else {
-        let item = await getProject(id);
-        if (item.dataType == "project") {
-          componentType = "ReaderPage";
-          title = item.title;
-        } else if (item.dataType == "note") {
-          componentType = "NotePage";
-          title = item.label;
-        }
+      switch (id) {
+        case "library":
+          componentType = "LibraryPage";
+          title = "Library";
+          break;
+        case "help":
+          componentType = "HelpPage";
+          title = "Help";
+          break;
+        case "settings":
+          componentType = "SettingsPage";
+          title = "Settings";
+          break;
+        default:
+          let item = await getProject(id);
+          if (item.dataType == "project") {
+            componentType = "ReaderPage";
+            title = item.title;
+          } else if (item.dataType == "note") {
+            componentType = "NotePage";
+            title = item.label;
+          }
+          break;
       }
 
       await this.$refs.layout.addGLComponent(componentType, title, id);
@@ -345,36 +386,3 @@ export default {
   },
 };
 </script>
-
-<style lang="scss">
-/* hide the global scrollbar */
-html {
-  overflow: hidden;
-}
-.lm_close {
-  // we don't need this button, but we must keep it due to some bug
-  visibility: hidden;
-}
-.lm_tab {
-  height: 36px !important;
-  min-width: 100px;
-  max-width: 150px;
-  display: flex;
-  align-items: center;
-  white-space: nowrap;
-}
-.lm_close_tab {
-  top: unset !important;
-}
-.lm_active {
-  border-top: 0.2rem solid $primary;
-  background-color: #222222 !important;
-  box-shadow: 2px -2px 2px rgb(0 0 0 / 30%) !important;
-}
-.lm_header {
-  background: rgb(48, 48, 48);
-}
-.lm_header [class^="lm_"] {
-  box-sizing: inherit !important;
-}
-</style>

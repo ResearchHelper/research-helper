@@ -27,7 +27,8 @@ class PDFApplication {
       findController: pdfFindController,
       annotationEditorMode: pdfjsLib.AnnotationEditorType.NONE,
     });
-    // pdfLinkService.setViewer(pdfViewer);
+    // must have this otherwise find controller does not work
+    pdfLinkService.setViewer(pdfViewer);
 
     this.container = container;
     this.peekContainer = peekContainer;
@@ -69,6 +70,7 @@ class PDFApplication {
     let buffer = window.fs.readFileSync(filePath);
     this.pdfDocument = await pdfjsLib.getDocument({ data: buffer }).promise;
     this.pdfLinkService.setDocument(this.pdfDocument, null);
+    this.pdfFindController.setDocument(this.pdfDocument);
     this.pdfViewer.setDocument(this.pdfDocument);
     this.peekManager.loadPDF(filePath);
   }

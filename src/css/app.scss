@@ -1,9 +1,30 @@
 // app global css in SCSS form
+/* hide the global scrollbar */
+:root {
+  --color-layout-base-bkgd: transparent;
+  --color-layout-single-pane-content-bkgd: transparent;
+  --color-layout-splitter-dragging-bkgd: #444444;
+  --color-layout-active-tab-bkgd: #1d1d1d;
+  --color-layout-active-tab-fore: #dddddd;
+  --color-layout-focused-tab-bkgd: #1d1d1d;
+  --color-layout-single-tab-container-fore: #999999;
+  --color-layout-single-tab-container-bkgd: #2a2a2a;
+  --color-layout-header-bkgd: #222121;
+}
+
+html {
+  overflow: hidden;
+}
+
+.q-tooltip {
+  font-size: 0.8rem;
+}
+
 .text-dark-grey {
-  color: #2a2a2a !important;
+  color: $dark-grey !important;
 }
 .bg-dark-grey {
-  background: #2a2a2a !important;
+  background: $dark-grey !important;
 }
 
 .q-splitter-separator {

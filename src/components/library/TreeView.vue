@@ -67,11 +67,14 @@
             </q-list>
           </q-menu>
           <!-- the body of a tree node -->
-          <!-- icon width: 21px -->
-          <q-icon :name="prop.node.icon" />
+          <!-- icon width: 1.5rem -->
+          <q-icon
+            size="1.5rem"
+            :name="prop.node.icon"
+          />
           <input
             v-if="renamingFolderId === prop.node._id"
-            style="width: calc(100% - 21px)"
+            style="width: calc(100% - 1.5rem)"
             ref="renameInput"
             v-model="prop.node.label"
             @blur="renameFolder"
@@ -79,6 +82,7 @@
           />
           <div
             v-else
+            style="font-size: 1rem"
             class="ellipsis"
           >
             {{ prop.node.label }}

@@ -11,7 +11,10 @@
       colspan="100%"
     >
       <div class="row items-center">
-        <q-icon name="bi-file-text-fill" />
+        <q-icon
+          style="font-size: 1rem"
+          name="bi-file-text-fill"
+        />
         <input
           v-if="renaming"
           v-model="label"
@@ -21,6 +24,7 @@
         />
         <div
           v-else
+          style="font-size: 1rem"
           class="q-ml-xs"
         >
           {{ label }}
@@ -31,8 +35,18 @@
       v-else
       colspan="100%"
     >
-      <q-icon name="bi-file-pdf-fill" />
-      {{ basename(item.path) }}
+      <div class="row">
+        <q-icon
+          style="font-size: 1rem; padding-right: 0.3rem"
+          name="bi-file-pdf-fill"
+        />
+        <div
+          class="col"
+          style="font-size: 1rem"
+        >
+          {{ basename(item.path) }}
+        </div>
+      </div>
     </q-td>
 
     <q-menu

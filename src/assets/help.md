@@ -6,7 +6,7 @@ version 0.1.0-alpha
 
 ## Official sites
 
-- Official Site (in development)
+- [Official Site](https://researchhelper.github.io)
 - [GitHub Page](https://github.com/ResearchHelper/research-helper)
 
 ## Markdown basics

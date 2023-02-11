@@ -6,14 +6,11 @@
 </template>
 <script>
 import Vditor from "vditor";
-import "src/css/vditor/vscode-dark-editor.css";
-import "src/css/vditor/vscode-dark-content.css";
 import { useStateStore } from "src/stores/appState";
 import {
   loadNote,
   saveNote,
   getAllNotes,
-  updateNote,
   getNote,
   uploadImage,
 } from "src/backend/project/note";
@@ -27,7 +24,7 @@ export default {
 
   setup() {
     const stateStore = useStateStore();
-    return { stateStore, loadNote, saveNote };
+    return { stateStore };
   },
 
   data() {
@@ -55,6 +52,8 @@ export default {
 
   methods: {
     initEditor() {
+      this.setTheme("light");
+
       let toolbar = [];
       if (this.hasToolbar)
         toolbar = [
@@ -128,9 +127,6 @@ export default {
           handler: (files) => {
             for (let file of files) {
               uploadImage(this.noteId, file).then((uploaded) => {
-                // this.editor.insertValue(
-                //   `![${uploaded.imgName}](${uploaded.imgPath})`
-                // );
                 this.editor.insertValue(
                   `![${uploaded.imgName}](./img/${uploaded.imgName})`
                 );
@@ -139,6 +135,39 @@ export default {
           },
         },
       });
+    },
+
+    setTheme(theme) {
+      // must append editorStyle before contentStyle
+      // otherwise the texts are dark
+      let editorStyle = document.getElementById("vditor-editor-style");
+      let contentStyle = document.getElementById("vditor-content-style");
+      if (editorStyle === null) {
+        editorStyle = document.createElement("link");
+        editorStyle.id = "vditor-editor-style";
+        editorStyle.type = "text/css";
+        editorStyle.rel = "stylesheet";
+        document.head.append(editorStyle);
+      }
+      if (contentStyle === null) {
+        contentStyle = document.createElement("link");
+        contentStyle.id = "vditor-content-style";
+        contentStyle.type = "text/css";
+        contentStyle.rel = "stylesheet";
+        document.head.append(contentStyle);
+      }
+
+      switch (theme) {
+        case "dark":
+          editorStyle.href = "src/css/vditor/vscode-dark-editor.css";
+          contentStyle.href = "src/css/vditor/vscode-dark-content.css";
+          break;
+
+        case "light":
+          editorStyle.href = "src/css/vditor/vscode-light-editor.css";
+          contentStyle.href = "src/css/vditor/vscode-light-content.css";
+          break;
+      }
     },
 
     async setContent() {

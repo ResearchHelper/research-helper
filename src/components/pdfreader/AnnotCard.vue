@@ -35,13 +35,14 @@
     </q-card-section>
     <q-input
       v-if="editing"
-      v-model="annot.content"
-      @update:model-value="onInput"
-      @blur="editing = false"
       outlined
       square
       autogrow
       autofocus
+      input-style="font-size: 1rem"
+      v-model="annot.content"
+      @update:model-value="onInput"
+      @blur="editing = false"
     />
     <pre
       ref="content"
@@ -51,7 +52,7 @@
         max-height: 30vh;
         white-space: pre-wrap;
         overflow: auto;
-        border: 1px dashed grey;
+        border: 0.1rem dashed grey;
       "
       class="q-mx-xs q-my-xs"
       >{{ annot.content }}</pre

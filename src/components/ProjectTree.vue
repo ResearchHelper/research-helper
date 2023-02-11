@@ -9,7 +9,6 @@
       'no-pointer-events': !isGraphViewOpened || !isTreeOpened,
     }"
     v-model="treeSize"
-    style="background: dark"
   >
     <template v-slot:before>
       <!-- expansion item title height: 36px -->
@@ -20,7 +19,7 @@
         expand-separator
         default-opened
         hide-expand-icon
-        header-class="q-pa-none q-ma-none shadow-1 bg-dark"
+        header-class="q-pa-none q-ma-none shadow-1"
         header-style="height: 36px"
         :duration="0"
       >
@@ -108,17 +107,18 @@
 
                 <q-icon
                   v-if="prop.node.dataType == 'note'"
-                  size="xs"
+                  size="1.2rem"
                   name="bi-file-earmark-text"
                 />
                 <q-icon
                   v-else
-                  size="xs"
+                  size="1.2rem"
                   name="import_contacts"
                 />
+                <!-- note icon has 1rem width -->
                 <input
                   v-if="prop.node == renamingNote"
-                  style="width: calc(100% - 21px)"
+                  style="width: calc(100% - 1rem)"
                   v-model="prop.node.label"
                   @keydown.enter="renameNote"
                   @blur="renameNote"
@@ -127,22 +127,21 @@
                 <!-- add item-id and type for access of drag source -->
                 <div
                   v-else
-                  style="width: calc(100% - 23px)"
+                  style="width: calc(100% - 1.2rem)"
                   class="ellipsis"
                   :item-id="prop.key"
                   :type="prop.node.dataType"
                 >
                   {{ prop.node.label }}
-                  <q-tooltip>id: {{ prop.key }}</q-tooltip>
+                  <q-tooltip> id: {{ prop.key }} </q-tooltip>
                 </div>
               </div>
               <q-icon
                 v-if="prop.node.dataType == 'project'"
-                style="color: white"
                 name="close"
                 @click="closeProject(prop.key)"
               >
-                <q-tooltip>Close project</q-tooltip>
+                <q-tooltip> Close project </q-tooltip>
               </q-icon>
             </template>
           </q-tree>
@@ -158,7 +157,7 @@
         switch-toggle-side
         expand-separator
         hide-expand-icon
-        header-class="q-pa-none q-ma-none shadow-1 bg-dark"
+        header-class="q-pa-none q-ma-none shadow-1"
         :duration="0"
       >
         <template v-slot:header="props">

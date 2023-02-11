@@ -1,0 +1,60 @@
+.vditor-reset {
+  color: #000000;
+  background-color: #ffffff;
+}
+
+.vditor-reset h1,
+.vditor-reset h2 {
+  padding-bottom: 0.3em;
+  border-bottom: 1px solid #eaecef;
+}
+.vditor-reset hr {
+  background-color: #eaecef;
+}
+.vditor-reset blockquote {
+  color: #000000;
+  border-left: 0.25em solid #78b5de;
+}
+.vditor-reset iframe {
+  border: 1px solid #d1d5da;
+}
+.vditor-reset table tr {
+  border-top: 1px solid #c6cbd1;
+  background-color: transparent;
+}
+.vditor-reset code:not(.hljs):not(.highlight-chroma) {
+  background-color: rgba(27, 31, 35, 0.05);
+}
+.vditor-reset kbd {
+  color: #24292e;
+  background-color: #fafbfc;
+  border: 1px solid #d1d5da;
+  box-shadow: inset 0 -1px 0 #d1d5da;
+}
+.vditor-speech {
+  background-color: #f6f8fa;
+  border: 1px solid #d1d5da;
+  color: #586069;
+}
+.vditor-speech--current,
+.vditor-speech:hover {
+  color: #000080;
+}
+.vditor-linkcard a {
+  background-color: #f6f8fa;
+}
+.vditor-linkcard a:visited .vditor-linkcard__abstract {
+  color: rgba(88, 96, 105, 0.36);
+}
+.vditor-linkcard__title {
+  color: #24292e;
+}
+.vditor-linkcard__abstract {
+  color: #586069;
+}
+.vditor-linkcard__site {
+  color: #4285f4;
+}
+.vditor-linkcard__image {
+  background-color: rgba(88, 96, 105, 0.36);
+}

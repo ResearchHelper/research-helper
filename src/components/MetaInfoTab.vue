@@ -3,69 +3,82 @@
   <!-- show this after rightMenu is shown, 
     otherwise autogrow extends to full-height -->
   <div v-if="!!project">
+    <div style="font-size: 1.2rem">Type</div>
     <q-input
       borderless
       autogrow
       dense
-      label="Type"
+      input-style="font-size: 1rem; padding-top: 0"
       v-model="project.type"
       @blur="modifyInfo()"
     />
+    <q-separator />
+    <div style="font-size: 1.2rem">Title</div>
     <q-input
       borderless
       autogrow
       dense
-      label="Title"
+      input-style="font-size: 1rem; padding-top: 0"
       v-model="project.title"
       @blur="modifyInfo()"
     />
+    <q-separator />
+    <div style="font-size: 1.2rem">Author(s)</div>
     <q-input
       borderless
       autogrow
       dense
-      label="Author(s)"
+      input-style="font-size: 1rem; padding-top: 0"
       v-model="author"
       @blur="modifyInfo()"
     />
+    <q-separator />
+    <div style="font-size: 1.2rem">Abstract</div>
     <q-input
       borderless
       dense
       type="textarea"
-      label="Abstract"
+      input-style="font-size: 1rem; padding-top: 0"
       v-model="project.abstract"
       @blur="modifyInfo()"
     />
+    <q-separator />
+    <div style="font-size: 1.2rem">DOI</div>
     <q-input
       borderless
       autogrow
       dense
-      label="DOI"
+      input-style="font-size: 1rem; padding-top: 0"
       v-model="project.DOI"
       @blur="modifyInfo()"
     />
+    <q-separator />
+    <div style="font-size: 1.2rem">ISBN</div>
     <q-input
       borderless
       autogrow
       dense
-      label="ISBN"
+      input-style="font-size: 1rem; padding-top: 0"
       v-model="project.isbn"
       @blur="modifyInfo()"
     />
-
+    <q-separator />
+    <div style="font-size: 1.2rem">Attached File</div>
     <q-input
       borderless
       autogrow
       dense
-      label="File"
+      input-style="font-size: 1rem; padding-top: 0"
       v-model="project.path"
       @blur="modifyInfo()"
     />
-
+    <q-separator />
+    <div style="font-size: 1.2rem">Tags</div>
     <div class="column">
       <q-input
         borderless
         dense
-        label="Tags"
+        input-style="font-size: 1rem; padding-top: 0"
         v-model.trim="tag"
         @keydown.enter="addTag"
       />

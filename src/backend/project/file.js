@@ -1,6 +1,3 @@
-// import { useStateStore } from "src/stores/appState";
-// const stateStore = useStateStore();
-// const storagePath = stateStore.storagePath;
 import { db } from "../database";
 
 const path = window.path;
@@ -76,9 +73,26 @@ async function createFile(projectId, fileName) {
   }
 }
 
+/**
+ * Delete file
+ * @param {string} filePath
+ */
 function deleteFile(filePath) {
   try {
     fs.rmSync(filePath, { force: true });
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+/**
+ * Move folder
+ * @param {string} srcPath source path
+ * @param {string} dstPath destination path
+ */
+function moveFolder(srcPath, dstPath) {
+  try {
+    fs.renameSync(srcPath, dstPath);
   } catch (error) {
     console.log(error);
   }
@@ -90,4 +104,5 @@ export {
   copyFile,
   createFile,
   deleteFile,
+  moveFolder,
 };

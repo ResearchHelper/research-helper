@@ -2,7 +2,6 @@ import { db } from "../database";
 import { uid } from "quasar";
 import { Buffer } from "buffer";
 import { createFile, deleteFile } from "./file";
-import { updateEdge } from "./graph";
 
 const fs = window.fs;
 const path = window.path;
