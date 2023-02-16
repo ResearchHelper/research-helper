@@ -41,7 +41,7 @@
       square
       bordered
       flat
-      class="q-my-md"
+      class="q-my-md card"
     >
       <q-card-section>
         <div class="text-h6">Theme</div>
@@ -52,7 +52,6 @@
           outlined
           :options="themeOptions"
           v-model="theme"
-          @update:model-value="(option) => changeTheme(option.value)"
         />
       </q-card-section>
     </q-card>
@@ -61,21 +60,20 @@
       square
       bordered
       flat
-      class="q-my-md"
+      class="q-my-md card"
     >
       <q-card-section>
         <div class="text-h6">Font</div>
       </q-card-section>
       <q-card-section class="q-pt-none">
-        <div style="font-size: 1rem">Font size: {{ textsize }}px</div>
+        <div style="font-size: 1rem">Font size: {{ fontSize }}px</div>
         <q-slider
           class="col q-pl-md"
           :min="14"
           :max="25"
           markers
           snap
-          v-model="textsize"
-          @update:model-value="(textsize) => changeFontSize(textsize)"
+          v-model="fontSize"
         ></q-slider>
       </q-card-section>
     </q-card>
@@ -84,7 +82,7 @@
       square
       bordered
       flat
-      class="q-my-md"
+      class="q-my-md card"
     >
       <q-card-section>
         <div class="text-h6">Language</div>
@@ -95,7 +93,6 @@
           outlined
           v-model="language"
           :options="languageOptions"
-          @update:model-value="changeLanguage"
         />
       </q-card-section>
     </q-card>
@@ -104,7 +101,7 @@
       square
       bordered
       flat
-      class="q-my-md"
+      class="q-my-md card"
     >
       <q-card-section>
         <div class="text-h6">Storage</div>
@@ -116,7 +113,7 @@
           square
           readonly
           input-style="cursor: pointer; font-size: 1rem"
-          v-model="storagePath"
+          v-model="stateStore.settings.storagePath"
           @click="showFolderPicker"
         >
           <template v-slot:before>
@@ -128,7 +125,7 @@
   </div>
 </template>
 <script>
-import { useQuasar, dom } from "quasar";
+import { useQuasar } from "quasar";
 import { useStateStore } from "src/stores/appState";
 import { updateAppState } from "src/backend/appState";
 import { moveFolder } from "src/backend/project/file";
@@ -150,61 +147,93 @@ export default {
 
       progress: 1.0,
       textsize: 16,
-      storagePath: this.stateStore.storagePath,
 
       languageOptions: [
         { value: "en_US", label: "English (en_US)" },
         { value: "zh_CN", label: "中文 (zh_CN)" },
       ],
-      language: { value: "en_US", label: "English (en_US)" },
 
       themeOptions: [
         { value: "dark", label: "Dark (Default)" },
         { value: "light", label: "Light" },
       ],
-      theme: { value: "dark", label: "Dark" },
     };
+  },
+
+  computed: {
+    language: {
+      get() {
+        let result = null;
+        for (let option of this.languageOptions) {
+          if (option.value === this.stateStore.settings.language) {
+            result = option;
+          }
+        }
+        return result;
+      },
+      set(option) {
+        this.stateStore.settings.language = option.value;
+        this.changeLanguage(option.value);
+      },
+    },
+
+    theme: {
+      get() {
+        let result = null;
+        for (let option of this.themeOptions) {
+          if (option.value === this.stateStore.settings.theme) {
+            result = option;
+          }
+        }
+        return result;
+      },
+      set(option) {
+        this.stateStore.settings.theme = option.value;
+        this.changeTheme(option.value);
+      },
+    },
+
+    fontSize: {
+      get() {
+        return parseFloat(this.stateStore.settings.fontSize);
+      },
+      set(size) {
+        this.stateStore.settings.fontSize = size + "px";
+        this.changeFontSize(size);
+      },
+    },
   },
 
   methods: {
     changeFontSize(size) {
       document.documentElement.style.fontSize = size + "px";
+      this.saveAppState();
+    },
+
+    changeLanguage(locale) {
+      this.$i18n.locale = locale;
+      this.saveAppState();
     },
 
     changeTheme(theme) {
-      let colors = {};
       switch (theme) {
         case "dark":
           this.$q.dark.set(true);
-          colors = {
-            "--color-layout-active-tab-bkgd": "#2a2a2a",
-            "--color-layout-active-tab-fore": "#dddddd",
-            "--color-layout-focused-tab-bkgd": "#1d1d1d",
-            "--color-layout-single-tab-container-fore": "#999999",
-            "--color-layout-single-tab-container-bkgd": "#2a2a2a",
-            "--color-layout-header-bkgd": "#222121",
-          };
           break;
 
         case "light":
           this.$q.dark.set(false);
-          colors = {
-            "--color-layout-active-tab-bkgd": "white",
-            "--color-layout-active-tab-fore": "black",
-            "--color-layout-focused-tab-bkgd": "white",
-            "--color-layout-single-tab-container-fore": "black",
-            "--color-layout-single-tab-container-bkgd": "darkgrey",
-            "--color-layout-header-bkgd": "grey",
-          };
           break;
       }
-      for (let k in colors) {
-        document.documentElement.style.setProperty(k, colors[k]);
-      }
+      this.saveAppState();
     },
 
-    changeLanguage(option) {
-      this.$i18n.locale = option.value;
+    async changePath() {
+      // update db
+      this.oldStoragePath = this.stateStore.settings.storagePath;
+      this.stateStore.settings.storagePath = this.storagePath;
+      await this.saveAppState();
+      await this.moveFiles();
     },
 
     async showFolderPicker() {
@@ -215,21 +244,12 @@ export default {
       }
     },
 
-    async changePath() {
-      // update db
-      this.oldStoragePath = this.stateStore.storagePath;
-      this.stateStore.storagePath = this.storagePath;
-      let state = this.stateStore.saveState();
-      await updateAppState(state);
-      await this.moveFiles();
-    },
-
     async moveFiles() {
       // show progress bar
       this.showProgressDialog = true;
 
       // move files
-      moveFolder(this.oldStoragePath, this.stateStore.storagePath);
+      moveFolder(this.oldStoragePath, this.stateStore.settings.storagePath);
 
       // update file paths in db
       let projects = await getAllProjects();
@@ -242,7 +262,7 @@ export default {
 
         item.path = item.path.replace(
           this.oldStoragePath,
-          this.stateStore.storagePath
+          this.stateStore.settings.storagePath
         );
         this.progress = index / n;
       }
@@ -254,6 +274,17 @@ export default {
         this.error = error;
       }
     },
+
+    async saveAppState() {
+      let state = this.stateStore.saveState();
+      await updateAppState(state);
+    },
   },
 };
 </script>
+
+<style scoped>
+.card {
+  background: var(--color-settings-card-bkgd);
+}
+</style>

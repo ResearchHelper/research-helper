@@ -14,7 +14,7 @@ const AnnotationType = {
 async function getAnnotations(projectId) {
   try {
     let result = await db.find({
-      selector: { dataType: "pdf_annotation", projectId: projectId },
+      selector: { dataType: "pdfAnnotation", projectId: projectId },
     });
 
     return result.docs;
@@ -67,7 +67,7 @@ async function createAnnotation(container, annot, fromDB = false) {
 
     // some necessary attributes
     annot._id = uid();
-    annot.dataType = "pdf_annotation";
+    annot.dataType = "pdfAnnotation";
     annot.content = "";
   }
 

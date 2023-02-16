@@ -26,9 +26,10 @@
   >
     <template v-slot:before>
       <TreeView
-        ref="tree"
+        style="background: var(--color-library-treeview-bkgd)"
         :draggingProjectId="draggingProjectId"
         @exportFolder="(folder) => showExportFolderDialog(folder)"
+        ref="tree"
       />
     </template>
     <template v-slot:after>
@@ -41,6 +42,10 @@
       >
         <template v-slot:before>
           <ActionBar
+            style="
+              min-height: 36px;
+              background: var(--color-library-toolbar-bkgd);
+            "
             v-model:searchString="searchString"
             :rightMenuSize="rightMenuSize"
             @toggleRightMenu="(visible) => toggleRightMenu(visible)"
@@ -49,7 +54,14 @@
             @showIdentifierDialog="showIdentifierDialog(true)"
             ref="actionBar"
           />
+          <!-- actionbar height 36px, table view is 100%-36px -->
           <TableView
+            style="
+              position: absolute;
+              height: calc(100% - 36px);
+              width: 100%;
+              background: var(--color-library-tableview-bkgd);
+            "
             :searchString="searchString"
             @dragProject="(key) => onDragProject(key)"
             ref="table"
@@ -66,11 +78,16 @@
               name="metaInfoTab"
               icon="info"
               :ripple="false"
-            />
+            >
+              <q-tooltip>{{ $t("metaInfo") }}</q-tooltip>
+            </q-tab>
           </q-tabs>
           <!-- q-tab height 36px -->
           <q-tab-panels
-            style="height: calc(100% - 36px)"
+            style="
+              height: calc(100% - 36px);
+              background: var(--color-rightmenu-tab-panel-bkgd);
+            "
             model-value="metaInfoTab"
           >
             <q-tab-panel name="metaInfoTab">

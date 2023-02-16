@@ -39,6 +39,12 @@ export default {
     };
   },
 
+  watch: {
+    "stateStore.settings.theme"(theme) {
+      this.setTheme(theme);
+    },
+  },
+
   async mounted() {
     this.currentNote = await getNote(this.noteId);
     this.dirPath = window.path.dirname(this.currentNote.path);
@@ -52,8 +58,6 @@ export default {
 
   methods: {
     initEditor() {
-      this.setTheme("light");
-
       let toolbar = [];
       if (this.hasToolbar)
         toolbar = [
@@ -86,9 +90,6 @@ export default {
           math: {
             inlineDigit: true,
           },
-          hljs: {
-            style: "native",
-          },
           markdown: {
             linkBase: this.dirPath,
           },
@@ -108,7 +109,10 @@ export default {
           ],
         },
         after: () => {
-          if (!!this.showEditor) this.setContent();
+          if (!!this.showEditor) {
+            this.setContent();
+            this.setTheme(this.stateStore.settings.theme);
+          }
         },
         focus: () => {
           // used to filter stuff
@@ -138,6 +142,12 @@ export default {
     },
 
     setTheme(theme) {
+      // this is used to set code theme
+      this.editor.setTheme(
+        theme,
+        theme,
+        theme === "dark" ? "solarized-dark256" : "solarized-light"
+      );
       // must append editorStyle before contentStyle
       // otherwise the texts are dark
       let editorStyle = document.getElementById("vditor-editor-style");

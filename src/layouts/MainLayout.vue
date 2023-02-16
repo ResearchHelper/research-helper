@@ -1,7 +1,7 @@
 <template>
   <WelcomeCarousel
     v-if="welcomeCarousel"
-    @selectPath="(path) => setStoragePath(path)"
+    @selectPath="(path) => changeStoragePath(path)"
   />
   <q-splitter
     :model-value="56"
@@ -10,7 +10,7 @@
   >
     <template v-slot:before>
       <div
-        style="height: 100vh"
+        style="height: 100vh; background: var(--color-leftmenu-bkgd)"
         class="column justify-between"
       >
         <div>
@@ -120,17 +120,6 @@ export default {
   setup() {
     const $q = useQuasar();
     const stateStore = useStateStore();
-
-    let theme = "dark";
-    switch (theme) {
-      case "dark":
-        $q.dark.set(true);
-        break;
-      case "light":
-        $q.dark.set(false);
-        break;
-    }
-
     return { stateStore };
   },
 
@@ -153,8 +142,10 @@ export default {
       set(visible) {
         this.stateStore.showLeftMenu = visible;
         if (visible) {
-          this.leftMenuSize = this.stateStore.leftMenuSize;
+          // if visible, the left menu has at least 10 unit width
+          this.leftMenuSize = Math.max([this.stateStore.leftMenuSize, 10]);
         } else {
+          // if not visible, record the size and close the menu
           this.stateStore.leftMenuSize = this.leftMenuSize;
           this.leftMenuSize = 0;
         }
@@ -192,31 +183,52 @@ export default {
   async mounted() {
     let state = await getAppState();
     this.stateStore.loadState(state);
-    if (this.stateStore.showLeftMenu) this.leftMenuSize = state.leftMenuSize;
 
-    if (!this.stateStore.storagePath) {
+    if (this.stateStore.showLeftMenu) this.leftMenuSize = state.leftMenuSize;
+    const layout = await getLayout();
+    await this.$refs.layout.loadGLLayout(layout.config);
+
+    this.changeTheme(this.stateStore.settings.theme);
+    this.changeLanguage(this.stateStore.settings.language);
+    this.changeFontSize(this.stateStore.settings.fontSize);
+    if (!this.stateStore.settings.storagePath) {
       this.welcomeCarousel = true;
-    } else {
-      const layout = await getLayout();
-      await this.$refs.layout.loadGLLayout(layout.config);
     }
+    await this.saveAppState();
   },
 
   methods: {
-    async setStoragePath(path) {
+    /**
+     * Load and apply settings
+     */
+
+    changeTheme(theme) {
+      switch (theme) {
+        case "dark":
+          this.$q.dark.set(true);
+          break;
+
+        case "light":
+          this.$q.dark.set(false);
+          break;
+      }
+    },
+
+    changeLanguage(locale) {
+      this.$i18n.locale = locale;
+    },
+
+    changeFontSize(fontSize) {
+      document.documentElement.style.fontSize = fontSize;
+    },
+
+    changeStoragePath(path) {
       // update db
-      this.stateStore.storagePath = path;
-      await this.saveAppState();
+      this.stateStore.settings.storagePath = path;
+      this.saveAppState();
 
       // update ui
       this.welcomeCarousel = false;
-      const layout = await getLayout();
-      await this.$refs.layout.loadGLLayout(layout.config);
-    },
-
-    async resizeLeftMenu(size) {
-      this.$refs.layout.resize();
-      this.stateStore.leftMenuSize = size > 10 ? size : 10;
     },
 
     /*****************************************************************
@@ -292,6 +304,11 @@ export default {
     /***************************************************
      * Layout and AppState
      ***************************************************/
+
+    async resizeLeftMenu(size) {
+      this.$refs.layout.resize();
+      this.stateStore.leftMenuSize = size > 10 ? size : 10;
+    },
 
     /**
      * When layout is changed, save layout and appstate

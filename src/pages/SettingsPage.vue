@@ -5,32 +5,35 @@
     :separator-style="{ cursor: 'default' }"
   >
     <template v-slot:before>
-      <q-tabs
-        v-model="tab"
-        vertical
-        no-caps
-        stretch
-        inline-label
-        align="left"
-        indicator-color="transparent"
-        active-color="primary"
-      >
-        <q-tab
-          name="general"
-          :ripple="false"
+      <div style="background: var(--color-settings-tabs-area-bkgd)">
+        <q-tabs
+          v-model="tab"
+          vertical
+          no-caps
+          stretch
+          inline-label
+          align="left"
+          indicator-color="transparent"
+          active-color="primary"
         >
-          <q-icon
-            name="bi-grid-1x2"
-            size="1.2rem"
-          />
-          <div style="font-size: 1rem; padding-left: 0.5rem">General</div>
-        </q-tab>
-      </q-tabs>
+          <q-tab
+            name="general"
+            :ripple="false"
+          >
+            <q-icon
+              name="bi-grid-1x2"
+              size="1.2rem"
+            />
+            <div style="font-size: 1rem; padding-left: 0.5rem">General</div>
+          </q-tab>
+        </q-tabs>
+      </div>
     </template>
 
     <template v-slot:after>
       <div class="fit row">
         <q-tab-panels
+          style="background: var(--color-settings-tab-panel-bkgd)"
           v-model="tab"
           vertical
           class="fit"

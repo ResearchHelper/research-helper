@@ -78,13 +78,13 @@ class PDFApplication {
   async loadState(projectId) {
     try {
       let result = await db.find({
-        selector: { dataType: "pdf_state", projectId: projectId },
+        selector: { dataType: "pdfState", projectId: projectId },
       });
 
       let state = result.docs[0];
       if (!!!state) {
         state = {
-          dataType: "pdf_state",
+          dataType: "pdfState",
           projectId: projectId,
           pagesCount: 0,
           currentPageNumber: 1,
@@ -190,8 +190,14 @@ class PDFApplication {
       return tree;
     }
 
-    let outline = await this.pdfDocument.getOutline();
-    return _dfs(outline);
+    let toc = [];
+    try {
+      let outline = await this.pdfDocument.getOutline();
+      toc = _dfs(outline);
+    } catch (error) {
+      console.log(error);
+    }
+    return toc;
   }
 
   /**

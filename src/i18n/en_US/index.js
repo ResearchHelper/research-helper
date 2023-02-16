@@ -1,7 +1,10 @@
 export default {
   // library page
+  // action bar
   add: "Add",
-  info: "Detail Info",
+  localSearch: "Local search",
+  info: "Detail info",
+
   // reader page
   cursor: "Cursor",
   highlight: "Hightlight",
@@ -19,6 +22,7 @@ export default {
   settings: "Settings",
   // project tree
   // right menu
+  metaInfo: "Meta info",
   // meta tab
   // annot card
 };

@@ -1,153 +1,146 @@
 <template>
-  <div>
-    <!-- actionBar height 50px  -->
-    <q-table
-      v-if="ready"
-      style="position: absolute; height: calc(100% - 50px); width: 100%"
-      class="stickyHeader no-shadow"
-      virtual-scroll
-      dense
-      hide-bottom
-      square
-      separator="none"
-      :rows-per-page-options="[0]"
-      :columns="headers"
-      :rows="projects"
-      row-key="_id"
-      :wrap-cells="true"
-      :filter="searchString"
-      :filter-method="searchProject"
-      ref="table"
-    >
-      <template v-slot:header="props">
-        <q-tr :props="props">
-          <q-th auto-width></q-th>
-          <q-th
-            v-for="col in props.cols"
-            :key="col.name"
-            :props="props"
-          >
-            <div class="text-subtitle1 text-bold">{{ col.label }}</div>
-          </q-th>
-        </q-tr>
-      </template>
-      <template v-slot:body="props">
-        <q-tr
-          no-hover
-          style="cursor: pointer"
+  <!-- actionBar height 36px  -->
+  <q-table
+    v-if="ready"
+    class="stickyHeader no-shadow"
+    virtual-scroll
+    dense
+    hide-bottom
+    square
+    separator="none"
+    :rows-per-page-options="[0]"
+    :columns="headers"
+    :rows="projects"
+    row-key="_id"
+    :wrap-cells="true"
+    :filter="searchString"
+    :filter-method="searchProject"
+    ref="table"
+  >
+    <template v-slot:header="props">
+      <q-tr :props="props">
+        <q-th auto-width></q-th>
+        <q-th
+          v-for="col in props.cols"
+          :key="col.name"
           :props="props"
-          :class="{
-            'bg-primary': props.key === stateStore.selectedItemId,
-            'bg-grey':
-              props.rowIndex % 2 === 0 &&
-              props.key !== stateStore.selectedItemId,
-          }"
-          draggable="true"
-          @dragstart="onDragStart(props.key)"
-          @dragend="onDragEnd"
         >
-          <q-td auto-width>
-            <q-icon
-              v-if="!!props.row.path || props.row.children?.length > 0"
-              size="sm"
-              :name="props.expand ? 'arrow_drop_down' : 'arrow_right'"
-              @click="props.expand = !props.expand"
-            />
-          </q-td>
-          <q-td
-            v-for="col in props.cols"
-            :key="col.name"
-            :props="props"
-            @click="clickProject(props.row, props.rowIndex)"
-            @dblclick="dblclickProject(props.row)"
-            @contextmenu="toggleContextMenu(props.row, props.rowIndex)"
-          >
-            <div
-              v-if="col.name === 'author'"
-              style="width: 20em"
-              class="ellipsis"
-            >
-              {{ authorString(col.value) }}
-            </div>
-            <div
-              v-else
-              style="font-size: 1rem; width: 30rem"
-              class="ellipsis"
-            >
-              {{ col.value }}
-            </div>
-          </q-td>
-          <TableProjectMenu
-            :row="props.row"
-            @openItem="(row) => dblclickProject(row)"
-            @deleteItem="(row) => deleteProject(row, false)"
-            @deleteItemFromDB="(row) => deleteProject(row, true)"
-            @attachFile="
-              (row) => {
-                props.expand = true;
-                updateProject(row);
-              }
-            "
-            @addNote="
-              (row) => {
-                props.expand = true;
-                addNote(row._id);
-              }
-            "
+          <div class="text-subtitle1 text-bold">{{ col.label }}</div>
+        </q-th>
+      </q-tr>
+    </template>
+    <template v-slot:body="props">
+      <q-tr
+        no-hover
+        style="cursor: pointer"
+        :props="props"
+        :class="{
+          'bg-primary': props.key === stateStore.selectedItemId,
+          'tableview-row':
+            props.rowIndex % 2 === 0 && props.key !== stateStore.selectedItemId,
+        }"
+        draggable="true"
+        @dragstart="onDragStart(props.key)"
+        @dragend="onDragEnd"
+      >
+        <q-td auto-width>
+          <q-icon
+            v-if="!!props.row.path || props.row.children?.length > 0"
+            size="sm"
+            :name="props.expand ? 'arrow_drop_down' : 'arrow_right'"
+            @click="props.expand = !props.expand"
           />
-        </q-tr>
-
-        <!-- PDF -->
-        <TableItemRow
-          v-if="props.expand && !!props.row.path"
-          :item="props.row"
-          :class="{
-            'bg-primary': props.key === stateStore.selectedItemId,
-            'bg-dark-grey':
-              props.rowIndex % 2 === 0 &&
-              props.key !== stateStore.selectedItemId,
-          }"
-          @clickPDF="selectedProjectIndex = props.rowIndex"
-        />
-        <!-- Notes -->
-        <TableItemRow
-          v-show="props.expand"
-          v-for="note in props.row.children"
-          :key="note._id"
-          :item="note"
-          :class="{
-            'bg-primary': note._id === stateStore.selectedItemId,
-            'bg-dark-grey':
-              props.rowIndex % 2 === 0 &&
-              note._id !== stateStore.selectedItemId,
-          }"
-          @renameNote="(note) => renameNote(note)"
-          @deleteNote="(note) => deleteNote(note)"
-        />
-
-        <q-tr
-          v-show="!!searchString"
+        </q-td>
+        <q-td
+          v-for="col in props.cols"
+          :key="col.name"
           :props="props"
-          :class="{
-            'bg-primary': props.key === stateStore.selectedItemId,
-            'bg-dark-grey':
-              props.rowIndex % 2 === 0 &&
-              props.key !== stateStore.selectedItemId,
-          }"
+          @click="clickProject(props.row, props.rowIndex)"
+          @dblclick="dblclickProject(props.row)"
+          @contextmenu="toggleContextMenu(props.row, props.rowIndex)"
         >
-          <q-td colspan="100%">
-            <div
-              :style="`width: ${
-                $refs.table.$el.getBoundingClientRect().width * 0.8
-              }px;`"
-              class="q-px-lg ellipsis text-grey text-capitalize"
-              v-html="expansionText[props.rowIndex]"
-            ></div>
-          </q-td>
-        </q-tr>
-      </template>
-    </q-table>
-  </div>
+          <div
+            v-if="col.name === 'author'"
+            style="width: 20em"
+            class="ellipsis"
+          >
+            {{ authorString(col.value) }}
+          </div>
+          <div
+            v-else
+            style="font-size: 1rem; width: 30rem"
+            class="ellipsis"
+          >
+            {{ col.value }}
+          </div>
+        </q-td>
+        <TableProjectMenu
+          :row="props.row"
+          @openItem="(row) => dblclickProject(row)"
+          @deleteItem="(row) => deleteProject(row, false)"
+          @deleteItemFromDB="(row) => deleteProject(row, true)"
+          @attachFile="
+            (row) => {
+              props.expand = true;
+              updateProject(row);
+            }
+          "
+          @addNote="
+            (row) => {
+              props.expand = true;
+              addNote(row._id);
+            }
+          "
+        />
+      </q-tr>
+
+      <!-- PDF -->
+      <TableItemRow
+        v-if="props.expand && !!props.row.path"
+        :item="props.row"
+        :class="{
+          'bg-primary': props.key === stateStore.selectedItemId,
+          'tableview-row':
+            props.rowIndex % 2 === 0 && props.key !== stateStore.selectedItemId,
+        }"
+        @clickPDF="selectedProjectIndex = props.rowIndex"
+      />
+      <!-- Notes -->
+      <TableItemRow
+        v-show="props.expand"
+        v-for="note in props.row.children"
+        :key="note._id"
+        :item="note"
+        :class="{
+          'bg-primary': note._id === stateStore.selectedItemId,
+          'tableview-row':
+            props.rowIndex % 2 === 0 && note._id !== stateStore.selectedItemId,
+        }"
+        @renameNote="(note) => renameNote(note)"
+        @deleteNote="(note) => deleteNote(note)"
+      />
+
+      <q-tr
+        v-show="!!searchString"
+        :props="props"
+        :class="{
+          'bg-primary': props.key === stateStore.selectedItemId,
+          'tableview-row':
+            props.rowIndex % 2 === 0 && props.key !== stateStore.selectedItemId,
+        }"
+      >
+        <q-td colspan="100%">
+          <div
+            :style="`width: ${
+              $refs.table.$el.getBoundingClientRect().width * 0.8
+            }px;`"
+            class="q-px-lg ellipsis text-grey text-capitalize"
+            v-html="expansionText[props.rowIndex]"
+          ></div>
+        </q-td>
+      </q-tr>
+    </template>
+  </q-table>
 </template>
 
 <script>
@@ -527,5 +520,9 @@ export default {
   thead tr:first-child th {
     top: 0;
   }
+}
+
+.tableview-row {
+  background: var(--color-library-tableview-row-bkgd);
 }
 </style>

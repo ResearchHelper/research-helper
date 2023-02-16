@@ -14,7 +14,10 @@
       dense
       square
       icon="add"
+      size="0.8rem"
+      padding="none"
     >
+      <q-tooltip>{{ $t("add") }}</q-tooltip>
       <q-menu>
         <q-list dense>
           <q-item
@@ -47,7 +50,9 @@
     <q-input
       outlined
       dense
-      placeholder="Search"
+      square
+      class="actionbar-input"
+      :placeholder="$t('localSearch')"
       :model-value="searchString"
       @update:model-value="
         (text) => {
@@ -71,11 +76,15 @@
       flat
       dense
       square
+      size="0.8rem"
+      padding="none"
       :ripple="false"
       toggle-color="primary"
       :options="[{ value: true, icon: 'list' }]"
       @update:model-value="$emit('toggleRightMenu', showRightMenu)"
-    />
+    >
+      <q-tooltip>{{ $t("info") }}</q-tooltip>
+    </q-btn-toggle>
   </q-toolbar>
 </template>
 
@@ -125,4 +134,14 @@ export default {
 };
 </script>
 
-<style></style>
+<style lang="scss">
+.actionbar-input {
+  /* for sizing the q-input */
+  .q-field__control {
+    height: min(1.8rem, 36px) !important;
+  }
+  .q-field__marginal {
+    height: min(1.8rem, 36px) !important;
+  }
+}
+</style>

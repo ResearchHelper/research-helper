@@ -1,4 +1,8 @@
 <template>
+  <!-- 
+    div spans the entire background.
+    q-tree only spans enough height to display its elements
+  -->
   <div style="height: 100%">
     <q-tree
       dense

@@ -1,5 +1,6 @@
 <template>
   <q-splitter
+    style="background: var(--color-projecttree-bkgd)"
     horizontal
     emit-immediately
     :limits="[36, maxHeight]"
@@ -118,7 +119,7 @@
                 <!-- note icon has 1rem width -->
                 <input
                   v-if="prop.node == renamingNote"
-                  style="width: calc(100% - 1rem)"
+                  style="width: calc(100% - 1.2rem)"
                   v-model="prop.node.label"
                   @keydown.enter="renameNote"
                   @blur="renameNote"

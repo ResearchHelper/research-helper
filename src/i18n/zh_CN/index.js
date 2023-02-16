@@ -1,6 +1,8 @@
 export default {
   // library page
+  // action bar
   add: "添加",
+  localSearch: "本地搜索",
   info: "详细信息",
   // reader page
   cursor: "光标",
@@ -18,6 +20,7 @@ export default {
   help: "帮助",
   settings: "设置",
   // right menu
+  metaInfo: "元数据",
   // meta tab
   // annot card
 };

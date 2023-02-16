@@ -8,7 +8,11 @@
   >
     <template v-slot:before>
       <PDFToolBar
-        style="position: absolute; top: 0"
+        style="
+          position: absolute;
+          top: 0;
+          background: var(--color-pdfreader-toolbar-bkgd);
+        "
         v-model:pdfState="pdfState"
         :rightMenuSize="rightMenuSize"
         :matchesCount="matchesCount"
@@ -72,8 +76,9 @@
         v-model="rightMenuTab"
         dense
         align="justify"
+        style="background: var(--color-rightmenu-tabs-bkgd)"
         indicator-color="transparent"
-        active-bg-color="primary"
+        active-color="primary"
       >
         <q-tab
           name="metaInfoTab"
@@ -93,7 +98,10 @@
       </q-tabs>
       <!-- q-tab height: 36px -->
       <q-tab-panels
-        style="height: calc(100% - 36px)"
+        style="
+          height: calc(100% - 36px);
+          background: var(--color-rightmenu-tab-panel-bkgd);
+        "
         v-model="rightMenuTab"
       >
         <q-tab-panel name="metaInfoTab">
@@ -458,15 +466,14 @@ export default {
   top: 36px;
   width: 100%; // so the right scroll bar does not touch right edge
   margin-right: 10px;
-  background-color: $dark;
+  background-color: var(--color-pdfreader-viewer-bkgd);
 }
 
 .peekContainer {
   position: absolute;
   overflow: auto;
-  background: grey;
-  border: solid black 5px;
-  border-radius: 5px;
+  background: var(--color-pdfreader-viewer-bkgd);
+  border: solid $primary 3px;
 }
 
 .page {
@@ -484,29 +491,8 @@ export default {
   outline: dashed 2px cyan;
 }
 
-.q-splitter__after {
-  // hide the bottom scrollbar in pdf page
-  overflow: hidden;
-}
-
-// scrollbar styles in pdfreader
-/* width */
-::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
-}
-
-/* handle */
-::-webkit-scrollbar-thumb {
-  background: rgb(75, 75, 75, 75%);
-  border-radius: 5px;
-  &:hover {
-    background: $primary;
-  }
-}
-
-/* corner */
-::-webkit-scrollbar-corner {
-  color: transparent;
-}
+// .q-splitter__after {
+//   // hide the bottom scrollbar in pdf page
+//   // overflow: hidden;
+// }
 </style>

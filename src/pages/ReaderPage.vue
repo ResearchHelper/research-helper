@@ -1,10 +1,8 @@
 <template>
-  <div>
-    <PDFReader
-      v-if="visible"
-      :projectId="itemId"
-    />
-  </div>
+  <PDFReader
+    v-if="visible"
+    :projectId="itemId"
+  />
 </template>
 
 <script>

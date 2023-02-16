@@ -8,8 +8,8 @@ const fs = window.fs;
  * @returns {string} storagePath
  */
 async function storagePath() {
-  let state = await db.get("app_state");
-  return state.storagePath;
+  let state = await db.get("appState");
+  return state.settings.storagePath;
 }
 
 /**

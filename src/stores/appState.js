@@ -1,14 +1,9 @@
 import { defineStore } from "pinia";
-
-const path = window.path;
-const fs = window.fs;
+import { useQuasar } from "quasar";
 
 export const useStateStore = defineStore("stateStore", {
   state: () => ({
     ready: false,
-
-    // user data path
-    storagePath: "",
 
     // layout
     leftMenuSize: 20,
@@ -22,29 +17,38 @@ export const useStateStore = defineStore("stateStore", {
     workingItemId: "library", // workingItem
     openedProjectIds: new Set(), // for projectTree
     openItemId: "", // communicate between layout and deep vue component
+
+    // settings
+    settings: {
+      theme: "dark",
+      language: "en_US",
+      storagePath: "",
+      fontSize: "16px",
+    },
   }),
 
   actions: {
     async loadState(state) {
-      this.storagePath = state.storagePath;
-      this.leftMenuSize = state.leftMenuSize;
-      this.showLeftMenu = state.showLeftMenu;
-      this.selectedFolderId = state.selectedFolderId;
-      this.workingItemId = state.workingItemId;
+      this.leftMenuSize = state.leftMenuSize || this.leftMenuSize;
+      this.showLeftMenu = state.showLeftMenu || this.showLeftMenu;
+      this.selectedFolderId = state.selectedFolderId || this.selectedFolderId;
+      this.workingItemId = state.workingItemId || this.workingItemId;
       this.openedProjectIds = new Set(state.openedProjectIds); // convert to Set after loading
+      this.settings = state.settings || this.settings;
 
       this.ready = true;
     },
 
     saveState() {
       let state = {
-        _id: "app_state",
-        storagePath: this.storagePath,
+        _id: "appState",
+        dataType: "appState",
         leftMenuSize: this.leftMenuSize,
         showLeftMenu: this.showLeftMenu,
         selectedFolderId: this.selectedFolderId,
         workingItemId: this.workingItemId,
         openedProjectIds: [...this.openedProjectIds], // convert to Array for saving
+        settings: this.settings,
       };
       return state;
     },

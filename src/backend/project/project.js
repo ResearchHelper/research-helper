@@ -76,7 +76,7 @@ async function deleteProject(projectId, deleteFromDB) {
       // remove from db
       await db.remove(project);
 
-      // remove related pdf_state, pdf_annotations and notes on db
+      // remove related pdfState, pdfAnnotation and notes on db
       let result = await db.find({
         selector: {
           projectId: project._id,
