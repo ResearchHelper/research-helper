@@ -1,6 +1,16 @@
 import { db } from "../database";
 import { sortTree } from "./utils";
 
+/**
+ * Folder data
+ * @typedef {Object} Folder
+ * @property {string} _id - uid managed by db
+ * @property {string} dataType - "folder"
+ * @property {string} label - folder name
+ * @property {string} icon - folder icon in treeview
+ * @property {string[]} children - folderId list
+ */
+
 async function getFolderTree() {
   try {
     let result = await db.find({
@@ -62,7 +72,7 @@ async function addFolder(parentId) {
     // push to children of parent Node
     let parentNode = await db.get(parentId);
     parentNode.children.push(node._id);
-    updateFolder(parentId, { children: parentNode.children });
+    await updateFolder(parentId, { children: parentNode.children });
 
     return node;
   } catch (err) {
@@ -77,6 +87,7 @@ async function updateFolder(folderId, props) {
       folder[key] = props[key];
     }
     await db.put(folder);
+    return db.get(folderId);
   } catch (error) {
     console.log(error);
   }

@@ -151,17 +151,27 @@ export default {
     /**
      * Add folder to selected node
      * @param {Object} parentNode
+     * @param {string} label - folder name
      */
-    async addFolder(parentNode) {
+    async addFolder(parentNode, label = "", focus = false) {
       // add to database
       let node = await addFolder(parentNode._id);
+
+      // set node label if we specify one
+      if (!!label) {
+        node.label = label;
+        node = await updateFolder(node._id, { label: node.label });
+      }
 
       // add to UI and expand the parent folder
       parentNode.children.push(node);
       this.expandedKeys.push(parentNode._id);
 
-      // then rename it
-      this.setRenameFolder(node);
+      // focus on it
+      if (focus) this.stateStore.selectedFolderId = node._id;
+
+      // rename it if label is empty
+      if (!!!label) this.setRenameFolder(node);
     },
 
     /**

@@ -46,8 +46,10 @@
           v-close-popup
           :ripple="false"
           @click="confirm"
-          >Confirm</q-btn
+          color="negative"
         >
+          Confirm
+        </q-btn>
       </q-card-actions>
     </q-card>
   </q-dialog>

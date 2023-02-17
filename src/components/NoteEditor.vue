@@ -45,6 +45,10 @@ export default {
     },
   },
 
+  beforeMount() {
+    this.setTheme(this.stateStore.settings.theme);
+  },
+
   async mounted() {
     this.currentNote = await getNote(this.noteId);
     this.dirPath = window.path.dirname(this.currentNote.path);
@@ -111,7 +115,12 @@ export default {
         after: () => {
           if (!!this.showEditor) {
             this.setContent();
-            this.setTheme(this.stateStore.settings.theme);
+            let theme = this.stateStore.settings.theme;
+            this.editor.setTheme(
+              theme,
+              theme,
+              theme === "dark" ? "solarized-dark256" : "solarized-light"
+            );
           }
         },
         focus: () => {
@@ -143,11 +152,14 @@ export default {
 
     setTheme(theme) {
       // this is used to set code theme
-      this.editor.setTheme(
-        theme,
-        theme,
-        theme === "dark" ? "solarized-dark256" : "solarized-light"
-      );
+      if (!!this.editor) {
+        this.editor.setTheme(
+          theme,
+          theme,
+          theme === "dark" ? "solarized-dark256" : "solarized-light"
+        );
+      }
+
       // must append editorStyle before contentStyle
       // otherwise the texts are dark
       let editorStyle = document.getElementById("vditor-editor-style");

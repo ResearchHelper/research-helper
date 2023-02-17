@@ -1,7 +1,11 @@
 <template>
+  <ImportDialog
+    v-model:show="importDialog"
+    @confirm="(isCreateFolder) => addProjectsByCollection(isCreateFolder)"
+  />
   <ExportDialog
     v-model:show="exportFolderDialog"
-    @confirm="exportFolder"
+    @confirm="(format, options) => exportFolder(format, options)"
   />
   <IdentifierDialog
     v-model:show="identifierDialog"
@@ -51,6 +55,7 @@
             @toggleRightMenu="(visible) => toggleRightMenu(visible)"
             @addEmptyProject="addEmptyProject"
             @addByFiles="addProjectsByFiles"
+            @addByCollection="(collection) => showImportDialog(collection)"
             @showIdentifierDialog="showIdentifierDialog(true)"
             ref="actionBar"
           />
@@ -113,6 +118,7 @@ import ExportDialog from "src/components/library/ExportDialog.vue";
 import IdentifierDialog from "src/components/library/IdentifierDialog.vue";
 import DeleteDialog from "src/components/library/DeleteDialog.vue";
 import ErrorDialog from "src/components/ErrorDialog.vue";
+import ImportDialog from "src/components/library/ImportDialog.vue";
 
 import {
   addProject,
@@ -122,8 +128,7 @@ import {
 } from "src/backend/project/project";
 import { createEdge, updateEdge } from "src/backend/project/graph";
 import { useStateStore } from "src/stores/appState";
-import { exportFile } from "quasar";
-import { getMeta, exportMeta } from "src/backend/project/meta";
+import { getMeta, exportMeta, importMeta } from "src/backend/project/meta";
 import { copyFile } from "src/backend/project/file";
 
 export default {
@@ -144,6 +149,7 @@ export default {
     IdentifierDialog,
     DeleteDialog,
     ErrorDialog,
+    ImportDialog,
   },
 
   data() {
@@ -167,6 +173,9 @@ export default {
 
       errorDialog: false,
       error: null,
+
+      importDialog: false,
+      collection: null,
     };
   },
 
@@ -203,6 +212,11 @@ export default {
       this.createProject = createProject;
     },
 
+    showImportDialog(collection) {
+      this.importDialog = true;
+      this.collection = collection;
+    },
+
     /**
      * Add an empty project to table
      */
@@ -217,7 +231,7 @@ export default {
 
     /**
      * Add projects by importing files
-     * @param {Array} files
+     * @param {File[]} files
      */
     async addProjectsByFiles(files) {
       for (let file of files) {
@@ -236,6 +250,39 @@ export default {
           this.errorDialog = true;
         }
       }
+    },
+
+    /**
+     * Add projects by a collection file (.bib, .ris, etc...)
+     * @param {boolean} isCreateFolder
+     */
+    async addProjectsByCollection(isCreateFolder) {
+      // create folder if user wants to
+      if (isCreateFolder) {
+        let rootNode = this.$refs.tree.$refs.tree.getNodeByKey("library");
+        let folderName = window.path.basename(
+          this.collection.name,
+          window.path.extname(this.collection.name)
+        );
+        let focus = true;
+        await this.$refs.tree.addFolder(rootNode, folderName, focus);
+      }
+
+      await this.$nextTick(); //wait until ui actions settled
+
+      let metas = await importMeta(this.collection.path);
+      for (let meta of metas) {
+        // add a new project to db and update it with meta
+        let project = await addProject(this.stateStore.selectedFolderId);
+        project = await updateProjectByMeta(project, meta);
+        await createEdge(project);
+
+        // update ui
+        this.$refs.table.addProject(project);
+      }
+
+      this.importDialog = false;
+      this.collection = null;
     },
 
     async processIdentifier(identifier) {
@@ -327,15 +374,13 @@ export default {
 
     /**
      * Export a folder as a collection of references
-     * @param {Object} folder
+     * @param {string} format - citation.js suported format
+     * @param {Object} options - extra options
      */
-    async exportFolder() {
+    async exportFolder(format, options) {
       if (!!!this.folder) return;
 
-      let bibtex = await exportMeta(this.folder._id, "bibtex");
-      let status = exportFile(`${this.folder.label}.bib`, bibtex, {
-        mimeType: "text/plain",
-      });
+      await exportMeta(this.folder, format, options);
     },
   },
 };

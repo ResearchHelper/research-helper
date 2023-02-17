@@ -1,9 +1,9 @@
 <template>
   <q-toolbar class="q-px-none">
     <q-file
-      :multiple="true"
+      :multiple="multiple"
+      :accept="accept"
       :append="false"
-      :accept="'.pdf'"
       style="display: none"
       @update:model-value="(files) => addByFiles(files)"
       ref="filePicker"
@@ -18,7 +18,7 @@
       padding="none"
     >
       <q-tooltip>{{ $t("add") }}</q-tooltip>
-      <q-menu>
+      <q-menu square>
         <q-list dense>
           <q-item
             clickable
@@ -37,9 +37,19 @@
           <q-item
             clickable
             v-close-popup
-            @click="$refs.filePicker.$el.click()"
+            @click="showFilePicker('file')"
           >
             <q-item-section>Create Entry By File</q-item-section>
+          </q-item>
+          <q-separator />
+          <q-item
+            clickable
+            v-close-popup
+            @click="showFilePicker('collection')"
+          >
+            <q-item-section>
+              Import Collection (Bib, RIS, etc ...)
+            </q-item-section>
           </q-item>
         </q-list>
       </q-menu>
@@ -98,6 +108,7 @@ export default {
     "toggleRightMenu",
     "addEmptyProject",
     "addByFiles",
+    "addByCollection",
     "showIdentifierDialog",
   ],
 
@@ -109,6 +120,9 @@ export default {
   data() {
     return {
       showRightMenu: false,
+      multiple: true,
+      accept: "",
+      fileType: "",
     };
   },
 
@@ -119,12 +133,38 @@ export default {
   },
 
   methods: {
+    async showFilePicker(fileType) {
+      switch (fileType) {
+        case "file":
+          this.multiple = true;
+          this.accept = ".pdf";
+          break;
+
+        case "collection":
+          this.multiple = false;
+          this.accept = ".bib, .ris, .json";
+          break;
+      }
+      this.fileType = fileType;
+      await this.$nextTick(); // wait until the acceptType is set
+      this.$refs.filePicker.$el.click();
+    },
+
     addEmpty() {
       this.$emit("addEmptyProject");
     },
 
-    addByFiles(files) {
-      this.$emit("addByFiles", files);
+    addByFiles(file) {
+      switch (this.fileType) {
+        case "file":
+          // in this case, file is an array of File objects
+          this.$emit("addByFiles", file);
+          break;
+
+        case "collection":
+          this.$emit("addByCollection", file);
+          break;
+      }
     },
 
     addByID() {
