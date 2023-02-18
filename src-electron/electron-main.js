@@ -32,6 +32,7 @@ function createWindow() {
     webPreferences: {
       contextIsolation: true,
       // More info: https://v2.quasar.dev/quasar-cli-vite/developing-electron-apps/electron-preload-script
+      sandbox: false, // to be able to use @electron/remote in preload
       preload: path.resolve(__dirname, process.env.QUASAR_ELECTRON_PRELOAD),
       // webSecurity: false,
     },
