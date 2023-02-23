@@ -1,5 +1,6 @@
-import { app, BrowserWindow, nativeTheme, shell, Menu } from "electron";
+import { app, BrowserWindow, nativeTheme } from "electron";
 import { initialize, enable } from "@electron/remote/main";
+import { autoUpdater } from "electron-updater";
 import path from "path";
 import os from "os";
 
@@ -34,7 +35,7 @@ function createWindow() {
       // More info: https://v2.quasar.dev/quasar-cli-vite/developing-electron-apps/electron-preload-script
       sandbox: false, // to be able to use @electron/remote in preload
       preload: path.resolve(__dirname, process.env.QUASAR_ELECTRON_PRELOAD),
-      // webSecurity: false,
+      webSecurity: false, // to be able to load image in note editor in dev mode
     },
   });
 
@@ -56,7 +57,11 @@ function createWindow() {
   });
 }
 
-app.whenReady().then(createWindow);
+app.whenReady().then(() => {
+  createWindow();
+
+  autoUpdater.checkForUpdates();
+});
 
 app.on("window-all-closed", () => {
   if (platform !== "darwin") {
@@ -70,20 +75,16 @@ app.on("activate", () => {
   }
 });
 
-// no new window is allowed to create
-app.on("web-contents-created", (e, webContents) => {
-  webContents.on("new-window", (event, url) => {
-    event.preventDefault();
-    if (process.env.DEV) {
-      // in dev mode, every incomplete link with have
-      // base_url http://localhost:port
-      url = url.replace(process.env.APP_URL + "/", "");
-    }
-    try {
-      new URL(url);
-      shell.openExternal(url); // a valid external url
-    } catch (error) {
-      // not a valid url, do nothing
-    }
-  });
+function sendUpdaterMsg(msg) {
+  mainWindow.webContents.send("updateMessage", msg);
+}
+
+autoUpdater.on("update-available", (info) => {
+  console.log("update available", info);
+  sendUpdaterMsg("update available");
+});
+
+autoUpdater.on("update-not-available", (info) => {
+  console.log("update not available", info);
+  sendUpdaterMsg("update not available");
 });

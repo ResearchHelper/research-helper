@@ -7,7 +7,6 @@ import { PeekManager } from "./pdfpeek";
 import { AnnotationType } from "./annotation";
 import { db } from "../database";
 import { debounce } from "quasar";
-import { openURL } from "quasar";
 
 class PDFApplication {
   constructor(container, peekContainer) {
@@ -55,7 +54,7 @@ class PDFApplication {
           // external links must open using default browser
           link.onclick = (e) => {
             e.preventDefault();
-            openURL(link.href);
+            window.browser.openURL(link.href);
           };
         }
       }

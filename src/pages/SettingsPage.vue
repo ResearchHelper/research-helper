@@ -5,7 +5,9 @@
     :separator-style="{ cursor: 'default' }"
   >
     <template v-slot:before>
-      <div style="background: var(--color-settings-tabs-area-bkgd)">
+      <div
+        style="height: 100%; background: var(--color-settings-tabs-area-bkgd)"
+      >
         <q-tabs
           v-model="tab"
           vertical
@@ -26,6 +28,16 @@
             />
             <div style="font-size: 1rem; padding-left: 0.5rem">General</div>
           </q-tab>
+          <q-tab
+            name="about"
+            :ripple="false"
+          >
+            <q-icon
+              name="bi-info-circle"
+              size="1.2rem"
+            />
+            <div style="font-size: 1rem; padding-left: 0.5rem">About</div>
+          </q-tab>
         </q-tabs>
       </div>
     </template>
@@ -41,6 +53,9 @@
           <q-tab-panel name="general">
             <GeneralTab />
           </q-tab-panel>
+          <q-tab-panel name="about">
+            <AboutTab />
+          </q-tab-panel>
         </q-tab-panels>
       </div>
     </template>
@@ -49,10 +64,12 @@
 
 <script>
 import GeneralTab from "src/components/settings/GeneralTab.vue";
+import AboutTab from "src/components/settings/AboutTab.vue";
 
 export default {
   components: {
     GeneralTab,
+    AboutTab,
   },
 
   data() {

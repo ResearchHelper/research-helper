@@ -1,15 +1,17 @@
 {
-  "name": "research-helper-quasar",
+  "name": "research-helper",
   "version": "0.0.1",
   "description": "A paper/textbook management tool",
   "productName": "Research-Helper",
   "author": "Hunt Feng",
-  "private": true,
+  "private": false,
   "scripts": {
     "lint": "eslint --ext .js,.vue ./",
     "format": "prettier --write \"**/*.{js,vue,scss,html,md,json}\" --ignore-path .gitignore",
-    "test": "echo \"No test specified\" && exit 0"
+    "test": "echo \"No test specified\" && exit 0",
+    "dist": "electron-builder"
   },
+  "repository": "https://github.com/ResearchHelper/research-helper",
   "dependencies": {
     "@citation-js/plugin-isbn": "^0.3.1",
     "@electron/remote": "^2.0.8",
@@ -21,6 +23,7 @@
     "cytoscape": "^3.23.0",
     "cytoscape-cise": "^1.0.0",
     "cytoscape-cola": "^2.5.1",
+    "electron-updater": "^5.3.0",
     "events": "^3.3.0",
     "golden-layout": "^2.6.0",
     "katex": "^0.16.4",
@@ -41,6 +44,7 @@
     "@vue/devtools": "^6.2.1",
     "autoprefixer": "^10.4.2",
     "electron": "~23.0.0",
+    "electron-builder": "^23.6.0",
     "electron-packager": "^15.2.0",
     "eslint": "^8.10.0",
     "eslint-config-prettier": "^8.1.0",

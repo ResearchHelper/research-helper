@@ -60,6 +60,12 @@ export default {
     this.initEditor();
   },
 
+  created() {
+    this.saveContent = debounce(this._saveContent, 100);
+    this.changeLinks = debounce(this._changeLinks, 50);
+    this.addImgResizer = debounce(this._addImgResizer, 50);
+  },
+
   methods: {
     initEditor() {
       let toolbar = [];
@@ -196,6 +202,7 @@ export default {
       let content = await loadNote(this.noteId);
       this.editor.setValue(content);
       this.changeLinks();
+      this.addImgResizer();
     },
 
     async _saveContent() {
@@ -250,27 +257,29 @@ export default {
       updateEdge(this.noteId, data);
     },
 
-    async clickLink(linkNode) {
+    async clickLink(e, linkNode) {
+      e.stopImmediatePropagation(); // stop propagating the click event
       this.editor.blur(); // save the content before jumping
 
       let link = linkNode.querySelector(
         "span.vditor-ir__marker--link"
       ).innerText;
       try {
+        // valid external url, open it externally
         new URL(link);
-        // valid external url, do nothing
+        window.browser.openURL(link);
       } catch (error) {
         // we just want the document, both getProject or getNote are good
         this.stateStore.openItemId = link;
+        console.log("item id");
       }
     },
 
     _changeLinks() {
       let vditor = this.$refs.vditor;
-      // let linkNodes = vditor.querySelectorAll("a");
       let linkNodes = vditor.querySelectorAll("[data-type='a']");
       for (let linkNode of linkNodes) {
-        linkNode.onclick = () => this.clickLink(linkNode);
+        linkNode.onclick = (e) => this.clickLink(e, linkNode);
       }
     },
 
@@ -287,11 +296,20 @@ export default {
       }
       return this.hints;
     },
-  },
 
-  created() {
-    this.saveContent = debounce(this._saveContent, 100);
-    this.changeLinks = debounce(this._changeLinks, 50);
+    _addImgResizer() {
+      // TODO
+      let vditor = this.$refs.vditor;
+      let imgs = vditor.querySelectorAll("img");
+      for (let img of imgs) {
+        img.onmouseover = () => {
+          console.log("on hover");
+        };
+        img.onmouseleave = () => {
+          console.log("on leave");
+        };
+      }
+    },
   },
 };
 </script>

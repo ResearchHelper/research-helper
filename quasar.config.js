@@ -179,7 +179,7 @@ module.exports = configure(function (/* ctx */) {
 
       inspectPort: 5858,
 
-      bundler: "packager", // 'packager' or 'builder'
+      bundler: "builder", // 'packager' or 'builder'
 
       packager: {
         // https://github.com/electron-userland/electron-packager/blob/master/docs/api.md#options
@@ -195,7 +195,11 @@ module.exports = configure(function (/* ctx */) {
       builder: {
         // https://www.electron.build/configuration/configuration
 
-        appId: "research-helper-quasar",
+        appId: "com.electron.researchhelper",
+        publish: {
+          provider: "github",
+          releaseType: "release",
+        },
       },
     },
 

@@ -1,14 +1,17 @@
 .vditor {
   --border-color: #f3f3f3;
   --second-color: #000000;
-  --panel-background-color: #ffffff;
+  /* --panel-background-color: #ffffff; */
+  --panel-background-color: #fffbf2;
   --panel-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-  --toolbar-background-color: #dddddd;
+  /* --toolbar-background-color: #dddddd; */
+  --toolbar-background-color: #fffbf2;
   --toolbar-icon-color: #595959;
   --toolbar-icon-hover-color: #000000;
   --toolbar-height: 35px;
   --toolbar-divider-margin-top: 8px;
-  --textarea-background-color: #ffffff;
+  /* --textarea-background-color: #ffffff; */
+  --textarea-background-color: #fffbf2;
   --textarea-text-color: #000000;
   --resize-icon-color: var(--toolbar-icon-color);
   --resize-background-color: var(--toolbar-background-color);
