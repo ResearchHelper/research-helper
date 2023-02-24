@@ -61,7 +61,7 @@
         >
           <div
             v-if="col.name === 'author'"
-            style="width: 20em"
+            style="font-size: 1rem; width: 20em"
             class="ellipsis"
           >
             {{ authorString(col.value) }}

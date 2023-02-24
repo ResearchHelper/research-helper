@@ -16,12 +16,28 @@
         </div>
       </q-card-section>
       <q-card-section class="q-pt-none">
-        current version: v0.1.0-alpha
-        {{ updateStatus }}
+        current version: {{ version }}
         <q-btn
-          flat
-          label="Update"
+          v-if="!isUpdateAvailable"
+          unelevated
+          square
+          :ripple="false"
+          no-caps
+          label="Check for updates"
+          color="primary"
+          @click="checkForUpdates"
         />
+        <q-btn
+          v-else
+          unelevated
+          square
+          :ripple="false"
+          no-caps
+          label="Install Updates"
+          color="primary"
+          @click="downloadUpdate"
+        />
+        <div>{{ updateMsg }}</div>
       </q-card-section>
     </q-card>
   </div>
@@ -30,14 +46,33 @@
 export default {
   data() {
     return {
-      updateStatus: "",
+      version: "",
+      updateMsg: "",
+      isUpdateAvailable: false,
     };
   },
 
   mounted() {
-    window.updater.updateMessage((info) => {
-      this.updateStatus = info;
+    this.version = window.updater.versionInfo();
+
+    window.updater.updateAvailable((isAvailable) => {
+      this.isUpdateAvailable = isAvailable;
     });
+
+    window.updater.updateMessage((event, info) => {
+      console.log(info);
+      this.updateMsg = info;
+    });
+  },
+
+  methods: {
+    checkForUpdates() {
+      window.updater.checkForUpdates();
+    },
+
+    downloadUpdate() {
+      window.updater.downloadUpdate();
+    },
   },
 };
 </script>

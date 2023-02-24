@@ -289,7 +289,7 @@ export default {
       if (!identifier) return;
 
       try {
-        let metas = await getMeta(identifier);
+        let metas = await getMeta(identifier, "json");
         let meta = metas[0];
 
         if (this.createProject) {

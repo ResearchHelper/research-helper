@@ -35,7 +35,7 @@
             <q-icon
               name="bi-info-circle"
               size="1.2rem"
-            />
+            ></q-icon>
             <div style="font-size: 1rem; padding-left: 0.5rem">About</div>
           </q-tab>
         </q-tabs>

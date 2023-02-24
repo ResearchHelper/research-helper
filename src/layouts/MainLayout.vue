@@ -53,6 +53,13 @@
             icon="settings"
             @click="setComponent('settings')"
           >
+            <q-badge
+              v-if="isUpdateAvailable"
+              floating
+              rounded
+              color="blue"
+              style="top: 10%; right: 10%"
+            ></q-badge>
             <q-tooltip>{{ $t("settings") }}</q-tooltip>
           </q-btn>
         </div>
@@ -130,6 +137,8 @@ export default {
       leftMenuSize: 0,
 
       dragover: false,
+
+      isUpdateAvailable: false,
     };
   },
 
@@ -143,7 +152,7 @@ export default {
         this.stateStore.showLeftMenu = visible;
         if (visible) {
           // if visible, the left menu has at least 10 unit width
-          this.leftMenuSize = Math.max([this.stateStore.leftMenuSize, 10]);
+          this.leftMenuSize = Math.max(this.stateStore.leftMenuSize, 15);
         } else {
           // if not visible, record the size and close the menu
           this.stateStore.leftMenuSize = this.leftMenuSize;
@@ -188,6 +197,9 @@ export default {
     const layout = await getLayout();
     await this.$refs.layout.loadGLLayout(layout.config);
 
+    window.updater.updateAvailable((isAvailable) => {
+      this.isUpdateAvailable = isAvailable;
+    });
     this.changeTheme(this.stateStore.settings.theme);
     this.changeLanguage(this.stateStore.settings.language);
     this.changeFontSize(this.stateStore.settings.fontSize);

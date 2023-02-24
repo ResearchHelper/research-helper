@@ -1,10 +1,10 @@
-import { app, BrowserWindow, nativeTheme } from "electron";
+import { app, BrowserWindow, nativeTheme, ipcMain } from "electron";
 import { initialize, enable } from "@electron/remote/main";
 import { autoUpdater } from "electron-updater";
 import path from "path";
 import os from "os";
 
-initialize();
+initialize(); // initialize electron remote
 
 // needed in case process is undefined under Linux
 const platform = process.platform || os.platform();
@@ -39,7 +39,7 @@ function createWindow() {
     },
   });
 
-  enable(mainWindow.webContents);
+  enable(mainWindow.webContents); // enable electron remote
   mainWindow.loadURL(process.env.APP_URL);
 
   if (process.env.DEBUGGING) {
@@ -57,11 +57,7 @@ function createWindow() {
   });
 }
 
-app.whenReady().then(() => {
-  createWindow();
-
-  autoUpdater.checkForUpdates();
-});
+app.whenReady().then(createWindow);
 
 app.on("window-all-closed", () => {
   if (platform !== "darwin") {
@@ -75,16 +71,44 @@ app.on("activate", () => {
   }
 });
 
-function sendUpdaterMsg(msg) {
-  mainWindow.webContents.send("updateMessage", msg);
-}
+// autoUpdater
+autoUpdater.autoDownload = false;
+autoUpdater.autoInstallOnAppQuit = true;
 
-autoUpdater.on("update-available", (info) => {
-  console.log("update available", info);
-  sendUpdaterMsg("update available");
+ipcMain.on("checkForUpdates", (event) => {
+  autoUpdater.checkForUpdates();
+});
+ipcMain.on("downloadUpdate", (event) => {
+  autoUpdater.downloadUpdate();
 });
 
+autoUpdater.on("checking-for-update", () => {
+  mainWindow.webContents.send("updateMessage", "Checking for updates");
+});
+autoUpdater.on("update-available", (info) => {
+  mainWindow.webContents.send("updateAvailable", true);
+
+  mainWindow.webContents.send(
+    "updateMessage",
+    `Newer version ${info.version} is available`
+  );
+});
 autoUpdater.on("update-not-available", (info) => {
-  console.log("update not available", info);
-  sendUpdaterMsg("update not available");
+  mainWindow.webContents.send("updateAvailable", false);
+  mainWindow.webContents.send("updateMessage", "App is up-to-date");
+});
+autoUpdater.on("download-progress", (info) => {
+  mainWindow.webContents.send(
+    "updateMessage",
+    `Downloading: ${Math.round(info.percent)}%`
+  );
+});
+autoUpdater.on("update-downloaded", (event) => {
+  mainWindow.webContents.send(
+    "updateMessage",
+    "Download complete, restart app to install."
+  );
+});
+autoUpdater.on("error", (error, info) => {
+  mainWindow.webContents.send("updateMessage", info);
 });

@@ -16,7 +16,7 @@
  *   })
  */
 import { contextBridge, shell, ipcRenderer } from "electron";
-import { dialog } from "@electron/remote";
+import { app, dialog, BrowserWindow } from "@electron/remote";
 import fs from "fs";
 import path from "path";
 
@@ -41,8 +41,25 @@ contextBridge.exposeInMainWorld("browser", {
   },
 });
 
+// auto updater
 contextBridge.exposeInMainWorld("updater", {
+  versionInfo() {
+    return app.getVersion();
+  },
+
   updateMessage(callback) {
     ipcRenderer.on("updateMessage", callback);
+  },
+
+  updateAvailable(callback) {
+    ipcRenderer.on("updateAvailable", callback);
+  },
+
+  checkForUpdates() {
+    ipcRenderer.send("checkForUpdates");
+  },
+
+  downloadUpdate() {
+    ipcRenderer.send("downloadUpdate");
   },
 });

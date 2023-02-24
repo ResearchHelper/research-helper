@@ -1,87 +1,146 @@
 <template>
-  <!-- systembar: 32px, tab: 36px  -->
+  <!-- tab: 36px  -->
   <!-- show this after rightMenu is shown, 
     otherwise autogrow extends to full-height -->
   <div v-if="!!project">
-    <div style="font-size: 1.2rem">Type</div>
-    <q-input
-      borderless
-      autogrow
-      dense
-      input-style="font-size: 1rem; padding-top: 0"
-      v-model="project.type"
-      @blur="modifyInfo()"
-    />
-    <q-separator />
-    <div style="font-size: 1.2rem">Title</div>
-    <q-input
-      borderless
-      autogrow
-      dense
-      input-style="font-size: 1rem; padding-top: 0"
-      v-model="project.title"
-      @blur="modifyInfo()"
-    />
-    <q-separator />
-    <div style="font-size: 1.2rem">Author(s)</div>
-    <q-input
-      borderless
-      autogrow
-      dense
-      input-style="font-size: 1rem; padding-top: 0"
-      v-model="author"
-      @blur="modifyInfo()"
-    />
-    <q-separator />
-    <div style="font-size: 1.2rem">Abstract</div>
-    <q-input
-      borderless
-      dense
-      type="textarea"
-      input-style="font-size: 1rem; padding-top: 0"
-      v-model="project.abstract"
-      @blur="modifyInfo()"
-    />
-    <q-separator />
-    <div style="font-size: 1.2rem">DOI</div>
-    <q-input
-      borderless
-      autogrow
-      dense
-      input-style="font-size: 1rem; padding-top: 0"
-      v-model="project.DOI"
-      @blur="modifyInfo()"
-    />
-    <q-separator />
-    <div style="font-size: 1.2rem">ISBN</div>
-    <q-input
-      borderless
-      autogrow
-      dense
-      input-style="font-size: 1rem; padding-top: 0"
-      v-model="project.isbn"
-      @blur="modifyInfo()"
-    />
-    <q-separator />
-    <div style="font-size: 1.2rem">Attached File</div>
-    <q-input
-      borderless
-      autogrow
-      dense
-      input-style="font-size: 1rem; padding-top: 0"
-      v-model="project.path"
-      @blur="modifyInfo()"
-    />
-    <q-separator />
-    <div style="font-size: 1.2rem">Tags</div>
-    <div class="column">
-      <q-input
-        borderless
+    <div class="row justify-between">
+      <div
+        class="col"
+        style="font-size: 1rem"
+      >
+        Type
+      </div>
+      <input
+        class="col-8 input"
+        type="text"
+        v-model="project.type"
+        @blur="modifyInfo(true)"
+      />
+    </div>
+
+    <div class="row q-mt-sm">
+      <div
+        class="col"
+        style="font-size: 1rem"
+      >
+        Title
+      </div>
+    </div>
+
+    <div class="row q-mt-sm">
+      <textarea
+        style="min-height: 5rem"
+        class="col input"
+        type="text"
+        v-model="project.title"
+        @blur="modifyInfo(true)"
+      ></textarea>
+    </div>
+
+    <div class="row justify-between q-mt-sm">
+      <div
+        class="col"
+        style="font-size: 1rem"
+      >
+        Author(s)
+      </div>
+      <input
+        class="col-8 input"
+        type="text"
+        placeholder="First Last / Last, First"
+        v-model.trim="name"
+        @keydown.enter="addAuthor"
+      />
+    </div>
+
+    <div class="row q-mt-sm">
+      <q-chip
+        v-for="(author, index) in authors"
+        :key="index"
+        :ripple="false"
+        class="col-12"
         dense
-        input-style="font-size: 1rem; padding-top: 0"
+        :label="author"
+        removable
+        @remove="removeAuthor(index)"
+      />
+    </div>
+
+    <div
+      class="col q-mt-sm"
+      style="font-size: 1rem"
+    >
+      Abstract
+    </div>
+    <div class="row">
+      <textarea
+        style="min-height: 10rem"
+        class="col input"
+        v-model="project.abstract"
+        @blur="modifyInfo(false)"
+      ></textarea>
+    </div>
+
+    <div class="row justify-between q-mt-sm">
+      <div
+        class="col"
+        style="font-size: 1rem"
+      >
+        DOI
+      </div>
+      <input
+        class="col-8 input"
+        type="text"
+        v-model="project.DOI"
+        @blur="modifyInfo(false)"
+      />
+    </div>
+
+    <div class="row justify-between q-mt-sm">
+      <div
+        class="col"
+        style="font-size: 1rem"
+      >
+        ISBN
+      </div>
+      <input
+        class="col-8 input"
+        type="text"
+        v-model="project.isbn"
+        @blur="modifyInfo(false)"
+      />
+    </div>
+
+    <div class="row justify-between q-mt-sm">
+      <div
+        class="col"
+        style="font-size: 1rem"
+      >
+        Attached File
+      </div>
+      <input
+        class="col-8 input"
+        type="text"
+        v-model="project.path"
+        @blur="modifyInfo(false)"
+      />
+    </div>
+
+    <div class="row justify-between q-mt-sm">
+      <div
+        class="col"
+        style="font-size: 1rem"
+      >
+        Tags
+      </div>
+      <input
+        class="col-8 input"
+        type="text"
         v-model.trim="tag"
         @keydown.enter="addTag"
       />
+    </div>
+    <div class="q-pb-sm">
       <q-chip
         v-for="(tag, index) in project.tags"
         :key="index"
@@ -91,8 +150,7 @@
         :label="tag"
         removable
         @remove="removeTag(tag)"
-      >
-      </q-chip>
+      />
     </div>
   </div>
 </template>
@@ -114,50 +172,24 @@ export default {
   data() {
     return {
       project: null,
-      tag: "",
-      relatedProjects: [],
-      relatedProjectId: "",
+      name: "", // author name
+      tag: "", // project tag
     };
   },
 
   computed: {
-    author: {
-      get() {
-        let authors = this.project.author;
-        if (!!!authors?.length) return "";
+    authors() {
+      let authors = this.project.author;
+      if (!!!authors?.length) return "";
 
-        let names = [];
-        for (let author of authors) {
-          if (!!!author) continue;
-          if (!!author.literal) names.push(author.literal);
-          else names.push(`${author.given} ${author.family}`);
-        }
-        return names.join("\n");
-      },
-      set(text) {
-        this.project.author = [];
-        let names = text.split("\n");
-        for (let i in names) {
-          let name = names[i];
-          if (name.trim() === "") continue;
-
-          let author = {};
-          if (name.includes(",")) {
-            [author.family, author.given] = name
-              .split(",")
-              .map((item) => item.trim());
-          } else {
-            let truncks = name.split(" ");
-            if (truncks.length === 1) {
-              author.literal = name;
-            } else {
-              author.family = truncks.pop();
-              author.given = truncks.join("");
-            }
-          }
-          this.project.author[i] = author;
-        }
-      },
+      let names = [];
+      for (let author of authors) {
+        if (!!!author) continue;
+        if (!!author.literal) names.push(author.literal);
+        else names.push(`${author.given} ${author.family}`);
+      }
+      console.log(names);
+      return names;
     },
   },
 
@@ -180,25 +212,56 @@ export default {
       this.project = item;
     },
 
-    async getRelatedProjects(related) {
-      this.relatedProjects = [];
-      for (let projectId of related) {
-        this.relatedProjects.push(await getProject(projectId));
-      }
-    },
-
-    async modifyInfo() {
+    /**
+     * Update project info
+     * @param {boolean} updateRelated - if true, also modify info in related projects
+     */
+    async modifyInfo(updateRelated) {
       // update db and also update rev in this.project
       this.project = await updateProject(this.project);
-      let sourceNode = {
-        id: this.project._id,
-        label: this.project.title,
-        type: "project",
-      };
-      await updateEdge(this.project._id, { sourceNode: sourceNode });
+
+      if (updateRelated) {
+        let sourceNode = {
+          id: this.project._id,
+          label: this.project.title,
+          type: "project",
+        };
+        await updateEdge(this.project._id, { sourceNode: sourceNode });
+      }
 
       // update table data
       this.$emit("updateProject", this.project);
+    },
+
+    async addAuthor() {
+      if (this.name.trim() === "") return;
+      // update ui
+      let author = {};
+      if (this.name.includes(",")) {
+        [author.family, author.given] = this.name
+          .split(",")
+          .map((item) => item.trim());
+      } else {
+        let truncks = this.name.split(" ");
+        if (truncks.length === 1) {
+          author.literal = this.name;
+        } else {
+          author.family = truncks.pop();
+          author.given = truncks.join("");
+        }
+      }
+      this.project.author.push(author);
+
+      // update db
+      this.modifyInfo(false);
+    },
+
+    async removeAuthor(index) {
+      // update ui
+      this.project.author.splice(index, 1);
+
+      // update db
+      this.modifyInfo(false);
     },
 
     async addTag() {
@@ -206,23 +269,35 @@ export default {
       this.project.tags.push(this.tag);
       this.tag = ""; // remove text in input
 
-      // update table data
+      // update table data for immediate search
       this.$emit("updateProject", this.project);
 
       // update db
-      this.project = await updateProject(this.project);
+      this.modifyInfo(false);
     },
 
     async removeTag(tag) {
       // update ui
       this.project.tags = this.project.tags.filter((t) => t != tag);
 
-      // update table data
+      // update table data for immediate search
       this.$emit("updateProject", this.project);
 
       // update db
-      this.project = await updateProject(this.project);
+      this.modifyInfo(false);
     },
   },
 };
 </script>
+<style lang="scss" scoped>
+.input {
+  color: var(--color-text);
+  background: var(--color-rightmenu-tab-panel-bkgd);
+  border: 1px solid grey;
+  font-size: 1rem;
+  &:focus-visible {
+    outline: none !important;
+    border: 2px solid $primary;
+  }
+}
+</style>

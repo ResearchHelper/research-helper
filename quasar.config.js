@@ -195,10 +195,19 @@ module.exports = configure(function (/* ctx */) {
       builder: {
         // https://www.electron.build/configuration/configuration
 
-        appId: "com.electron.researchhelper",
+        appId: "com.researchhelper.researchhelper",
         publish: {
           provider: "github",
           releaseType: "release",
+        },
+        linux: {
+          target: "AppImage",
+        },
+        win: {
+          target: "nsis",
+        },
+        mac: {
+          target: "dmg",
         },
       },
     },
