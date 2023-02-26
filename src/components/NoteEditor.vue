@@ -6,6 +6,9 @@
 </template>
 <script>
 import Vditor from "vditor";
+import "src/css/vditor/index.css";
+import darkContent from "src/css/vditor/dark.css?raw";
+import lightContent from "src/css/vditor/light.css?raw";
 import { useStateStore } from "src/stores/appState";
 import {
   loadNote,
@@ -43,10 +46,6 @@ export default {
     "stateStore.settings.theme"(theme) {
       this.setTheme(theme);
     },
-  },
-
-  beforeMount() {
-    this.setTheme(this.stateStore.settings.theme);
   },
 
   async mounted() {
@@ -95,13 +94,20 @@ export default {
           pin: true,
         },
         toolbar: toolbar,
-        lang: "en_US",
+        lang: this.stateStore.settings.language,
+        tab: "    ", // use 4 spaces as tab
         preview: {
           math: {
+            // able to use digit in inline math
             inlineDigit: true,
           },
           markdown: {
+            // in DEV mode, load local files instead of server path
             linkBase: this.dirPath,
+          },
+          hljs: {
+            // enable line number in code block
+            lineNumber: true,
           },
         },
         placeholder: "Live Markdown editor + Latex supported!",
@@ -121,12 +127,7 @@ export default {
         after: () => {
           if (!!this.showEditor) {
             this.setContent();
-            let theme = this.stateStore.settings.theme;
-            this.editor.setTheme(
-              theme,
-              theme,
-              theme === "dark" ? "solarized-dark256" : "solarized-light"
-            );
+            this.setTheme(this.stateStore.settings.theme);
           }
         },
         focus: () => {
@@ -162,38 +163,25 @@ export default {
         this.editor.setTheme(
           theme,
           theme,
-          theme === "dark" ? "solarized-dark256" : "solarized-light"
+          theme === "dark" ? "native" : "emacs"
         );
       }
-
       // must append editorStyle before contentStyle
       // otherwise the texts are dark
-      let editorStyle = document.getElementById("vditor-editor-style");
       let contentStyle = document.getElementById("vditor-content-style");
-      if (editorStyle === null) {
-        editorStyle = document.createElement("link");
-        editorStyle.id = "vditor-editor-style";
-        editorStyle.type = "text/css";
-        editorStyle.rel = "stylesheet";
-        document.head.append(editorStyle);
-      }
       if (contentStyle === null) {
-        contentStyle = document.createElement("link");
+        contentStyle = document.createElement("style");
         contentStyle.id = "vditor-content-style";
         contentStyle.type = "text/css";
-        contentStyle.rel = "stylesheet";
         document.head.append(contentStyle);
       }
 
       switch (theme) {
         case "dark":
-          editorStyle.href = "src/css/vditor/vscode-dark-editor.css";
-          contentStyle.href = "src/css/vditor/vscode-dark-content.css";
+          contentStyle.innerHTML = darkContent;
           break;
-
         case "light":
-          editorStyle.href = "src/css/vditor/vscode-light-editor.css";
-          contentStyle.href = "src/css/vditor/vscode-light-content.css";
+          contentStyle.innerHTML = lightContent;
           break;
       }
     },

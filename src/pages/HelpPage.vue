@@ -6,12 +6,26 @@
 </template>
 <script>
 import Vditor from "vditor";
-import "vditor/dist/index.css";
-
+import "src/css/vditor/index.css";
+import darkContent from "src/css/vditor/dark.css?raw";
+import lightContent from "src/css/vditor/light.css?raw";
 import text from "src/assets/help.md?raw";
+
+import { useStateStore } from "src/stores/appState";
 
 export default {
   props: { itemId: String, visible: Boolean },
+
+  setup() {
+    const stateStore = useStateStore();
+    return { stateStore };
+  },
+
+  watch: {
+    "stateStore.settings.theme"(theme) {
+      this.setTheme(theme);
+    },
+  },
 
   mounted() {
     const toolbar = [
@@ -38,38 +52,64 @@ export default {
         pin: true,
       },
       toolbar: toolbar,
-      lang: "en_US",
+      lang: this.stateStore.settings.language,
+      tab: "    ", // use 4 spaces as tab
       preview: {
         math: {
+          // able to use digit in inline math
           inlineDigit: true,
         },
+        markdown: {
+          // in DEV mode, load local files instead of server path
+          linkBase: this.dirPath,
+        },
         hljs: {
-          style: "native",
+          // enable line number in code block
+          lineNumber: true,
         },
       },
       placeholder: "Live Markdown editor + Latex supported!",
       cache: {
         enable: false,
       },
-      hint: {
-        parse: false,
-        delay: 200, // unit: ms
-        extend: [
-          {
-            key: "[[",
-            hint: () => [],
-          },
-        ],
-      },
       after: () => {
         this.editor.setValue(text);
+        this.setTheme(this.stateStore.settings.theme);
       },
     });
   },
+
+  methods: {
+    setTheme(theme) {
+      // this is used to set code theme
+      if (!!this.editor) {
+        this.editor.setTheme(
+          theme,
+          theme,
+          theme === "dark" ? "native" : "emacs"
+        );
+      }
+      // must append editorStyle before contentStyle
+      // otherwise the texts are dark
+      let contentStyle = document.getElementById("vditor-content-style");
+      if (contentStyle === null) {
+        contentStyle = document.createElement("style");
+        contentStyle.id = "vditor-content-style";
+        contentStyle.type = "text/css";
+        document.head.append(contentStyle);
+      }
+
+      switch (theme) {
+        case "dark":
+          console.log(darkContent);
+          contentStyle.innerHTML = darkContent;
+          break;
+        case "light":
+          console.log(lightContent);
+          contentStyle.innerHTML = lightContent;
+          break;
+      }
+    },
+  },
 };
 </script>
-
-<style>
-@import "src/css/vditor/vscode-dark-editor.css";
-@import "src/css/vditor/vscode-dark-content.css";
-</style>
