@@ -36,7 +36,9 @@ npm install
 ## Start the electron app in development mode (hot-code reloading, error reporting, etc.)
 
 ```bash
-./dev.sh
+yarn dev # start electron app in development mode
+yarn build # build the app with debugger
+yarn release-[platform] # build production mode and publish it
 ```
 
 # Acknowledgement

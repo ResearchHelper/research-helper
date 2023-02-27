@@ -254,8 +254,8 @@
   font-size: 14px;
   display: none;
   -webkit-user-select: none;
-     -moz-user-select: none;
-          user-select: none;
+  -moz-user-select: none;
+  user-select: none;
   max-width: 320px;
   min-width: 80px;
   animation-duration: 0.15s;
@@ -492,7 +492,9 @@
   border: 1px solid var(--border-color);
   border-radius: 3px;
   box-sizing: border-box;
-  font-family: "Helvetica Neue", "Luxi Sans", "DejaVu Sans", "Hiragino Sans GB", "Microsoft Yahei", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "Segoe UI Symbol", "Android Emoji", "EmojiSymbols";
+  font-family: "Helvetica Neue", "Luxi Sans", "DejaVu Sans", "Hiragino Sans GB",
+    "Microsoft Yahei", sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
+    "Noto Color Emoji", "Segoe UI Symbol", "Android Emoji", "EmojiSymbols";
 }
 .vditor .vditor-copy {
   z-index: auto;
@@ -580,8 +582,8 @@
   border-radius: 3px;
   font-size: 12px;
   -webkit-user-select: none;
-     -moz-user-select: none;
-          user-select: none;
+  -moz-user-select: none;
+  user-select: none;
   float: right;
   margin: 8px 3px 0 0;
 }
@@ -593,8 +595,8 @@
   padding: 3px 0;
   cursor: row-resize;
   -webkit-user-select: none;
-     -moz-user-select: none;
-          user-select: none;
+  -moz-user-select: none;
+  user-select: none;
   position: absolute;
   width: 100%;
 }
@@ -705,8 +707,8 @@
   cursor: pointer;
   margin-left: 24px;
   -webkit-user-select: none;
-     -moz-user-select: none;
-          user-select: none;
+  -moz-user-select: none;
+  user-select: none;
   color: var(--toolbar-icon-color);
 }
 .vditor-img__btn:hover {
@@ -790,11 +792,14 @@
 .vditor-reset {
   color: #24292e;
   font-variant-ligatures: no-common-ligatures;
-  font-family: "Helvetica Neue", "Luxi Sans", "DejaVu Sans", "Hiragino Sans GB", "Microsoft Yahei", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "Segoe UI Symbol", "Android Emoji", "EmojiSymbols";
+  font-family: "Helvetica Neue", "Luxi Sans", "DejaVu Sans", "Hiragino Sans GB",
+    "Microsoft Yahei", sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
+    "Noto Color Emoji", "Segoe UI Symbol", "Android Emoji", "EmojiSymbols";
   word-wrap: break-word;
   overflow: auto;
   line-height: 1.5;
-  font-size: 16px;
+  /* font-size: 16px; */
+  font-size: 1rem;
   word-break: break-word;
 }
 .vditor-reset--anchor {
@@ -953,7 +958,9 @@
   margin: 0;
   font-size: 85%;
   border-radius: 3px;
-  font-family: mononoki, Consolas, "Liberation Mono", Menlo, Courier, monospace, "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "Segoe UI Symbol", "Android Emoji", "EmojiSymbols";
+  font-family: mononoki, Consolas, "Liberation Mono", Menlo, Courier, monospace,
+    "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "Segoe UI Symbol",
+    "Android Emoji", "EmojiSymbols";
   word-break: break-word;
   background-size: 20px 20px;
   white-space: pre-wrap;
@@ -969,7 +976,9 @@
   display: block;
   overflow: auto;
   white-space: pre;
-  font-family: mononoki, Consolas, "Liberation Mono", Menlo, Courier, monospace, "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "Segoe UI Symbol", "Android Emoji", "EmojiSymbols";
+  font-family: mononoki, Consolas, "Liberation Mono", Menlo, Courier, monospace,
+    "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "Segoe UI Symbol",
+    "Android Emoji", "EmojiSymbols";
   background-size: 20px 20px;
   background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADwAAAA8AgMAAABHkjHhAAAACVBMVEWAgIBaWlo+Pj7rTFvWAAAAA3RSTlMHCAw+VhR4AAAA+klEQVQoz4WSMW7EQAhFPxKWNh2FCx+HkaZI6RRb5DYbyVfIJXLKDCFoMbaTKSw/8ZnPAPjaH2xgZcUNUDADD7D9LtDBCLZ45fbkvo/30K8yeI64pPwl6znd/3n/Oe93P3ho9qeh72btTFzqkz0rsJle8Zr81OLEwZ1dv/713uWqvu2pl+k0fy7MWtj9r/tN5q/02z89qa/L4Dc2LvM93kezPfXlME/O86EbY/V9GB9ePX8G1/6W+/9h1dq/HGfTfzT3j/xNo7522Bfnqe5jO/fvhVthlfk434v3iO9zG/UOphyPeinPl1J8Gtaa7xPTa/Dk+RIs4deMvwGvcGsmsCvJ0AAAAABJRU5ErkJggg==);
   word-break: initial;
@@ -1094,8 +1103,8 @@
   width: 3em;
   /* works for line-numbers below 1000 lines */
   -webkit-user-select: none;
-     -moz-user-select: none;
-          user-select: none;
+  -moz-user-select: none;
+  user-select: none;
   counter-reset: linenumber;
 }
 .vditor-linenumber__rows > span {
@@ -1225,8 +1234,8 @@
 .vditor-toc {
   margin-bottom: 16px;
   -webkit-user-select: text;
-     -moz-user-select: text;
-          user-select: text;
+  -moz-user-select: text;
+  user-select: text;
   color: #4285f4;
 }
 .vditor-toc .vditor-outline__action {
@@ -1342,7 +1351,7 @@
 .vditor-wysiwyg h4:empty::after,
 .vditor-wysiwyg h5:empty::after,
 .vditor-wysiwyg h6:empty::after {
-  content: ' ';
+  content: " ";
 }
 .vditor-wysiwyg code[data-marker="`"] {
   padding-left: 0 !important;
@@ -1377,36 +1386,37 @@
   float: left;
   padding-right: 4px;
   margin-left: -29px;
-  content: 'H1';
+  content: "H1";
   font-size: 0.85rem;
   font-weight: normal;
   color: var(--second-color);
 }
 .vditor-wysiwyg > .vditor-reset > h2:before {
-  content: 'H2';
+  content: "H2";
 }
 .vditor-wysiwyg > .vditor-reset > h3:before {
-  content: 'H3';
+  content: "H3";
 }
 .vditor-wysiwyg > .vditor-reset > h4:before {
-  content: 'H4';
+  content: "H4";
 }
 .vditor-wysiwyg > .vditor-reset > h5:before {
-  content: 'H5';
+  content: "H5";
 }
 .vditor-wysiwyg > .vditor-reset > h6:before {
-  content: 'H6';
+  content: "H6";
 }
 .vditor-wysiwyg div[data-type="link-ref-defs-block"]:before {
   content: '"A"';
 }
 .vditor-wysiwyg div[data-type="footnotes-block"]:before {
-  content: '^F';
+  content: "^F";
 }
 .vditor-wysiwyg div.vditor-wysiwyg__block:before {
   content: "</>";
 }
-.vditor-wysiwyg div.vditor-wysiwyg__block[data-type="yaml-front-matter"]:before {
+.vditor-wysiwyg
+  div.vditor-wysiwyg__block[data-type="yaml-front-matter"]:before {
   content: "F";
 }
 .vditor-wysiwyg div.vditor-wysiwyg__block[data-type="math-block"]:before {
@@ -1473,7 +1483,7 @@
 .vditor-ir__node[data-type="yaml-front-matter"]:after,
 .vditor-ir__node[data-type="math-block"]:before,
 .vditor-ir__node[data-type="math-block"]:after {
-  content: ' ';
+  content: " ";
   color: var(--second-color);
 }
 .vditor-ir__node:not(.vditor-ir__node--expand) .vditor-ir__marker {
@@ -1537,15 +1547,15 @@
 }
 .vditor-ir__node--expand[data-type="code-block"]:before,
 .vditor-ir__node--expand[data-type="code-block"]:after {
-  content: '```';
+  content: "```";
 }
 .vditor-ir__node--expand[data-type="yaml-front-matter"]:before,
 .vditor-ir__node--expand[data-type="yaml-front-matter"]:after {
-  content: '---';
+  content: "---";
 }
 .vditor-ir__node--expand[data-type="math-block"]:before,
 .vditor-ir__node--expand[data-type="math-block"]:after {
-  content: '$$';
+  content: "$$";
 }
 .vditor-ir__node span[data-type="code-block-open-marker"],
 .vditor-ir__node span[data-type="code-block-close-marker"],
@@ -1605,7 +1615,7 @@
 .vditor-ir h4:empty::after,
 .vditor-ir h5:empty::after,
 .vditor-ir h6:empty::after {
-  content: ' ';
+  content: " ";
 }
 .vditor-ir .vditor-reset > h1:before,
 .vditor-ir .vditor-reset > h2:before,
@@ -1619,25 +1629,25 @@
   float: left;
   padding-right: 4px;
   margin-left: -29px;
-  content: 'H1';
+  content: "H1";
   font-size: 0.85rem;
   font-weight: normal;
   color: var(--second-color);
 }
 .vditor-ir .vditor-reset > h2:before {
-  content: 'H2';
+  content: "H2";
 }
 .vditor-ir .vditor-reset > h3:before {
-  content: 'H3';
+  content: "H3";
 }
 .vditor-ir .vditor-reset > h4:before {
-  content: 'H4';
+  content: "H4";
 }
 .vditor-ir .vditor-reset > h5:before {
-  content: 'H5';
+  content: "H5";
 }
 .vditor-ir .vditor-reset > h6:before {
-  content: 'H6';
+  content: "H6";
 }
 .vditor-ir div[data-type="link-ref-defs-block"] {
   color: var(--blockquote-color);
@@ -1651,15 +1661,36 @@
   margin-top: 24px;
 }
 .vditor-ir div[data-type="footnotes-block"]:before {
-  content: '^F';
+  content: "^F";
 }
-.vditor-ir div[data-type="footnotes-block"] > div[data-type="footnotes-def"] > ul,
-.vditor-ir div[data-type="footnotes-block"] > div[data-type="footnotes-def"] > ol,
-.vditor-ir div[data-type="footnotes-block"] > div[data-type="footnotes-def"] > p,
-.vditor-ir div[data-type="footnotes-block"] > div[data-type="footnotes-def"] > blockquote,
-.vditor-ir div[data-type="footnotes-block"] > div[data-type="footnotes-def"] > pre,
-.vditor-ir div[data-type="footnotes-block"] > div[data-type="footnotes-def"] > table,
-.vditor-ir div[data-type="footnotes-block"] > div[data-type="footnotes-def"] > hr {
+.vditor-ir
+  div[data-type="footnotes-block"]
+  > div[data-type="footnotes-def"]
+  > ul,
+.vditor-ir
+  div[data-type="footnotes-block"]
+  > div[data-type="footnotes-def"]
+  > ol,
+.vditor-ir
+  div[data-type="footnotes-block"]
+  > div[data-type="footnotes-def"]
+  > p,
+.vditor-ir
+  div[data-type="footnotes-block"]
+  > div[data-type="footnotes-def"]
+  > blockquote,
+.vditor-ir
+  div[data-type="footnotes-block"]
+  > div[data-type="footnotes-def"]
+  > pre,
+.vditor-ir
+  div[data-type="footnotes-block"]
+  > div[data-type="footnotes-def"]
+  > table,
+.vditor-ir
+  div[data-type="footnotes-block"]
+  > div[data-type="footnotes-def"]
+  > hr {
   margin-left: 8px;
 }
 .vditor-ir .vditor-toc:before {
@@ -1683,7 +1714,9 @@
   }
 }
 .vditor-sv {
-  font-family: "Helvetica Neue", "Luxi Sans", "DejaVu Sans", "Hiragino Sans GB", "Microsoft Yahei", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "Segoe UI Symbol", "Android Emoji", "EmojiSymbols";
+  font-family: "Helvetica Neue", "Luxi Sans", "DejaVu Sans", "Hiragino Sans GB",
+    "Microsoft Yahei", sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
+    "Noto Color Emoji", "Segoe UI Symbol", "Android Emoji", "EmojiSymbols";
   margin: 0 1px 0 0;
   overflow: auto;
   width: 100%;
@@ -1789,4 +1822,3 @@
 .vditor-sv__marker--strong {
   font-weight: bold;
 }
-

@@ -33,7 +33,9 @@
               :name="props.expanded ? 'arrow_drop_down' : 'arrow_right'"
             />
           </q-item-section>
-          <q-item-section> Active Projects </q-item-section>
+          <q-item-section>
+            <div style="font-size: 1rem">Active Projects</div>
+          </q-item-section>
         </template>
         <div :style="`height: ${treeSize - 36}px; overflow-y: auto`">
           <q-tree
@@ -170,7 +172,9 @@
               :name="props.expanded ? 'arrow_drop_down' : 'arrow_right'"
             />
           </q-item-section>
-          <q-item-section> Related Items </q-item-section>
+          <q-item-section>
+            <div style="font-size: 1rem">Related Items</div>
+          </q-item-section>
           <q-item-section side>
             <q-btn
               flat
@@ -181,7 +185,7 @@
               icon="refresh"
               @click.stop="$refs.graphview.reload()"
             >
-              <q-tooltip>refresh graphview</q-tooltip>
+              <q-tooltip>Refresh graphview</q-tooltip>
             </q-btn>
           </q-item-section>
         </template>

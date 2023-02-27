@@ -46,13 +46,13 @@
       ]"
     >
       <template v-slot:cursor>
-        <q-tooltip>cursor</q-tooltip>
+        <q-tooltip>Cursor</q-tooltip>
       </template>
       <template v-slot:highlight>
-        <q-tooltip>highlight</q-tooltip>
+        <q-tooltip>Highlight</q-tooltip>
       </template>
       <template v-slot:comment>
-        <q-tooltip>comment</q-tooltip>
+        <q-tooltip>Comment</q-tooltip>
       </template>
     </q-btn-toggle>
     <q-btn
@@ -61,7 +61,7 @@
       :ripple="false"
       size="0.5rem"
     >
-      <q-tooltip>highlight color</q-tooltip>
+      <q-tooltip>Highlight color</q-tooltip>
       <q-menu
         anchor="bottom middle"
         self="top middle"
@@ -89,7 +89,7 @@
       size="0.7rem"
       padding="xs"
     >
-      <template v-slot:label><q-tooltip>view</q-tooltip></template>
+      <template v-slot:label><q-tooltip>View</q-tooltip></template>
       <q-list dense>
         <q-item class="row justify-center items-center">
           <q-btn
@@ -166,7 +166,7 @@
       padding="xs"
       @click="requestFullscreen"
     >
-      <q-tooltip>enter full screen</q-tooltip>
+      <q-tooltip>Enter full screen</q-tooltip>
     </q-btn>
     <q-btn
       v-else
@@ -179,7 +179,7 @@
       icon="fullscreen_exit"
       @click="exitFullscreen"
     >
-      <q-tooltip>exit full screen</q-tooltip>
+      <q-tooltip>Exit full screen</q-tooltip>
     </q-btn>
 
     <q-btn
@@ -191,7 +191,7 @@
       padding="none"
       ref="searchBtn"
     >
-      <q-tooltip>search</q-tooltip>
+      <q-tooltip>Search</q-tooltip>
       <q-menu
         persistent
         @show="$emit('searchText', search)"
@@ -265,7 +265,7 @@
       @update:model-value="$emit('toggleRightMenu', showRightMenu)"
     >
       <template v-slot:default>
-        <q-tooltip>toogle right menu</q-tooltip>
+        <q-tooltip>Toggle right menu</q-tooltip>
       </template>
     </q-btn-toggle>
   </q-toolbar>
