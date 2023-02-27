@@ -101,11 +101,9 @@ export default {
 
       switch (theme) {
         case "dark":
-          console.log(darkContent);
           contentStyle.innerHTML = darkContent;
           break;
         case "light":
-          console.log(lightContent);
           contentStyle.innerHTML = lightContent;
           break;
       }
