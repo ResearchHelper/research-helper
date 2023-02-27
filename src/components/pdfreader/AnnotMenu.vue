@@ -10,8 +10,10 @@
           v-close-popup
           @click="copyID"
         >
-          <q-icon name="content_copy"></q-icon>
-          Copy Annot ID
+          <div style="font-size: 1rem">
+            <q-icon name="content_copy"></q-icon>
+            Copy Annot ID
+          </div>
         </div>
       </q-item>
       <q-item>
@@ -20,8 +22,10 @@
           v-close-popup
           @click="deleteAnnot"
         >
-          <q-icon name="delete"></q-icon>
-          Delete Annot
+          <div style="font-size: 1rem">
+            <q-icon name="delete_outline"></q-icon>
+            Delete Annot
+          </div>
         </div>
       </q-item>
     </q-list>

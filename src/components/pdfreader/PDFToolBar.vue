@@ -189,6 +189,7 @@
       icon="search"
       size="0.8rem"
       padding="none"
+      ref="searchBtn"
     >
       <q-tooltip>search</q-tooltip>
       <q-menu
@@ -263,9 +264,9 @@
       :options="[{ value: true, icon: 'list' }]"
       @update:model-value="$emit('toggleRightMenu', showRightMenu)"
     >
-      <template v-slot:default
-        ><q-tooltip>toogle right menu</q-tooltip></template
-      >
+      <template v-slot:default>
+        <q-tooltip>toogle right menu</q-tooltip>
+      </template>
     </q-btn-toggle>
   </q-toolbar>
 </template>
@@ -350,7 +351,7 @@ export default {
   },
 
   mounted() {
-    this.state = JSON.parse(JSON.stringify(this.pdfState));
+    this.state = this.pdfState;
   },
 
   methods: {
