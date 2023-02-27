@@ -59,6 +59,9 @@ export default {
     this.initEditor();
   },
 
+  /**
+   * After the component is created, create debounce functions
+   */
   created() {
     this.saveContent = debounce(this._saveContent, 100);
     this.changeLinks = debounce(this._changeLinks, 50);
@@ -66,6 +69,9 @@ export default {
   },
 
   methods: {
+    /************************************************
+     * Initialization of vditor
+     ************************************************/
     initEditor() {
       let toolbar = [];
       if (this.hasToolbar)
@@ -141,6 +147,7 @@ export default {
         input: () => {
           this.saveContent();
           this.changeLinks();
+          this.addImgResizer();
         },
         upload: {
           accept: "image/*",
@@ -186,6 +193,10 @@ export default {
       }
     },
 
+    /*****************************************
+     * Set and save content
+     *****************************************/
+
     async setContent() {
       let content = await loadNote(this.noteId);
       this.editor.setValue(content);
@@ -202,9 +213,6 @@ export default {
     },
 
     async saveLinks() {
-      // let note = await getNote(this.noteId);
-      // note.links = [];
-
       let sourceNode = {
         id: this.currentNote._id,
         label: this.currentNote.label,
@@ -234,7 +242,6 @@ export default {
           }
         }
       }
-      // updateNote(this.noteId, { links: note.links });
 
       let data = {
         source: sourceNode.id,
@@ -242,7 +249,18 @@ export default {
         sourceNode: sourceNode,
         targetNodes: targetNodes,
       };
-      updateEdge(this.noteId, data);
+      await updateEdge(this.noteId, data);
+    },
+
+    /*****************************************
+     * Modify the default click link behavior
+     *****************************************/
+    _changeLinks() {
+      let vditor = this.$refs.vditor;
+      let linkNodes = vditor.querySelectorAll("[data-type='a']");
+      for (let linkNode of linkNodes) {
+        linkNode.onclick = (e) => this.clickLink(e, linkNode);
+      }
     },
 
     async clickLink(e, linkNode) {
@@ -263,14 +281,70 @@ export default {
       }
     },
 
-    _changeLinks() {
+    /********************************************
+     * Add image resize handle on each image in the note
+     ********************************************/
+    _addImgResizer() {
       let vditor = this.$refs.vditor;
-      let linkNodes = vditor.querySelectorAll("[data-type='a']");
-      for (let linkNode of linkNodes) {
-        linkNode.onclick = (e) => this.clickLink(e, linkNode);
+      let imgs = vditor.querySelectorAll("img");
+      for (let img of imgs) {
+        let p = img.parentElement.parentElement;
+        if (!!p.onmouseover) continue;
+        // add this only if the image does not have it
+        p.onmouseenter = () => {
+          let dragHandle = document.createElement("div");
+          dragHandle.style.backgroundColor = "grey";
+          dragHandle.style.position = "relative";
+          dragHandle.style.display = "inline-block";
+          dragHandle.style.borderRadius = `${10}px`;
+          dragHandle.style.top = `${-img.height / 3}px`;
+          dragHandle.style.left = `${-0.05 * img.width}px`;
+          dragHandle.style.width = `${5}px`;
+          dragHandle.style.height = `${img.height / 3}px`;
+          dragHandle.style.zIndex = 10000;
+          dragHandle.style.cursor = "ew-resize";
+
+          dragHandle.onmousedown = (e) => {
+            e.preventDefault();
+            let widthStart = img.width;
+            let heightStart = img.height;
+            let xStart = e.clientX;
+            let ratio = img.height / img.width;
+
+            document.onmousemove = (ev) => {
+              let dx = ev.clientX - xStart;
+              let dy = ratio * dx;
+
+              img.width = widthStart + dx;
+              img.height = heightStart + dy;
+
+              dragHandle.style.top = `${-img.height / 3}px`;
+              dragHandle.style.left = `${-0.05 * img.width}px`;
+              dragHandle.style.height = `${img.height / 3}px`;
+            };
+
+            document.onmouseup = (e) => {
+              document.onmousemove = null;
+              document.onmouseup = null;
+            };
+          };
+          p.append(dragHandle);
+
+          p.onmouseleave = () => {
+            dragHandle.remove();
+          };
+        };
       }
     },
 
+    /*******************************************
+     * Hints
+     *******************************************/
+
+    /**
+     * Return a filtered list of projects / notes according to key
+     * @param {string} key
+     */
     filterHints(key) {
       this.hints = [];
       for (let item of this.projects.concat(this.notes)) {
@@ -283,20 +357,6 @@ export default {
         }
       }
       return this.hints;
-    },
-
-    _addImgResizer() {
-      // TODO
-      let vditor = this.$refs.vditor;
-      let imgs = vditor.querySelectorAll("img");
-      for (let img of imgs) {
-        img.onmouseover = () => {
-          console.log("on hover");
-        };
-        img.onmouseleave = () => {
-          console.log("on leave");
-        };
-      }
     },
   },
 };
