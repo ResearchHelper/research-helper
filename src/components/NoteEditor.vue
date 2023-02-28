@@ -46,6 +46,10 @@ export default {
     "stateStore.settings.theme"(theme) {
       this.setTheme(theme);
     },
+
+    "$el.clientWidth"(width) {
+      console.log(width);
+    },
   },
 
   async mounted() {
@@ -57,6 +61,8 @@ export default {
     this.$refs.vditor.setAttribute("id", `vditor-${this.noteId}`);
     this.showEditor = true;
     this.initEditor();
+    await this.$nextTick();
+    console.log(this.$el.clientWidth);
   },
 
   /**
@@ -361,3 +367,9 @@ export default {
   },
 };
 </script>
+<style>
+pre.vditor-reset {
+  /* do not change padding after resizing */
+  padding: 10px 35px !important;
+}
+</style>

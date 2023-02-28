@@ -425,14 +425,17 @@ export default {
       // unit: px
       let top = 0;
       let mid = 0;
-      let n = rects.length;
+      let n = 0; // number of non-empty rect
       for (let rect of rects) {
+        if (rect.width < 0.1) continue;
         top = Math.max(top, rect.bottom);
-        mid += (rect.left + rect.right) / 2 / n;
+        mid += (rect.left + rect.right) / 2;
+        n++;
       }
+      mid /= n; // averaged mid point
 
       this.style = `
-      background: var(--q-dark-page);
+      background: var(--color-pdfreader-colorpicker-bkgd);
       position: absolute;
       left: ${mid - bgRect.left - 75}px;
       top: ${top - bgRect.top + 10}px;
@@ -488,11 +491,6 @@ export default {
 
 .activeAnnotation {
   outline-offset: 3px;
-  outline: dashed 2px cyan;
+  outline: dashed 2px $primary;
 }
-
-// .q-splitter__after {
-//   // hide the bottom scrollbar in pdf page
-//   // overflow: hidden;
-// }
 </style>

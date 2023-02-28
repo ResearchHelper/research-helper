@@ -1,7 +1,7 @@
 export default {
   // library page
   // action bar
-  add: "添加",
+  add: "添加项目",
   localSearch: "本地搜索",
   info: "详细信息",
   // reader page

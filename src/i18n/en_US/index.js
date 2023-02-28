@@ -1,7 +1,7 @@
 export default {
   // library page
   // action bar
-  add: "Add",
+  add: "Add Project",
   localSearch: "Local search",
   info: "Detail info",
 

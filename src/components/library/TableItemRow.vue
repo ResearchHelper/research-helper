@@ -50,6 +50,7 @@
     </q-td>
 
     <q-menu
+      v-if="item.dataType === 'note'"
       touch-position
       context-menu
       square

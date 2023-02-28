@@ -13,3 +13,8 @@ export default {
   components: { NoteEditor },
 };
 </script>
+<style lang="scss">
+.vditor-reset > pre {
+  padding: 10px 35px !important;
+}
+</style>

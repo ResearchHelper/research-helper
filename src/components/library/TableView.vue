@@ -144,7 +144,6 @@
 </template>
 
 <script>
-// import ActionBar from "./ActionBar.vue";
 import TableProjectMenu from "./TableProjectMenu.vue";
 import TableItemRow from "./TableItemRow.vue";
 
@@ -170,12 +169,10 @@ import {
 } from "src/backend/project/graph";
 
 export default {
-  // props: { rightMenuSize: Number },
   props: { searchString: String },
   emits: ["dragProject"],
 
   components: {
-    // ActionBar,
     TableProjectMenu,
     TableItemRow,
   },
@@ -218,6 +215,7 @@ export default {
         },
       ],
       projects: [],
+      isClickingPDF: false,
 
       // for search
       showExpansion: false,
