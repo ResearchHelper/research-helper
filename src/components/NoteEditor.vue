@@ -6,14 +6,14 @@
 </template>
 <script>
 import Vditor from "vditor";
-import "src/css/vditor/vscode-dark-editor.css";
-import "src/css/vditor/vscode-dark-content.css";
+import "src/css/vditor/index.css";
+import darkContent from "src/css/vditor/dark.css?raw";
+import lightContent from "src/css/vditor/light.css?raw";
 import { useStateStore } from "src/stores/appState";
 import {
   loadNote,
   saveNote,
   getAllNotes,
-  updateNote,
   getNote,
   uploadImage,
 } from "src/backend/project/note";
@@ -27,7 +27,7 @@ export default {
 
   setup() {
     const stateStore = useStateStore();
-    return { stateStore, loadNote, saveNote };
+    return { stateStore };
   },
 
   data() {
@@ -42,6 +42,16 @@ export default {
     };
   },
 
+  watch: {
+    "stateStore.settings.theme"(theme) {
+      this.setTheme(theme);
+    },
+
+    "$el.clientWidth"(width) {
+      console.log(width);
+    },
+  },
+
   async mounted() {
     this.currentNote = await getNote(this.noteId);
     this.dirPath = window.path.dirname(this.currentNote.path);
@@ -51,9 +61,23 @@ export default {
     this.$refs.vditor.setAttribute("id", `vditor-${this.noteId}`);
     this.showEditor = true;
     this.initEditor();
+    await this.$nextTick();
+    console.log(this.$el.clientWidth);
+  },
+
+  /**
+   * After the component is created, create debounce functions
+   */
+  created() {
+    this.saveContent = debounce(this._saveContent, 100);
+    this.changeLinks = debounce(this._changeLinks, 50);
+    this.addImgResizer = debounce(this._addImgResizer, 50);
   },
 
   methods: {
+    /************************************************
+     * Initialization of vditor
+     ************************************************/
     initEditor() {
       let toolbar = [];
       if (this.hasToolbar)
@@ -82,16 +106,20 @@ export default {
           pin: true,
         },
         toolbar: toolbar,
-        lang: "en_US",
+        lang: this.stateStore.settings.language,
+        tab: "    ", // use 4 spaces as tab
         preview: {
           math: {
+            // able to use digit in inline math
             inlineDigit: true,
           },
-          hljs: {
-            style: "native",
-          },
           markdown: {
+            // in DEV mode, load local files instead of server path
             linkBase: this.dirPath,
+          },
+          hljs: {
+            // enable line number in code block
+            lineNumber: true,
           },
         },
         placeholder: "Live Markdown editor + Latex supported!",
@@ -109,7 +137,10 @@ export default {
           ],
         },
         after: () => {
-          if (!!this.showEditor) this.setContent();
+          if (!!this.showEditor) {
+            this.setContent();
+            this.setTheme(this.stateStore.settings.theme);
+          }
         },
         focus: () => {
           // used to filter stuff
@@ -122,15 +153,13 @@ export default {
         input: () => {
           this.saveContent();
           this.changeLinks();
+          this.addImgResizer();
         },
         upload: {
           accept: "image/*",
           handler: (files) => {
             for (let file of files) {
               uploadImage(this.noteId, file).then((uploaded) => {
-                // this.editor.insertValue(
-                //   `![${uploaded.imgName}](${uploaded.imgPath})`
-                // );
                 this.editor.insertValue(
                   `![${uploaded.imgName}](./img/${uploaded.imgName})`
                 );
@@ -141,10 +170,44 @@ export default {
       });
     },
 
+    setTheme(theme) {
+      // this is used to set code theme
+      if (!!this.editor) {
+        this.editor.setTheme(
+          theme,
+          theme,
+          theme === "dark" ? "native" : "emacs"
+        );
+      }
+      // must append editorStyle before contentStyle
+      // otherwise the texts are dark
+      let contentStyle = document.getElementById("vditor-content-style");
+      if (contentStyle === null) {
+        contentStyle = document.createElement("style");
+        contentStyle.id = "vditor-content-style";
+        contentStyle.type = "text/css";
+        document.head.append(contentStyle);
+      }
+
+      switch (theme) {
+        case "dark":
+          contentStyle.innerHTML = darkContent;
+          break;
+        case "light":
+          contentStyle.innerHTML = lightContent;
+          break;
+      }
+    },
+
+    /*****************************************
+     * Set and save content
+     *****************************************/
+
     async setContent() {
       let content = await loadNote(this.noteId);
       this.editor.setValue(content);
       this.changeLinks();
+      this.addImgResizer();
     },
 
     async _saveContent() {
@@ -156,9 +219,6 @@ export default {
     },
 
     async saveLinks() {
-      // let note = await getNote(this.noteId);
-      // note.links = [];
-
       let sourceNode = {
         id: this.currentNote._id,
         label: this.currentNote.label,
@@ -188,7 +248,6 @@ export default {
           }
         }
       }
-      // updateNote(this.noteId, { links: note.links });
 
       let data = {
         source: sourceNode.id,
@@ -196,33 +255,102 @@ export default {
         sourceNode: sourceNode,
         targetNodes: targetNodes,
       };
-      updateEdge(this.noteId, data);
+      await updateEdge(this.noteId, data);
     },
 
-    async clickLink(linkNode) {
+    /*****************************************
+     * Modify the default click link behavior
+     *****************************************/
+    _changeLinks() {
+      let vditor = this.$refs.vditor;
+      let linkNodes = vditor.querySelectorAll("[data-type='a']");
+      for (let linkNode of linkNodes) {
+        linkNode.onclick = (e) => this.clickLink(e, linkNode);
+      }
+    },
+
+    async clickLink(e, linkNode) {
+      e.stopImmediatePropagation(); // stop propagating the click event
       this.editor.blur(); // save the content before jumping
 
       let link = linkNode.querySelector(
         "span.vditor-ir__marker--link"
       ).innerText;
       try {
+        // valid external url, open it externally
         new URL(link);
-        // valid external url, do nothing
+        window.browser.openURL(link);
       } catch (error) {
         // we just want the document, both getProject or getNote are good
         this.stateStore.openItemId = link;
+        console.log("item id");
       }
     },
 
-    _changeLinks() {
+    /********************************************
+     * Add image resize handle on each image in the note
+     ********************************************/
+    _addImgResizer() {
       let vditor = this.$refs.vditor;
-      // let linkNodes = vditor.querySelectorAll("a");
-      let linkNodes = vditor.querySelectorAll("[data-type='a']");
-      for (let linkNode of linkNodes) {
-        linkNode.onclick = () => this.clickLink(linkNode);
+      let imgs = vditor.querySelectorAll("img");
+      for (let img of imgs) {
+        let p = img.parentElement.parentElement;
+        if (!!p.onmouseover) continue;
+        // add this only if the image does not have it
+        p.onmouseenter = () => {
+          let dragHandle = document.createElement("div");
+          dragHandle.style.backgroundColor = "grey";
+          dragHandle.style.position = "relative";
+          dragHandle.style.display = "inline-block";
+          dragHandle.style.borderRadius = `${10}px`;
+          dragHandle.style.top = `${-img.height / 3}px`;
+          dragHandle.style.left = `${-0.05 * img.width}px`;
+          dragHandle.style.width = `${5}px`;
+          dragHandle.style.height = `${img.height / 3}px`;
+          dragHandle.style.zIndex = 10000;
+          dragHandle.style.cursor = "ew-resize";
+
+          dragHandle.onmousedown = (e) => {
+            e.preventDefault();
+            let widthStart = img.width;
+            let heightStart = img.height;
+            let xStart = e.clientX;
+            let ratio = img.height / img.width;
+
+            document.onmousemove = (ev) => {
+              let dx = ev.clientX - xStart;
+              let dy = ratio * dx;
+
+              img.width = widthStart + dx;
+              img.height = heightStart + dy;
+
+              dragHandle.style.top = `${-img.height / 3}px`;
+              dragHandle.style.left = `${-0.05 * img.width}px`;
+              dragHandle.style.height = `${img.height / 3}px`;
+            };
+
+            document.onmouseup = (e) => {
+              document.onmousemove = null;
+              document.onmouseup = null;
+            };
+          };
+          p.append(dragHandle);
+
+          p.onmouseleave = () => {
+            dragHandle.remove();
+          };
+        };
       }
     },
 
+    /*******************************************
+     * Hints
+     *******************************************/
+
+    /**
+     * Return a filtered list of projects / notes according to key
+     * @param {string} key
+     */
     filterHints(key) {
       this.hints = [];
       for (let item of this.projects.concat(this.notes)) {
@@ -237,10 +365,11 @@ export default {
       return this.hints;
     },
   },
-
-  created() {
-    this.saveContent = debounce(this._saveContent, 100);
-    this.changeLinks = debounce(this._changeLinks, 50);
-  },
 };
 </script>
+<style>
+pre.vditor-reset {
+  /* do not change padding after resizing */
+  padding: 10px 35px !important;
+}
+</style>

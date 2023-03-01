@@ -3,23 +3,19 @@
 style="width: 100px; vertical-align:middle">
 </p>
 
+<p align="center">
+<a href="https://github.com/ResearchHelper/research-helper/README.md">English</a>
+|
+<a href="https://github.com/ResearchHelper/research-helper/README.zh_CN.md">中文</a>
+</p>
+
 # Research Helper
 
 Research helper is a paper/book management tool. It is a reference management tool with various useful functionalities such as: built-in PDF reader and live markdown.
 
-# Features
+# Demo
 
-## Built-in PDF reader
-
-![reader.gif](./gifs/reader.gif)
-
-## Drag & Drop Layout
-
-![layout.gif](./gifs/layout.gif)
-
-## Built-in Live Markdown editor
-
-![note.gif](./gifs/note.gif)
+![demo.gif](./gifs/demo.gif)
 
 # Contribute to Research-Helper
 
@@ -36,7 +32,8 @@ npm install
 ## Start the electron app in development mode (hot-code reloading, error reporting, etc.)
 
 ```bash
-./dev.sh
+yarn dev # start electron app in development mode
+yarn build # build the app with debugger
 ```
 
 # Acknowledgement
@@ -53,3 +50,7 @@ This project is made possible by the following open source projects.
 - pdf.js
 - vditor
 - Pouchdb
+
+# License
+
+This project uses AGPL license.

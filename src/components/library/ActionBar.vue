@@ -1,9 +1,9 @@
 <template>
   <q-toolbar class="q-px-none">
     <q-file
-      :multiple="true"
+      :multiple="multiple"
+      :accept="accept"
       :append="false"
-      :accept="'.pdf'"
       style="display: none"
       @update:model-value="(files) => addByFiles(files)"
       ref="filePicker"
@@ -14,8 +14,11 @@
       dense
       square
       icon="add"
+      size="0.8rem"
+      padding="none"
     >
-      <q-menu>
+      <q-tooltip>{{ $t("add") }}</q-tooltip>
+      <q-menu square>
         <q-list dense>
           <q-item
             clickable
@@ -34,9 +37,19 @@
           <q-item
             clickable
             v-close-popup
-            @click="$refs.filePicker.$el.click()"
+            @click="showFilePicker('file')"
           >
             <q-item-section>Create Entry By File</q-item-section>
+          </q-item>
+          <q-separator />
+          <q-item
+            clickable
+            v-close-popup
+            @click="showFilePicker('collection')"
+          >
+            <q-item-section>
+              Import Collection (Bib, RIS, etc ...)
+            </q-item-section>
           </q-item>
         </q-list>
       </q-menu>
@@ -47,7 +60,9 @@
     <q-input
       outlined
       dense
-      placeholder="Search"
+      square
+      class="actionbar-input"
+      :placeholder="$t('localSearch')"
       :model-value="searchString"
       @update:model-value="
         (text) => {
@@ -71,11 +86,15 @@
       flat
       dense
       square
+      size="0.8rem"
+      padding="none"
       :ripple="false"
       toggle-color="primary"
       :options="[{ value: true, icon: 'list' }]"
       @update:model-value="$emit('toggleRightMenu', showRightMenu)"
-    />
+    >
+      <q-tooltip>{{ $t("info") }}</q-tooltip>
+    </q-btn-toggle>
   </q-toolbar>
 </template>
 
@@ -89,6 +108,7 @@ export default {
     "toggleRightMenu",
     "addEmptyProject",
     "addByFiles",
+    "addByCollection",
     "showIdentifierDialog",
   ],
 
@@ -100,6 +120,9 @@ export default {
   data() {
     return {
       showRightMenu: false,
+      multiple: true,
+      accept: "",
+      fileType: "",
     };
   },
 
@@ -110,12 +133,38 @@ export default {
   },
 
   methods: {
+    async showFilePicker(fileType) {
+      switch (fileType) {
+        case "file":
+          this.multiple = true;
+          this.accept = ".pdf";
+          break;
+
+        case "collection":
+          this.multiple = false;
+          this.accept = ".bib, .ris, .json";
+          break;
+      }
+      this.fileType = fileType;
+      await this.$nextTick(); // wait until the acceptType is set
+      this.$refs.filePicker.$el.click();
+    },
+
     addEmpty() {
       this.$emit("addEmptyProject");
     },
 
-    addByFiles(files) {
-      this.$emit("addByFiles", files);
+    addByFiles(file) {
+      switch (this.fileType) {
+        case "file":
+          // in this case, file is an array of File objects
+          this.$emit("addByFiles", file);
+          break;
+
+        case "collection":
+          this.$emit("addByCollection", file);
+          break;
+      }
     },
 
     addByID() {
@@ -125,4 +174,14 @@ export default {
 };
 </script>
 
-<style></style>
+<style lang="scss">
+.actionbar-input {
+  /* for sizing the q-input */
+  .q-field__control {
+    height: min(1.8rem, 36px) !important;
+  }
+  .q-field__marginal {
+    height: min(1.8rem, 36px) !important;
+  }
+}
+</style>

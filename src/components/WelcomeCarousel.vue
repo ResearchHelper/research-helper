@@ -23,7 +23,9 @@
         style="width: 60%"
         dense
         outlined
+        readonly
         v-model="path"
+        @click="showFolderPicker"
       >
         <template v-slot:append>
           <q-btn
@@ -61,7 +63,7 @@ export default {
   methods: {
     showFolderPicker() {
       let result = window.folderPicker.show();
-      if (!!result[0]) this.path = result[0];
+      if (result !== undefined && !!result[0]) this.path = result[0];
     },
 
     start() {

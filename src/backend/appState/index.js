@@ -7,34 +7,21 @@ import debounce from "lodash/debounce";
 
 async function getAppState() {
   try {
-    return await db.get("app_state");
+    return await db.get("appState");
   } catch (error) {
-    // cannot get app_state
+    // cannot get appState
 
     let state = {
-      _id: "app_state",
-      // user data path
-      storagePath: "",
-
-      // layout
-      leftMenuSize: 20,
-      showLeftMenu: false,
-
-      // tree view
-      selectedFolderId: "",
-
-      // projects
-      workingItemId: "library", // workingItem
-      openedProjectIds: new Set(), // for projectTree
+      _id: "appState",
+      dataType: "appState",
     };
-
     await db.put(state);
     return state;
   }
 }
 
 async function _updateAppState(state) {
-  let oldState = await db.get("app_state");
+  let oldState = await db.get("appState");
   state._rev = oldState._rev;
   await db.put(state);
 }

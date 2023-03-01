@@ -1,21 +1,36 @@
 <template>
   <q-spinner-ios
-    v-show="!ready && itemId !== 'library'"
+    v-show="!ready && !specialPages.includes(itemId)"
     color="primary"
     size="md"
   />
   <div class="q-mx-xl q-my-sm row justify-between">
     <div class="row items-center">
       <div class="square"></div>
-      <div class="q-ml-xs">Project</div>
+      <div
+        class="q-ml-xs"
+        style="font-size: 1rem"
+      >
+        Project
+      </div>
     </div>
     <div class="row items-center">
       <div class="circle"></div>
-      <div class="q-ml-xs">Note</div>
+      <div
+        class="q-ml-xs"
+        style="font-size: 1rem"
+      >
+        Note
+      </div>
     </div>
     <div class="row items-center">
       <div class="triangle"></div>
-      <div class="q-ml-xs">Missing</div>
+      <div
+        class="q-ml-xs"
+        style="font-size: 1rem"
+      >
+        Missing
+      </div>
     </div>
   </div>
   <div
@@ -44,6 +59,7 @@ export default {
   data() {
     return {
       ready: false,
+      specialPages: ["library", "settings"],
       nodes: [],
       edges: [],
     };
@@ -63,7 +79,7 @@ export default {
 
   methods: {
     async reload() {
-      if (!!!this.itemId || this.itemId === "library") return;
+      if (!!!this.itemId || this.specialPages.includes(this.itemId)) return;
       this.ready = false;
       await this.getGraph();
       await this.drawGraph(this.stateStore);
@@ -71,7 +87,10 @@ export default {
     },
 
     async getGraph() {
-      if (!!!this.itemId || this.itemId == "library") return;
+      // get background color
+      let color = getComputedStyle(document.body).getPropertyValue(
+        "--color-text"
+      );
 
       this.nodes = [];
       this.edges = [];
@@ -87,7 +106,7 @@ export default {
       else if (type === "note") sourceNode.data.shape = "ellipse";
       else if (type === undefined) sourceNode.data.shape = "triangle";
       sourceNode.data.bg =
-        this.itemId === sourceNode.data.id ? "#1976d2" : "white";
+        this.itemId === sourceNode.data.id ? "#1976d2" : color;
       this.nodes.push(sourceNode);
 
       for (let inEdge of inEdges) {
@@ -97,7 +116,7 @@ export default {
         if (node.data.type === "project") node.data.shape = "rectangle";
         else if (node.data.type === "note") node.data.shape = "ellipse";
         else if (node.data.type === undefined) node.data.shape = "triangle";
-        node.data.bg = this.itemId === node.data.id ? "#1976d2" : "white";
+        node.data.bg = this.itemId === node.data.id ? "#1976d2" : color;
         this.nodes.push(node);
 
         // add in edges
@@ -119,7 +138,8 @@ export default {
           node.data.shape = "ellipse";
         else if (outEdge.targetNodes[i].type === undefined)
           node.data.shape = "triangle";
-        node.data.bg = this.itemId === node.data.id ? "#1976d2" : "white";
+
+        node.data.bg = this.itemId === node.data.id ? "#1976d2" : color;
         this.nodes.push(node);
 
         // add out edges
@@ -191,21 +211,21 @@ export default {
 </script>
 <style scoped>
 .square {
-  width: 1em;
-  height: 1em;
-  background: white;
+  width: 1rem;
+  height: 1rem;
+  background: var(--color-text);
 }
 .circle {
-  width: 1em;
-  height: 1em;
-  background: white;
+  width: 1rem;
+  height: 1rem;
+  background: var(--color-text);
   border-radius: 50%;
 }
 .triangle {
   width: 0;
   height: 0;
-  border-left: 0.7em solid transparent;
-  border-right: 0.7em solid transparent;
-  border-bottom: 1em solid white;
+  border-left: 0.6rem solid transparent;
+  border-right: 0.6rem solid transparent;
+  border-bottom: 1rem solid var(--color-text);
 }
 </style>

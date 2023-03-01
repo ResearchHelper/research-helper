@@ -15,40 +15,51 @@
  *     doAThing: () => {}
  *   })
  */
-import { contextBridge } from "electron";
-import { BrowserWindow, dialog } from "@electron/remote";
+import { contextBridge, shell, ipcRenderer } from "electron";
+import { app, dialog, BrowserWindow } from "@electron/remote";
 import fs from "fs";
 import path from "path";
-
-contextBridge.exposeInMainWorld("myWindowAPI", {
-  minimize() {
-    BrowserWindow.getFocusedWindow().minimize();
-  },
-
-  toggleMaximize() {
-    const win = BrowserWindow.getFocusedWindow();
-
-    if (win.isMaximized()) {
-      win.unmaximize();
-    } else {
-      win.maximize();
-    }
-  },
-
-  close() {
-    BrowserWindow.getFocusedWindow().close();
-  },
-});
 
 // inject these libraries in preload, otherwise they are externalized
 contextBridge.exposeInMainWorld("fs", fs);
 contextBridge.exposeInMainWorld("path", path);
 
+// quasar's filePicker cannot pick folder only, use electron's dialog
 contextBridge.exposeInMainWorld("folderPicker", {
   show() {
     let result = dialog.showOpenDialogSync(BrowserWindow.getFocusedWindow(), {
       properties: ["openDirectory", "createDirectory"],
     });
     return result;
+  },
+});
+
+// use electron's shell to open link in user's default browser
+contextBridge.exposeInMainWorld("browser", {
+  openURL(url) {
+    shell.openExternal(url);
+  },
+});
+
+// auto updater
+contextBridge.exposeInMainWorld("updater", {
+  versionInfo() {
+    return app.getVersion();
+  },
+
+  updateMessage(callback) {
+    ipcRenderer.on("updateMessage", callback);
+  },
+
+  updateAvailable(callback) {
+    ipcRenderer.on("updateAvailable", callback);
+  },
+
+  checkForUpdates() {
+    ipcRenderer.send("checkForUpdates");
+  },
+
+  downloadUpdate() {
+    ipcRenderer.send("downloadUpdate");
   },
 });

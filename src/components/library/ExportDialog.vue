@@ -16,6 +16,15 @@
             :options="formats"
             v-model="format"
           />
+
+          <q-select
+            v-if="format.value === 'bibliography'"
+            outlined
+            dense
+            options-dense
+            :options="templates"
+            v-model="template"
+          />
         </div>
       </q-card-section>
       <q-card-actions align="right">
@@ -40,14 +49,30 @@ export default {
 
   data() {
     return {
-      formats: ["Bibtex"],
-      format: "Bixtex",
+      formats: [
+        { label: "Bibliography", value: "bibliography" },
+        { label: "BibTeX", value: "bibtex" },
+        { label: "BibLaTex", value: "biblatex" },
+        { label: "CLS-JSON", value: "json" },
+        { label: "RIS", value: "ris" },
+      ],
+      format: { label: "BibTeX", value: "bibtex" },
+
+      templates: [
+        { label: "APA", value: "apa" },
+        { label: "Vancouver", value: "vancouver" },
+        { label: "Havard1", value: "havard1" },
+      ],
+      template: { label: "APA", value: "apa" },
     };
   },
 
   methods: {
     confirm() {
-      this.$emit("confirm");
+      let options = null;
+      if (this.format.value === "bibliography")
+        options = { template: this.template.value };
+      this.$emit("confirm", this.format.value, options);
       this.$emit("update:show", false);
     },
 

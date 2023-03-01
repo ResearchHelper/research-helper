@@ -1,9 +1,10 @@
-import { app, BrowserWindow, nativeTheme, shell, Menu } from "electron";
+import { app, BrowserWindow, nativeTheme, ipcMain } from "electron";
 import { initialize, enable } from "@electron/remote/main";
+import { autoUpdater } from "electron-updater";
 import path from "path";
 import os from "os";
 
-initialize();
+initialize(); // initialize electron remote
 
 // needed in case process is undefined under Linux
 const platform = process.platform || os.platform();
@@ -32,12 +33,13 @@ function createWindow() {
     webPreferences: {
       contextIsolation: true,
       // More info: https://v2.quasar.dev/quasar-cli-vite/developing-electron-apps/electron-preload-script
+      sandbox: false, // to be able to use @electron/remote in preload
       preload: path.resolve(__dirname, process.env.QUASAR_ELECTRON_PRELOAD),
-      webSecurity: false,
+      webSecurity: false, // to be able to load image in note editor in dev mode
     },
   });
 
-  enable(mainWindow.webContents);
+  enable(mainWindow.webContents); // enable electron remote
   mainWindow.loadURL(process.env.APP_URL);
 
   if (process.env.DEBUGGING) {
@@ -69,20 +71,44 @@ app.on("activate", () => {
   }
 });
 
-// no new window is allowed to create
-app.on("web-contents-created", (e, webContents) => {
-  webContents.on("new-window", (event, url) => {
-    event.preventDefault();
-    if (process.env.DEV) {
-      // in dev mode, every incomplete link with have
-      // base_url http://localhost:port
-      url = url.replace(process.env.APP_URL + "/", "");
-    }
-    try {
-      new URL(url);
-      shell.openExternal(url); // a valid external url
-    } catch (error) {
-      // not a valid url, do nothing
-    }
-  });
+// autoUpdater
+autoUpdater.autoDownload = false;
+autoUpdater.autoInstallOnAppQuit = true;
+
+ipcMain.on("checkForUpdates", (event) => {
+  autoUpdater.checkForUpdates();
+});
+ipcMain.on("downloadUpdate", (event) => {
+  autoUpdater.downloadUpdate();
+});
+
+autoUpdater.on("checking-for-update", () => {
+  mainWindow.webContents.send("updateMessage", "Checking for updates");
+});
+autoUpdater.on("update-available", (info) => {
+  mainWindow.webContents.send("updateAvailable", true);
+
+  mainWindow.webContents.send(
+    "updateMessage",
+    `Newer version ${info.version} is available`
+  );
+});
+autoUpdater.on("update-not-available", (info) => {
+  mainWindow.webContents.send("updateAvailable", false);
+  mainWindow.webContents.send("updateMessage", "App is up-to-date");
+});
+autoUpdater.on("download-progress", (info) => {
+  mainWindow.webContents.send(
+    "updateMessage",
+    `Downloading: ${Math.round(info.percent)}%`
+  );
+});
+autoUpdater.on("update-downloaded", (event) => {
+  mainWindow.webContents.send(
+    "updateMessage",
+    "Download complete, restart app to install."
+  );
+});
+autoUpdater.on("error", (error, info) => {
+  mainWindow.webContents.send("updateMessage", info);
 });

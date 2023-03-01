@@ -3,7 +3,7 @@
     <!-- navigation -->
     <div>
       <input
-        style="width: 3em"
+        style="height: 1.5rem; width: 3rem"
         :value="pdfState.currentPageNumber"
         @keydown.enter="
           (e) => {
@@ -24,7 +24,7 @@
       @update:model-value="$emit('update:pdfState', state)"
       :ripple="false"
       flat
-      size="sm"
+      size="0.7rem"
       padding="xs"
       toggle-color="primary"
       :options="[
@@ -46,29 +46,29 @@
       ]"
     >
       <template v-slot:cursor>
-        <q-tooltip>cursor</q-tooltip>
+        <q-tooltip>Cursor</q-tooltip>
       </template>
       <template v-slot:highlight>
-        <q-tooltip>highlight</q-tooltip>
+        <q-tooltip>Highlight</q-tooltip>
       </template>
       <template v-slot:comment>
-        <q-tooltip>comment</q-tooltip>
+        <q-tooltip>Comment</q-tooltip>
       </template>
     </q-btn-toggle>
     <q-btn
       :style="`background: ${pdfState.color}`"
       flat
       :ripple="false"
-      size="xs"
+      size="0.5rem"
     >
-      <q-tooltip>highlight color</q-tooltip>
+      <q-tooltip>Highlight color</q-tooltip>
       <q-menu
         anchor="bottom middle"
         self="top middle"
       >
         <q-item
           dense
-          style="width: 150px"
+          style="width: 10rem"
         >
           <ColorPicker
             @selected="
@@ -86,10 +86,10 @@
       flat
       :ripple="false"
       icon="visibility"
-      size="sm"
+      size="0.7rem"
       padding="xs"
     >
-      <template v-slot:label><q-tooltip>view</q-tooltip></template>
+      <template v-slot:label><q-tooltip>View</q-tooltip></template>
       <q-list dense>
         <q-item class="row justify-center items-center">
           <q-btn
@@ -128,17 +128,20 @@
           />
         </q-item>
         <q-separator />
-        <q-item>
+        <q-item class="justify-center">
           <q-btn-toggle
             class="column"
+            flat
             stack
             dense
+            square
+            no-caps
             :ripple="false"
             toggle-color="primary"
             :options="[
-              { label: 'No Spread', value: 0 },
-              { label: 'Odd Spread', value: 1 },
-              { label: 'Even Spread', value: 2 },
+              { label: 'No Spreads', value: 0 },
+              { label: 'Odd Spreads', value: 1 },
+              { label: 'Even Spreads', value: 2 },
             ]"
             v-model="state.spreadMode"
             @update:model-value="
@@ -159,20 +162,24 @@
       flat
       :ripple="false"
       icon="fullscreen"
+      size="0.9rem"
+      padding="xs"
       @click="requestFullscreen"
     >
-      <q-tooltip>enter full screen</q-tooltip>
+      <q-tooltip>Enter full screen</q-tooltip>
     </q-btn>
     <q-btn
       v-else
       dense
       square
       flat
+      size="0.9rem"
+      padding="none"
       :ripple="false"
       icon="fullscreen_exit"
       @click="exitFullscreen"
     >
-      <q-tooltip>exit full screen</q-tooltip>
+      <q-tooltip>Exit full screen</q-tooltip>
     </q-btn>
 
     <q-btn
@@ -180,17 +187,22 @@
       flat
       :ripple="false"
       icon="search"
-      size="sm"
-      padding="xs"
+      size="0.8rem"
+      padding="none"
+      ref="searchBtn"
     >
-      <q-tooltip>search</q-tooltip>
+      <q-tooltip>Search</q-tooltip>
       <q-menu
         persistent
         @show="$emit('searchText', search)"
         @hide="clearSearch"
       >
-        <q-item dense>
+        <q-item
+          dense
+          class="row"
+        >
           <q-input
+            class="col q-mt-sm"
             dense
             outlined
             hide-bottom-space
@@ -201,17 +213,17 @@
           <q-btn
             dense
             flat
+            icon="arrow_back"
             :ripple="false"
             @click="$emit('changeMatch', -1)"
-            >Prev</q-btn
-          >
+          />
           <q-btn
             dense
             flat
+            icon="arrow_forward"
             :ripple="false"
             @click="$emit('changeMatch', 1)"
-            >Next</q-btn
-          >
+          />
         </q-item>
         <q-item>
           <q-checkbox
@@ -222,15 +234,17 @@
           <q-checkbox
             dense
             label="Match Case"
+            class="q-ml-sm"
             v-model="search.caseSensitive"
           />
           <q-checkbox
             dense
             label="Whole Words"
+            class="q-ml-sm"
             v-model="search.entireWord"
           />
         </q-item>
-        <q-item>
+        <q-item class="q-py-none">
           {{ searchSummary }}
         </q-item>
       </q-menu>
@@ -244,15 +258,15 @@
       clearable
       unelevated
       :ripple="false"
-      size="sm"
+      size="0.7rem"
       padding="xs"
       toggle-color="primary"
       :options="[{ value: true, icon: 'list' }]"
       @update:model-value="$emit('toggleRightMenu', showRightMenu)"
     >
-      <template v-slot:default
-        ><q-tooltip>toogle right menu</q-tooltip></template
-      >
+      <template v-slot:default>
+        <q-tooltip>Toggle right menu</q-tooltip>
+      </template>
     </q-btn-toggle>
   </q-toolbar>
 </template>
@@ -337,7 +351,7 @@ export default {
   },
 
   mounted() {
-    this.state = JSON.parse(JSON.stringify(this.pdfState));
+    this.state = this.pdfState;
   },
 
   methods: {

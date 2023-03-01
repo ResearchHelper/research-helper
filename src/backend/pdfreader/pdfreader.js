@@ -7,7 +7,6 @@ import { PeekManager } from "./pdfpeek";
 import { AnnotationType } from "./annotation";
 import { db } from "../database";
 import { debounce } from "quasar";
-import { openURL } from "quasar";
 
 class PDFApplication {
   constructor(container, peekContainer) {
@@ -27,7 +26,8 @@ class PDFApplication {
       findController: pdfFindController,
       annotationEditorMode: pdfjsLib.AnnotationEditorType.NONE,
     });
-    // pdfLinkService.setViewer(pdfViewer);
+    // must have this otherwise find controller does not work
+    pdfLinkService.setViewer(pdfViewer);
 
     this.container = container;
     this.peekContainer = peekContainer;
@@ -54,7 +54,7 @@ class PDFApplication {
           // external links must open using default browser
           link.onclick = (e) => {
             e.preventDefault();
-            openURL(link.href);
+            window.browser.openURL(link.href);
           };
         }
       }
@@ -69,6 +69,7 @@ class PDFApplication {
     let buffer = window.fs.readFileSync(filePath);
     this.pdfDocument = await pdfjsLib.getDocument({ data: buffer }).promise;
     this.pdfLinkService.setDocument(this.pdfDocument, null);
+    this.pdfFindController.setDocument(this.pdfDocument);
     this.pdfViewer.setDocument(this.pdfDocument);
     this.peekManager.loadPDF(filePath);
   }
@@ -76,13 +77,13 @@ class PDFApplication {
   async loadState(projectId) {
     try {
       let result = await db.find({
-        selector: { dataType: "pdf_state", projectId: projectId },
+        selector: { dataType: "pdfState", projectId: projectId },
       });
 
       let state = result.docs[0];
       if (!!!state) {
         state = {
-          dataType: "pdf_state",
+          dataType: "pdfState",
           projectId: projectId,
           pagesCount: 0,
           currentPageNumber: 1,
@@ -188,8 +189,14 @@ class PDFApplication {
       return tree;
     }
 
-    let outline = await this.pdfDocument.getOutline();
-    return _dfs(outline);
+    let toc = [];
+    try {
+      let outline = await this.pdfDocument.getOutline();
+      toc = _dfs(outline);
+    } catch (error) {
+      console.log(error);
+    }
+    return toc;
   }
 
   /**

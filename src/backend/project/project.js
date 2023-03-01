@@ -17,6 +17,7 @@ import { createProjectFolder, deleteProjectFolder } from "./file";
  * @property {string} ISBN - ISBN of a book
  * @property {string} URL - URL to this article/book
  * @property {string} publisher - publisher
+ * @property {undefined | string} path - attached file path
  * @property {Array} tags - user defined keywords for easier search
  * @property {Array} related - array of related projectIDs
  * @property {Array} folderIds - array of folderIDs containing this project
@@ -75,7 +76,7 @@ async function deleteProject(projectId, deleteFromDB) {
       // remove from db
       await db.remove(project);
 
-      // remove related pdf_state, pdf_annotations and notes on db
+      // remove related pdfState, pdfAnnotation and notes on db
       let result = await db.find({
         selector: {
           projectId: project._id,

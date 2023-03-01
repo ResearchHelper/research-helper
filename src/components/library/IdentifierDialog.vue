@@ -18,7 +18,7 @@
           autofocus
           class="full-width"
           placeholder="DOI, ISBN, Wikidata, Ris, etc ..."
-          v-model="identifier"
+          v-model.trim="identifier"
           @keydown.enter="confirm"
         />
       </q-card-section>
