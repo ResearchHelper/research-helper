@@ -13,9 +13,11 @@ style="width: 100px; vertical-align:middle">
 
 Research helper is a paper/book management tool. It is a reference management tool with various useful functionalities such as: built-in PDF reader and live markdown.
 
+![screenshot.png](./galleries/screenshot.png)
+
 # Demo
 
-![demo.gif](./gifs/demo.gif)
+![demo.gif](./galleries/demo.gif)
 
 # Contribute to Research-Helper
 

@@ -13,9 +13,11 @@ style="width: 100px; vertical-align:middle">
 
 研究小助手是一款开源的文献管理工具。它有着内置的 PDF 阅读器以及所见即所得的 Markdown 编辑器。你可以很好地用它来管理自己的电子书，文献以及笔记。
 
+![screenshot.png](./galleries/screenshot.png)
+
 # 演示
 
-![demo.gif](./gifs/demo.gif)
+![demo.gif](./galleries/demo.gif)
 
 # 为研究小助手作贡献
 
