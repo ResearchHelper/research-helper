@@ -4,9 +4,9 @@ style="width: 100px; vertical-align:middle">
 </p>
 
 <p align="center">
-<a href="https://github.com/ResearchHelper/research-helper/README.md">English</a>
+<a href="https://github.com/ResearchHelper/research-helper/blob/main/README.md">English</a>
 |
-<a href="https://github.com/ResearchHelper/research-helper/README.zh_CN.md">中文</a>
+<a href="https://github.com/ResearchHelper/research-helper/blob/main/README.zh_CN.md">中文</a>
 </p>
 
 # Research Helper
