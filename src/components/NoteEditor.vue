@@ -62,7 +62,6 @@ export default {
     this.showEditor = true;
     this.initEditor();
     await this.$nextTick();
-    console.log(this.$el.clientWidth);
   },
 
   /**

@@ -187,7 +187,6 @@ export default {
   },
 
   async mounted() {
-    await this.$nextTick();
     this.pdfApp = new PDFApplication(
       this.$refs.viewerContainer,
       this.$refs.peekContainer
@@ -202,11 +201,6 @@ export default {
       this.changeSpreadMode(this.pdfState.spreadMode);
       this.changeScale({ scale: this.pdfState.currentScale });
       this.pdfState.pagesCount = this.pdfApp.pdfViewer.pagesCount;
-      this.$refs.viewerContainer.scrollTo(
-        this.pdfState.scrollLeft,
-        this.pdfState.scrollTop
-      );
-      this.ready = true;
     });
 
     this.pdfApp.eventBus.on("annotationeditorlayerrendered", (e) => {
@@ -229,6 +223,17 @@ export default {
 
     this.pdfApp.eventBus.on("pagechanging", (e) => {
       this.pdfState.currentPageNumber = e.pageNumber;
+
+      // if the pdf is initially loaded, scroll to last position
+      // this line is here because if the scrollto is called too early
+      // then the position will be slightly different each time
+      if (!this.ready) {
+        this.$refs.viewerContainer.scrollTo(
+          this.pdfState.scrollLeft,
+          this.pdfState.scrollTop
+        );
+        this.ready = true;
+      }
     });
 
     this.pdfApp.eventBus.on("scalechanging", (e) => {

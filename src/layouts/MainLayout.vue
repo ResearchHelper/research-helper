@@ -371,6 +371,11 @@ export default {
       if (!!!element) return;
 
       let type = element.getAttribute("type");
+
+      // FIXME: temporary do not allow drag to open pdf
+      // since multiple same pdf are having issues
+      if (type === "project") return;
+
       let id = element.getAttribute("item-id");
       let componentType = type == "project" ? "ReaderPage" : "NotePage";
       this.$refs.layout.addGLDragSource(

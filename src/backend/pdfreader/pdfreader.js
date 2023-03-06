@@ -140,7 +140,8 @@ class PDFApplication {
   changeScale(params) {
     if (!!params.delta) this.pdfViewer.currentScale += params.delta;
 
-    if (!!params.scaleValue) this.pdfViewer.currentScaleValue = scaleValue;
+    if (!!params.scaleValue)
+      this.pdfViewer.currentScaleValue = params.scaleValue;
 
     if (!!params.scale) this.pdfViewer.currentScale = params.scale;
   }
@@ -151,22 +152,19 @@ class PDFApplication {
       // disable the default action avoid the offsetParent not set error
       e.preventDefault();
       if (e.deltaY < 0) {
+        let container = this.container;
         let oldScale = this.pdfViewer.currentScale;
         this.pdfViewer.currentScale += 0.1;
         let newScale = this.pdfViewer.currentScale;
-        let container = this.container;
-        let oldX = container.scrollLeft + e.pageX;
-        let oldY = container.scrollTop + e.pageY;
 
-        // shift the scroll bar if cursor if too far from center
-        if (e.pageX > window.innerWidth * (7 / 10))
-          container.scrollLeft += (newScale / oldScale - 1) * oldX;
-        else if (e.pageX < window.innerWidth * (3 / 10))
-          container.scrollLeft -= (newScale / oldScale - 1) * oldX;
-        if (e.pageY > window.innerHeight * (7 / 10))
-          container.scrollTop += (newScale / oldScale - 1) * oldY;
-        else if (e.pageY < window.innerHeight * (3 / 10))
-          container.scrollTop -= (newScale / oldScale - 1) * oldY;
+        let ratio = newScale / oldScale - 1;
+
+        // shift the scroll bar if cursor is on the right / bottom of the screen
+        // the default zoom-in takes the upper-left conner as scale origin
+        if (e.pageX > window.innerWidth * (6 / 10))
+          container.scrollLeft += ratio * (container.scrollLeft + e.pageX);
+        if (e.pageY > window.innerHeight * (6 / 10))
+          container.scrollTop += ratio * e.pageY;
       } else {
         this.pdfViewer.currentScale -= 0.1;
       }

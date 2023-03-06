@@ -222,13 +222,7 @@ import {
 } from "src/backend/project/graph";
 
 export default {
-  emits: [
-    "addNode",
-    "renameNode",
-    "closeProject",
-    "openProject",
-    "treedragstart",
-  ],
+  emits: ["addNode", "renameNode", "closeProject", "openProject"],
 
   components: { GraphView },
 
