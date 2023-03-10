@@ -50,14 +50,16 @@
     </q-td>
 
     <q-menu
-      v-if="item.dataType === 'note'"
       touch-position
       context-menu
       square
       auto-close
       transition-duration="0"
     >
-      <q-list dense>
+      <q-list
+        v-if="item.dataType === 'note'"
+        dense
+      >
         <q-item
           clickable
           @click="copyID"
@@ -71,19 +73,38 @@
           clickable
           @click="openItem"
         >
-          <q-item-section>Open</q-item-section>
+          <q-item-section>Open Item</q-item-section>
         </q-item>
         <q-item
           clickable
           @click="setRenaming"
         >
-          <q-item-section>Rename</q-item-section>
+          <q-item-section>Rename Item</q-item-section>
         </q-item>
         <q-item
           clickable
           @click="deleteItem"
         >
-          <q-item-section>Delete</q-item-section>
+          <q-item-section>Delete Item</q-item-section>
+        </q-item>
+      </q-list>
+
+      <q-list
+        v-else
+        dense
+      >
+        <q-item
+          clickable
+          @click="openItem"
+        >
+          <q-item-section>Open Item</q-item-section>
+        </q-item>
+
+        <q-item
+          clickable
+          @click="renameFile"
+        >
+          <q-item-section>Rename Item from Metadata</q-item-section>
         </q-item>
       </q-list>
     </q-menu>
@@ -95,7 +116,7 @@ import { copyToClipboard } from "quasar";
 
 export default {
   props: { item: Object },
-  emits: ["renameNote", "deleteNote", "clickPDF"],
+  emits: ["renameNote", "deleteNote", "renameFile"],
 
   data() {
     return {
@@ -117,7 +138,6 @@ export default {
 
     clickItem() {
       this.stateStore.selectedItemId = this.item._id;
-      if (this.item.dataType === "project") this.$emit("clickPDF");
     },
 
     openItem() {
@@ -144,6 +164,10 @@ export default {
 
     async deleteItem() {
       this.$emit("deleteNote", this.item);
+    },
+
+    async renameFile() {
+      this.$emit("renameFile", this.item);
     },
   },
 };

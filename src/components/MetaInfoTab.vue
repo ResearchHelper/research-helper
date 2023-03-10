@@ -26,7 +26,6 @@
         Title
       </div>
     </div>
-
     <div class="row q-mt-sm">
       <textarea
         style="min-height: 5rem"
@@ -35,6 +34,21 @@
         v-model="project.title"
         @blur="modifyInfo(true)"
       ></textarea>
+    </div>
+
+    <div class="row justify-between">
+      <div
+        class="col"
+        style="font-size: 1rem"
+      >
+        Year
+      </div>
+      <input
+        class="col-8 input"
+        type="text"
+        v-model="project.year"
+        @blur="modifyInfo(true)"
+      />
     </div>
 
     <div class="row justify-between q-mt-sm">
@@ -217,6 +231,7 @@ export default {
      * @param {boolean} updateRelated - if true, also modify info in related projects
      */
     async modifyInfo(updateRelated) {
+      console.log(this.project);
       // update db and also update rev in this.project
       this.project = await updateProject(this.project);
 

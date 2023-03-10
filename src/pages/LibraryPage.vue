@@ -97,7 +97,7 @@
           >
             <q-tab-panel name="metaInfoTab">
               <MetaInfoTab
-                v-if="!!rightMenuSize"
+                v-if="!!rightMenuSize && !$refs.table.isClickingPDF"
                 :projectId="stateStore.selectedItemId"
                 @updateProject="updateProjectUI"
               />

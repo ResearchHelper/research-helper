@@ -34,10 +34,10 @@
         no-hover
         style="cursor: pointer"
         :props="props"
+        class="tableview-row"
         :class="{
-          'bg-primary': props.key === stateStore.selectedItemId,
-          'tableview-row':
-            props.rowIndex % 2 === 0 && props.key !== stateStore.selectedItemId,
+          'bg-primary':
+            props.key === stateStore.selectedItemId && !isClickingPDF,
         }"
         draggable="true"
         @dragstart="onDragStart(props.key)"
@@ -99,11 +99,11 @@
         v-if="props.expand && !!props.row.path"
         :item="props.row"
         :class="{
-          'bg-primary': props.key === stateStore.selectedItemId,
-          'tableview-row':
-            props.rowIndex % 2 === 0 && props.key !== stateStore.selectedItemId,
+          'bg-primary':
+            props.key === stateStore.selectedItemId && isClickingPDF,
         }"
-        @clickPDF="selectedProjectIndex = props.rowIndex"
+        @click="this.isClickingPDF = true"
+        @renameFile="(meta) => renameFromMeta(meta)"
       />
       <!-- Notes -->
       <TableItemRow
@@ -113,8 +113,6 @@
         :item="note"
         :class="{
           'bg-primary': note._id === stateStore.selectedItemId,
-          'tableview-row':
-            props.rowIndex % 2 === 0 && note._id !== stateStore.selectedItemId,
         }"
         @renameNote="(note) => renameNote(note)"
         @deleteNote="(note) => deleteNote(note)"
@@ -152,6 +150,7 @@ import { useStateStore } from "src/stores/appState";
 import {
   getProjectsByFolderId,
   deleteProject,
+  updateProject,
 } from "src/backend/project/project";
 import {
   getNotes,
@@ -167,6 +166,7 @@ import {
   updateEdgeTarget,
   deleteEdgeTarget,
 } from "src/backend/project/graph";
+import { renameFile } from "src/backend/project/file";
 
 export default {
   props: { searchString: String },
@@ -241,8 +241,35 @@ export default {
 
   methods: {
     /*********************************************************
-     * Notes (Add, delete, rename)
+     * Item Row (Add note, delete note, rename note, rename file from meta)
      *********************************************************/
+
+    /**
+     * Rename attached file from Metadata
+     * @param {Object} - meta infos
+     */
+    async renameFromMeta(meta) {
+      let author = "";
+      let year = meta.year || "Unknown";
+      let title = meta.title;
+      let extname = window.path.extname(meta.path);
+      if (meta.author.length === 0) {
+        // no author
+        author = "Unknown";
+      } else {
+        // 1 author
+        let author0 = meta.author[0];
+        author = !!author0.family ? author0.family : author0.literal;
+
+        // more than 1 authors
+        if (meta.author.length > 1) author += " et al.";
+      }
+      let fileName = `${author} - ${year} - ${title}${extname}`;
+
+      // update ui and backend
+      meta.path = renameFile(meta.path, fileName);
+      await updateProject(meta);
+    },
 
     /**
      * Add note to a project
@@ -319,6 +346,7 @@ export default {
      * @param {Object} project
      */
     updateProject(project) {
+      if (this.selectedProjectIndex === null) return;
       // update ui
       let children = this.projects[this.selectedProjectIndex].children;
       project.children = children;
@@ -365,6 +393,9 @@ export default {
       console.log(row);
       this.stateStore.selectedItemId = row._id;
       this.selectedProjectIndex = rowIndex;
+
+      // ditinguish clicking project row or pdf row
+      this.isClickingPDF = false;
     },
 
     /**

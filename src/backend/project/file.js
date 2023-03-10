@@ -86,6 +86,24 @@ function deleteFile(filePath) {
 }
 
 /**
+ * Rename a file
+ * @param {string} filePath - path to file
+ * @param {string} fileName - new file name
+ * @param {string} newPath - new path to file
+ */
+function renameFile(filePath, fileName) {
+  try {
+    console.log("here");
+    let dirname = path.dirname(filePath);
+    let newPath = path.join(dirname, fileName);
+    fs.renameSync(filePath, newPath);
+    return newPath;
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+/**
  * Move folder
  * @param {string} srcPath source path
  * @param {string} dstPath destination path
@@ -104,5 +122,6 @@ export {
   copyFile,
   createFile,
   deleteFile,
+  renameFile,
   moveFolder,
 };
