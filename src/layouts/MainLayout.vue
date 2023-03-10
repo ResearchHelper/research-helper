@@ -363,19 +363,22 @@ export default {
      *******************************************/
 
     /**
+     * FIXME
      * Add dragSource to the rows in projectTree
      * @param {HTMLElement} element
      * @param {boolean} addComponentOnly
      */
     addDragSource(element, addComponentOnly = false) {
+      // FIXME multi-windows with same id is not well supported
+      // think about a good way to do this
+      // can we view the same "Object" in different windows ?
+      // so that we don't need to worry about update conflict
+      element.style.userSelect = "none";
+      return;
+
       if (!!!element) return;
 
       let type = element.getAttribute("type");
-
-      // FIXME: temporary do not allow drag to open pdf
-      // since multiple same pdf are having issues
-      if (type === "project") return;
-
       let id = element.getAttribute("item-id");
       let componentType = type == "project" ? "ReaderPage" : "NotePage";
       this.$refs.layout.addGLDragSource(

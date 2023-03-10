@@ -171,6 +171,10 @@ class PDFApplication {
     }
   }
 
+  async getPageLabels() {
+    return await this.pdfDocument.getPageLabels();
+  }
+
   async getTOC() {
     if (!!this.pdfDocument == false) return;
     function _dfs(oldNode) {

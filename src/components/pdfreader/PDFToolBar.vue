@@ -4,16 +4,17 @@
     <div>
       <input
         style="height: 1.5rem; width: 3rem"
-        :value="pdfState.currentPageNumber"
-        @keydown.enter="
-          (e) => {
-            state.currentPageNumber = e.target.value;
-            $emit('update:pdfState', state);
-            $emit('changePageNumber', e.target.value);
-          }
-        "
+        :value="pageLabel"
+        @keydown.enter="(e) => changePage(e.target.value)"
       />
-      {{ "of " + pdfState.pagesCount }}
+      <span v-if="!!pageLabels">
+        {{
+          "(" + pdfState.currentPageNumber + " of " + pdfState.pagesCount + ")"
+        }}
+      </span>
+      <span v-else>
+        {{ " of " + pdfState.pagesCount }}
+      </span>
     </div>
 
     <q-space />
@@ -278,7 +279,12 @@ import { AnnotationType } from "src/backend/pdfreader/annotation";
 import ColorPicker from "./ColorPicker.vue";
 
 export default {
-  props: { pdfState: Object, matchesCount: Object, rightMenuSize: Number },
+  props: {
+    pdfState: Object,
+    pageLabels: Array,
+    matchesCount: Object,
+    rightMenuSize: Number,
+  },
   emits: [
     "update:pdfState",
     "changePageNumber",
@@ -348,6 +354,15 @@ export default {
 
       return text;
     },
+
+    pageLabel() {
+      let pageNumber = this.pdfState.currentPageNumber;
+      if (!!this.pageLabels) {
+        return this.pageLabels[pageNumber - 1];
+      } else {
+        return pageNumber;
+      }
+    },
   },
 
   mounted() {
@@ -355,6 +370,14 @@ export default {
   },
 
   methods: {
+    changePage(pageLabel) {
+      let pageIndex = this.pageLabels.indexOf(pageLabel);
+      if (pageIndex === -1) return; // do nothing if not finding the label
+      this.state.currentPageNumber = pageIndex + 1;
+      this.$emit("update:pdfState", this.state);
+      this.$emit("changePageNumber", this.state.currentPageNumber);
+    },
+
     clearSearch() {
       this.readyForSearch = false;
       this.$emit("searchText", { query: "" });

@@ -47,10 +47,14 @@ class PeekManager {
 
   peak(link) {
     link.onmouseover = (ev) => {
-      let annot = link.parentElement;
-      this.showContainer(annot);
-      this.pdfViewer.linkService.setHash(link.href.split("#")[1]);
-      this.handtool.activate();
+      let timeoutId = setTimeout(() => {
+        let annot = link.parentElement;
+        this.pdfViewer.linkService.setHash(link.href.split("#")[1]);
+        this.showContainer(annot);
+        this.handtool.activate();
+      }, 500);
+
+      link.onmouseleave = () => clearTimeout(timeoutId);
     };
     this.container.onmouseleave = () => {
       this.container.style.display = "none";

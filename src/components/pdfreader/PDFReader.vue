@@ -14,6 +14,7 @@
           background: var(--color-pdfreader-toolbar-bkgd);
         "
         v-model:pdfState="pdfState"
+        :pageLabels="pageLabels"
         :rightMenuSize="rightMenuSize"
         :matchesCount="matchesCount"
         @changePageNumber="changePageNumber"
@@ -174,6 +175,7 @@ export default {
       // pdf related
       pdfState: {},
       matchesCount: { current: -1, total: 0 },
+      pageLabels: [],
       outline: [],
       annots: [],
       selectedAnnotId: "",
@@ -320,6 +322,7 @@ export default {
       this.annots = this.annotManager.annots;
       await this.pdfApp.loadPDF(project.path);
       this.outline = await this.pdfApp.getTOC();
+      this.pageLabels = await this.pdfApp.getPageLabels();
     },
 
     /**********************************
