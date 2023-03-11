@@ -55,6 +55,18 @@
       </q-menu>
     </q-btn>
 
+    <q-btn
+      flat
+      dense
+      square
+      icon="refresh"
+      size="0.8rem"
+      padding="none"
+      @click="$emit('refreshTable')"
+    >
+      <q-tooltip>Refresh</q-tooltip>
+    </q-btn>
+
     <q-space />
 
     <q-input
@@ -110,6 +122,7 @@ export default {
     "addByFiles",
     "addByCollection",
     "showIdentifierDialog",
+    "refreshTable",
   ],
 
   setup() {

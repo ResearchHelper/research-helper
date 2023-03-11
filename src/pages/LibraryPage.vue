@@ -22,6 +22,15 @@
     :error="error"
   />
 
+  <q-file
+    :multiple="false"
+    :append="false"
+    :accept="'.pdf'"
+    style="display: none"
+    @update:model-value="(file) => attachFile(file)"
+    ref="filePicker"
+  />
+
   <q-splitter
     style="position: absolute; width: 100%; height: 100%"
     :limits="[0, 30]"
@@ -52,23 +61,27 @@
             "
             v-model:searchString="searchString"
             :rightMenuSize="rightMenuSize"
-            @toggleRightMenu="(visible) => toggleRightMenu(visible)"
             @addEmptyProject="addEmptyProject"
             @addByFiles="addProjectsByFiles"
             @addByCollection="(collection) => showImportDialog(collection)"
             @showIdentifierDialog="showIdentifierDialog(true)"
+            @refreshTable="getProjects"
+            @toggleRightMenu="(visible) => toggleRightMenu(visible)"
             ref="actionBar"
           />
           <!-- actionbar height 36px, table view is 100%-36px -->
           <TableView
+            v-model:projects="projects"
+            v-model:selectedProject="selectedProject"
+            :searchString="searchString"
             style="
               position: absolute;
               height: calc(100% - 36px);
               width: 100%;
               background: var(--color-library-tableview-bkgd);
             "
-            :searchString="searchString"
             @dragProject="(key) => onDragProject(key)"
+            @attachFile="$refs.filePicker"
             ref="table"
           />
         </template>
@@ -98,8 +111,7 @@
             <q-tab-panel name="metaInfoTab">
               <MetaInfoTab
                 v-if="!!rightMenuSize && !$refs.table.isClickingPDF"
-                :projectId="stateStore.selectedItemId"
-                @updateProject="updateProjectUI"
+                v-model:project="selectedProject"
               />
             </q-tab-panel>
           </q-tab-panels>
@@ -125,8 +137,11 @@ import {
   updateProject,
   updateProjectByMeta,
   getProject,
+  getProjectsByFolderId,
+  deleteProject,
 } from "src/backend/project/project";
-import { createEdge, updateEdge } from "src/backend/project/graph";
+import { getNotes } from "src/backend/project/note";
+import { createEdge, updateEdge, deleteEdge } from "src/backend/project/graph";
 import { useStateStore } from "src/stores/appState";
 import { getMeta, exportMeta, importMeta } from "src/backend/project/meta";
 import { copyFile } from "src/backend/project/file";
@@ -155,6 +170,9 @@ export default {
   data() {
     return {
       searchString: "",
+      projects: [],
+      selectedProject: null,
+
       treeViewSize: 20,
       rightMenuSize: 0,
       prvRightMenuSize: 25,
@@ -176,10 +194,19 @@ export default {
 
       importDialog: false,
       collection: null,
+
+      // file dialog
+      replaceStoredCopy: false,
     };
   },
 
-  mounted() {
+  watch: {
+    async "stateStore.selectedFolderId"(folderId, _) {
+      await this.getProjects();
+    },
+  },
+
+  async mounted() {
     this.$bus.on("showDeleteDialog", (project, deleteFromDB) => {
       this.deleteDialog = true;
       this.project = project;
@@ -189,17 +216,36 @@ export default {
     this.$bus.on("showSearchMetaDialog", () => {
       this.showIdentifierDialog(false);
     });
+
+    this.$bus.on("showFileDialog", (replaceStoredCopy) => {
+      this.$refs.filePicker.$el.click();
+      this.replaceStoredCopy = replaceStoredCopy;
+    });
+
+    this.getProjects();
   },
 
   beforeUnmount() {
     this.$bus.off("showDeleteDialog");
     this.$bus.off("showSearchMetaDialog");
+    this.$bus.off("showFileDialog");
   },
 
   methods: {
     /************************************************
-     * ActionBar
+     * Projects (get, add, delete, attachFile)
      ************************************************/
+
+    async getProjects() {
+      // get projects and their notes
+      this.projects = await getProjectsByFolderId(
+        this.stateStore.selectedFolderId
+      );
+      for (let i in this.projects) {
+        // notes are the children of project
+        this.projects[i].children = await getNotes(this.projects[i]._id);
+      }
+    },
 
     /**
      * Open identifier dialog.
@@ -226,7 +272,7 @@ export default {
       await createEdge(project);
 
       // update ui
-      this.$refs.table.addProject(project);
+      this.projects.push(project);
     },
 
     /**
@@ -244,7 +290,7 @@ export default {
           await createEdge(project);
 
           // update ui
-          this.$refs.table.addProject(project);
+          this.projects.push(project);
         } catch (error) {
           this.error = error;
           this.errorDialog = true;
@@ -278,7 +324,7 @@ export default {
         await createEdge(project);
 
         // update ui
-        this.$refs.table.addProject(project);
+        this.projects.push(project);
       }
 
       this.importDialog = false;
@@ -299,7 +345,7 @@ export default {
           await createEdge(project);
 
           // update ui
-          this.$refs.table.addProject(project);
+          this.projects.push(project);
         } else {
           // update an existing project meta
           let project = await getProject(this.stateStore.selectedItemId);
@@ -311,8 +357,8 @@ export default {
           };
           await updateEdge(project._id, { sourceNode: sourceNode });
 
-          // update ui
-          this.updateProjectUI(project);
+          // update projectree ui
+          this.$bus.emit("updateProject", row);
         }
       } catch (error) {
         this.error = error;
@@ -320,30 +366,45 @@ export default {
       }
     },
 
-    /**************************************************
-     * MetaInfoTab
-     **************************************************/
-
     /**
-     * Toggle RightMenu and record its size
-     * @param {boolean} visible
+     * Delete a project from the current folder,
+     * if deleteFromDB is true, delete the project from database and remove the actual files
      */
-    toggleRightMenu(visible) {
-      if (visible) {
-        this.rightMenuSize = this.prvRightMenuSize;
-      } else {
-        // record the rightmenu size for next use
-        this.prvRightMenuSize = this.rightMenuSize;
-        this.rightMenuSize = 0;
+    async deleteProject() {
+      // update ui
+      this.projects = this.projects.filter(
+        (p) => p._id != this.selectedProject._id
+      );
+      // update projectTree ui
+      this.$bus.emit("deleteProject", this.selectedProject._id);
+
+      // update db
+      await this.$nextTick(); // wait until the ui closes all windows
+      let notes = await getNotes(this.selectedProject._id);
+      await deleteProject(
+        this.selectedProject._id,
+        this.deleteFromDB,
+        this.stateStore.selectedFolderId
+      );
+      if (this.deleteFromDB) {
+        await deleteEdge(this.selectedProject._id);
+        for (let note of notes) {
+          await deleteEdge(note._id);
+        }
       }
     },
 
     /**
-     * Update the UI of an entry in TableView
-     * @param {Object} project
+     * Attach file to a project
+     * @param {File} file
      */
-    updateProjectUI(project) {
-      this.$refs.table.updateProject(project);
+    async attachFile(file) {
+      let dstPath = file.path;
+      if (this.replaceStoredCopy)
+        dstPath = await copyFile(file.path, this.row._id);
+      this.selectedProject.path = dstPath;
+      let row = await updateProject(this.selectedProject);
+      this.selectedProject._rev = row._rev;
     },
 
     /************************************************************
@@ -357,10 +418,6 @@ export default {
     onDragProject(key) {
       this.draggingProjectId = key;
       if (!!!key) this.$refs.tree.onDragEnd(null);
-    },
-
-    deleteProject() {
-      this.$refs.table.deleteProject(this.project, this.deleteFromDB);
     },
 
     /**********************************************************
@@ -381,6 +438,24 @@ export default {
       if (!!!this.folder) return;
 
       await exportMeta(this.folder, format, options);
+    },
+
+    /**************************************************
+     * MetaInfoTab
+     **************************************************/
+
+    /**
+     * Toggle RightMenu and record its size
+     * @param {boolean} visible
+     */
+    toggleRightMenu(visible) {
+      if (visible) {
+        this.rightMenuSize = this.prvRightMenuSize;
+      } else {
+        // record the rightmenu size for next use
+        this.prvRightMenuSize = this.rightMenuSize;
+        this.rightMenuSize = 0;
+      }
     },
   },
 };

@@ -1,12 +1,12 @@
 <template>
-  <q-file
+  <!-- <q-file
     :multiple="false"
     :append="false"
     :accept="'.pdf'"
     style="display: none"
     @update:model-value="(file) => attachFile(file)"
     ref="filePicker"
-  />
+  /> -->
 
   <q-menu
     touch-position
@@ -156,27 +156,17 @@ export default {
     },
 
     replaceLinkToFile() {
-      this.replaceStoredCopy = false;
-      this.$refs.filePicker.$el.click();
+      let replaceStoredCopy = false;
+      this.atttchFile(replaceStoredCopy);
     },
 
     replaceStoredFileCopy() {
-      this.replaceStoredCopy = true;
-      this.$refs.filePicker.$el.click();
+      let replaceStoredCopy = true;
+      this.atttchFile(replaceStoredCopy);
     },
 
-    /**
-     *
-     * @param {File} file
-     */
-    async attachFile(file) {
-      let dstPath = file.path;
-      if (this.replaceStoredCopy)
-        dstPath = await copyFile(file.path, this.row._id);
-      let row = await getProject(this.row._id);
-      row.path = dstPath;
-      row = await updateProject(row);
-      this.$emit("attachFile", row);
+    atttchFile(replaceStoredCopy) {
+      this.$bus.emit("showFileDialog", replaceStoredCopy);
     },
 
     showSearchMetaDialog() {

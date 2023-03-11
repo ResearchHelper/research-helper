@@ -108,7 +108,7 @@
         <q-tab-panel name="metaInfoTab">
           <MetaInfoTab
             v-if="!!rightMenuSize"
-            :project-id="projectId"
+            v-model:project="project"
           />
         </q-tab-panel>
 
@@ -166,6 +166,7 @@ export default {
   data() {
     return {
       ready: false,
+      project: null,
 
       // right menu
       prvRightMenuSize: 25,
@@ -269,6 +270,10 @@ export default {
   },
 
   watch: {
+    project(newProject) {
+      this.$bus.emit("updateProject", newProject);
+    },
+
     pdfState: {
       handler(state) {
         if (!this.ready) return;
@@ -323,6 +328,8 @@ export default {
       await this.pdfApp.loadPDF(project.path);
       this.outline = await this.pdfApp.getTOC();
       this.pageLabels = await this.pdfApp.getPageLabels();
+
+      this.project = project;
     },
 
     /**********************************

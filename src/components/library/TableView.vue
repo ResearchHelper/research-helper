@@ -1,7 +1,5 @@
 <template>
-  <!-- actionBar height 36px  -->
   <q-table
-    v-if="ready"
     class="stickyHeader no-shadow"
     virtual-scroll
     dense
@@ -10,7 +8,7 @@
     separator="none"
     :rows-per-page-options="[0]"
     :columns="headers"
-    :rows="projects"
+    :rows="rows"
     row-key="_id"
     :wrap-cells="true"
     :filter="searchString"
@@ -77,14 +75,7 @@
         <TableProjectMenu
           :row="props.row"
           @openItem="(row) => dblclickProject(row)"
-          @deleteItem="(row) => deleteProject(row, false)"
-          @deleteItemFromDB="(row) => deleteProject(row, true)"
-          @attachFile="
-            (row) => {
-              props.expand = true;
-              updateProject(row);
-            }
-          "
+          @attachFile="props.expand = true"
           @addNote="
             (row) => {
               props.expand = true;
@@ -147,17 +138,8 @@ import TableItemRow from "./TableItemRow.vue";
 
 import { copyToClipboard } from "quasar";
 import { useStateStore } from "src/stores/appState";
-import {
-  getProjectsByFolderId,
-  deleteProject,
-  updateProject,
-} from "src/backend/project/project";
-import {
-  getNotes,
-  addNote,
-  deleteNote,
-  updateNote,
-} from "src/backend/project/note";
+import { updateProject } from "src/backend/project/project";
+import { addNote, deleteNote, updateNote } from "src/backend/project/note";
 import {
   createEdge,
   deleteEdge,
@@ -169,8 +151,8 @@ import {
 import { renameFile } from "src/backend/project/file";
 
 export default {
-  props: { searchString: String },
-  emits: ["dragProject"],
+  props: { searchString: String, projects: Array, selectedProject: Object },
+  emits: ["dragProject", "update:projects", "update:selectedProject"],
 
   components: {
     TableProjectMenu,
@@ -183,23 +165,8 @@ export default {
     return { stateStore, basename };
   },
 
-  async mounted() {
-    this.projects = await getProjectsByFolderId(
-      this.stateStore.selectedFolderId
-    );
-
-    for (let i in this.projects) {
-      // notes are the children of project
-      this.projects[i].children = await getNotes(this.projects[i]._id);
-    }
-
-    this.ready = true;
-  },
-
   data() {
     return {
-      ready: false,
-
       headers: [
         {
           name: "title",
@@ -214,28 +181,31 @@ export default {
           align: "left",
         },
       ],
-      projects: [],
       isClickingPDF: false,
 
       // for search
       showExpansion: false,
       expansionText: [],
-
-      // for update
-      selectedProjectIndex: null,
     };
   },
 
-  watch: {
-    async "stateStore.selectedFolderId"(folderId, _) {
-      this.projects = await getProjectsByFolderId(
-        this.stateStore.selectedFolderId
-      );
+  computed: {
+    rows: {
+      get() {
+        return this.projects;
+      },
+      set(newRows) {
+        this.$emit("update:projects", newRows);
+      },
+    },
 
-      for (let i in this.projects) {
-        // notes are the children of project
-        this.projects[i].children = await getNotes(this.projects[i]._id);
-      }
+    selectedRow: {
+      get() {
+        return this.selectedProject;
+      },
+      set(newRow) {
+        this.$emit("update:selectedProject", newRow);
+      },
     },
   },
 
@@ -268,7 +238,8 @@ export default {
 
       // update ui and backend
       meta.path = renameFile(meta.path, fileName);
-      await updateProject(meta);
+      meta = await updateProject(meta);
+      this.selectedRow._rev = meta._rev;
     },
 
     /**
@@ -282,11 +253,11 @@ export default {
       await appendEdgeTarget(note.projectId, note);
 
       // update ui
-      let project = this.projects[this.selectedProjectIndex];
-      project.children.push(note);
+      this.selectedRow.children.push(note);
       this.stateStore.selectedItemId = note._id;
 
-      this.$bus.emit("updateProject", project); // to update ui of projectTree
+      // update projectTree ui
+      this.$bus.emit("updateProject", this.selectedRow);
     },
 
     /**
@@ -300,9 +271,11 @@ export default {
       await deleteEdgeTarget(note.projectId, note._id);
 
       // update ui
-      let project = this.projects.find((p) => p._id == note.projectId);
-      project.children = project.children.filter((n) => n._id != note._id);
-      this.$bus.emit("updateProject", project); // to update ui of projectTree
+      let row = this.rows.find((p) => p._id == note.projectId);
+      row.children = row.children.filter((n) => n._id != note._id);
+
+      // update projectTree ui
+      this.$bus.emit("updateProject", row);
     },
 
     /**
@@ -321,63 +294,8 @@ export default {
       await updateEdgeTarget(note.projectId, note);
 
       // update ui
-      let project = this.projects.find((p) => p._id == note.projectId);
-      this.$bus.emit("updateProject", project); // to update ui of projectTree
-    },
-
-    /***********************************************
-     * Projects (Add, update, delete)
-     **********************************************/
-
-    /**
-     * Add an entry to table
-     * @param {Object} project
-     */
-    addProject(project) {
-      // update db has been done in action bar
-
-      // update ui
-      project.children = []; // for displaying the note list
-      this.projects.push(project);
-    },
-
-    /**
-     * Update the UI of a project object in the table
-     * @param {Object} project
-     */
-    updateProject(project) {
-      if (this.selectedProjectIndex === null) return;
-      // update ui
-      let children = this.projects[this.selectedProjectIndex].children;
-      project.children = children;
-      this.projects[this.selectedProjectIndex] = project;
-
-      // update projectTree ui
-      this.$bus.emit("updateProject", project);
-    },
-
-    /**
-     * Delete a project from the current folder,
-     * if deleteFromDB is true, delete the project from database and remove the actual files
-     * @param {Object} project
-     * @param {boolean} deleteFromDB
-     */
-    async deleteProject(project, deleteFromDB) {
-      // update ui
-      this.projects = this.projects.filter((p) => p._id != project._id);
-      // update projectTree ui
-      this.$bus.emit("deleteProject", project._id);
-
-      // update db
-      await this.$nextTick(); // wait until the ui closes all windows
-      let notes = await getNotes(project._id);
-      await deleteProject(project._id, deleteFromDB);
-      if (deleteFromDB) {
-        await deleteEdge(project._id);
-        for (let note of notes) {
-          await deleteEdge(note._id);
-        }
-      }
+      let row = this.rows.find((p) => p._id == note.projectId);
+      this.$bus.emit("updateProject", row); // to update ui of projectTree
     },
 
     /**
@@ -392,10 +310,10 @@ export default {
     clickProject(row, rowIndex) {
       console.log(row);
       this.stateStore.selectedItemId = row._id;
-      this.selectedProjectIndex = rowIndex;
 
       // ditinguish clicking project row or pdf row
       this.isClickingPDF = false;
+      this.$emit("update:selectedProject", row);
     },
 
     /**
