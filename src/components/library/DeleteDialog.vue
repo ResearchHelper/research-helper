@@ -11,25 +11,25 @@
           v-if="deleteFromDB"
           class="text-h6"
         >
-          Permenantly Delete
+          {{ $t("permenantly-delete") }}
         </div>
         <div
           v-else
           class="text-h6"
         >
-          Delete
+          {{ $t("delete") }}
         </div>
       </q-card-section>
       <q-card-section class="q-pt-none">
         <strong>
-          Are you sure you want to delete the following project ?
+          {{ $t("are-you-sure-you-want-to-delete-the-following-project") }}
         </strong>
         <ul>
           <li>"{{ projectTitle }}"</li>
         </ul>
         <strong v-if="deleteFromDB">
-          <div>* This operation is not reversible.</div>
-          <div>* Notes in this project will be deleted.</div>
+          <div>{{ $t("this-operation-is-not-reversible") }}</div>
+          <div>{{ $t("notes-in-this-project-will-be-deleted") }}</div>
         </strong>
       </q-card-section>
       <q-card-actions align="right">
@@ -39,7 +39,7 @@
           :ripple="false"
           @click="cancel"
         >
-          Cancel
+          {{ $t("cancel") }}
         </q-btn>
         <q-btn
           flat
@@ -48,7 +48,7 @@
           @click="confirm"
           color="negative"
         >
-          Confirm
+          {{ $t("confirm") }}
         </q-btn>
       </q-card-actions>
     </q-card>

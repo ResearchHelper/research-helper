@@ -26,7 +26,9 @@
               name="bi-grid-1x2"
               size="1.2rem"
             />
-            <div style="font-size: 1rem; padding-left: 0.5rem">General</div>
+            <div style="font-size: 1rem; padding-left: 0.5rem">
+              {{ $t("general") }}
+            </div>
           </q-tab>
           <q-tab
             name="about"
@@ -36,7 +38,9 @@
               name="bi-info-circle"
               size="1.2rem"
             ></q-icon>
-            <div style="font-size: 1rem; padding-left: 0.5rem">About</div>
+            <div style="font-size: 1rem; padding-left: 0.5rem">
+              {{ $t("about") }}
+            </div>
           </q-tab>
         </q-tabs>
       </div>

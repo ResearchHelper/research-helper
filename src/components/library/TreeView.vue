@@ -43,7 +43,7 @@
                 v-close-popup
                 @click="addFolder(prop.node)"
               >
-                <q-item-section>Add Folder</q-item-section>
+                <q-item-section>{{ $t("add-folder") }}</q-item-section>
               </q-item>
               <q-item
                 v-if="!specialFolderIds.includes(prop.node._id)"
@@ -51,14 +51,14 @@
                 v-close-popup
                 @click="setRenameFolder(prop.node)"
               >
-                <q-item-section>Rename</q-item-section>
+                <q-item-section>{{ $t("rename") }}</q-item-section>
               </q-item>
               <q-item
                 clickable
                 v-close-popup
                 @click="exportFolder(prop.node)"
               >
-                <q-item-section>Export References</q-item-section>
+                <q-item-section>{{ $t("export-references") }}</q-item-section>
               </q-item>
               <q-item
                 v-if="!specialFolderIds.includes(prop.node._id)"
@@ -66,7 +66,7 @@
                 v-close-popup
                 @click="deleteFolder(prop.node)"
               >
-                <q-item-section>Delete</q-item-section>
+                <q-item-section>{{ $t("delete") }}</q-item-section>
               </q-item>
             </q-list>
           </q-menu>

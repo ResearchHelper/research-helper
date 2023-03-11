@@ -14,6 +14,7 @@
           background: var(--color-pdfreader-toolbar-bkgd);
         "
         v-model:pdfState="pdfState"
+        :pageLabels="pageLabels"
         :rightMenuSize="rightMenuSize"
         :matchesCount="matchesCount"
         @changePageNumber="changePageNumber"
@@ -84,17 +85,23 @@
           name="metaInfoTab"
           icon="info"
           :ripple="false"
-        />
+        >
+          <q-tooltip>{{ $t("info") }}</q-tooltip>
+        </q-tab>
         <q-tab
           name="tocTab"
           icon="toc"
           :ripple="false"
-        />
+        >
+          <q-tooltip>{{ $t("toc") }}</q-tooltip>
+        </q-tab>
         <q-tab
           name="annotationTab"
           icon="edit"
           :ripple="false"
-        />
+        >
+          <q-tooltip>{{ $t("comment") }}</q-tooltip>
+        </q-tab>
       </q-tabs>
       <!-- q-tab height: 36px -->
       <q-tab-panels
@@ -107,7 +114,7 @@
         <q-tab-panel name="metaInfoTab">
           <MetaInfoTab
             v-if="!!rightMenuSize"
-            :project-id="projectId"
+            v-model:project="project"
           />
         </q-tab-panel>
 
@@ -165,6 +172,7 @@ export default {
   data() {
     return {
       ready: false,
+      project: null,
 
       // right menu
       prvRightMenuSize: 25,
@@ -174,6 +182,7 @@ export default {
       // pdf related
       pdfState: {},
       matchesCount: { current: -1, total: 0 },
+      pageLabels: [],
       outline: [],
       annots: [],
       selectedAnnotId: "",
@@ -187,7 +196,6 @@ export default {
   },
 
   async mounted() {
-    await this.$nextTick();
     this.pdfApp = new PDFApplication(
       this.$refs.viewerContainer,
       this.$refs.peekContainer
@@ -202,11 +210,6 @@ export default {
       this.changeSpreadMode(this.pdfState.spreadMode);
       this.changeScale({ scale: this.pdfState.currentScale });
       this.pdfState.pagesCount = this.pdfApp.pdfViewer.pagesCount;
-      this.$refs.viewerContainer.scrollTo(
-        this.pdfState.scrollLeft,
-        this.pdfState.scrollTop
-      );
-      this.ready = true;
     });
 
     this.pdfApp.eventBus.on("annotationeditorlayerrendered", (e) => {
@@ -229,6 +232,17 @@ export default {
 
     this.pdfApp.eventBus.on("pagechanging", (e) => {
       this.pdfState.currentPageNumber = e.pageNumber;
+
+      // if the pdf is initially loaded, scroll to last position
+      // this line is here because if the scrollto is called too early
+      // then the position will be slightly different each time
+      if (!this.ready) {
+        this.$refs.viewerContainer.scrollTo(
+          this.pdfState.scrollLeft,
+          this.pdfState.scrollTop
+        );
+        this.ready = true;
+      }
     });
 
     this.pdfApp.eventBus.on("scalechanging", (e) => {
@@ -262,6 +276,10 @@ export default {
   },
 
   watch: {
+    project(newProject) {
+      this.$bus.emit("updateProject", newProject);
+    },
+
     pdfState: {
       handler(state) {
         if (!this.ready) return;
@@ -315,6 +333,9 @@ export default {
       this.annots = this.annotManager.annots;
       await this.pdfApp.loadPDF(project.path);
       this.outline = await this.pdfApp.getTOC();
+      this.pageLabels = await this.pdfApp.getPageLabels();
+
+      this.project = project;
     },
 
     /**********************************

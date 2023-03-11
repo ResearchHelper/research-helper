@@ -8,7 +8,7 @@
       class="column no-wrap flex-center"
     >
       <h2>
-        Welcome to Research Helper
+        {{ $t("welcome-to-research-helper") }}
         <q-icon class="q-ml-lg">
           <img
             src="~assets/logo.svg"
@@ -18,7 +18,9 @@
       </h2>
       <div></div>
 
-      <div class="text-h5">Select a folder to fill up your knowledge</div>
+      <div class="text-h5">
+        {{ $t("select-a-folder-to-fill-up-your-knowledge") }}
+      </div>
       <q-input
         style="width: 60%"
         dense
@@ -31,7 +33,7 @@
           <q-btn
             flat
             :ripple="false"
-            label="Browse"
+            label="$t('browse')"
             @click="showFolderPicker"
           />
         </template>

@@ -17,7 +17,7 @@
       size="0.8rem"
       padding="none"
     >
-      <q-tooltip>{{ $t("add") }}</q-tooltip>
+      <q-tooltip>{{ $t("add-project") }}</q-tooltip>
       <q-menu square>
         <q-list dense>
           <q-item
@@ -25,21 +25,23 @@
             v-close-popup
             @click="addEmpty"
           >
-            <q-item-section>Create Empty Entry</q-item-section>
+            <q-item-section>{{ $t("create-empty-entry") }}</q-item-section>
           </q-item>
           <q-item
             clickable
             v-close-popup
             @click="addByID"
           >
-            <q-item-section>Create Entry By Identifier</q-item-section>
+            <q-item-section>{{
+              $t("create-entry-by-identifier")
+            }}</q-item-section>
           </q-item>
           <q-item
             clickable
             v-close-popup
             @click="showFilePicker('file')"
           >
-            <q-item-section>Create Entry By File</q-item-section>
+            <q-item-section>{{ $t("create-entry-by-file") }}</q-item-section>
           </q-item>
           <q-separator />
           <q-item
@@ -48,11 +50,23 @@
             @click="showFilePicker('collection')"
           >
             <q-item-section>
-              Import Collection (Bib, RIS, etc ...)
+              {{ $t("import-collection-bib-ris-etc") }}
             </q-item-section>
           </q-item>
         </q-list>
       </q-menu>
+    </q-btn>
+
+    <q-btn
+      flat
+      dense
+      square
+      icon="refresh"
+      size="0.8rem"
+      padding="none"
+      @click="$emit('refreshTable')"
+    >
+      <q-tooltip>{{ $t("refresh") }}</q-tooltip>
     </q-btn>
 
     <q-space />
@@ -62,7 +76,7 @@
       dense
       square
       class="actionbar-input"
-      :placeholder="$t('localSearch')"
+      :placeholder="$t('local-search')"
       :model-value="searchString"
       @update:model-value="
         (text) => {
@@ -110,6 +124,7 @@ export default {
     "addByFiles",
     "addByCollection",
     "showIdentifierDialog",
+    "refreshTable",
   ],
 
   setup() {

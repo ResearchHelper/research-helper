@@ -368,18 +368,26 @@ export default {
      * @param {boolean} addComponentOnly
      */
     addDragSource(element, addComponentOnly = false) {
+      // FIXME multi-windows with same id is not well supported
+      // think about a good way to do this
+      // can we view the same "Object" in different windows ?
+      // so that we don't need to worry about update conflict
       if (!!!element) return;
+      element.style.userSelect = "none";
+      return;
 
-      let type = element.getAttribute("type");
-      let id = element.getAttribute("item-id");
-      let componentType = type == "project" ? "ReaderPage" : "NotePage";
-      this.$refs.layout.addGLDragSource(
-        element,
-        componentType,
-        { id: id },
-        element.innerText,
-        addComponentOnly
-      );
+      // if (!!!element) return;
+
+      // let type = element.getAttribute("type");
+      // let id = element.getAttribute("item-id");
+      // let componentType = type == "project" ? "ReaderPage" : "NotePage";
+      // this.$refs.layout.addGLDragSource(
+      //   element,
+      //   componentType,
+      //   { id: id },
+      //   element.innerText,
+      //   addComponentOnly
+      // );
     },
 
     /**

@@ -12,18 +12,18 @@
             src="~assets/logo.svg"
             alt="logo"
           />
-          <div class="q-ml-sm">Research Helper</div>
+          <div class="q-ml-sm">{{ $t("research-helper") }}</div>
         </div>
       </q-card-section>
       <q-card-section class="q-pt-none">
-        current version: {{ version }}
+        {{ $t("current-version-version", [version]) }}
         <q-btn
           v-if="!isUpdateAvailable"
           unelevated
           square
           :ripple="false"
           no-caps
-          label="Check for updates"
+          label="$t('check-for-updates')"
           color="primary"
           @click="checkForUpdates"
         />
@@ -33,7 +33,7 @@
           square
           :ripple="false"
           no-caps
-          label="Install Updates"
+          label="$t('install-updates')"
           color="primary"
           @click="downloadUpdate"
         />

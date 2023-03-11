@@ -2,18 +2,18 @@
   <!-- tab: 36px  -->
   <!-- show this after rightMenu is shown, 
     otherwise autogrow extends to full-height -->
-  <div v-if="!!project">
+  <div v-if="!!meta">
     <div class="row justify-between">
       <div
         class="col"
         style="font-size: 1rem"
       >
-        Type
+        {{ $t("type") }}
       </div>
       <input
         class="col-8 input"
         type="text"
-        v-model="project.type"
+        v-model="meta.type"
         @blur="modifyInfo(true)"
       />
     </div>
@@ -23,16 +23,15 @@
         class="col"
         style="font-size: 1rem"
       >
-        Title
+        {{ $t("title") }}
       </div>
     </div>
-
     <div class="row q-mt-sm">
       <textarea
         style="min-height: 5rem"
         class="col input"
         type="text"
-        v-model="project.title"
+        v-model="meta.title"
         @blur="modifyInfo(true)"
       ></textarea>
     </div>
@@ -42,12 +41,27 @@
         class="col"
         style="font-size: 1rem"
       >
-        Author(s)
+        {{ $t("year") }}
       </div>
       <input
         class="col-8 input"
         type="text"
-        placeholder="First Last / Last, First"
+        v-model="meta.year"
+        @blur="modifyInfo(true)"
+      />
+    </div>
+
+    <div class="row justify-between q-mt-sm">
+      <div
+        class="col"
+        style="font-size: 1rem"
+      >
+        {{ $t("author") }}
+      </div>
+      <input
+        class="col-8 input"
+        type="text"
+        :placeholder="$t('first-last-last-first')"
         v-model.trim="name"
         @keydown.enter="addAuthor"
       />
@@ -70,13 +84,13 @@
       class="col q-mt-sm"
       style="font-size: 1rem"
     >
-      Abstract
+      {{ $t("abstract") }}
     </div>
     <div class="row">
       <textarea
         style="min-height: 10rem"
         class="col input"
-        v-model="project.abstract"
+        v-model="meta.abstract"
         @blur="modifyInfo(false)"
       ></textarea>
     </div>
@@ -91,7 +105,7 @@
       <input
         class="col-8 input"
         type="text"
-        v-model="project.DOI"
+        v-model="meta.DOI"
         @blur="modifyInfo(false)"
       />
     </div>
@@ -106,7 +120,7 @@
       <input
         class="col-8 input"
         type="text"
-        v-model="project.isbn"
+        v-model="meta.isbn"
         @blur="modifyInfo(false)"
       />
     </div>
@@ -116,12 +130,12 @@
         class="col"
         style="font-size: 1rem"
       >
-        Attached File
+        {{ $t("file") }}
       </div>
       <input
         class="col-8 input"
         type="text"
-        v-model="project.path"
+        v-model="meta.path"
         @blur="modifyInfo(false)"
       />
     </div>
@@ -131,7 +145,7 @@
         class="col"
         style="font-size: 1rem"
       >
-        Tags
+        {{ $t("tags") }}
       </div>
       <input
         class="col-8 input"
@@ -142,7 +156,7 @@
     </div>
     <div class="q-pb-sm">
       <q-chip
-        v-for="(tag, index) in project.tags"
+        v-for="(tag, index) in meta.tags"
         :key="index"
         :ripple="false"
         dense
@@ -157,12 +171,12 @@
 
 <script>
 import { useStateStore } from "src/stores/appState";
-import { getProject, updateProject } from "src/backend/project/project";
+import { updateProject } from "src/backend/project/project";
 import { updateEdge } from "src/backend/project/graph";
 
 export default {
-  props: { projectId: String },
-  emits: ["updateProject"],
+  props: { project: Object },
+  emits: ["update:project"],
 
   setup() {
     const stateStore = useStateStore();
@@ -171,15 +185,23 @@ export default {
 
   data() {
     return {
-      project: null,
       name: "", // author name
       tag: "", // project tag
     };
   },
 
   computed: {
+    meta: {
+      get() {
+        return this.project;
+      },
+      set(newMeta) {
+        this.$emit("update:project", newMeta);
+      },
+    },
+
     authors() {
-      let authors = this.project.author;
+      let authors = this.meta.author;
       if (!!!authors?.length) return "";
 
       let names = [];
@@ -188,49 +210,28 @@ export default {
         if (!!author.literal) names.push(author.literal);
         else names.push(`${author.given} ${author.family}`);
       }
-      console.log(names);
       return names;
     },
   },
 
-  mounted() {
-    this.getInfo(this.projectId);
-  },
-
-  watch: {
-    projectId(id) {
-      this.getInfo(id);
-    },
-  },
-
   methods: {
-    async getInfo(projectId) {
-      this.project = null;
-      if (!!!projectId) return;
-      let item = await getProject(projectId);
-      if (item.dataType !== "project") return;
-      this.project = item;
-    },
-
     /**
      * Update project info
      * @param {boolean} updateRelated - if true, also modify info in related projects
      */
     async modifyInfo(updateRelated) {
       // update db and also update rev in this.project
-      this.project = await updateProject(this.project);
+      let meta = await updateProject(this.meta);
+      this.meta._rev = meta._rev;
 
       if (updateRelated) {
         let sourceNode = {
-          id: this.project._id,
-          label: this.project.title,
+          id: this.meta._id,
+          label: this.meta.title,
           type: "project",
         };
-        await updateEdge(this.project._id, { sourceNode: sourceNode });
+        await updateEdge(this.meta._id, { sourceNode: sourceNode });
       }
-
-      // update table data
-      this.$emit("updateProject", this.project);
     },
 
     async addAuthor() {
@@ -247,10 +248,11 @@ export default {
           author.literal = this.name;
         } else {
           author.family = truncks.pop();
-          author.given = truncks.join("");
+          author.given = truncks.join(" ");
         }
       }
-      this.project.author.push(author);
+      this.meta.author.push(author);
+      this.name = "";
 
       // update db
       this.modifyInfo(false);
@@ -258,7 +260,7 @@ export default {
 
     async removeAuthor(index) {
       // update ui
-      this.project.author.splice(index, 1);
+      this.meta.author.splice(index, 1);
 
       // update db
       this.modifyInfo(false);
@@ -266,11 +268,8 @@ export default {
 
     async addTag() {
       // update ui
-      this.project.tags.push(this.tag);
+      this.meta.tags.push(this.tag);
       this.tag = ""; // remove text in input
-
-      // update table data for immediate search
-      this.$emit("updateProject", this.project);
 
       // update db
       this.modifyInfo(false);
@@ -278,10 +277,7 @@ export default {
 
     async removeTag(tag) {
       // update ui
-      this.project.tags = this.project.tags.filter((t) => t != tag);
-
-      // update table data for immediate search
-      this.$emit("updateProject", this.project);
+      this.meta.tags = this.meta.tags.filter((t) => t != tag);
 
       // update db
       this.modifyInfo(false);

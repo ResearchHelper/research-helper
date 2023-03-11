@@ -68,8 +68,9 @@ async function addProject(folderId) {
  * and remove the actual folder containing the project files in storage path
  * @param {string} projectId
  * @param {boolean} deleteFromDB
+ * @param {string} folderId - if deleteFromDB === false, then we need folderId
  */
-async function deleteProject(projectId, deleteFromDB) {
+async function deleteProject(projectId, deleteFromDB, folderId = "") {
   try {
     let project = await db.get(projectId);
     if (deleteFromDB) {
@@ -90,7 +91,7 @@ async function deleteProject(projectId, deleteFromDB) {
       // (do not rely on project.path because it might be empty)
       await deleteProjectFolder(projectId);
     } else {
-      let folderId = stateStore.selectedFolderId;
+      if (!!!folderId) throw new Error("folderId is needed");
       project.folderIds = project.folderIds.filter((id) => id != folderId);
       await db.put(project);
     }

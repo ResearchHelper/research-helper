@@ -1,13 +1,4 @@
 <template>
-  <q-file
-    :multiple="false"
-    :append="false"
-    :accept="'.pdf'"
-    style="display: none"
-    @update:model-value="(file) => attachFile(file)"
-    ref="filePicker"
-  />
-
   <q-menu
     touch-position
     context-menu
@@ -20,7 +11,7 @@
         v-close-popup
         @click="copyItemId"
       >
-        <q-item-section>Copy Project ID</q-item-section>
+        <q-item-section>{{ $t("copy-project-id") }}</q-item-section>
       </q-item>
 
       <q-separator />
@@ -31,7 +22,7 @@
         v-close-popup
         @click="addNote"
       >
-        <q-item-section> Add Note </q-item-section>
+        <q-item-section> {{ $t("add-note") }} </q-item-section>
       </q-item>
       <q-item
         clickable
@@ -82,7 +73,7 @@
         v-close-popup
         @click="openItem"
       >
-        <q-item-section>Open Project</q-item-section>
+        <q-item-section>{{ $t("open-project") }}</q-item-section>
       </q-item>
 
       <q-item
@@ -90,7 +81,7 @@
         v-close-popup
         @click="showSearchMetaDialog"
       >
-        <q-item-section>Search Meta Info</q-item-section>
+        <q-item-section>{{ $t("search-meta-info") }}</q-item-section>
       </q-item>
 
       <q-item
@@ -99,14 +90,14 @@
         v-close-popup
         @click="deleteItem(false)"
       >
-        <q-item-section>Delete From Folder</q-item-section>
+        <q-item-section>{{ $t("delete-from-folder") }}</q-item-section>
       </q-item>
       <q-item
         clickable
         v-close-popup
         @click="deleteItem(true)"
       >
-        <q-item-section>Delete From DataBase</q-item-section>
+        <q-item-section>{{ $t("delete-from-database") }}</q-item-section>
       </q-item>
     </q-list>
   </q-menu>
@@ -114,18 +105,10 @@
 <script>
 import { copyToClipboard } from "quasar";
 import { useStateStore } from "src/stores/appState";
-import { updateProject, getProject } from "src/backend/project/project";
-import { copyFile } from "src/backend/project/file";
 
 export default {
   props: { row: Object },
-  emits: [
-    "openItem",
-    "deleteItem",
-    "deleteItemFromDB",
-    "attachFile",
-    "addNote",
-  ],
+  emits: ["openItem", "deleteItem", "deleteItemFromDB", "addNote"],
 
   data() {
     return {
@@ -156,27 +139,17 @@ export default {
     },
 
     replaceLinkToFile() {
-      this.replaceStoredCopy = false;
-      this.$refs.filePicker.$el.click();
+      let replaceStoredCopy = false;
+      this.atttchFile(replaceStoredCopy);
     },
 
     replaceStoredFileCopy() {
-      this.replaceStoredCopy = true;
-      this.$refs.filePicker.$el.click();
+      let replaceStoredCopy = true;
+      this.atttchFile(replaceStoredCopy);
     },
 
-    /**
-     *
-     * @param {File} file
-     */
-    async attachFile(file) {
-      let dstPath = file.path;
-      if (this.replaceStoredCopy)
-        dstPath = await copyFile(file.path, this.row._id);
-      let row = await getProject(this.row._id);
-      row.path = dstPath;
-      row = await updateProject(row);
-      this.$emit("attachFile", row);
+    atttchFile(replaceStoredCopy) {
+      this.$bus.emit("showFileDialog", replaceStoredCopy);
     },
 
     showSearchMetaDialog() {
