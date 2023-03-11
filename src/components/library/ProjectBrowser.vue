@@ -97,7 +97,7 @@
               icon="info"
               :ripple="false"
             >
-              <q-tooltip>{{ $t("metaInfo") }}</q-tooltip>
+              <q-tooltip>{{ $t("info") }}</q-tooltip>
             </q-tab>
           </q-tabs>
           <!-- q-tab height 36px -->

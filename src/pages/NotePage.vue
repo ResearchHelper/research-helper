@@ -15,6 +15,7 @@ export default {
 </script>
 <style lang="scss">
 .vditor-reset > pre {
+  // Fix padding no matter what window size it is
   padding: 10px 35px !important;
 }
 </style>

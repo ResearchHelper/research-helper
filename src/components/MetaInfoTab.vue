@@ -8,7 +8,7 @@
         class="col"
         style="font-size: 1rem"
       >
-        Type
+        {{ $t("type") }}
       </div>
       <input
         class="col-8 input"
@@ -23,7 +23,7 @@
         class="col"
         style="font-size: 1rem"
       >
-        Title
+        {{ $t("title") }}
       </div>
     </div>
     <div class="row q-mt-sm">
@@ -41,7 +41,7 @@
         class="col"
         style="font-size: 1rem"
       >
-        Year
+        {{ $t("year") }}
       </div>
       <input
         class="col-8 input"
@@ -56,12 +56,12 @@
         class="col"
         style="font-size: 1rem"
       >
-        Author(s)
+        {{ $t("author") }}
       </div>
       <input
         class="col-8 input"
         type="text"
-        placeholder="First Last / Last, First"
+        :placeholder="$t('first-last-last-first')"
         v-model.trim="name"
         @keydown.enter="addAuthor"
       />
@@ -84,7 +84,7 @@
       class="col q-mt-sm"
       style="font-size: 1rem"
     >
-      Abstract
+      {{ $t("abstract") }}
     </div>
     <div class="row">
       <textarea
@@ -130,7 +130,7 @@
         class="col"
         style="font-size: 1rem"
       >
-        File
+        {{ $t("file") }}
       </div>
       <input
         class="col-8 input"
@@ -145,7 +145,7 @@
         class="col"
         style="font-size: 1rem"
       >
-        Tags
+        {{ $t("tags") }}
       </div>
       <input
         class="col-8 input"

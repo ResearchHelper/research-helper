@@ -4,7 +4,9 @@
     @hide="cancel"
   >
     <q-card style="min-width: 300px">
-      <q-card-section> <div class="text-h6">Options</div> </q-card-section>
+      <q-card-section>
+        <div class="text-h6">{{ $t("options") }}</div>
+      </q-card-section>
       <q-card-section class="q-pt-none">
         <div class="row items-center">
           <div class="col-auto">Format:</div>

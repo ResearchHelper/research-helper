@@ -6,7 +6,7 @@
     >
       <q-card style="width: 50vw">
         <q-card-section>
-          <div class="text-h6">Moving Files</div>
+          <div class="text-h6">{{ $t("moving-files") }}</div>
         </q-card-section>
         <q-card-section class="q-pt-none">
           <q-linear-progress
@@ -21,7 +21,7 @@
           </q-linear-progress>
           <div class="text-negative">{{ error }}</div>
           <div v-show="progress > 0.999">
-            Files were successfully transfer to new path.
+            {{ $t("files-were-successfully-transfer-to-new-path") }}
           </div>
         </q-card-section>
         <q-card-actions align="right">
@@ -44,7 +44,7 @@
       class="q-my-md card"
     >
       <q-card-section>
-        <div class="text-h6">Theme</div>
+        <div class="text-h6">{{ $t("theme") }}</div>
       </q-card-section>
       <q-card-section class="q-pt-none">
         <q-select
@@ -63,10 +63,12 @@
       class="q-my-md card"
     >
       <q-card-section>
-        <div class="text-h6">Font</div>
+        <div class="text-h6">{{ $t("font") }}</div>
       </q-card-section>
       <q-card-section class="q-pt-none">
-        <div style="font-size: 1rem">Font size: {{ fontSize }}px</div>
+        <div style="font-size: 1rem">
+          {{ $t("font-size-fontsize-px", [fontSize]) }}
+        </div>
         <q-slider
           class="col q-pl-md"
           :min="14"
@@ -85,7 +87,7 @@
       class="q-my-md card"
     >
       <q-card-section>
-        <div class="text-h6">Language</div>
+        <div class="text-h6">{{ $t("language") }}</div>
       </q-card-section>
       <q-card-section class="q-pt-none">
         <q-select
@@ -104,7 +106,7 @@
       class="q-my-md card"
     >
       <q-card-section>
-        <div class="text-h6">Storage</div>
+        <div class="text-h6">{{ $t("storage") }}</div>
       </q-card-section>
       <q-card-section class="q-pt-none">
         <q-input
@@ -117,7 +119,7 @@
           @click="showFolderPicker"
         >
           <template v-slot:before>
-            <div style="font-size: 1rem">Storage path:</div>
+            <div style="font-size: 1rem">{{ $t("storage-path") }}</div>
           </template>
         </q-input>
       </q-card-section>
@@ -149,13 +151,13 @@ export default {
       textsize: 16,
 
       languageOptions: [
-        { value: "en_US", label: "English (en_US)" },
-        { value: "zh_CN", label: "中文 (zh_CN)" },
+        { value: "en_US", label: this.$t("english-en_us") },
+        { value: "zh_CN", label: this.$t("zhong-wen-zhcn") },
       ],
 
       themeOptions: [
-        { value: "dark", label: "Dark (Default)" },
-        { value: "light", label: "Light" },
+        { value: "dark", label: this.$t("dark-default") },
+        { value: "light", label: this.$t("light") },
       ],
     };
   },

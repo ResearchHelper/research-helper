@@ -47,13 +47,13 @@
       ]"
     >
       <template v-slot:cursor>
-        <q-tooltip>Cursor</q-tooltip>
+        <q-tooltip>{{ $t("cursor") }}</q-tooltip>
       </template>
       <template v-slot:highlight>
-        <q-tooltip>Highlight</q-tooltip>
+        <q-tooltip>{{ $t("highlight") }}</q-tooltip>
       </template>
       <template v-slot:comment>
-        <q-tooltip>Comment</q-tooltip>
+        <q-tooltip>{{ $t("comment") }}</q-tooltip>
       </template>
     </q-btn-toggle>
     <q-btn
@@ -62,7 +62,7 @@
       :ripple="false"
       size="0.5rem"
     >
-      <q-tooltip>Highlight color</q-tooltip>
+      <q-tooltip>{{ $t("highlight-color") }}</q-tooltip>
       <q-menu
         anchor="bottom middle"
         self="top middle"
@@ -90,9 +90,11 @@
       size="0.7rem"
       padding="xs"
     >
-      <template v-slot:label><q-tooltip>View</q-tooltip></template>
+      <template v-slot:label
+        ><q-tooltip>{{ $t("view") }}</q-tooltip></template
+      >
       <q-list dense>
-        <q-item class="row justify-center items-center">
+        <q-item class="row justify-between items-center">
           <q-btn
             dense
             flat
@@ -100,14 +102,18 @@
             icon="expand"
             class="rotate-90"
             @click="$emit('changeScale', { scaleValue: 'page-width' })"
-          />
+          >
+            <q-tooltip>{{ $t("page-width") }}</q-tooltip>
+          </q-btn>
           <q-btn
             dense
             flat
             :ripple="false"
             icon="expand"
             @click="$emit('changeScale', { scaleValue: 'page-height' })"
-          />
+          >
+            <q-tooltip>{{ $t("page-height") }}</q-tooltip>
+          </q-btn>
         </q-item>
         <q-separator />
         <q-item class="row justify-center items-center">
@@ -115,18 +121,22 @@
             dense
             flat
             :ripple="false"
-            icon="remove"
+            icon="zoom_out"
             @click="$emit('changeScale', { delta: -0.1 })"
-          />
+          >
+            <q-tooltip>{{ $t("zoom-out") }}</q-tooltip>
+          </q-btn>
           <div>
             {{ Math.trunc(pdfState.currentScale * 100) + "%" }}
           </div>
           <q-btn
             dense
             :ripple="false"
-            icon="add"
+            icon="zoom_in"
             @click="$emit('changeScale', { delta: 0.1 })"
-          />
+          >
+            <q-tooltip>{{ $t("zoom-in") }}</q-tooltip>
+          </q-btn>
         </q-item>
         <q-separator />
         <q-item class="justify-center">
@@ -140,9 +150,9 @@
             :ripple="false"
             toggle-color="primary"
             :options="[
-              { label: 'No Spreads', value: 0 },
-              { label: 'Odd Spreads', value: 1 },
-              { label: 'Even Spreads', value: 2 },
+              { label: $t('no-spreads'), value: 0 },
+              { label: $t('odd-spreads'), value: 1 },
+              { label: $t('even-spreads'), value: 2 },
             ]"
             v-model="state.spreadMode"
             @update:model-value="
@@ -167,7 +177,7 @@
       padding="xs"
       @click="requestFullscreen"
     >
-      <q-tooltip>Enter full screen</q-tooltip>
+      <q-tooltip>{{ $t("enter-full-screen") }}</q-tooltip>
     </q-btn>
     <q-btn
       v-else
@@ -180,7 +190,7 @@
       icon="fullscreen_exit"
       @click="exitFullscreen"
     >
-      <q-tooltip>Exit full screen</q-tooltip>
+      <q-tooltip>{{ $t("exit-full-screen") }}</q-tooltip>
     </q-btn>
 
     <q-btn
@@ -192,7 +202,7 @@
       padding="none"
       ref="searchBtn"
     >
-      <q-tooltip>Search</q-tooltip>
+      <q-tooltip>{{ $t("search") }}</q-tooltip>
       <q-menu
         persistent
         @show="$emit('searchText', search)"
@@ -207,7 +217,7 @@
             dense
             outlined
             hide-bottom-space
-            placeholder="Search"
+            :placeholder="$t('search')"
             v-model="search.query"
             @keydown.enter="$emit('changeMatch', 1)"
           ></q-input>
@@ -229,18 +239,18 @@
         <q-item>
           <q-checkbox
             dense
-            label="Highlight All"
+            :label="$t('highlight-all')"
             v-model="search.highlightAll"
           />
           <q-checkbox
             dense
-            label="Match Case"
+            :label="$t('match-case')"
             class="q-ml-sm"
             v-model="search.caseSensitive"
           />
           <q-checkbox
             dense
-            label="Whole Words"
+            :label="$t('whole-words')"
             class="q-ml-sm"
             v-model="search.entireWord"
           />
@@ -266,7 +276,7 @@
       @update:model-value="$emit('toggleRightMenu', showRightMenu)"
     >
       <template v-slot:default>
-        <q-tooltip>Toggle right menu</q-tooltip>
+        <q-tooltip>{{ $t("toggle-right-menu") }}</q-tooltip>
       </template>
     </q-btn-toggle>
   </q-toolbar>
@@ -346,9 +356,12 @@ export default {
       let matchesCount = this.matchesCount;
       if (!!matchesCount) {
         if (matchesCount.total != 0) {
-          text = `${matchesCount.current} of ${matchesCount.total} matches`;
+          text = this.$t("matchescount-current-of-matchescount-total-matches", [
+            matchesCount.current,
+            matchesCount.total,
+          ]);
         } else {
-          text = "phrase not found";
+          text = this.$t("phrase-not-found");
         }
       }
 

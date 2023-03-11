@@ -85,17 +85,23 @@
           name="metaInfoTab"
           icon="info"
           :ripple="false"
-        />
+        >
+          <q-tooltip>{{ $t("info") }}</q-tooltip>
+        </q-tab>
         <q-tab
           name="tocTab"
           icon="toc"
           :ripple="false"
-        />
+        >
+          <q-tooltip>{{ $t("toc") }}</q-tooltip>
+        </q-tab>
         <q-tab
           name="annotationTab"
           icon="edit"
           :ripple="false"
-        />
+        >
+          <q-tooltip>{{ $t("comment") }}</q-tooltip>
+        </q-tab>
       </q-tabs>
       <!-- q-tab height: 36px -->
       <q-tab-panels

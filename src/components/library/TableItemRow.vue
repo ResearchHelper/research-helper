@@ -64,7 +64,7 @@
           clickable
           @click="copyID"
         >
-          <q-item-section>Copy Note ID</q-item-section>
+          <q-item-section>{{ $t("copy-note-id") }}</q-item-section>
         </q-item>
 
         <q-separator />
@@ -73,19 +73,19 @@
           clickable
           @click="openItem"
         >
-          <q-item-section>Open Note</q-item-section>
+          <q-item-section>{{ $t("open-note") }}</q-item-section>
         </q-item>
         <q-item
           clickable
           @click="setRenaming"
         >
-          <q-item-section>Rename Note</q-item-section>
+          <q-item-section>{{ $t("rename-note") }}</q-item-section>
         </q-item>
         <q-item
           clickable
           @click="deleteItem"
         >
-          <q-item-section>Delete Note</q-item-section>
+          <q-item-section>{{ $t("delete-note") }}</q-item-section>
         </q-item>
       </q-list>
 
@@ -97,14 +97,14 @@
           clickable
           @click="openItem"
         >
-          <q-item-section>Open PDF</q-item-section>
+          <q-item-section>{{ $t("open-pdf") }}</q-item-section>
         </q-item>
 
         <q-item
           clickable
           @click="renameFile"
         >
-          <q-item-section>Rename PDF from Metadata</q-item-section>
+          <q-item-section>{{ $t("rename-pdf-from-metadata") }}</q-item-section>
         </q-item>
       </q-list>
     </q-menu>

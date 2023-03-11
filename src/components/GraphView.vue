@@ -11,7 +11,7 @@
         class="q-ml-xs"
         style="font-size: 1rem"
       >
-        Project
+        {{ $t("project") }}
       </div>
     </div>
     <div class="row items-center">
@@ -20,7 +20,7 @@
         class="q-ml-xs"
         style="font-size: 1rem"
       >
-        Note
+        {{ $t("note") }}
       </div>
     </div>
     <div class="row items-center">
@@ -29,7 +29,7 @@
         class="q-ml-xs"
         style="font-size: 1rem"
       >
-        Missing
+        {{ $t("missing") }}
       </div>
     </div>
   </div>

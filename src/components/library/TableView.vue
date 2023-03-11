@@ -171,13 +171,13 @@ export default {
         {
           name: "title",
           field: "title",
-          label: "Title",
+          label: this.$t("title"),
           align: "left",
         },
         {
           name: "author",
           field: "author",
-          label: "Author(s)",
+          label: this.$t("author"),
           align: "left",
         },
       ],

@@ -34,7 +34,7 @@
             />
           </q-item-section>
           <q-item-section>
-            <div style="font-size: 1rem">Active Projects</div>
+            <div style="font-size: 1rem">{{ $t("active-projects") }}</div>
           </q-item-section>
         </template>
         <div :style="`height: ${treeSize - 36}px; overflow-y: auto`">
@@ -74,7 +74,7 @@
                       v-close-popup
                       @click="addNote(prop.node)"
                     >
-                      <q-item-section> Add Note </q-item-section>
+                      <q-item-section> {{ $t("add-note") }} </q-item-section>
                     </q-item>
                     <q-separator />
                     <q-item
@@ -82,7 +82,9 @@
                       v-close-popup
                       @click="closeProject(prop.key)"
                     >
-                      <q-item-section> Close Project </q-item-section>
+                      <q-item-section>
+                        {{ $t("close-project") }}
+                      </q-item-section>
                     </q-item>
                   </q-list>
 
@@ -96,14 +98,14 @@
                       v-close-popup
                       @click="setRenameNote(prop.node)"
                     >
-                      <q-item-section> Rename </q-item-section>
+                      <q-item-section> {{ $t("rename") }} </q-item-section>
                     </q-item>
                     <q-item
                       clickable
                       v-close-popup
                       @click="deleteNote(prop.node)"
                     >
-                      <q-item-section> Delete </q-item-section>
+                      <q-item-section> {{ $t("delete") }} </q-item-section>
                     </q-item>
                   </q-list>
                 </q-menu>
@@ -144,7 +146,7 @@
                 name="close"
                 @click="closeProject(prop.key)"
               >
-                <q-tooltip> Close project </q-tooltip>
+                <q-tooltip> {{ $t("close-project") }} </q-tooltip>
               </q-icon>
             </template>
           </q-tree>
@@ -173,7 +175,7 @@
             />
           </q-item-section>
           <q-item-section>
-            <div style="font-size: 1rem">Related Items</div>
+            <div style="font-size: 1rem">{{ $t("related-items") }}</div>
           </q-item-section>
           <q-item-section side>
             <q-btn
@@ -185,7 +187,7 @@
               icon="refresh"
               @click.stop="$refs.graphview.reload()"
             >
-              <q-tooltip>Refresh graphview</q-tooltip>
+              <q-tooltip>{{ $t("refresh-graphview") }}</q-tooltip>
             </q-btn>
           </q-item-section>
         </template>

@@ -12,7 +12,7 @@
         >
           <div style="font-size: 1rem">
             <q-icon name="content_copy"></q-icon>
-            Copy Annot ID
+            {{ $t("copy-annot-id") }}
           </div>
         </div>
       </q-item>
@@ -24,7 +24,7 @@
         >
           <div style="font-size: 1rem">
             <q-icon name="delete_outline"></q-icon>
-            Delete Annot
+            {{ $t("delete-annot") }}
           </div>
         </div>
       </q-item>

@@ -363,7 +363,6 @@ export default {
      *******************************************/
 
     /**
-     * FIXME
      * Add dragSource to the rows in projectTree
      * @param {HTMLElement} element
      * @param {boolean} addComponentOnly
@@ -373,21 +372,22 @@ export default {
       // think about a good way to do this
       // can we view the same "Object" in different windows ?
       // so that we don't need to worry about update conflict
+      if (!!!element) return;
       element.style.userSelect = "none";
       return;
 
-      if (!!!element) return;
+      // if (!!!element) return;
 
-      let type = element.getAttribute("type");
-      let id = element.getAttribute("item-id");
-      let componentType = type == "project" ? "ReaderPage" : "NotePage";
-      this.$refs.layout.addGLDragSource(
-        element,
-        componentType,
-        { id: id },
-        element.innerText,
-        addComponentOnly
-      );
+      // let type = element.getAttribute("type");
+      // let id = element.getAttribute("item-id");
+      // let componentType = type == "project" ? "ReaderPage" : "NotePage";
+      // this.$refs.layout.addGLDragSource(
+      //   element,
+      //   componentType,
+      //   { id: id },
+      //   element.innerText,
+      //   addComponentOnly
+      // );
     },
 
     /**

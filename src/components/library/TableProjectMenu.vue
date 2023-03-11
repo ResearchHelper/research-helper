@@ -11,7 +11,7 @@
         v-close-popup
         @click="copyItemId"
       >
-        <q-item-section>Copy Project ID</q-item-section>
+        <q-item-section>{{ $t("copy-project-id") }}</q-item-section>
       </q-item>
 
       <q-separator />
@@ -22,7 +22,7 @@
         v-close-popup
         @click="addNote"
       >
-        <q-item-section> Add Note </q-item-section>
+        <q-item-section> {{ $t("add-note") }} </q-item-section>
       </q-item>
       <q-item
         clickable
@@ -73,7 +73,7 @@
         v-close-popup
         @click="openItem"
       >
-        <q-item-section>Open Project</q-item-section>
+        <q-item-section>{{ $t("open-project") }}</q-item-section>
       </q-item>
 
       <q-item
@@ -81,7 +81,7 @@
         v-close-popup
         @click="showSearchMetaDialog"
       >
-        <q-item-section>Search Meta Info</q-item-section>
+        <q-item-section>{{ $t("search-meta-info") }}</q-item-section>
       </q-item>
 
       <q-item
@@ -90,14 +90,14 @@
         v-close-popup
         @click="deleteItem(false)"
       >
-        <q-item-section>Delete From Folder</q-item-section>
+        <q-item-section>{{ $t("delete-from-folder") }}</q-item-section>
       </q-item>
       <q-item
         clickable
         v-close-popup
         @click="deleteItem(true)"
       >
-        <q-item-section>Delete From DataBase</q-item-section>
+        <q-item-section>{{ $t("delete-from-database") }}</q-item-section>
       </q-item>
     </q-list>
   </q-menu>

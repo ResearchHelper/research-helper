@@ -92,7 +92,7 @@ export default {
           "|",
           { name: "table", tipPosition: "s" },
           "|",
-          { name: "upload", tipPosition: "s", tip: "upload image" },
+          { name: "upload", tipPosition: "s", tip: this.$t("upload-image") },
           { name: "export", tipPosition: "s" },
           "|",
           { name: "help", tipPosition: "s" },
@@ -121,7 +121,7 @@ export default {
             lineNumber: true,
           },
         },
-        placeholder: "Live Markdown editor + Latex supported!",
+        placeholder: this.$t("live-markdown-editor-latex-supported"),
         cache: {
           enable: false,
         },

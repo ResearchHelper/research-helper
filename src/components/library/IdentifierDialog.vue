@@ -8,7 +8,7 @@
       style="min-width: 500px"
     >
       <q-card-section>
-        <div class="text-h6">Search Identifier</div>
+        <div class="text-h6">{{ $t("search-identifier") }}</div>
       </q-card-section>
       <q-card-section class="q-pt-none">
         <q-input
@@ -17,7 +17,7 @@
           dense
           autofocus
           class="full-width"
-          placeholder="DOI, ISBN, Wikidata, Ris, etc ..."
+          placeholder="DOI, ISBN, Wikidata, Ris, ..."
           v-model.trim="identifier"
           @keydown.enter="confirm"
         />
@@ -27,14 +27,14 @@
           flat
           v-close-popup
           :ripple="false"
-          label="Cancel"
+          label="$t('cancel')"
           @click="cancel"
         />
         <q-btn
           flat
           v-close-popup
           :ripple="false"
-          label="Confirm"
+          label="$t('confirm')"
           @click="confirm"
         />
       </q-card-actions>
