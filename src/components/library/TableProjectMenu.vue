@@ -1,13 +1,4 @@
 <template>
-  <!-- <q-file
-    :multiple="false"
-    :append="false"
-    :accept="'.pdf'"
-    style="display: none"
-    @update:model-value="(file) => attachFile(file)"
-    ref="filePicker"
-  /> -->
-
   <q-menu
     touch-position
     context-menu
@@ -114,18 +105,10 @@
 <script>
 import { copyToClipboard } from "quasar";
 import { useStateStore } from "src/stores/appState";
-import { updateProject, getProject } from "src/backend/project/project";
-import { copyFile } from "src/backend/project/file";
 
 export default {
   props: { row: Object },
-  emits: [
-    "openItem",
-    "deleteItem",
-    "deleteItemFromDB",
-    "attachFile",
-    "addNote",
-  ],
+  emits: ["openItem", "deleteItem", "deleteItemFromDB", "addNote"],
 
   data() {
     return {

@@ -36,7 +36,7 @@
       ></textarea>
     </div>
 
-    <div class="row justify-between">
+    <div class="row justify-between q-mt-sm">
       <div
         class="col"
         style="font-size: 1rem"
@@ -130,7 +130,7 @@
         class="col"
         style="font-size: 1rem"
       >
-        Attached File
+        File
       </div>
       <input
         class="col-8 input"
