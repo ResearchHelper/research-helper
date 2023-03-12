@@ -1,9 +1,8 @@
 <template>
-  <WelcomeCarousel
-    v-if="welcomeCarousel"
-    @selectPath="(path) => changeStoragePath(path)"
-  />
+  <WelcomeCarousel v-model="welcomeCarousel"/>
+
   <q-splitter
+    v-if="!welcomeCarousel"
     :model-value="56"
     unit="px"
     :separator-style="{ cursor: 'default' }"
@@ -106,7 +105,6 @@ import GLayout from "./GLayout.vue";
 import "src/css/goldenlayout/base.scss";
 import "src/css/goldenlayout/theme.scss";
 
-import { useQuasar } from "quasar";
 import { useStateStore } from "src/stores/appState";
 import { getProject } from "src/backend/project/project";
 import { getNotes } from "src/backend/project/note";
@@ -125,7 +123,6 @@ export default {
   },
 
   setup() {
-    const $q = useQuasar();
     const stateStore = useStateStore();
     return { stateStore };
   },
@@ -133,11 +130,7 @@ export default {
   data() {
     return {
       welcomeCarousel: false,
-
       leftMenuSize: 0,
-
-      dragover: false,
-
       isUpdateAvailable: false,
     };
   },
@@ -193,20 +186,28 @@ export default {
     let state = await getAppState();
     this.stateStore.loadState(state);
 
+    // if there is no path, show welcome carousel
+    if (!this.stateStore.settings.storagePath) {
+      this.welcomeCarousel = true;
+    }
+
+    // apply layout related settings
     if (this.stateStore.showLeftMenu) this.leftMenuSize = state.leftMenuSize;
     const layout = await getLayout();
     await this.$refs.layout.loadGLLayout(layout.config);
 
-    window.updater.updateAvailable((isAvailable) => {
-      this.isUpdateAvailable = isAvailable;
-    });
+    // apply UI related settings
     this.changeTheme(this.stateStore.settings.theme);
     this.changeLanguage(this.stateStore.settings.language);
     this.changeFontSize(this.stateStore.settings.fontSize);
-    if (!this.stateStore.settings.storagePath) {
-      this.welcomeCarousel = true;
-    }
-    await this.saveAppState();
+
+    // check if update is available
+    // if available, show a blue dot on settings icon
+    setTimeout(() => {
+      window.updater.updateAvailable((event, isAvailable) => {
+        this.isUpdateAvailable = isAvailable;
+      });
+    }, 1000);
   },
 
   methods: {
@@ -235,11 +236,6 @@ export default {
     },
 
     changeStoragePath(path) {
-      // update db
-      this.stateStore.settings.storagePath = path;
-      this.saveAppState();
-
-      // update ui
       this.welcomeCarousel = false;
     },
 

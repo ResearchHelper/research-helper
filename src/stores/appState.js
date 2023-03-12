@@ -1,5 +1,4 @@
 import { defineStore } from "pinia";
-import { useQuasar } from "quasar";
 
 export const useStateStore = defineStore("stateStore", {
   state: () => ({

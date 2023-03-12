@@ -262,8 +262,8 @@ export default {
     this.treeSize = this.maxHeight;
 
     // events emited from other components (TableView.vuew)
-    this.$bus.on("updateProject", (project) => this.updateProject(project));
-    this.$bus.on("deleteProject", (projectId) => this.closeProject(projectId));
+    this.$bus.on("updateProject", this.updateProject);
+    this.$bus.on("deleteProject", this.closeProject);
 
     await this.getProjectTree();
     let selected = this.stateStore.workingItemId;
@@ -274,8 +274,8 @@ export default {
 
   beforeUnmount() {
     // not necessary for this component, but a good habit
-    this.$bus.off("updateProject");
-    this.$bus.off("deleteProject");
+    this.$bus.off("updateProject", this.updateProject);
+    this.$bus.off("deleteProject", this.closeProject);
   },
 
   watch: {

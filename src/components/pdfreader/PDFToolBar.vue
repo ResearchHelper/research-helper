@@ -283,7 +283,6 @@
 </template>
 
 <script>
-import { useQuasar } from "quasar";
 import { useStateStore } from "src/stores/appState";
 import { AnnotationType } from "src/backend/pdfreader/annotation";
 import ColorPicker from "./ColorPicker.vue";
@@ -310,7 +309,6 @@ export default {
   },
 
   setup() {
-    const $q = useQuasar();
     const stateStore = useStateStore();
     return { stateStore, AnnotationType };
   },
