@@ -9,8 +9,8 @@ import Vditor from "vditor";
 import "src/css/vditor/index.css";
 import darkContent from "src/css/vditor/dark.css?raw";
 import lightContent from "src/css/vditor/light.css?raw";
-import text from "src/assets/help.md?raw";
-
+import text_en_US from "src/assets/help_en_US.md?raw";
+import text_zh_CN from "src/assets/help_zh_CN.md?raw";
 import { useStateStore } from "src/stores/appState";
 
 export default {
@@ -25,9 +25,16 @@ export default {
     "stateStore.settings.theme"(theme) {
       this.setTheme(theme);
     },
+
+    "stateStore.settings.language"(lang) {
+      console.log(lang);
+      this.editor.setValue(
+        this.$i18n.locale === "zh_CN" ? text_zh_CN : text_en_US
+      );
+    },
   },
 
-  mounted() {
+  async mounted() {
     const toolbar = [
       {
         name: "outline",
@@ -73,7 +80,9 @@ export default {
         enable: false,
       },
       after: () => {
-        this.editor.setValue(text);
+        this.editor.setValue(
+          this.$i18n.locale === "zh_CN" ? text_zh_CN : text_en_US
+        );
         this.setTheme(this.stateStore.settings.theme);
       },
     });
@@ -111,3 +120,9 @@ export default {
   },
 };
 </script>
+<style>
+pre.vditor-reset {
+  /* do not change padding after resizing */
+  padding: 10px 35px !important;
+}
+</style>

@@ -1,8 +1,7 @@
 <template>
-  <WelcomeCarousel v-model="welcomeCarousel"/>
+  <WelcomeCarousel v-model="welcomeCarousel" />
 
   <q-splitter
-    v-if="!welcomeCarousel"
     :model-value="56"
     unit="px"
     :separator-style="{ cursor: 'default' }"
@@ -75,7 +74,6 @@
         <template v-slot:before>
           <ProjectTree
             style="height: 100vh"
-            v-if="stateStore.ready"
             @addNode="(element) => addDragSource(element)"
             @renameNode="(node) => editComponentState(node)"
             @openProject="(projectId) => (stateStore.openItemId = projectId)"
@@ -85,7 +83,6 @@
         </template>
         <template v-slot:after>
           <GLayout
-            v-if="stateStore.ready"
             ref="layout"
             style="width: 100%; height: 100vh"
             v-model:workingItemId="stateStore.workingItemId"
@@ -344,7 +341,6 @@ export default {
     },
 
     async saveAppState() {
-      if (!this.stateStore.ready) return;
       // if folders are not created yet
       // selectedFolderId is ""
       if (!!!this.stateStore.selectedFolderId) {
