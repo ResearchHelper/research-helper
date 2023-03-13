@@ -127,7 +127,6 @@
   </div>
 </template>
 <script>
-import { useQuasar } from "quasar";
 import { useStateStore } from "src/stores/appState";
 import { updateAppState } from "src/backend/appState";
 import { moveFolder } from "src/backend/project/file";
@@ -137,7 +136,6 @@ import { db } from "src/backend/database";
 
 export default {
   setup() {
-    const $q = useQuasar();
     const stateStore = useStateStore();
     return { stateStore };
   },
@@ -239,7 +237,7 @@ export default {
     },
 
     async showFolderPicker() {
-      let result = window.folderPicker.show();
+      let result = window.fileBrowser.showFolderPicker();
       if (result !== undefined && !!result[0]) {
         this.storagePath = result[0]; // do not update texts in label yet
         await this.changePath();

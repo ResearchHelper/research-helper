@@ -23,7 +23,7 @@
           square
           :ripple="false"
           no-caps
-          label="$t('check-for-updates')"
+          :label="$t('check-for-updates')"
           color="primary"
           @click="checkForUpdates"
         />
@@ -33,7 +33,7 @@
           square
           :ripple="false"
           no-caps
-          label="$t('install-updates')"
+          :label="$t('install-updates')"
           color="primary"
           @click="downloadUpdate"
         />
@@ -55,7 +55,8 @@ export default {
   mounted() {
     this.version = window.updater.versionInfo();
 
-    window.updater.updateAvailable((isAvailable) => {
+    window.updater.updateAvailable((event, isAvailable) => {
+      console.log("isavailable", isAvailable)
       this.isUpdateAvailable = isAvailable;
     });
 

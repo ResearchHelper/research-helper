@@ -25,13 +25,23 @@ contextBridge.exposeInMainWorld("fs", fs);
 contextBridge.exposeInMainWorld("path", path);
 
 // quasar's filePicker cannot pick folder only, use electron's dialog
-contextBridge.exposeInMainWorld("folderPicker", {
-  show() {
+contextBridge.exposeInMainWorld("fileBrowser", {
+  showFolderPicker() {
     let result = dialog.showOpenDialogSync(BrowserWindow.getFocusedWindow(), {
       properties: ["openDirectory", "createDirectory"],
     });
     return result;
   },
+
+  showFilePicker(multiSelections=false) {
+    let properties = ["openFile"];
+    if (multiSelections) properties.push("multiSelections");
+    let result = dialog.showOpenDialogSync(BrowserWindow.getFocusedWindow(), {
+      properties: properties,
+      filters: [{name: "*.pdf", extensions: ["pdf"]}]
+    });
+    return result;
+  }
 });
 
 // use electron's shell to open link in user's default browser

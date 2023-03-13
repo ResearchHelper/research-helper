@@ -22,15 +22,6 @@
     :error="error"
   />
 
-  <q-file
-    :multiple="false"
-    :append="false"
-    :accept="'.pdf'"
-    style="display: none"
-    @update:model-value="(file) => attachFile(file)"
-    ref="filePicker"
-  />
-
   <q-splitter
     style="position: absolute; width: 100%; height: 100%"
     :limits="[0, 30]"
@@ -81,7 +72,6 @@
               background: var(--color-library-tableview-bkgd);
             "
             @dragProject="(key) => onDragProject(key)"
-            @attachFile="$refs.filePicker"
             ref="table"
           />
         </template>
@@ -191,9 +181,6 @@ export default {
 
       importDialog: false,
       collection: null,
-
-      // file dialog
-      replaceStoredCopy: false,
     };
   },
 
@@ -203,32 +190,34 @@ export default {
     },
   },
 
-  async mounted() {
-    this.$bus.on("showDeleteDialog", (project, deleteFromDB) => {
-      this.deleteDialog = true;
-      this.project = project;
-      this.deleteFromDB = deleteFromDB;
-    });
-
-    this.$bus.on("showSearchMetaDialog", () => {
-      this.showIdentifierDialog(false);
-    });
-
-    this.$bus.on("showFileDialog", (replaceStoredCopy) => {
-      this.$refs.filePicker.$el.click();
-      this.replaceStoredCopy = replaceStoredCopy;
-    });
+  mounted() {
+    this.$bus.on("showDeleteDialog", this.showDeleteDialog);
+    this.$bus.on("showSearchMetaDialog", this.showSearchMetaDialog);
 
     this.getProjects();
   },
 
   beforeUnmount() {
-    this.$bus.off("showDeleteDialog");
-    this.$bus.off("showSearchMetaDialog");
-    this.$bus.off("showFileDialog");
+    // must provide the callback function so it can properly remove the listener
+    this.$bus.off("showDeleteDialog", this.showDeleteDialog);
+    this.$bus.off("showSearchMetaDialog", this.showSearchMetaDialog);
   },
 
   methods: {
+    /**
+     * Eventbus methods
+     */
+    showDeleteDialog(project, deleteFromDB) {
+      this.deleteDialog = true;
+      this.project = project;
+      this.deleteFromDB = deleteFromDB;
+    },
+
+    showSearchMetaDialog() {
+      let createProject = false;
+      this.showIdentifierDialog(createProject);
+    },
+
     /************************************************
      * Projects (get, add, delete, attachFile)
      ************************************************/
@@ -389,19 +378,6 @@ export default {
           await deleteEdge(note._id);
         }
       }
-    },
-
-    /**
-     * Attach file to a project
-     * @param {File} file
-     */
-    async attachFile(file) {
-      let dstPath = file.path;
-      if (this.replaceStoredCopy)
-        dstPath = await copyFile(file.path, this.row._id);
-      this.selectedProject.path = dstPath;
-      let row = await updateProject(this.selectedProject);
-      this.selectedProject._rev = row._rev;
     },
 
     /************************************************************

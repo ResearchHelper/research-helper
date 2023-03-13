@@ -29,7 +29,7 @@
         @mouseover="$refs.submenu.show()"
       >
         <q-item-section>
-          {{ !!row.path ? "Replace File" : "Attach File" }}
+          {{ !!row.path ? $t("replace-file") : $t("attach-file") }}
         </q-item-section>
         <q-item-section side>
           <q-icon name="arrow_right" />
@@ -48,8 +48,8 @@
               <q-item-section @click="replaceStoredFileCopy">
                 {{
                   !!row.path
-                    ? "Replace Stored Copy of File"
-                    : "Attach Stored Copy of File"
+                    ? $t("replace-stored-copy-of-file")
+                    : $t("attach-stored-copy-of-file")
                 }}
               </q-item-section>
             </q-item>
@@ -59,7 +59,9 @@
             >
               <q-item-section @click="replaceLinkToFile">
                 {{
-                  !!row.path ? "Replace Link to File" : "Attach Link to File"
+                  !!row.path
+                    ? $t("replace-path-to-file")
+                    : $t("attach-path-to-file")
                 }}
               </q-item-section>
             </q-item>
@@ -108,7 +110,13 @@ import { useStateStore } from "src/stores/appState";
 
 export default {
   props: { row: Object },
-  emits: ["openItem", "deleteItem", "deleteItemFromDB", "addNote"],
+  emits: [
+    "openItem",
+    "deleteItem",
+    "deleteItemFromDB",
+    "addNote",
+    "attachFile",
+  ],
 
   data() {
     return {
@@ -140,16 +148,16 @@ export default {
 
     replaceLinkToFile() {
       let replaceStoredCopy = false;
-      this.atttchFile(replaceStoredCopy);
+      this.attachFile(replaceStoredCopy);
     },
 
     replaceStoredFileCopy() {
       let replaceStoredCopy = true;
-      this.atttchFile(replaceStoredCopy);
+      this.attachFile(replaceStoredCopy);
     },
 
-    atttchFile(replaceStoredCopy) {
-      this.$bus.emit("showFileDialog", replaceStoredCopy);
+    attachFile(replaceStoredCopy) {
+      this.$emit("attachFile", replaceStoredCopy);
     },
 
     showSearchMetaDialog() {

@@ -98,5 +98,12 @@
   "page-height": "适合页高",
   "zoom-in": "放大",
   "zoom-out": "缩小",
-  "toc": "目录"
+  "toc": "目录",
+  "start": "开始！",
+  "replace-file": "替换文件",
+  "attach-file": "附加文件",
+  "replace-stored-copy-of-file": "替换数据库中的文件",
+  "attach-stored-copy-of-file": "附加文件到数据库",
+  "attach-path-to-file": "附加文件路径",
+  "replace-path-to-file": "替换文件路径"
 }

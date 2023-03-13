@@ -99,5 +99,12 @@
   "page-height": "Page height",
   "zoom-in": "Zoom in",
   "zoom-out": "Zoom out",
-  "toc": "Table of Contents"
+  "toc": "Table of Contents",
+  "start": "Start!",
+  "replace-file": "Replace file",
+  "attach-file": "Attach file",
+  "replace-stored-copy-of-file": "Replace Stored Copy of File",
+  "attach-stored-copy-of-file": "Attach Stored Copy of File",
+  "attach-path-to-file": "Attach Path to File",
+  "replace-path-to-file": "Replace Path to File"
 }

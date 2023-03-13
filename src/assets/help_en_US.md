@@ -1,7 +1,5 @@
 # Research Helper
 
-version 0.1.0-alpha
-
 > **Warning**: This note will be reset every time. **DO NOT** save anything important here.
 
 ## Official sites

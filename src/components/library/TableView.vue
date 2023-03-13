@@ -75,7 +75,12 @@
         <TableProjectMenu
           :row="props.row"
           @openItem="(row) => dblclickProject(row)"
-          @attachFile="props.expand = true"
+          @attachFile="
+            (replaceStoredCopy) => {
+              props.expand = true;
+              attachFile(replaceStoredCopy, props.row._id);
+            }
+          "
           @addNote="
             (row) => {
               props.expand = true;
@@ -148,7 +153,7 @@ import {
   updateEdgeTarget,
   deleteEdgeTarget,
 } from "src/backend/project/graph";
-import { renameFile } from "src/backend/project/file";
+import { renameFile, copyFile } from "src/backend/project/file";
 
 export default {
   props: { searchString: String, projects: Array, selectedProject: Object },
@@ -211,8 +216,24 @@ export default {
 
   methods: {
     /*********************************************************
-     * Item Row (Add note, delete note, rename note, rename file from meta)
+     * Item Row (Attachfile, add note, delete note, rename note, rename file from meta)
      *********************************************************/
+
+    /**
+     * Attach file to a project
+     * @param {boolean} replaceStoredCopy
+     * @param {string} rowId
+     */
+    async attachFile(replaceStoredCopy, rowId) {
+      let filePaths = window.fileBrowser.showFilePicker();
+      if (filePaths?.length === 1) {
+        let dstPath = filePaths[0];
+        if (replaceStoredCopy) dstPath = await copyFile(dstPath, rowId);
+        this.selectedRow.path = dstPath;
+        let row = await updateProject(this.selectedRow);
+        this.selectedRow._rev = row._rev;
+      }
+    },
 
     /**
      * Rename attached file from Metadata

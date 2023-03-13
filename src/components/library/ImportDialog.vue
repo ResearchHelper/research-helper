@@ -11,7 +11,7 @@
         <q-checkbox
           dense
           v-model="isCreateFolder"
-          label="$t('create-a-new-folder-for-this-collection')"
+          :label="$t('create-a-new-folder-for-this-collection')"
         />
       </q-card-section>
       <q-card-actions align="right">
@@ -19,14 +19,14 @@
           flat
           v-close-popup
           :ripple="false"
-          label="$t('cancel')"
+          :label="$t('cancel')"
           @click="cancel"
         />
         <q-btn
           flat
           v-close-popup
           :ripple="false"
-          label="$t('confirm')"
+          :label="$t('confirm')"
           @click="confirm"
         />
       </q-card-actions>
