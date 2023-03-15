@@ -73,6 +73,7 @@
       >
         <template v-slot:before>
           <ProjectTree
+            v-if="ready"
             style="height: 100vh"
             @addNode="(element) => addDragSource(element)"
             @renameNode="(node) => editComponentState(node)"
@@ -83,11 +84,11 @@
         </template>
         <template v-slot:after>
           <GLayout
-            ref="layout"
             style="width: 100%; height: 100vh"
             v-model:workingItemId="stateStore.workingItemId"
             @layoutchanged="onLayoutChanged"
             @itemdestroyed="onItemDestroyed"
+            ref="layout"
           ></GLayout>
         </template>
       </q-splitter>
@@ -129,6 +130,7 @@ export default {
       welcomeCarousel: false,
       leftMenuSize: 0,
       isUpdateAvailable: false,
+      ready: false,
     };
   },
 
@@ -205,6 +207,10 @@ export default {
         this.isUpdateAvailable = isAvailable;
       });
     }, 1000);
+
+    // the openItemIds are ready
+    // we can load the projectTree
+    this.ready = true;
   },
 
   methods: {

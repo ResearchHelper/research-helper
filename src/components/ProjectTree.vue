@@ -326,7 +326,7 @@ export default {
 
     async getProjectTree() {
       this.projects = [];
-      for (let projectId of this.stateStore.openedProjectIds.values()) {
+      for (let projectId of this.stateStore.openedProjectIds) {
         await this.pushProjectNode(projectId);
       }
 

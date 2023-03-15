@@ -98,7 +98,10 @@
             "
             model-value="metaInfoTab"
           >
-            <q-tab-panel name="metaInfoTab">
+            <q-tab-panel
+              name="metaInfoTab"
+              class="q-pa-none"
+            >
               <MetaInfoTab
                 v-if="!!rightMenuSize && !$refs.table.isClickingPDF"
                 v-model:project="selectedProject"
@@ -135,6 +138,10 @@ import { createEdge, updateEdge, deleteEdge } from "src/backend/project/graph";
 import { useStateStore } from "src/stores/appState";
 import { getMeta, exportMeta, importMeta } from "src/backend/project/meta";
 import { copyFile } from "src/backend/project/file";
+
+import * as pdfjsLib from "pdfjs-dist/build/pdf";
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+  "node_modules/pdfjs-dist/build/pdf.worker.min.js";
 
 export default {
   setup() {
@@ -273,6 +280,45 @@ export default {
           project.path = await copyFile(file.path, project._id);
           project.title = window.path.basename(project.path, ".pdf");
           project = await updateProject(project);
+
+          // get meta
+          let buffer = window.fs.readFileSync(file.path);
+          let pdf = await pdfjsLib.getDocument({ data: buffer }).promise;
+          for (
+            let pageNumber = 1;
+            pageNumber <= Math.min(10, pdf.numPages);
+            pageNumber++
+          ) {
+            let page = await pdf.getPage(pageNumber);
+            let content = await page.getTextContent();
+            for (let item of content.items) {
+              let identifier = null;
+              // match ISBN-10 or ISBN-13
+              let isbns = item.str.match(
+                /^ISBN.* (?=(?:\D*\d){10}(?:(?:\D*\d){3})?$)[\d-]+$/
+              );
+              if (!!isbns)
+                identifier = isbns[0].match(
+                  /(?=(?:\D*\d){10}(?:(?:\D*\d){3})?$)[\d-]+/
+                )[0];
+
+              // match DOI
+              let dois = item.str.match(/^http.*doi.*/);
+              if (!!dois) identifier = dois[0];
+
+              // update project meta
+              if (!!identifier) {
+                console.log(identifier);
+                let metas = await getMeta(identifier, "json");
+                let meta = metas[0];
+                project = await updateProjectByMeta(project, meta);
+
+                break;
+              }
+            }
+          }
+
+          // create edge
           await createEdge(project);
 
           // update ui
@@ -343,8 +389,10 @@ export default {
           };
           await updateEdge(project._id, { sourceNode: sourceNode });
 
+          // update tableview UI
+          for (let prop in project) this.selectedProject[prop] = project[prop];
           // update projectree ui
-          this.$bus.emit("updateProject", row);
+          this.$bus.emit("updateProject", this.selectedProject);
         }
       } catch (error) {
         this.error = error;

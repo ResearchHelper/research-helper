@@ -106,5 +106,6 @@
   "replace-stored-copy-of-file": "Replace Stored Copy of File",
   "attach-stored-copy-of-file": "Attach Stored Copy of File",
   "attach-path-to-file": "Attach Path to File",
-  "replace-path-to-file": "Replace Path to File"
+  "replace-path-to-file": "Replace Path to File",
+  "reference": "References"
 }

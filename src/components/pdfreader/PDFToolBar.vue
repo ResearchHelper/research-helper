@@ -382,9 +382,17 @@ export default {
 
   methods: {
     changePage(pageLabel) {
-      let pageIndex = this.pageLabels.indexOf(pageLabel);
-      if (pageIndex === -1) return; // do nothing if not finding the label
-      this.state.currentPageNumber = pageIndex + 1;
+      let pageNumber = 1;
+      if (!!this.pageLabels) {
+        // If pageLabels exists
+        let pageIndex = this.pageLabels.indexOf(pageLabel);
+        if (pageIndex === -1) return; // do nothing if not finding the label
+        pageNumber = pageIndex + 1;
+      } else {
+        // If there are no pageLabels
+        pageNumber = parseInt(pageLabel);
+      }
+      this.state.currentPageNumber = pageNumber;
       this.$emit("update:pdfState", this.state);
       this.$emit("changePageNumber", this.state.currentPageNumber);
     },
