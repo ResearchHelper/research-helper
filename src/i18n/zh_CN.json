@@ -105,5 +105,6 @@
   "replace-stored-copy-of-file": "替换数据库中的文件",
   "attach-stored-copy-of-file": "附加文件到数据库",
   "attach-path-to-file": "附加文件路径",
-  "replace-path-to-file": "替换文件路径"
+  "replace-path-to-file": "替换文件路径",
+  "reference": "引用文献"
 }

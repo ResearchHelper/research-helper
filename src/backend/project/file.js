@@ -47,8 +47,6 @@ async function deleteProjectFolder(projectId) {
 async function copyFile(srcPath, projectId) {
   try {
     let fileName = path.basename(srcPath);
-    console.log("storapath:", await storagePath());
-
     let dstPath = path.join(await storagePath(), projectId, fileName);
     fs.copyFileSync(srcPath, dstPath);
     return dstPath;

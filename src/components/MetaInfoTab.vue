@@ -1,178 +1,233 @@
 <template>
-  <!-- tab: 36px  -->
   <!-- show this after rightMenu is shown, 
     otherwise autogrow extends to full-height -->
-  <div v-if="!!meta">
-    <div class="row justify-between">
+  <q-tabs
+    v-if="meta?.reference?.length > 0"
+    v-model="tab"
+    dense
+    no-caps
+  >
+    <q-tab name="meta">{{ $t("info") }}</q-tab>
+    <q-tab name="reference">{{ $t("reference") }}</q-tab>
+  </q-tabs>
+  <q-tab-panels
+    v-if="!!meta"
+    v-model="tab"
+  >
+    <q-tab-panel name="meta">
+      <div class="row justify-between">
+        <div
+          class="col"
+          style="font-size: 1rem"
+        >
+          {{ $t("type") }}
+        </div>
+        <input
+          class="col-8 input"
+          type="text"
+          v-model="meta.type"
+          @blur="modifyInfo(true)"
+        />
+      </div>
+
+      <div class="row q-mt-sm">
+        <div
+          class="col"
+          style="font-size: 1rem"
+        >
+          {{ $t("title") }}
+        </div>
+      </div>
+      <div class="row q-mt-sm">
+        <textarea
+          style="min-height: 5rem"
+          class="col input"
+          type="text"
+          v-model="meta.title"
+          @blur="modifyInfo(true)"
+        ></textarea>
+      </div>
+
+      <div class="row justify-between q-mt-sm">
+        <div
+          class="col"
+          style="font-size: 1rem"
+        >
+          {{ $t("year") }}
+        </div>
+        <input
+          class="col-8 input"
+          type="text"
+          v-model="meta.year"
+          @blur="modifyInfo(true)"
+        />
+      </div>
+
+      <div class="row justify-between q-mt-sm">
+        <div
+          class="col"
+          style="font-size: 1rem"
+        >
+          {{ $t("author") }}
+        </div>
+        <input
+          class="col-8 input"
+          type="text"
+          :placeholder="$t('first-last-last-first')"
+          v-model.trim="name"
+          @keydown.enter="addAuthor"
+        />
+      </div>
+
+      <div class="row q-mt-sm">
+        <q-chip
+          v-for="(author, index) in authors"
+          :key="index"
+          :ripple="false"
+          class="col-12"
+          dense
+          :label="author"
+          removable
+          @remove="removeAuthor(index)"
+        />
+      </div>
+
       <div
-        class="col"
+        class="col q-mt-sm"
         style="font-size: 1rem"
       >
-        {{ $t("type") }}
+        {{ $t("abstract") }}
       </div>
-      <input
-        class="col-8 input"
-        type="text"
-        v-model="meta.type"
-        @blur="modifyInfo(true)"
-      />
-    </div>
+      <div class="row">
+        <textarea
+          style="min-height: 10rem"
+          class="col input"
+          v-model="meta.abstract"
+          @blur="modifyInfo(false)"
+        ></textarea>
+      </div>
 
-    <div class="row q-mt-sm">
+      <div class="row justify-between q-mt-sm">
+        <div
+          class="col"
+          style="font-size: 1rem"
+        >
+          DOI
+        </div>
+        <input
+          class="col-8 input"
+          type="text"
+          v-model="meta.DOI"
+          @blur="modifyInfo(false)"
+        />
+      </div>
+
+      <div class="row justify-between q-mt-sm">
+        <div
+          class="col"
+          style="font-size: 1rem"
+        >
+          ISBN
+        </div>
+        <input
+          class="col-8 input"
+          type="text"
+          v-model="meta.ISBN"
+          @blur="modifyInfo(false)"
+        />
+      </div>
+
+      <div class="row justify-between q-mt-sm">
+        <div
+          class="col"
+          style="font-size: 1rem"
+        >
+          URL
+          <q-btn
+            flat
+            padding="none"
+            size="xs"
+            icon="bi-box-arrow-up-right"
+            :disable="!!!meta.URL"
+            @click="
+              (e) => {
+                e.preventDefault();
+                this.openURL(meta.URL);
+              }
+            "
+          />
+        </div>
+        <input
+          class="col-8 input"
+          type="url"
+          placeholder="https://..."
+          v-model.trim="meta.URL"
+          @blur="modifyInfo(false)"
+        />
+      </div>
+
+      <div class="row justify-between q-mt-sm">
+        <div
+          class="col"
+          style="font-size: 1rem"
+        >
+          {{ $t("file") }}
+        </div>
+        <input
+          class="col-8 input"
+          type="text"
+          v-model="meta.path"
+          @blur="modifyInfo(false)"
+        />
+      </div>
+
+      <div class="row justify-between q-mt-sm">
+        <div
+          class="col"
+          style="font-size: 1rem"
+        >
+          {{ $t("tags") }}
+        </div>
+        <input
+          class="col-8 input"
+          type="text"
+          v-model.trim="tag"
+          @keydown.enter="addTag"
+        />
+      </div>
+      <div class="q-pb-sm">
+        <q-chip
+          v-for="(tag, index) in meta.tags"
+          :key="index"
+          :ripple="false"
+          dense
+          icon="bookmark"
+          :label="tag"
+          removable
+          @remove="removeTag(tag)"
+        />
+      </div>
+    </q-tab-panel>
+
+    <q-tab-panel name="reference">
       <div
-        class="col"
-        style="font-size: 1rem"
+        v-for="(ref, ind) of meta.reference"
+        :key="ind"
+        class="q-pb-sm"
+        :class="{ link: !!ref.DOI }"
+        @click="openURL(`https://doi.org/${ref.DOI}`)"
       >
-        {{ $t("title") }}
+        {{ ind + 1 + ". " + ref.unstructured }}
       </div>
-    </div>
-    <div class="row q-mt-sm">
-      <textarea
-        style="min-height: 5rem"
-        class="col input"
-        type="text"
-        v-model="meta.title"
-        @blur="modifyInfo(true)"
-      ></textarea>
-    </div>
-
-    <div class="row justify-between q-mt-sm">
-      <div
-        class="col"
-        style="font-size: 1rem"
-      >
-        {{ $t("year") }}
-      </div>
-      <input
-        class="col-8 input"
-        type="text"
-        v-model="meta.year"
-        @blur="modifyInfo(true)"
-      />
-    </div>
-
-    <div class="row justify-between q-mt-sm">
-      <div
-        class="col"
-        style="font-size: 1rem"
-      >
-        {{ $t("author") }}
-      </div>
-      <input
-        class="col-8 input"
-        type="text"
-        :placeholder="$t('first-last-last-first')"
-        v-model.trim="name"
-        @keydown.enter="addAuthor"
-      />
-    </div>
-
-    <div class="row q-mt-sm">
-      <q-chip
-        v-for="(author, index) in authors"
-        :key="index"
-        :ripple="false"
-        class="col-12"
-        dense
-        :label="author"
-        removable
-        @remove="removeAuthor(index)"
-      />
-    </div>
-
-    <div
-      class="col q-mt-sm"
-      style="font-size: 1rem"
-    >
-      {{ $t("abstract") }}
-    </div>
-    <div class="row">
-      <textarea
-        style="min-height: 10rem"
-        class="col input"
-        v-model="meta.abstract"
-        @blur="modifyInfo(false)"
-      ></textarea>
-    </div>
-
-    <div class="row justify-between q-mt-sm">
-      <div
-        class="col"
-        style="font-size: 1rem"
-      >
-        DOI
-      </div>
-      <input
-        class="col-8 input"
-        type="text"
-        v-model="meta.DOI"
-        @blur="modifyInfo(false)"
-      />
-    </div>
-
-    <div class="row justify-between q-mt-sm">
-      <div
-        class="col"
-        style="font-size: 1rem"
-      >
-        ISBN
-      </div>
-      <input
-        class="col-8 input"
-        type="text"
-        v-model="meta.isbn"
-        @blur="modifyInfo(false)"
-      />
-    </div>
-
-    <div class="row justify-between q-mt-sm">
-      <div
-        class="col"
-        style="font-size: 1rem"
-      >
-        {{ $t("file") }}
-      </div>
-      <input
-        class="col-8 input"
-        type="text"
-        v-model="meta.path"
-        @blur="modifyInfo(false)"
-      />
-    </div>
-
-    <div class="row justify-between q-mt-sm">
-      <div
-        class="col"
-        style="font-size: 1rem"
-      >
-        {{ $t("tags") }}
-      </div>
-      <input
-        class="col-8 input"
-        type="text"
-        v-model.trim="tag"
-        @keydown.enter="addTag"
-      />
-    </div>
-    <div class="q-pb-sm">
-      <q-chip
-        v-for="(tag, index) in meta.tags"
-        :key="index"
-        :ripple="false"
-        dense
-        icon="bookmark"
-        :label="tag"
-        removable
-        @remove="removeTag(tag)"
-      />
-    </div>
-  </div>
+    </q-tab-panel>
+  </q-tab-panels>
 </template>
 
 <script>
 import { useStateStore } from "src/stores/appState";
 import { updateProject } from "src/backend/project/project";
 import { updateEdge } from "src/backend/project/graph";
+import { getMeta } from "src/backend/project/meta";
 
 export default {
   props: { project: Object },
@@ -185,6 +240,7 @@ export default {
 
   data() {
     return {
+      tab: "meta",
       name: "", // author name
       tag: "", // project tag
     };
@@ -282,6 +338,10 @@ export default {
       // update db
       this.modifyInfo(false);
     },
+
+    openURL(url) {
+      window.browser.openURL(url);
+    },
   },
 };
 </script>
@@ -294,6 +354,14 @@ export default {
   &:focus-visible {
     outline: none !important;
     border: 2px solid $primary;
+  }
+}
+
+.link {
+  color: $primary;
+  text-decoration: underline;
+  &:hover {
+    cursor: pointer;
   }
 }
 </style>

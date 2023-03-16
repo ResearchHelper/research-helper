@@ -17,10 +17,11 @@ import { createProjectFolder, deleteProjectFolder } from "./file";
  * @property {string} ISBN - ISBN of a book
  * @property {string} URL - URL to this article/book
  * @property {string} publisher - publisher
+ * @property {Object[]} reference - reference objects
  * @property {undefined | string} path - attached file path
- * @property {Array} tags - user defined keywords for easier search
- * @property {Array} related - array of related projectIDs
- * @property {Array} folderIds - array of folderIDs containing this project
+ * @property {string[]} tags - user defined keywords for easier search
+ * @property {string[]} related - array of related projectIDs
+ * @property {string[]} folderIds - array of folderIDs containing this project
  */
 
 /**
@@ -44,6 +45,7 @@ async function addProject(folderId) {
     project.URL = "";
     project.ISBN = "";
     project.publisher = "";
+    project.reference = [];
     project.related = []; // related projectIds
     project.tags = [];
     project.folderIds = ["library"]; // the folders containing the project
@@ -125,10 +127,12 @@ async function updateProjectByMeta(project, meta) {
   project.title = meta.title || "";
   project.author = meta.author || [];
   project.abstract = meta.abstract || "";
-  project.year = meta.year || "";
+  project.year = meta.year || meta?.issued?.["date-parts"][0][0] || "";
   project.DOI = meta.DOI || "";
+  project.ISBN = meta.ISBN || "";
   project.URL = meta.URL || "";
   project.publisher = meta.publisher || "";
+  project.reference = meta.reference || [];
 
   return await updateProject(project);
 }
