@@ -13,10 +13,7 @@
     "format": "prettier --write \"**/*.{js,vue,scss,html,md,json}\" --ignore-path .gitignore",
     "test": "echo \"No test specified\" && exit 0",
     "dev": "yarn run pouchdb-server --port 3000 -d remote_database &  quasar dev -m electron",
-    "build": "quasar build -m electron -T AppImage --debug",
-    "release-linux": "quasar build -m electron -T AppImage -P onTagOrDraft",
-    "release-win": "quasar build -m electron -T win32 -P onTagOrDraft",
-    "release-darwin": "quasar build -m electron -T darwin -P onTagOrDraft"
+    "debug": "quasar build -m electron -T AppImage --debug"
   },
   "dependencies": {
     "@citation-js/plugin-isbn": "^0.3.1",
