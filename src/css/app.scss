@@ -1,0 +1,131 @@
+// app global css in SCSS form
+body {
+  --color-text: black;
+  --color-layout-base-bkgd: transparent;
+  --color-layout-single-pane-content-bkgd: transparent;
+  --color-layout-splitter-dragging-bkgd: #444444;
+
+  // golden-layout tabs
+  --color-layout-active-tab-bkgd: #fffbf2;
+  --color-layout-active-tab-fore: black;
+  --color-layout-focused-tab-bkgd: #fffbf2;
+  --color-layout-single-tab-container-fore: black;
+  --color-layout-single-tab-container-bkgd: #f0ece0;
+  --color-layout-header-bkgd: #eee8d5;
+
+  // left menu
+  --color-leftmenu-bkgd: #eee8d5;
+
+  // project tree
+  --color-projecttree-bkgd: #eee8d5;
+
+  // library page
+  --color-library-tableview-row-bkgd: #ededed;
+  --color-library-toolbar-bkgd: #fffbf2;
+  --color-library-tableview-bkgd: #fffbf2;
+  --color-library-treeview-bkgd: #fffbf2;
+
+  // settings page
+  --color-settings-tabs-area-bkgd: #fffbf2;
+  --color-settings-tab-panel-bkgd: #fffbf2;
+  --color-settings-card-bkgd: #ffffff;
+
+  // reader page
+  --color-pdfreader-viewer-bkgd: grey;
+  --color-pdfreader-toolbar-bkgd: #fffbf2;
+  --color-pdfreader-colorpicker-bkgd: lightgrey;
+
+  // right menu
+  --color-rightmenu-tabs-bkgd: #fffbf2;
+  --color-rightmenu-tab-panel-bkgd: #fffbf2;
+}
+
+body.body--dark {
+  --color-text: white;
+
+  // golden-layout tabs
+  --color-layout-active-tab-bkgd: #2a2a2a;
+  --color-layout-active-tab-fore: #dddddd;
+  --color-layout-focused-tab-bkgd: #1d1d1d;
+  --color-layout-single-tab-container-fore: #999999;
+  --color-layout-single-tab-container-bkgd: #2a2a2a;
+  --color-layout-header-bkgd: #222121;
+
+  // left menu
+  --color-leftmenu-bkgd: #1d1d1d;
+
+  // project tree
+  --color-projecttree-bkgd: #1d1d1d;
+
+  // library page
+  --color-library-tableview-row-bkgd: #2a2a2a;
+  --color-library-toolbar-bkgd: #1d1d1d;
+  --color-library-tableview-bkgd: #1d1d1d;
+  --color-library-treeview-bkgd: #1d1d1d;
+
+  // settings page
+  --color-settings-tabs-area-bkgd: #1d1d1d;
+  --color-settings-tab-panel-bkgd: #1d1d1d;
+  --color-settings-card-bkgd: #2a2a2a;
+
+  // reader page
+  --color-pdfreader-viewer-bkgd: #2a2a2a;
+  --color-pdfreader-toolbar-bkgd: #1d1d1d;
+  --color-pdfreader-colorpicker-bkgd: #1d1d1d;
+
+  // right menu
+  --color-rightmenu-tabs-bkgd: #1d1d1d;
+  --color-rightmenu-tab-panel-bkgd: #1d1d1d;
+}
+
+html {
+  /* hide the global scrollbar */
+  overflow: hidden;
+}
+
+.q-tooltip {
+  font-size: 0.8rem;
+}
+
+.q-splitter-separator {
+  &:hover {
+    width: 2px;
+    background-color: $primary;
+  }
+  &:active {
+    width: 2px;
+    background-color: $primary;
+  }
+}
+
+.q-splitter-separator-horizontal {
+  &:hover {
+    height: 2px;
+    background-color: $primary;
+  }
+  &:active {
+    height: 2px;
+    background-color: $primary;
+  }
+}
+
+// scrollbar styles
+/* width */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+/* handle */
+::-webkit-scrollbar-thumb {
+  background: rgb(75, 75, 75, 75%);
+  border-radius: 5px;
+  &:hover {
+    background: $primary;
+  }
+}
+
+/* corner */
+::-webkit-scrollbar-corner {
+  color: transparent;
+}
