@@ -305,7 +305,7 @@ export default {
      */
     async renameNote(note) {
       // update db
-      await updateNote(note._id, { label: note.label });
+      await updateNote(note);
       let sourceNode = {
         id: note._id,
         label: note.label,

@@ -1,28 +1,6 @@
-import { db } from "../database";
+import { db, Project } from "../database";
 import { uid } from "quasar";
 import { createProjectFolder, deleteProjectFolder } from "./file";
-
-/**
- * Project data
- * @typedef {Object} Project
- * @property {string} _id - unique id
- * @property {string} _rev - data version handled by database
- * @property {string} dataType - "project" (used for database search)
- * @property {string} type - article / book / conference-paper ...
- * @property {string} title - article / book title
- * @property {Array} author - array of authors [{family: "Feng", given: "Feng"}, {literal: "John"}]
- * @property {string} abstract - article abstract
- * @property {number | string} year - year of published
- * @property {string} DOI - Digital Object Identity
- * @property {string} ISBN - ISBN of a book
- * @property {string} URL - URL to this article/book
- * @property {string} publisher - publisher
- * @property {Object[]} reference - reference objects
- * @property {undefined | string} path - attached file path
- * @property {string[]} tags - user defined keywords for easier search
- * @property {string[]} related - array of related projectIDs
- * @property {string[]} folderIds - array of folderIDs containing this project
- */
 
 /**
  * Add empty projet to database, creates project folder and returns the project
@@ -30,10 +8,10 @@ import { createProjectFolder, deleteProjectFolder } from "./file";
  * @param {string} folderId
  * @returns {Project} project
  */
-async function addProject(folderId) {
+async function addProject(folderId: string): Promise<Project | void> {
   try {
     // create empty project entry
-    let project = {};
+    let project = {} as Project;
     project._id = uid();
     project.dataType = "project";
     project.type = "";
@@ -72,12 +50,16 @@ async function addProject(folderId) {
  * @param {boolean} deleteFromDB
  * @param {string} folderId - if deleteFromDB === false, then we need folderId
  */
-async function deleteProject(projectId, deleteFromDB, folderId = "") {
+async function deleteProject(
+  projectId: string,
+  deleteFromDB: boolean,
+  folderId?: string
+) {
   try {
-    let project = await db.get(projectId);
+    let project: Project = await db.get(projectId);
     if (deleteFromDB) {
       // remove from db
-      await db.remove(project);
+      await db.remove(project as PouchDB.Core.RemoveDocument);
 
       // remove related pdfState, pdfAnnotation and notes on db
       let result = await db.find({
@@ -93,7 +75,7 @@ async function deleteProject(projectId, deleteFromDB, folderId = "") {
       // (do not rely on project.path because it might be empty)
       await deleteProjectFolder(projectId);
     } else {
-      if (!!!folderId) throw new Error("folderId is needed");
+      if (folderId === undefined) throw new Error("folderId is needed");
       project.folderIds = project.folderIds.filter((id) => id != folderId);
       await db.put(project);
     }
@@ -107,7 +89,7 @@ async function deleteProject(projectId, deleteFromDB, folderId = "") {
  * @param {Project} project
  * @returns {Project} updated project
  */
-async function updateProject(project) {
+async function updateProject(project: Project): Promise<Project | void> {
   try {
     let result = await db.put(project);
     return await db.get(result.id);
@@ -122,7 +104,8 @@ async function updateProject(project) {
  * @param {Object} meta
  * @returns {Project} modifiedProject
  */
-async function updateProjectByMeta(project, meta) {
+// TODO: use Meta interface later
+async function updateProjectByMeta(project: Project, meta: any) {
   project.type = meta.type || "";
   project.title = meta.title || "";
   project.author = meta.author || [];
@@ -142,7 +125,7 @@ async function updateProjectByMeta(project, meta) {
  * @param {string} projectId
  * @returns {Project|undefined} project
  */
-async function getProject(projectId) {
+async function getProject(projectId: string): Promise<Project | undefined> {
   try {
     return await db.get(projectId);
   } catch (error) {
@@ -152,9 +135,9 @@ async function getProject(projectId) {
 
 /**
  * Get all projects from database
- * @returns {Array} array of projects
+ * @returns {object[]} array of projects
  */
-async function getAllProjects() {
+async function getAllProjects(): Promise<object[]> {
   let result = await db.find({
     selector: {
       dataType: "project",
@@ -168,15 +151,14 @@ async function getAllProjects() {
  * @param {string} folderId
  * @returns {Array} array of projects
  */
-async function getProjectsByFolderId(folderId) {
+async function getProjectsByFolderId(folderId: string): Promise<Project[]> {
   let result = await db.find({
     selector: {
       dataType: "project",
       folderIds: { $in: [folderId] },
     },
   });
-
-  return result.docs;
+  return result.docs as Project[];
 }
 
 export {

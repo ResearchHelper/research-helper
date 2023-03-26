@@ -32,12 +32,7 @@ import { app, dialog, BrowserWindow } from "@electron/remote";
 import fs from "fs";
 import path from "path";
 
-// inject these libraries in preload, otherwise they are externalized
-contextBridge.exposeInMainWorld("fs", fs);
-contextBridge.exposeInMainWorld("path", path);
-
-// quasar's filePicker cannot pick folder only, use electron's dialog
-contextBridge.exposeInMainWorld("fileBrowser", {
+const fileBrowser = {
   showFolderPicker() {
     const mainWindow = BrowserWindow.getFocusedWindow();
     if (mainWindow === null) return;
@@ -58,17 +53,15 @@ contextBridge.exposeInMainWorld("fileBrowser", {
     });
     return result;
   },
-});
+};
 
-// use electron's shell to open link in user's default browser
-contextBridge.exposeInMainWorld("browser", {
+const browser = {
   openURL(url: string) {
     shell.openExternal(url);
   },
-});
+};
 
-// auto updater
-contextBridge.exposeInMainWorld("updater", {
+const updater = {
   versionInfo() {
     return app.getVersion();
   },
@@ -88,4 +81,27 @@ contextBridge.exposeInMainWorld("updater", {
   downloadUpdate() {
     ipcRenderer.send("downloadUpdate");
   },
-});
+};
+
+// inject these libraries in preload, otherwise they are externalized
+contextBridge.exposeInMainWorld("fs", fs);
+contextBridge.exposeInMainWorld("path", path);
+
+// quasar's filePicker cannot pick folder only, use electron's dialog
+contextBridge.exposeInMainWorld("fileBrowser", fileBrowser);
+
+// use electron's shell to open link in user's default browser
+contextBridge.exposeInMainWorld("browser", browser);
+
+// auto updater
+contextBridge.exposeInMainWorld("updater", updater);
+
+declare global {
+  interface Window {
+    fs: typeof fs;
+    path: typeof path;
+    fileBrowser: typeof fileBrowser;
+    browser: typeof browser;
+    updater: typeof updater;
+  }
+}

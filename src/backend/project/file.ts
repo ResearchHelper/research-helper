@@ -1,22 +1,22 @@
-import { db } from "../database";
+import { db, AppState } from "../database";
 
 const path = window.path;
 const fs = window.fs;
 
 /**
  * Get storagePath from database
- * @returns {string} storagePath
+ * @returns storagePath
  */
-async function storagePath() {
-  let state = await db.get("appState");
+async function storagePath(): Promise<string> {
+  let state: AppState = await db.get("appState");
   return state.settings.storagePath;
 }
 
 /**
  * Create project folder in storage path
- * @param {string} projectId
+ * @param projectId
  */
-async function createProjectFolder(projectId) {
+async function createProjectFolder(projectId: string) {
   try {
     let projectPath = path.join(await storagePath(), projectId);
     fs.mkdirSync(projectPath);
@@ -27,12 +27,12 @@ async function createProjectFolder(projectId) {
 
 /**
  * Delete the project folder in storage path
- * @param {string} projectId
+ * @param projectId
  */
-async function deleteProjectFolder(projectId) {
+async function deleteProjectFolder(projectId: string) {
   try {
     let dirPath = path.join(await storagePath(), projectId);
-    fs.rmSync(dirPath, { recursive: true, force: true });
+    fs.rmdirSync(dirPath, { recursive: true });
   } catch (error) {
     console.log(error);
   }
@@ -40,11 +40,14 @@ async function deleteProjectFolder(projectId) {
 
 /**
  * Copy file to the corresponding project folder and returns the new file path
- * @param {string} srcPath
- * @param {string} projectId
- * @returns {string} dstPath
+ * @param srcPath
+ * @param projectId
+ * @returns dstPath
  */
-async function copyFile(srcPath, projectId) {
+async function copyFile(
+  srcPath: string,
+  projectId: string
+): Promise<string | undefined> {
   try {
     let fileName = path.basename(srcPath);
     let dstPath = path.join(await storagePath(), projectId, fileName);
@@ -57,11 +60,11 @@ async function copyFile(srcPath, projectId) {
 
 /**
  * Create a file inside project folder
- * @param {string} projectId
- * @param {string} fileName
- * @returns {string} filePath
+ * @param projectId
+ * @param fileName - the created file's name
+ * @returns filePath - the created file's path
  */
-async function createFile(projectId, fileName) {
+async function createFile(projectId: string, fileName: string): string {
   try {
     let filePath = path.join(await storagePath(), projectId, fileName);
     fs.closeSync(fs.openSync(filePath, "w"));
@@ -73,10 +76,11 @@ async function createFile(projectId, fileName) {
 
 /**
  * Delete file
- * @param {string} filePath
+ * @param filePath
  */
-function deleteFile(filePath) {
+function deleteFile(filePath: string) {
   try {
+    // we can ignore this error since rmSync is there
     fs.rmSync(filePath, { force: true });
   } catch (error) {
     console.log(error);
@@ -85,13 +89,11 @@ function deleteFile(filePath) {
 
 /**
  * Rename a file
- * @param {string} filePath - path to file
- * @param {string} fileName - new file name
- * @param {string} newPath - new path to file
+ * @param filePath - path to file
+ * @param fileName - new file name
  */
-function renameFile(filePath, fileName) {
+function renameFile(filePath: string, fileName: string) {
   try {
-    console.log("here");
     let dirname = path.dirname(filePath);
     let newPath = path.join(dirname, fileName);
     fs.renameSync(filePath, newPath);
@@ -103,10 +105,10 @@ function renameFile(filePath, fileName) {
 
 /**
  * Move folder
- * @param {string} srcPath source path
- * @param {string} dstPath destination path
+ * @param srcPath source path
+ * @param dstPath destination path
  */
-function moveFolder(srcPath, dstPath) {
+function moveFolder(srcPath: string, dstPath: string) {
   try {
     fs.renameSync(srcPath, dstPath);
   } catch (error) {

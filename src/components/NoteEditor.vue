@@ -237,7 +237,6 @@ export default {
         } catch (error) {
           // this is an invalid url, might be an id
           if (!href.includes(".")) {
-            // note.links.push(href);
             let item = await getNote(href);
             targetNodes.push({
               id: href,

@@ -1,17 +1,11 @@
-import { db } from "../database";
+import { db, Folder, FolderTreeNode } from "../database";
 import { sortTree } from "./utils";
 
 /**
- * Folder data
- * @typedef {Object} Folder
- * @property {string} _id - uid managed by db
- * @property {string} dataType - "folder"
- * @property {string} label - folder name
- * @property {string} icon - folder icon in treeview
- * @property {string[]} children - folderId list
+ * Get the folder tree
+ * @returns tree
  */
-
-async function getFolderTree() {
+async function getFolderTree(): Promise<FolderTreeNode[] | undefined> {
   try {
     let result = await db.find({
       selector: {
@@ -29,26 +23,27 @@ async function getFolderTree() {
         icon: "home",
         children: [],
         dataType: "folder",
-      };
+      } as FolderTreeNode;
       await db.put(library);
       return [library];
     }
 
     // create a dict for later use
-    let folders = {};
-    for (let doc of docs) folders[doc._id] = doc;
+    let folders: { [k: string]: Folder } = {};
+    for (let doc of docs) folders[doc._id] = doc as Folder;
 
     // create tree using depth first search
-    function _dfs(root) {
-      let children = root.children;
-      root.children = [];
-      for (let childId of children) {
-        root.children.push(_dfs(folders[childId]));
+    function _dfs(root: Folder, folderTreeRoot: FolderTreeNode) {
+      Object.assign(folderTreeRoot, root);
+      folderTreeRoot.children = [];
+      for (let [i, childId] of root.children.entries()) {
+        folderTreeRoot.children.push({} as FolderTreeNode);
+        _dfs(folders[childId], folderTreeRoot.children[i]);
       }
-      return root;
     }
 
-    let tree = _dfs(folders["library"]);
+    let tree = {} as FolderTreeNode;
+    _dfs(folders["library"], tree);
     sortTree(tree);
 
     return [tree];
@@ -57,20 +52,23 @@ async function getFolderTree() {
   }
 }
 
-async function addFolder(parentId) {
+/**
+ * Add a subfolder to parent folder
+ * @param parentId - parent folder id
+ */
+async function addFolder(parentId: string) {
   try {
     // add to database
-    let node = {
+    let result = await db.post({
       label: "New Folder",
       icon: "folder",
       children: [],
       dataType: "folder",
-    };
-    let result = await db.post(node);
-    node = await db.get(result.id);
+    });
+    let node: Folder = await db.get(result.id);
 
     // push to children of parent Node
-    let parentNode = await db.get(parentId);
+    let parentNode: Folder = await db.get(parentId);
     parentNode.children.push(node._id);
     await updateFolder(parentId, { children: parentNode.children });
 
@@ -80,27 +78,36 @@ async function addFolder(parentId) {
   }
 }
 
-async function updateFolder(folderId, props) {
+/**
+ * Update folder properties
+ * @param folderId
+ * @param props - Folder
+ */
+async function updateFolder(folderId: string, props: { label?: string }) {
   try {
-    let folder = await db.get(folderId);
+    let folder: Folder = await db.get(folderId);
     for (let key in props) {
       folder[key] = props[key];
     }
-    await db.put(folder);
-    return db.get(folderId);
+    let result = await db.put(folder);
+    folder._rev = result.rev;
+    return folder;
   } catch (error) {
     console.log(error);
   }
 }
 
-async function deleteFolder(folderId) {
+/**
+ * Delete a folder
+ * @param folderId
+ */
+async function deleteFolder(folderId: string) {
   try {
     // delete from children of parent folder
     let result = await db.find({
       selector: { children: { $in: [folderId] } },
     });
-    let parentNode = result.docs[0];
-    console.log(parentNode);
+    let parentNode = result.docs[0] as Folder;
     parentNode.children = parentNode.children.filter((id) => id != folderId);
     await db.put(parentNode);
 
@@ -113,12 +120,11 @@ async function deleteFolder(folderId) {
     let docs = result.docs;
 
     // create a dict for later use
-    let folders = {};
-    for (let doc of docs) folders[doc._id] = doc;
+    let folders: { [key: string]: Folder } = {};
+    for (let doc of docs) folders[doc._id] = doc as Folder;
 
-    function _dfs(root) {
-      // console.log("deleting", root._id);
-      db.remove(root);
+    function _dfs(root: Folder) {
+      db.remove(root as PouchDB.Core.RemoveDocument);
       for (let childId of root.children) {
         _dfs(folders[childId]);
       }
@@ -132,9 +138,10 @@ async function deleteFolder(folderId) {
 
 /**
  * Get the parent folder of a given folder
- * @param {String} folderId
+ * @param folderId
+ * @returns parentFolder
  */
-async function getParentFolder(folderId) {
+async function getParentFolder(folderId: string): Promise<Folder | undefined> {
   try {
     let result = await db.find({
       selector: {
@@ -143,7 +150,7 @@ async function getParentFolder(folderId) {
       },
     });
     // the parent folder is unique
-    return result.docs[0];
+    return result.docs[0] as Folder;
   } catch (error) {
     console.log(error);
   }
@@ -151,13 +158,13 @@ async function getParentFolder(folderId) {
 
 /**
  * Move the dragFolder into the dropFolder
- * @param {String} dragFolderId
- * @param {String} dropFolderId
+ * @param dragFolderId
+ * @param dropFolderId
  */
-async function moveFolderInto(dragFolderId, dropFolderId) {
+async function moveFolderInto(dragFolderId: string, dropFolderId: string) {
   try {
     // remove from dragFolder's parent folder first
-    let dragParentFolder = await getParentFolder(dragFolderId);
+    let dragParentFolder = (await getParentFolder(dragFolderId)) as Folder;
     dragParentFolder.children = dragParentFolder.children.filter(
       (id) => id != dragFolderId
     );
@@ -166,7 +173,7 @@ async function moveFolderInto(dragFolderId, dropFolderId) {
     });
 
     // add to dropFolder after the dragParentFolder is modified
-    let dropFolder = await db.get(dropFolderId);
+    let dropFolder: Folder = await db.get(dropFolderId);
     dropFolder.children.push(dragFolderId);
     await updateFolder(dropFolderId, { children: dropFolder.children });
   } catch (error) {

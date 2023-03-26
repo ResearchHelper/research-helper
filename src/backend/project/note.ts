@@ -1,4 +1,4 @@
-import { db } from "../database";
+import { db, Note } from "../database";
 import { uid } from "quasar";
 import { Buffer } from "buffer";
 import { createFile, deleteFile } from "./file";
@@ -7,45 +7,23 @@ const fs = window.fs;
 const path = window.path;
 
 /**
- * Note data
- * @typedef {Object} Note
- * @property {string} _id - unique id handled by database
- * @property {string} _rev - rev handled by database
- * @property {string} dataType - for database search
- * @property {string} projectId - the project it belongs to
- * @property {string} path - path to actual markdown file
- * @property {string} label - markdown file name
- * @property {Array} forwardLinks - array of Links (link) to other notes/projects
- * @property {Array} backwardLinks - array of backward Links (links) from other notes/projects
- */
-
-/**
- * Link object, equivalent to node object in graph (cytoscape)
- * @typedef {Object} Link
- * @property {string} id - id of the node
- * @property {string} label - label of the node
- * @property {string} type - "project" | "note"
- */
-
-/**
  * Add a note to database
  * and creates the actual markdown file in project folder
  * @param {string} projectId
  * @returns {Note} note
  */
-async function addNote(projectId) {
+async function addNote(projectId: string): Promise<Note | undefined> {
   try {
-    let noteId = uid();
+    let noteId: string = uid();
 
     // create actual file
-    let filePath = await createFile(projectId, noteId + ".md");
+    let filePath: string = await createFile(projectId, noteId + ".md");
 
     // add to db
     let note = {
       _id: noteId,
       dataType: "note",
       projectId: projectId,
-      links: [],
       label: "New Note",
       path: filePath,
     };
@@ -61,11 +39,11 @@ async function addNote(projectId) {
  * Delete a note from database and from disk
  * @param {string} noteId
  */
-async function deleteNote(noteId) {
+async function deleteNote(noteId: string) {
   try {
     // delete note entry from db
-    let note = await db.get(noteId);
-    await db.remove(note);
+    let note: Note = await db.get(noteId);
+    await db.remove(note as PouchDB.Core.RemoveDocument);
 
     // delete actual file
     await deleteFile(note.path);
@@ -76,15 +54,12 @@ async function deleteNote(noteId) {
 
 /**
  * Update information of a note in database
- * @param {string} noteId
- * @param {Object} data
+ * @param {Note} note
  */
-async function updateNote(noteId, data) {
+async function updateNote(newNote: Note) {
   try {
-    let note = await db.get(noteId);
-    for (let prop in data) {
-      note[prop] = data[prop];
-    }
+    let note: Note = await db.get(newNote._id);
+    newNote._rev = note._rev;
     await db.put(note);
   } catch (error) {
     console.log(error);
@@ -96,7 +71,7 @@ async function updateNote(noteId, data) {
  * @param {string} noteId
  * @returns {Note} note
  */
-async function getNote(noteId) {
+async function getNote(noteId: string): Promise<Note | undefined> {
   try {
     return await db.get(noteId);
   } catch (error) {
@@ -107,9 +82,9 @@ async function getNote(noteId) {
 /**
  * Get all notes belong to specific project
  * @param {string} projectId
- * @returns {Array} array of notes
+ * @returns {Note[]} array of notes
  */
-async function getNotes(projectId) {
+async function getNotes(projectId: string): Promise<Note[]> {
   try {
     let result = await db.find({
       selector: {
@@ -118,7 +93,7 @@ async function getNotes(projectId) {
       },
     });
 
-    return result.docs;
+    return result.docs as Note[];
   } catch (error) {
     console.log(error);
     return [];
@@ -127,16 +102,16 @@ async function getNotes(projectId) {
 
 /**
  * Get all notes in database
- * @returns {Array} array of notes
+ * @returns {Note[]} array of notes
  */
-async function getAllNotes() {
+async function getAllNotes(): Promise<Note[]> {
   let result = await db.find({
     selector: {
       dataType: "note",
     },
   });
 
-  return result.docs;
+  return result.docs as Note[];
 }
 
 /**
@@ -144,10 +119,10 @@ async function getAllNotes() {
  * @param {string} noteId
  * @returns {string} content
  */
-async function loadNote(noteId) {
+async function loadNote(noteId: string): Promise<string> {
   try {
     let content = "";
-    let note = await db.get(noteId);
+    let note: Note = await db.get(noteId);
     if (fs.existsSync(note.path)) content = fs.readFileSync(note.path, "utf8");
     return content;
   } catch (error) {
@@ -161,9 +136,9 @@ async function loadNote(noteId) {
  * @param {string} noteId
  * @param {string} content
  */
-async function saveNote(noteId, content) {
+async function saveNote(noteId: string, content: string) {
   try {
-    let note = await db.get(noteId);
+    let note: Note = await db.get(noteId);
     fs.writeFileSync(note.path, content);
   } catch (error) {
     console.log(error);
@@ -173,21 +148,24 @@ async function saveNote(noteId, content) {
 /**
  * Upload image and save it under the project folder
  * If /img doesn't exist, it will create this folder
- * @param {String} noteId
+ * @param {string} noteId
  * @param {File} file
  */
-async function uploadImage(noteId, file) {
+async function uploadImage(
+  noteId: string,
+  file: File
+): Promise<{ imgName: string; imgPath: string } | undefined> {
   if (!file.type.includes("image")) return;
 
   try {
-    let note = await getNote(noteId);
-    let imgType = path.extname(file.name); // .png
-    let imgName = uid() + imgType; // use uuid as img name
-    let imgFolder = path.join(path.dirname(note.path), "img");
-    let imgPath = path.join(imgFolder, imgName);
+    let note: Note = await db.get(noteId);
+    let imgType: string = path.extname(file.name); // .png
+    let imgName: string = uid() + imgType; // use uuid as img name
+    let imgFolder: string = path.join(path.dirname(note.path), "img");
+    let imgPath: string = path.join(imgFolder, imgName);
     if (!fs.existsSync(imgFolder)) fs.mkdirSync(imgFolder);
 
-    let arrayBuffer = await file.arrayBuffer();
+    let arrayBuffer: ArrayBuffer = await file.arrayBuffer();
     fs.writeFileSync(imgPath, Buffer.from(arrayBuffer));
     return { imgName: imgName, imgPath: imgPath };
   } catch (error) {

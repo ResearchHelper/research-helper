@@ -1,17 +1,30 @@
+import { QTreeNode } from "quasar";
+// TODO: implement tree interface
+
+// TODO: implement meta interface
+
+// TODO: implement reference interface
+
+export interface Author {
+  family?: string;
+  given?: string;
+  literal?: string; // this exists only if family and given do not exist
+}
+
 export interface Project {
   _id: string; // unique id
   _rev: string; // data version handled by database
   dataType: "project"; // for database search
   type: string; // article / book / conference-paper ...
   title: string; // article / book title
-  author: Object[]; // array of authors [{family: "Feng", given: "Feng"}, {literal: "John"}]
+  author: Author[]; // array of authors [{family: "Feng", given: "Feng"}, {literal: "John"}]
   abstract: string; // article abstract
   year: number | string; // year of published
   DOI: string; // Digital Object Identity
   ISBN: string; // ISBN of a book
   URL: string; // URL to this article/book
   publisher: string; // publisher
-  reference: Object[]; // reference objects
+  reference: Map<string, any>[]; // reference objects
   path: undefined | string; // attached file path
   tags: string[]; // user defined keywords for easier search
   related: string[]; // array of related projectIDs
@@ -27,12 +40,27 @@ export interface Note {
   label: string; // markdown file name
 }
 
+/**
+ * Folder is datatype that goes into database
+ */
 export interface Folder {
   _id: string; // uid managed by db
+  _rev: string; // rev handled by database
   dataType: "folder"; // for database search
   label: string; // folder name
   icon: string; // folder icon in treeview
   children: string[]; // folderId list
+}
+
+/**
+ * FolderTreeNode is similar to Folder,
+ * but it is for UI display.
+ */
+export interface FolderTreeNode extends QTreeNode {
+  _id: string; // uid managed by db
+  _rev: string; // rev handled by database
+  dataType: "folder"; // for database search
+  children: FolderTreeNode[];
 }
 
 export interface Node {
@@ -44,7 +72,6 @@ export interface Node {
 export interface Edge {
   _id: string; // handled by db
   _rev: string; // handled by db
-  _deleted: string; // handled by db
   dataType: "edge"; // for database search
   type: "link" | "reference"; //
   source: string; // source id

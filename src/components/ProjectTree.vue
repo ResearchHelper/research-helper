@@ -454,7 +454,7 @@ export default {
       let renamingNote = this.renamingNote;
       if (!!!renamingNote) return;
       // update db
-      await updateNote(renamingNote._id, { label: renamingNote.label });
+      await updateNote(renamingNote);
       let sourceNode = {
         id: renamingNote._id,
         label: renamingNote.label,

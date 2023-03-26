@@ -1,4 +1,5 @@
 import { defineStore } from "pinia";
+import { AppState, Settings } from "src/backend/database";
 
 export const useStateStore = defineStore("stateStore", {
   state: () => ({
@@ -27,7 +28,7 @@ export const useStateStore = defineStore("stateStore", {
   }),
 
   actions: {
-    async loadState(state) {
+    async loadState(state: AppState) {
       this.leftMenuSize = state.leftMenuSize || this.leftMenuSize;
       this.showLeftMenu = state.showLeftMenu || this.showLeftMenu;
       this.selectedFolderId = state.selectedFolderId || this.selectedFolderId;
@@ -38,18 +39,17 @@ export const useStateStore = defineStore("stateStore", {
       this.ready = true;
     },
 
-    saveState() {
-      let state = {
+    saveState(): AppState {
+      return {
         _id: "appState",
         dataType: "appState",
         leftMenuSize: this.leftMenuSize,
         showLeftMenu: this.showLeftMenu,
         selectedFolderId: this.selectedFolderId,
         workingItemId: this.workingItemId,
-        openedProjectIds: [...this.openedProjectIds], // convert to Array for saving
-        settings: this.settings,
+        openedProjectIds: [...this.openedProjectIds] as string[], // convert to Array for saving
+        settings: this.settings as Settings,
       };
-      return state;
     },
   },
 });

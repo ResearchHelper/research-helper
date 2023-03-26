@@ -52,8 +52,9 @@ if (process.env.DEV || process.env.DEBUGGING) {
     remotedb.destroy();
     db.destroy();
   }
-  window.db = db;
-  window.destroyDB = destroyDB;
+  (window as any).db = db;
+  (window as any).destroyDB = destroyDB;
 }
 
 export { db };
+export * from "./models";

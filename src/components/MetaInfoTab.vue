@@ -211,13 +211,19 @@
 
     <q-tab-panel name="reference">
       <div
-        v-for="(ref, ind) of meta.reference"
+        v-for="(ref, ind) of references"
         :key="ind"
         class="q-pb-sm"
-        :class="{ link: !!ref.DOI }"
-        @click="openURL(`https://doi.org/${ref.DOI}`)"
       >
-        {{ ind + 1 + ". " + ref.unstructured }}
+        <div v-html="`${ind + 1}. ${ref.text}`"></div>
+        <div
+          v-if="!!ref.link"
+          class="link"
+          :href="ref.link"
+          @click="openURL(ref.link)"
+        >
+          {{ ref.link }}
+        </div>
       </div>
     </q-tab-panel>
   </q-tab-panels>
@@ -243,7 +249,14 @@ export default {
       tab: "meta",
       name: "", // author name
       tag: "", // project tag
+      references: [],
     };
+  },
+
+  watch: {
+    tab() {
+      if (this.tab === "reference") this.getReferences();
+    },
   },
 
   computed: {
@@ -337,6 +350,41 @@ export default {
 
       // update db
       this.modifyInfo(false);
+    },
+
+    async getReferences() {
+      if (!!!this.meta?.reference || this.references.length > 0) return;
+
+      for (let i in this.meta.reference) {
+        this.references.push({ text: "", link: undefined });
+      }
+
+      for (let [i, ref] of this.meta.reference.entries()) {
+        try {
+          this.references[i].text = getMeta(
+            ref.DOI || ref.key,
+            "bibliography",
+            {
+              format: "html",
+            }
+          );
+          this.references[i].link = this.references[i].text.match(
+            /(https[a-zA-Z0-9:\.\/\-\_]+)/g
+          )[0];
+          this.references[i].text = this.references[i].text.replace(
+            /(https[a-zA-Z0-9:\.\/\-\_]+)/g,
+            ""
+          );
+        } catch (error) {
+          let author = !!ref.author ? ref.author + " " : "";
+          let year = !!ref.year ? `(${ref.year}) ` : "";
+          let title =
+            ref["article-title"] || ref["series-title"] || ref.unstructured;
+          this.references[i].text = `<div>${author + year + title}</div>`;
+          if (ref.DOI || ref.key)
+            this.references[i].link = "https://doi.org/" + (ref.DOI || ref.key);
+        }
+      }
     },
 
     openURL(url) {

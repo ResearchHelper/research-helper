@@ -84,5 +84,8 @@ module.exports = {
 
     // allow debugger during development only
     "no-debugger": process.env.NODE_ENV === "production" ? "error" : "off",
+
+    // Require const declarations for variables that are never reassigned after declared
+    "prefer-const": "off",
   },
 };
