@@ -1,6 +1,8 @@
-import commentIcon from "src/assets/annotation-note.svg"; // so vite can resolve it
+// import icon in this way so vite can resolve it
+import commentIcon from "src/assets/annotation-note.svg";
+import { Annotation, Rect } from "../database";
 
-function clickCoordinates(rect, annotationLayer) {
+function clickCoordinates(rect: Rect, annotationLayer: HTMLElement) {
   let ost = computePageOffset(annotationLayer);
   let x_1 = rect.left - ost.left;
   let y_1 = rect.top - ost.top;
@@ -13,20 +15,27 @@ function clickCoordinates(rect, annotationLayer) {
   };
 }
 
-function computePageOffset(annotationLayer) {
+function computePageOffset(annotationLayer: HTMLElement): Rect {
   let rect = annotationLayer.getBoundingClientRect();
   return {
     top: rect.top,
     left: rect.left,
     width: rect.width,
     height: rect.height,
-  };
+  } as Rect;
 }
 
-function comment(container, annot, fromDB = false) {
+function comment(
+  container: HTMLElement,
+  annot: Annotation,
+  fromDB = false
+): { annot: Annotation; doms: HTMLElement[] } | undefined {
+  if (!!!annot._id) return;
+  if (!!!annot.rect) return;
+
   let annotationEditorLayer = container
-    .querySelector(`div.page[data-page-number='${annot.pageNumber}']`)
-    .querySelector(".annotationEditorLayer");
+    ?.querySelector(`div.page[data-page-number='${annot.pageNumber}']`)
+    ?.querySelector(".annotationEditorLayer") as HTMLElement;
   // let pdfViewer = annotClass.pdfViewer;
   if (!fromDB) annot.rect = clickCoordinates(annot.rect, annotationEditorLayer);
 

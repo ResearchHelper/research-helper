@@ -1,8 +1,8 @@
 {
   "name": "typescript-migration",
-  "version": "0.0.1",
-  "description": "A Quasar Project",
-  "productName": "Quasar App",
+  "version": "1.0.0-alpha",
+  "description": "A paper / book / note management tool",
+  "productName": "Research Helper",
   "author": "Hunt Feng <spacecurvature@gmail.com>",
   "private": true,
   "scripts": {

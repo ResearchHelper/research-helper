@@ -67,7 +67,7 @@
         class="peekContainer"
       >
         <div
-          ref="peakViewer"
+          ref="peekViewer"
           class="pdfViewer"
         ></div>
       </div>

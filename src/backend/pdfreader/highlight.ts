@@ -1,5 +1,13 @@
-function getSelectionRects() {
+import { Annotation, Rect } from "../database";
+
+/**
+ * Get user selected rects
+ * @returns selection rectangles
+ */
+function getSelectionRects(): Rect[] {
   let selection = window.getSelection();
+  console.log(selection);
+  if (!!!selection) return [];
   let range = selection.getRangeAt(0);
   // convert DOMRectList to Array since we need filter function
   let rects = Array.from(range.getClientRects());
@@ -9,18 +17,26 @@ function getSelectionRects() {
     return rect.width > 0.5 && rect.height > 0;
   });
 
+  console.log("rects1", rects);
+
   // remove repeated rectangles
-  let left = null;
-  let top = null;
+  let left: number;
+  let top: number;
   let dx = 0;
   let dy = 0;
-  let prvRectWidth = null;
-  rects = rects.filter((rect) => {
-    dx = Math.abs(rect.left - left); // Number-null = Number
-    dy = Math.abs(rect.top - top);
-    left = rect.left;
-    top = rect.top;
-    return dx > prvRectWidth / 2 || dy > rect.height / 2;
+  let prvRectWidth: number;
+  rects = rects.filter((rect, index) => {
+    if (index === 0) {
+      left = rect.left;
+      top = rect.top;
+      return rect;
+    } else {
+      dx = Math.abs(rect.left - left); // Number-undefined = NaN = Number
+      dy = Math.abs(rect.top - top);
+      left = rect.left;
+      top = rect.top;
+      return dx > prvRectWidth / 2 || dy > rect.height / 2;
+    }
   });
 
   // TODO: we can make it more robust, do this later
@@ -54,7 +70,7 @@ function getSelectionRects() {
   return newRects;
 }
 
-function selectionCoordinates(rect, annotationLayer) {
+function selectionCoordinates(rect: Rect, annotationLayer: HTMLElement) {
   let ost = computePageOffset(annotationLayer);
   let left_1 = rect.left - ost.left;
   let top_1 = rect.top - ost.top;
@@ -67,26 +83,32 @@ function selectionCoordinates(rect, annotationLayer) {
   };
 }
 
-function computePageOffset(annotationLayer) {
-  var rect = annotationLayer.getBoundingClientRect();
+function computePageOffset(annotationLayer: HTMLElement): Rect {
+  let rect = annotationLayer.getBoundingClientRect();
   return {
     top: rect.top,
     left: rect.left,
     width: rect.width,
     height: rect.height,
-  };
+  } as Rect;
 }
 
-function highlight(container, annot, fromDB = false) {
+function highlight(
+  container: HTMLElement,
+  annot: Annotation,
+  fromDB = false
+): { annot: Annotation; doms: HTMLElement[] } | undefined {
+  if (!!!annot._id) return;
+
   let annotationEditorLayer = container
-    .querySelector(`div.page[data-page-number='${annot.pageNumber}']`)
-    .querySelector(".annotationEditorLayer");
+    ?.querySelector(`div.page[data-page-number='${annot.pageNumber}']`)
+    ?.querySelector(".annotationEditorLayer") as HTMLElement;
 
   if (!fromDB) {
     let rects = getSelectionRects();
-    for (let i in rects) {
-      rects[i] = selectionCoordinates(rects[i], annotationEditorLayer);
-    }
+    rects.forEach((rect, index) => {
+      rects[index] = selectionCoordinates(rect, annotationEditorLayer);
+    });
     annot.rects = rects;
   }
 

@@ -1,12 +1,18 @@
-import * as pdfjsLib from "pdfjs-dist/build/pdf";
+import * as pdfjsLib from "pdfjs-dist";
 import * as pdfjsViewer from "pdfjs-dist/web/pdf_viewer";
 pdfjsLib.GlobalWorkerOptions.workerSrc =
   "node_modules/pdfjs-dist/build/pdf.worker.min.js";
 
-import { GrabToPan } from "./grab_to_pan";
+import { GrabToPan } from "./grabToPan";
 
 class PeekManager {
-  constructor(viewerContainer, container) {
+  handtool: GrabToPan;
+  container: HTMLElement;
+  viewerContainer: HTMLElement;
+  pdfViewer: pdfjsViewer.PDFSinglePageViewer;
+  linkService: pdfjsViewer.PDFLinkService;
+
+  constructor(viewerContainer: HTMLDivElement, container: HTMLDivElement) {
     // IMPORTANT: DO NOT CHANGE container to peekContainer, otherwise it breaks
     const eventBus = new pdfjsViewer.EventBus();
     const pdfLinkService = new pdfjsViewer.PDFLinkService({
@@ -19,10 +25,13 @@ class PeekManager {
       linkService: pdfLinkService,
       textLayerMode: 0, // DISABLE: 0, ENABLE: 1
       annotationMode: pdfjsLib.AnnotationMode.DISABLE,
+      l10n: pdfjsViewer.NullL10n,
     });
     pdfLinkService.setViewer(pdfSinglePageViewer);
 
-    container.addEventListener("mousewheel", (e) => this.handleZoom(e));
+    container.addEventListener("mousewheel", (e) =>
+      this._handleZoom(e as WheelEvent)
+    );
     this.handtool = new GrabToPan({ element: container });
     this.container = container;
     this.viewerContainer = viewerContainer;
@@ -30,7 +39,7 @@ class PeekManager {
     this.linkService = pdfLinkService;
   }
 
-  loadPDF(filePath) {
+  loadPDF(filePath: string) {
     // close any existing popup window first
     this.closeContainer();
 
@@ -45,12 +54,19 @@ class PeekManager {
     });
   }
 
-  peak(link) {
-    link.onmouseover = (ev) => {
+  /**
+   * Peek an internal link
+   * @param link - the <a> tag with internal link
+   */
+  peek(link: HTMLAnchorElement) {
+    link.onmouseover = () => {
       let timeoutId = setTimeout(() => {
-        let annot = link.parentElement;
+        // internal link is wrapped by an <section> tag
+        // this section tag has class linkAnnotation
+        // and it is in annotationLayer of pdfjs
+        let linkAnnot = link.parentElement as HTMLElement;
         this.pdfViewer.linkService.setHash(link.href.split("#")[1]);
-        this.showContainer(annot);
+        this.showContainer(linkAnnot);
         this.handtool.activate();
       }, 500);
 
@@ -61,7 +77,7 @@ class PeekManager {
     };
   }
 
-  showContainer(annot) {
+  showContainer(annot: HTMLElement) {
     let annotRect = annot.getBoundingClientRect();
     let viewerRect = this.viewerContainer.getBoundingClientRect();
 
@@ -103,34 +119,16 @@ class PeekManager {
     this.container.style.width = w + "px";
     this.container.style.height = h + "px";
     this.container.style.display = "block";
-    this.container.style.zIndex = 1000;
+    this.container.style.zIndex = "1000";
   }
 
   closeContainer() {
     this.container.style.display = "none";
   }
 
-  handleZoom(e) {
+  private _handleZoom(e: WheelEvent) {
     e.preventDefault();
-    if (e.deltaY < 0) {
-      let oldScale = this.pdfViewer.currentScale;
-      this.pdfViewer.currentScale += 0.1;
-      let newScale = this.pdfViewer.currentScale;
-      let oldX = this.container.scrollLeft + e.pageX;
-      let oldY = this.container.scrollTop + e.pageY;
-
-      // shift the scroll bar if cursor if too far from center
-      if (e.pageX > window.innerWidth * (7 / 10))
-        this.container.scrollLeft += (newScale / oldScale - 1) * oldX;
-      else if (e.pageX < window.innerWidth * (3 / 10))
-        this.container.scrollLeft -= (newScale / oldScale - 1) * oldX;
-      if (e.pageY > window.innerHeight * (7 / 10))
-        this.container.scrollTop += (newScale / oldScale - 1) * oldY;
-      else if (e.pageY < window.innerHeight * (3 / 10))
-        this.container.scrollTop -= (newScale / oldScale - 1) * oldY;
-    } else {
-      this.pdfViewer.currentScale -= 0.1;
-    }
+    this.pdfViewer.currentScale += e.deltaY < 0 ? 0.1 : -0.1;
   }
 }
 

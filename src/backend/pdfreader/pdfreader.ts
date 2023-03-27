@@ -1,15 +1,29 @@
-import * as pdfjsLib from "pdfjs-dist/build/pdf";
+import * as pdfjsLib from "pdfjs-dist";
 import * as pdfjsViewer from "pdfjs-dist/web/pdf_viewer";
 pdfjsLib.GlobalWorkerOptions.workerSrc =
   "node_modules/pdfjs-dist/build/pdf.worker.min.js";
 
 import { PeekManager } from "./pdfpeek";
 import { AnnotationType } from "./annotation";
-import { db } from "../database";
+import { db, PDFSearch, PDFState, TOCNode } from "../database";
 import { debounce } from "quasar";
 
 class PDFApplication {
-  constructor(container, peekContainer) {
+  container: HTMLDivElement;
+  peekContainer: HTMLDivElement;
+  eventBus: pdfjsViewer.EventBus;
+  pdfLinkService: pdfjsViewer.PDFLinkService;
+  pdfFindController: pdfjsViewer.PDFFindController;
+  pdfViewer: pdfjsViewer.PDFViewer;
+  peekManager: PeekManager;
+  pdfDocument: pdfjsLib.PDFDocumentProxy | undefined;
+
+  // saveState: typeof debounce<(state: PDFState) => Promise<void>>;
+  saveState: ((this: unknown, state: PDFState) => void) & {
+    cancel(): void;
+  };
+
+  constructor(container: HTMLDivElement, peekContainer: HTMLDivElement) {
     const eventBus = new pdfjsViewer.EventBus();
     const pdfLinkService = new pdfjsViewer.PDFLinkService({
       eventBus,
@@ -25,6 +39,7 @@ class PDFApplication {
       linkService: pdfLinkService,
       findController: pdfFindController,
       annotationEditorMode: pdfjsLib.AnnotationEditorType.NONE,
+      l10n: pdfjsViewer.NullL10n,
     });
     // must have this otherwise find controller does not work
     pdfLinkService.setViewer(pdfViewer);
@@ -36,20 +51,20 @@ class PDFApplication {
     this.pdfFindController = pdfFindController;
     this.pdfViewer = pdfViewer;
     this.peekManager = new PeekManager(container, peekContainer);
+    this.pdfDocument = undefined; // initialize in loadPDF
 
     // install internal event listener
-    eventBus.on("pagesinit", (e) => {
+    eventBus.on("pagesinit", () => {
       this.container.addEventListener("mousewheel", (e) =>
-        this.handleCtrlScroll(e)
+        this.handleCtrlScroll(e as WheelEvent)
       );
     });
 
-    eventBus.on("annotationlayerrendered", (e) => {
-      let links = this.container.querySelectorAll("a");
-      for (let link of links) {
+    eventBus.on("annotationlayerrendered", () => {
+      this.container.querySelectorAll("a").forEach((link) => {
         if (link.classList.contains("internalLink")) {
           // peek internal links
-          this.peekManager.peak(link);
+          this.peekManager.peek(link);
         } else {
           // external links must open using default browser
           link.onclick = (e) => {
@@ -57,7 +72,7 @@ class PDFApplication {
             window.browser.openURL(link.href);
           };
         }
-      }
+      });
     });
 
     // make saveState a debounce function
@@ -65,7 +80,7 @@ class PDFApplication {
     this.saveState = debounce(this._saveState, 500);
   }
 
-  async loadPDF(filePath) {
+  async loadPDF(filePath: string) {
     let buffer = window.fs.readFileSync(filePath);
     this.pdfDocument = await pdfjsLib.getDocument({ data: buffer }).promise;
     this.pdfLinkService.setDocument(this.pdfDocument, null);
@@ -74,13 +89,13 @@ class PDFApplication {
     this.peekManager.loadPDF(filePath);
   }
 
-  async loadState(projectId) {
+  async loadState(projectId: string): Promise<PDFState | undefined> {
     try {
       let result = await db.find({
         selector: { dataType: "pdfState", projectId: projectId },
       });
 
-      let state = result.docs[0];
+      let state = result.docs[0] as PDFState;
       if (!!!state) {
         state = {
           dataType: "pdfState",
@@ -94,7 +109,7 @@ class PDFApplication {
           color: "#FFFF00",
           scrollLeft: 0,
           scrollTop: 0,
-        };
+        } as PDFState;
       }
       return state;
     } catch (error) {
@@ -102,7 +117,7 @@ class PDFApplication {
     }
   }
 
-  async _saveState(state) {
+  private async _saveState(state: PDFState) {
     // also save the scroll position
     state.scrollLeft = this.container.scrollLeft;
     state.scrollTop = this.container.scrollTop;
@@ -125,19 +140,19 @@ class PDFApplication {
     }, 400);
   }
 
-  changePageNumber(pageNumber) {
-    this.pdfViewer.currentPageNumber = parseInt(pageNumber);
+  changePageNumber(pageNumber: number) {
+    this.pdfViewer.currentPageNumber = pageNumber;
   }
 
-  changeSpreadMode(spreadMode) {
-    this.pdfViewer.spreadMode = parseInt(spreadMode);
+  changeSpreadMode(spreadMode: number) {
+    this.pdfViewer.spreadMode = spreadMode;
   }
 
-  /**
-   * params = {delta?: Number, scaleValue?: 'page-width'|'page-height', scale?: Number}
-   * @param {Object} params
-   */
-  changeScale(params) {
+  changeScale(params: {
+    delta?: number;
+    scaleValue?: "page-width" | "page-height";
+    scale?: number;
+  }) {
     if (!!params.delta) this.pdfViewer.currentScale += params.delta;
 
     if (!!params.scaleValue)
@@ -146,7 +161,7 @@ class PDFApplication {
     if (!!params.scale) this.pdfViewer.currentScale = params.scale;
   }
 
-  handleCtrlScroll(e) {
+  handleCtrlScroll(e: WheelEvent) {
     if (e.ctrlKey === true) {
       // this is not scrolling, so we need to
       // disable the default action avoid the offsetParent not set error
@@ -171,48 +186,55 @@ class PDFApplication {
     }
   }
 
-  async getPageLabels() {
+  async getPageLabels(): Promise<string[] | null> {
+    if (this.pdfDocument === undefined) return null;
     return await this.pdfDocument.getPageLabels();
   }
 
-  async getTOC() {
-    if (!!this.pdfDocument == false) return;
-    function _dfs(oldNode) {
-      var tree = [];
-      for (var k in oldNode) {
+  async getTOC(): Promise<TOCNode[]> {
+    if (this.pdfDocument === undefined) return [];
+
+    function _dfs(oldNodes: TOCNode[]): TOCNode[] {
+      const tree = [];
+      for (let k in oldNodes) {
         let node = {
-          label: oldNode[k].title,
-          children: _dfs(oldNode[k].items),
-        };
-        if (typeof oldNode[k].dest === "string") node.dest = oldNode[k].dest;
-        else node.ref = oldNode[k].dest[0];
+          label: oldNodes[k].title,
+          children: _dfs(oldNodes[k].items),
+        } as TOCNode;
+        if (typeof oldNodes[k].dest === "string") node.dest = oldNodes[k].dest;
+        else {
+          let dest = oldNodes[k].dest;
+          if (!!dest && dest?.length > 0) node.ref = dest[0];
+        }
         tree.push(node);
       }
       return tree;
     }
 
-    let toc = [];
     try {
       let outline = await this.pdfDocument.getOutline();
-      toc = _dfs(outline);
+      return _dfs(outline as TOCNode[]);
     } catch (error) {
       console.log(error);
+      return [];
     }
-    return toc;
   }
 
   /**
-   *
-   * @param {Object} node the selected outline node
-   * @returns {Number} pageNumber
+   * Get page number of a TOCNode
    */
-  async getTOCPage(node) {
-    let pageNumber = null;
+  async getTOCPage(node: TOCNode): Promise<number> {
+    if (this.pdfDocument === undefined) return 1;
+
+    let pageNumber = 1;
+
     if (node.ref === undefined) {
-      let dest = await this.pdfDocument.getDestination(node.dest);
-      let ref = dest[0];
-      let pageIndex = await this.pdfDocument.getPageIndex(ref);
-      pageNumber = pageIndex + 1;
+      let dest = await this.pdfDocument.getDestination(node.dest as string);
+      if (!!dest && dest?.length > 0) {
+        let ref = dest[0];
+        let pageIndex = await this.pdfDocument.getPageIndex(ref);
+        pageNumber = pageIndex + 1;
+      }
     } else {
       let pageIndex = await this.pdfDocument.getPageIndex(node.ref);
       pageNumber = pageIndex + 1;
@@ -220,29 +242,26 @@ class PDFApplication {
     return pageNumber;
   }
 
-  async clickTOC(node) {
+  async clickTOC(node: TOCNode) {
     let pageNumber = await this.getTOCPage(node);
     this.changePageNumber(pageNumber);
   }
 
-  /**
-   * search = {query: "", highlightAll: true, caseSensitive: false, entireWord: false}
-   * @param {Object} search
-   */
-  searchText(search) {
+  searchText(search: PDFSearch) {
     this.eventBus.dispatch("find", search);
   }
 
-  changeMatch(delta) {
+  changeMatch(delta: number) {
     // delta can only be +1 (next) or -1 (prev)
     // highlight the next/previous match
-    let findController = this.pdfFindController;
+    if (this.pdfFindController.selected === undefined) return;
+    if (this.pdfFindController.pageMatches === undefined) return;
 
-    let currentMatch = findController.selected;
+    let currentMatch = this.pdfFindController.selected;
+    let matches = this.pdfFindController.pageMatches;
+
     let pageIdx = currentMatch.pageIdx;
     let newMatchIdx = currentMatch.matchIdx + delta;
-
-    let matches = findController.pageMatches;
     let matchIdxList = matches[pageIdx];
 
     while (newMatchIdx < 0 || newMatchIdx > matchIdxList.length - 1) {
@@ -263,7 +282,7 @@ class PDFApplication {
     this.pdfFindController.selected.matchIdx = newMatchIdx;
     this.changePageNumber(pageIdx + 1);
     this.eventBus.dispatch("updatetextlayermatches", {
-      source: findController,
+      source: this.pdfFindController,
       pageIndex: pageIdx,
     });
   }

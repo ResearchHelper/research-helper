@@ -1,4 +1,3 @@
-import { ref } from "vue";
 import {
   getAnnotations,
   getAnnotationById,
@@ -7,9 +6,15 @@ import {
   createAnnotation,
   AnnotationType,
 } from "src/backend/pdfreader/annotation";
+import { Annotation, Rect } from "../database";
 
 class AnnotManager {
-  constructor(projectId, container) {
+  projectId: string;
+  container: HTMLElement;
+  annots: Annotation[];
+  selected: string | null; // selected annotId
+
+  constructor(projectId: string, container: HTMLElement) {
     this.projectId = projectId;
     this.container = container;
     this.annots = [];
@@ -18,11 +23,10 @@ class AnnotManager {
 
   /**
    * Get all annotation of the project
-   * @public
    */
   async init() {
     try {
-      this.annots = await getAnnotations(this.projectId);
+      this.annots = (await getAnnotations(this.projectId)) as Annotation[];
     } catch (err) {
       console.log(err);
     }
@@ -30,14 +34,13 @@ class AnnotManager {
 
   /**
    * Return an array of annots on specified page
-   * @param {Number} pageNumber
-   * @returns {Array} annots
-   * @public
+   * @param pageNumber
+   * @returns annots
    */
-  getAnnotsByPage(pageNumber) {
+  getAnnotsByPage(pageNumber: number): Annotation[] {
     let annots = [];
     for (let annot of this.annots) {
-      if (annot.pageNumber == parseInt(pageNumber)) {
+      if (annot.pageNumber === pageNumber) {
         annots.push(annot);
       }
     }
@@ -46,11 +49,10 @@ class AnnotManager {
 
   /**
    * Search annotation in current annot list
-   * @param {String} annotId
-   * @returns Annotation
-   * @public
+   * @param annotId
+   * @returns annot
    */
-  getAnnotById(annotId) {
+  getAnnotById(annotId: string): Annotation {
     let target = null;
     for (let annot of this.annots) {
       if (annot._id == annotId) {
@@ -58,18 +60,18 @@ class AnnotManager {
         break;
       }
     }
-    return target;
+    return target as Annotation;
   }
 
   /**
    * Update properties of an annotation with specific id
-   * @param {string} id
-   * @param {Object} props
+   * @param id - annotation id
+   * @param props - new properties of the annotation
    * @public
    */
-  async update(id, props) {
+  async update(id: string, props: Annotation) {
     try {
-      let annot = await getAnnotationById(id);
+      let annot = (await getAnnotationById(id)) as Annotation;
       for (let key in props) {
         annot[key] = props[key];
       }
@@ -77,11 +79,11 @@ class AnnotManager {
 
       // update PDFReader UI
       if ("color" in props) {
-        for (let dom of document.querySelectorAll(
-          `section[annotation-id="${id}"]`
-        )) {
-          dom.style.background = props.color;
-        }
+        document
+          .querySelectorAll(`section[annotation-id="${id}"]`)
+          .forEach((dom) => {
+            (dom as HTMLElement).style.background = props.color;
+          });
       }
 
       // update AnnotationList UI
@@ -97,10 +99,9 @@ class AnnotManager {
 
   /**
    * Delete an annotation with specific id
-   * @param {string} annotId
-   * @public
+   * @param annotId
    */
-  async delete(annotId) {
+  async delete(annotId: string) {
     try {
       await deleteAnnotation(annotId);
     } catch (error) {
@@ -108,11 +109,11 @@ class AnnotManager {
     }
 
     // update PDFReader UI
-    for (let dom of document.querySelectorAll(
-      `section[annotation-id="${annotId}"]`
-    )) {
-      dom.remove();
-    }
+    document
+      .querySelectorAll(`section[annotation-id="${annotId}"]`)
+      .forEach((dom) => {
+        dom.remove();
+      });
 
     // update AnnotationList UI
     this.annots = this.annots.filter((annot) => annot._id != annotId);
@@ -120,12 +121,14 @@ class AnnotManager {
 
   /**
    * add to DB and return the corresponding doms (for PDFReader UI)
-   * @param {Object} rawAnnot
-   * @param {boolean} fromDB
-   * @returns {Array} Array of DOMs
-   * @private
+   * @param rawAnnot
+   * @param fromDB
+   * @returns Array of DOMs
    */
-  async _create(rawAnnot, fromDB = false) {
+  private async _create(
+    rawAnnot: Annotation,
+    fromDB = false
+  ): Promise<HTMLElement[]> {
     // update db
     rawAnnot.projectId = this.projectId;
     let result = await createAnnotation(this.container, rawAnnot, fromDB);
@@ -141,10 +144,9 @@ class AnnotManager {
 
   /**
    * Draw annots on specified page
-   * @param {number} pageNumber
-   * @public
+   * @param pageNumber
    */
-  async drawAnnots(pageNumber) {
+  async drawAnnots(pageNumber: number) {
     let annots = this.getAnnotsByPage(pageNumber);
     for (let annot of annots) {
       let doms = await this._create(annot, true);
@@ -160,14 +162,19 @@ class AnnotManager {
 
   /**
    * Create annot on specified page and coordinate
-   * @param {number} pageNumber
-   * @param {number} clientX
-   * @param {number} clientY
-   * @param {string} tool
-   * @param {string} color
-   * @public
+   * @param pageNumber
+   * @param clientX
+   * @param clientY
+   * @param tool
+   * @param color
    */
-  async create(pageNumber, clientX, clientY, tool, color) {
+  async create(
+    pageNumber: number,
+    clientX: number,
+    clientY: number,
+    tool: "highlight" | "comment",
+    color: string
+  ) {
     let rect = null;
     if (tool == AnnotationType.COMMENT) {
       rect = {
@@ -175,7 +182,7 @@ class AnnotManager {
         top: clientY,
         width: 40,
         height: 40,
-      };
+      } as Rect;
     }
 
     let doms = await this._create({
@@ -183,7 +190,7 @@ class AnnotManager {
       rect: rect, // only for comment annotation
       color: color,
       pageNumber: pageNumber,
-    });
+    } as Annotation);
 
     for (let dom of doms) {
       dom.onclick = () => {
@@ -199,37 +206,35 @@ class AnnotManager {
 
   /**
    * Set an annotation active
-   * @param {string} annotId
+   * @param annotId
    */
-  setActiveAnnot(annotId) {
+  setActiveAnnot(annotId: string | null) {
     this.selected = annotId;
 
     if (!!annotId) {
       // highlight it
-      let doms = this.container.querySelectorAll(
-        `section[annotation-id="${annotId}"]`
-      );
-      for (let dom of doms) {
-        dom.classList.add("activeAnnotation");
-      }
+      this.container
+        .querySelectorAll(`section[annotation-id="${annotId}"]`)
+        .forEach((dom) => {
+          dom.classList.add("activeAnnotation");
+        });
     } else {
       // deselect annotation
-      let doms = this.container.querySelectorAll(".activeAnnotation");
-      for (let dom of doms) {
+      this.container.querySelectorAll(".activeAnnotation").forEach((dom) => {
         dom.classList.remove("activeAnnotation");
-      }
+      });
     }
   }
 
-  _enableDragToMove(dom) {
-    let annotLayerRect = null;
-    let domRect = null;
+  private _enableDragToMove(dom: HTMLElement) {
+    let annotLayerRect: Rect;
+    let domRect: Rect;
     let offsetX = 0;
     let offsetY = 0;
     let shiftX = 0;
     let shiftY = 0;
     dom.ondragstart = (e) => {
-      annotLayerRect = dom.parentElement.getBoundingClientRect();
+      annotLayerRect = dom.parentElement?.getBoundingClientRect() as Rect;
       domRect = dom.getBoundingClientRect();
       offsetX = annotLayerRect.left;
       offsetY = annotLayerRect.top;
@@ -256,9 +261,12 @@ class AnnotManager {
 
       // left and top are in percentage
       // width and height are in px
-      this.update(dom.getAttribute("annotation-id"), {
-        rect: { left: left, top: top, width: 40, height: 40 },
-      });
+      let id = dom.getAttribute("annotation-id");
+      if (!!id) {
+        this.update(id, {
+          rect: { left: left, top: top, width: 40, height: 40 },
+        } as Annotation);
+      }
     };
   }
 }

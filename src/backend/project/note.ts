@@ -60,7 +60,7 @@ async function updateNote(newNote: Note) {
   try {
     let note: Note = await db.get(newNote._id);
     newNote._rev = note._rev;
-    await db.put(note);
+    await db.put(newNote);
   } catch (error) {
     console.log(error);
   }
