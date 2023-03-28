@@ -66,11 +66,12 @@
   </q-splitter>
 </template>
 
-<script>
+<script lang="ts">
+import { defineComponent } from "vue";
 import GeneralTab from "src/components/settings/GeneralTab.vue";
 import AboutTab from "src/components/settings/AboutTab.vue";
 
-export default {
+export default defineComponent({
   components: {
     GeneralTab,
     AboutTab,
@@ -82,5 +83,5 @@ export default {
       tab: "general",
     };
   },
-};
+});
 </script>

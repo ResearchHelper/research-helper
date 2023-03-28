@@ -84,6 +84,7 @@ export default {
           this.$i18n.locale === "zh_CN" ? text_zh_CN : text_en_US
         );
         this.setTheme(this.stateStore.settings.theme);
+        this.changeLinks();
       },
     });
   },
@@ -115,6 +116,32 @@ export default {
         case "light":
           contentStyle.innerHTML = lightContent;
           break;
+      }
+    },
+
+    changeLinks() {
+      let vditor = this.$refs.vditorHelp;
+      let linkNodes = vditor.querySelectorAll("[data-type='a']");
+      for (let linkNode of linkNodes) {
+        linkNode.onclick = (e) => this.clickLink(e, linkNode);
+      }
+    },
+
+    async clickLink(e, linkNode) {
+      e.stopImmediatePropagation(); // stop propagating the click event
+      this.editor.blur(); // save the content before jumping
+
+      let link = linkNode.querySelector(
+        "span.vditor-ir__marker--link"
+      ).innerText;
+      try {
+        // valid external url, open it externally
+        new URL(link);
+        window.browser.openURL(link);
+      } catch (error) {
+        // we just want the document, both getProject or getNote are good
+        this.stateStore.openItemId = link;
+        console.log("item id");
       }
     },
   },
