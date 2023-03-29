@@ -40,16 +40,31 @@
   ></div>
 </template>
 
-<script>
+<script lang="ts">
+// types
+import { defineComponent } from "vue";
+import { Edge, Node } from "src/backend/database";
+// db
 import { getOutEdge, getInEdges } from "src/backend/project/graph";
 import { useStateStore } from "src/stores/appState";
-
-import cytoscape from "cytoscape/dist/cytoscape.esm";
+// cytoscape
+import cytoscape from "cytoscape";
 import cola from "cytoscape-cola";
 cytoscape.use(cola);
 
-export default {
-  props: { itemId: String, height: Number },
+interface NodeUI {
+  data: Node & { bg?: string; shape?: string };
+}
+
+interface EdgeUI {
+  data: { source: string; target: string };
+}
+
+export default defineComponent({
+  props: {
+    itemId: { type: String, required: true },
+    height: { type: Number, required: true },
+  },
 
   setup() {
     const stateStore = useStateStore();
@@ -60,8 +75,8 @@ export default {
     return {
       ready: false,
       specialPages: ["library", "settings"],
-      nodes: [],
-      edges: [],
+      nodes: [] as NodeUI[],
+      edges: [] as EdgeUI[],
     };
   },
 
@@ -95,11 +110,11 @@ export default {
       this.nodes = [];
       this.edges = [];
 
-      let outEdge = await getOutEdge(this.itemId);
-      let inEdges = await getInEdges(this.itemId);
+      let outEdge = (await getOutEdge(this.itemId)) as Edge;
+      let inEdges = (await getInEdges(this.itemId)) as Edge[];
 
       // add source nodes
-      let sourceNode = {};
+      let sourceNode = {} as NodeUI;
       sourceNode.data = outEdge.sourceNode;
       let type = sourceNode.data.type;
       if (type === "project") sourceNode.data.shape = "rectangle";
@@ -111,7 +126,7 @@ export default {
 
       for (let inEdge of inEdges) {
         // add back linked nodes
-        let node = {};
+        let node = {} as NodeUI;
         node.data = inEdge.sourceNode;
         if (node.data.type === "project") node.data.shape = "rectangle";
         else if (node.data.type === "note") node.data.shape = "ellipse";
@@ -120,7 +135,7 @@ export default {
         this.nodes.push(node);
 
         // add in edges
-        let edge = {};
+        let edge = {} as EdgeUI;
         edge.data = {
           source: inEdge.source,
           target: sourceNode.data.id,
@@ -130,7 +145,7 @@ export default {
 
       for (let i in outEdge.targetNodes) {
         // add target nodes
-        let node = {};
+        let node = {} as NodeUI;
         node.data = outEdge.targetNodes[i];
         if (outEdge.targetNodes[i].type === "project")
           node.data.shape = "rectangle";
@@ -143,7 +158,7 @@ export default {
         this.nodes.push(node);
 
         // add out edges
-        let edge = {};
+        let edge = {} as EdgeUI;
         edge.data = {
           source: outEdge.source,
           target: outEdge.targets[i],
@@ -152,7 +167,7 @@ export default {
       }
     },
 
-    async drawGraph(stateStore) {
+    async drawGraph(stateStore: typeof this.stateStore) {
       let cy = cytoscape({
         container: document.getElementById("cy"),
 
@@ -166,11 +181,11 @@ export default {
               label: "data(label)",
               "text-wrap": "ellipsis",
               "text-max-width": "15em",
-              color: function (ele) {
-                return ele.data("bg");
+              color: function (el: cytoscape.NodeSingular) {
+                return el.data("bg");
               },
-              "background-color": function (ele) {
-                return ele.data("bg");
+              "background-color": function (el) {
+                return el.data("bg");
               },
             },
             css: {
@@ -185,7 +200,7 @@ export default {
               "curve-style": "straight",
             },
           },
-        ],
+        ] as cytoscape.Stylesheet[],
 
         elements: { nodes: this.nodes, edges: this.edges },
 
@@ -207,7 +222,7 @@ export default {
       });
     },
   },
-};
+});
 </script>
 <style scoped>
 .square {

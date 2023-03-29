@@ -24,7 +24,6 @@ async function addProject(folderId: string): Promise<Project | void> {
     project.ISBN = "";
     project.publisher = "";
     project.reference = [];
-    project.related = []; // related projectIds
     project.tags = [];
     project.folderIds = ["library"]; // the folders containing the project
     if (folderId != "library") project.folderIds.push(folderId);
@@ -135,15 +134,15 @@ async function getProject(projectId: string): Promise<Project | undefined> {
 
 /**
  * Get all projects from database
- * @returns {object[]} array of projects
+ * @returns {Project[]} array of projects
  */
-async function getAllProjects(): Promise<object[]> {
+async function getAllProjects(): Promise<Project[]> {
   let result = await db.find({
     selector: {
       dataType: "project",
     },
   });
-  return result.docs;
+  return result.docs as Project[];
 }
 
 /**

@@ -15,7 +15,7 @@ export const useStateStore = defineStore("stateStore", {
     // projects
     selectedItemId: "", // select from tableview
     workingItemId: "library", // workingItem
-    openedProjectIds: new Set(), // for projectTree
+    openedProjectIds: new Set<string>(), // for projectTree
     openItemId: "", // communicate between layout and deep vue component
 
     // settings
@@ -49,7 +49,7 @@ export const useStateStore = defineStore("stateStore", {
         workingItemId: this.workingItemId,
         openedProjectIds: [...this.openedProjectIds] as string[], // convert to Array for saving
         settings: this.settings as Settings,
-      };
+      } as AppState;
     },
   },
 });

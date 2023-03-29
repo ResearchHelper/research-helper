@@ -60,12 +60,13 @@
     </q-carousel-slide>
   </q-carousel>
 </template>
-<script>
+<script lang="ts">
+import { defineComponent } from "vue";
 import { useStateStore } from "src/stores/appState";
 import { updateAppState } from "src/backend/appState";
 
-export default {
-  props: {modelValue: Boolean},
+export default defineComponent({
+  props: { modelValue: Boolean },
   emits: ["update:modelValue"],
 
   setup() {
@@ -94,7 +95,7 @@ export default {
         }
         return result;
       },
-      set(option) {
+      set(option: { value: "en_US" | "zh_CN"; label: string }) {
         this.stateStore.settings.language = option.value;
         this.changeLanguage(option.value);
       },
@@ -107,14 +108,14 @@ export default {
       await updateAppState(state);
     },
 
-    changeLanguage(locale) {
+    changeLanguage(locale: "en_US" | "zh_CN") {
       this.$i18n.locale = locale;
       this.saveAppState();
     },
 
     changeStoragePath() {
       let result = window.fileBrowser.showFolderPicker();
-      if (result !== undefined && !!result[0]) { 
+      if (result !== undefined && !!result[0]) {
         this.path = result[0];
         this.stateStore.settings.storagePath = this.path;
         this.saveAppState();
@@ -122,8 +123,8 @@ export default {
     },
 
     start() {
-      this.$emit("update:modelValue", false)
+      this.$emit("update:modelValue", false);
     },
   },
-};
+});
 </script>

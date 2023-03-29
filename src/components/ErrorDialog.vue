@@ -32,7 +32,8 @@
   </q-dialog>
 </template>
 <script>
-export default {
+import { defineComponent } from "vue";
+export default defineComponent({
   props: { show: Boolean, error: Error },
   emits: ["update:show"],
 
@@ -41,5 +42,5 @@ export default {
       this.$emit("update:show", false);
     },
   },
-};
+});
 </script>

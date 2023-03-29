@@ -26,7 +26,7 @@
   </div>
 </template>
 
-<script setup lang="ts">
+<script setup>
 import {
   onMounted,
   ref,
@@ -41,18 +41,7 @@ import {
   getCurrentInstance,
   watch,
 } from "vue";
-import {
-  ComponentContainer,
-  Json,
-  LayoutConfig,
-  RowOrColumnItemConfig,
-  StackItemConfig,
-  ComponentItemConfig,
-  ResolvedComponentItemConfig,
-  LogicalZIndex,
-  VirtualLayout,
-  ResolvedLayoutConfig,
-} from "golden-layout";
+import { VirtualLayout, LayoutConfig } from "golden-layout";
 import GLComponent from "src/pages/GLComponent.vue";
 
 /*******************
@@ -70,29 +59,28 @@ const emit = defineEmits([
 /*******************
  * Data
  *******************/
-const GLRoot = ref<null | HTMLElement>(null);
-let GLayout: VirtualLayout;
+const GLRoot = ref(null);
+let GLayout;
 const GlcKeyPrefix = readonly(ref("glc_"));
 
 const AllComponents = ref({});
 const MapComponents = ref({});
 let IdToRef = {};
-const UnusedIndexes: number[] = [];
+var UnusedIndexes = [];
 let CurIndex = 0;
-let GlBoundingClientRect: DOMRect;
+let GlBoundingClientRect;
 
 const instance = getCurrentInstance();
 const initialized = ref(false);
 
 /*******************
- * Watcher
+ * Props
  *******************/
 watch(initialized, (initialized) => {
   // after initialized, focus the workingItem
   if (initialized) focusById(props.workingItemId);
 });
 
-// must use a getter to get props.workingItemId
 watch(
   () => props.workingItemId,
   (id) => focusById(id)
@@ -102,9 +90,9 @@ watch(
  * Method
  *******************/
 /** @internal */
-const addComponent = (componentType: string, title: string, id: string) => {
+const addComponent = (componentType, title, id) => {
   let index = CurIndex;
-  if (UnusedIndexes.length > 0) index = UnusedIndexes.pop() as number;
+  if (UnusedIndexes.length > 0) index = UnusedIndexes.pop();
   else CurIndex++;
 
   // for vite's dynamic import, see the following page
@@ -124,11 +112,7 @@ const addComponent = (componentType: string, title: string, id: string) => {
  * @param {String} title Tab title
  * @param {String} id projectId or noteId
  */
-const addGLComponent = async (
-  componentType: string,
-  title: string,
-  id: string
-) => {
+const addGLComponent = async (componentType, title, id) => {
   if (componentType.length == 0)
     throw new Error("addGLComponent: Component's type is empty");
 
@@ -142,18 +126,14 @@ const addGLComponent = async (
   GLayout.addComponent(componentType, { refId: index, id: id }, title);
 };
 
-const loadGLLayout = async (
-  layoutConfig: LayoutConfig | ResolvedLayoutConfig
-) => {
+const loadGLLayout = async (layoutConfig) => {
   GLayout.clear();
   AllComponents.value = {};
 
   // When reloading a saved Layout, first convert the saved "Resolved Config" to a "Config" by calling LayoutConfig.fromResolved().
-  const config = (
-    layoutConfig.resolved
-      ? LayoutConfig.fromResolved(layoutConfig as ResolvedLayoutConfig)
-      : layoutConfig
-  ) as LayoutConfig;
+  const config = layoutConfig.resolved
+    ? LayoutConfig.fromResolved(layoutConfig)
+    : layoutConfig;
   let contents = [config.root.content];
 
   let index = 0;
@@ -195,18 +175,18 @@ const resize = () => {
   emit("layoutchanged");
 };
 
-const onClick = (refId: number) => {
+const onClick = (refId) => {
   MapComponents.value[refId].container.focus();
 };
 
-const focusById = (id: string) => {
+const focusById = (id) => {
   if (id in IdToRef) {
     let refId = IdToRef[id];
     MapComponents.value[refId].container.focus();
   }
 };
 
-const removeGLComponent = (removeId: string) => {
+const removeGLComponent = (removeId) => {
   MapComponents.value[IdToRef[removeId]]?.container.close();
 };
 
@@ -219,10 +199,10 @@ const removeGLComponent = (removeId: string) => {
  * @param {String} title
  */
 const addGLDragSource = async (
-  element: HTMLElement,
-  componentType: Map,
-  componentState: Map,
-  title: string,
+  element,
+  componentType,
+  componentState,
+  title,
   addComponentOnly = false
 ) => {
   componentState.refId = addComponent(componentType, title, componentState.id);
@@ -240,7 +220,7 @@ const addGLDragSource = async (
   });
 };
 
-const renameGLComponent = async (id: string, title: string) => {
+const renameGLComponent = async (id, title) => {
   let container = MapComponents.value[IdToRef[id]]?.container;
   if (!!container) container.setTitle(title);
 };
@@ -254,16 +234,14 @@ onMounted(() => {
 
   window.addEventListener("resize", resize, { passive: true });
 
-  const handleBeforeVirtualRectingEvent = (count: number) => {
-    GlBoundingClientRect = (
-      GLRoot.value as HTMLElement
-    ).getBoundingClientRect();
+  const handleBeforeVirtualRectingEvent = (count) => {
+    GlBoundingClientRect = GLRoot.value.getBoundingClientRect();
   };
 
   const handleContainerVirtualRectingRequiredEvent = (
-    container: ComponentContainer,
-    width: number,
-    height: number
+    container,
+    width,
+    height
   ) => {
     const component = MapComponents.value[container.state.refId];
     if (!component || !component?.glc) {
@@ -280,8 +258,8 @@ onMounted(() => {
   };
 
   const handleContainerVirtualVisibilityChangeRequiredEvent = (
-    container: ComponentContainer,
-    visible: boolean
+    container,
+    visible
   ) => {
     const component = MapComponents.value[container.state.refId];
     if (!component || !component?.glc) {
@@ -293,9 +271,9 @@ onMounted(() => {
   };
 
   const handleContainerVirtualZIndexChangeRequiredEvent = (
-    container: ComponentContainer,
-    logicalZIndex: LogicalZIndex,
-    defaultZIndex: string
+    container,
+    logicalZIndex,
+    defaultZIndex
   ) => {
     const component = MapComponents.value[container.state.refId];
     if (!component || !component?.glc) {
@@ -307,13 +285,10 @@ onMounted(() => {
     component.glc.setZIndex(defaultZIndex);
   };
 
-  const bindComponentEventListener = (
-    container: ComponentContainer,
-    itemConfig: ResolvedComponentItemConfig
-  ) => {
+  const bindComponentEventListener = (container, itemConfig) => {
     let refId = -1;
     if (itemConfig && itemConfig.componentState) {
-      refId = (itemConfig.componentState as Json).refId as number;
+      refId = itemConfig.componentState.refId;
     } else {
       throw new Error(
         "bindComponentEventListener: component's ref id is required"
@@ -351,7 +326,7 @@ onMounted(() => {
     };
   };
 
-  const unbindComponentEventListener = (container: ComponentContainer) => {
+  const unbindComponentEventListener = (container) => {
     let refId = container.state.refId;
     let removeId = container.state.id;
     const component = MapComponents.value[refId];

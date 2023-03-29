@@ -2,7 +2,7 @@
   <!-- show this after rightMenu is shown, 
     otherwise autogrow extends to full-height -->
   <q-tabs
-    v-if="meta?.reference?.length > 0"
+    v-if="meta !== undefined && meta.reference.length > 0"
     v-model="tab"
     dense
     no-caps
@@ -152,7 +152,7 @@
             @click="
               (e) => {
                 e.preventDefault();
-                this.openURL(meta.URL);
+                openURL(meta?.URL);
               }
             "
           />
@@ -229,14 +229,19 @@
   </q-tab-panels>
 </template>
 
-<script>
+<script lang="ts">
+// types
+import { defineComponent } from "vue";
+import type { PropType } from "vue";
+import { Author, Project } from "src/backend/database";
+// backend stuff
 import { useStateStore } from "src/stores/appState";
 import { updateProject } from "src/backend/project/project";
 import { updateEdge } from "src/backend/project/graph";
 import { getMeta } from "src/backend/project/meta";
 
-export default {
-  props: { project: Object },
+export default defineComponent({
+  props: { project: Object as PropType<Project> },
   emits: ["update:project"],
 
   setup() {
@@ -249,7 +254,7 @@ export default {
       tab: "meta",
       name: "", // author name
       tag: "", // project tag
-      references: [],
+      references: [] as { text: string; link: string }[],
     };
   },
 
@@ -264,13 +269,13 @@ export default {
       get() {
         return this.project;
       },
-      set(newMeta) {
+      set(newMeta: Project) {
         this.$emit("update:project", newMeta);
       },
     },
 
     authors() {
-      let authors = this.meta.author;
+      let authors = this.meta?.author;
       if (!!!authors?.length) return "";
 
       let names = [];
@@ -286,27 +291,32 @@ export default {
   methods: {
     /**
      * Update project info
-     * @param {boolean} updateRelated - if true, also modify info in related projects
+     * @param updateEdgeData - if true, also modify the edge data
      */
-    async modifyInfo(updateRelated) {
+    async modifyInfo(updateEdgeData: boolean) {
+      if (this.meta === undefined) return;
       // update db and also update rev in this.project
-      let meta = await updateProject(this.meta);
-      this.meta._rev = meta._rev;
+      this.meta = (await updateProject(this.meta as Project)) as Project;
 
-      if (updateRelated) {
+      if (updateEdgeData) {
         let sourceNode = {
           id: this.meta._id,
           label: this.meta.title,
           type: "project",
         };
-        await updateEdge(this.meta._id, { sourceNode: sourceNode });
+        await updateEdge(this.meta._id as string, { sourceNode: sourceNode });
       }
     },
 
     async addAuthor() {
+      if (this.meta === undefined) {
+        this.name = "";
+        return;
+      }
       if (this.name.trim() === "") return;
+
       // update ui
-      let author = {};
+      let author = {} as Author;
       if (this.name.includes(",")) {
         [author.family, author.given] = this.name
           .split(",")
@@ -327,7 +337,9 @@ export default {
       this.modifyInfo(false);
     },
 
-    async removeAuthor(index) {
+    async removeAuthor(index: number) {
+      if (this.meta === undefined) return;
+
       // update ui
       this.meta.author.splice(index, 1);
 
@@ -336,6 +348,8 @@ export default {
     },
 
     async addTag() {
+      if (this.meta === undefined) return;
+
       // update ui
       this.meta.tags.push(this.tag);
       this.tag = ""; // remove text in input
@@ -344,7 +358,9 @@ export default {
       this.modifyInfo(false);
     },
 
-    async removeTag(tag) {
+    async removeTag(tag: string) {
+      if (this.meta === undefined) return;
+
       // update ui
       this.meta.tags = this.meta.tags.filter((t) => t != tag);
 
@@ -356,25 +372,22 @@ export default {
       if (!!!this.meta?.reference || this.references.length > 0) return;
 
       for (let i in this.meta.reference) {
-        this.references.push({ text: "", link: undefined });
+        this.references.push({ text: "", link: "" });
       }
 
       for (let [i, ref] of this.meta.reference.entries()) {
         try {
-          this.references[i].text = getMeta(
-            ref.DOI || ref.key,
-            "bibliography",
-            {
-              format: "html",
-            }
-          );
-          this.references[i].link = this.references[i].text.match(
-            /(https[a-zA-Z0-9:\.\/\-\_]+)/g
-          )[0];
-          this.references[i].text = this.references[i].text.replace(
-            /(https[a-zA-Z0-9:\.\/\-\_]+)/g,
-            ""
-          );
+          getMeta(ref.DOI || ref.key, "bibliography", {
+            format: "html",
+          }).then((text) => {
+            this.references[i].link = text.match(
+              /(https[a-zA-Z0-9:\.\/\-\_]+)/g
+            )[0];
+            this.references[i].text = text.replace(
+              /(https[a-zA-Z0-9:\.\/\-\_]+)/g,
+              ""
+            );
+          });
         } catch (error) {
           let author = !!ref.author ? ref.author + " " : "";
           let year = !!ref.year ? `(${ref.year}) ` : "";
@@ -387,11 +400,12 @@ export default {
       }
     },
 
-    openURL(url) {
+    openURL(url: string | undefined) {
+      if (url === undefined || url === "") return;
       window.browser.openURL(url);
     },
   },
-};
+});
 </script>
 <style lang="scss" scoped>
 .input {

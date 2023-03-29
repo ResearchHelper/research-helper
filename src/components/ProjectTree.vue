@@ -67,7 +67,7 @@
                   <!-- menu for project -->
                   <q-list
                     dense
-                    v-if="projectMenu"
+                    v-if="showProjectMenu"
                   >
                     <q-item
                       clickable
@@ -185,7 +185,7 @@
               padding="none"
               class="q-mr-xs"
               icon="refresh"
-              @click.stop="$refs.graphview.reload()"
+              @click.stop="($refs.graphview as any).reload()"
             >
               <q-tooltip>{{ $t("refresh-graphview") }}</q-tooltip>
             </q-btn>
@@ -202,9 +202,14 @@
   </q-splitter>
 </template>
 
-<script>
+<script lang="ts">
+// types
+import { defineComponent } from "vue";
+import { Note, Project, ProjectUI } from "src/backend/database";
+import { QTree, QTreeNode } from "quasar";
+// components
 import GraphView from "./GraphView.vue";
-
+// db
 import { useStateStore } from "src/stores/appState";
 import {
   getNotes,
@@ -223,7 +228,7 @@ import {
   updateEdgeTarget,
 } from "src/backend/project/graph";
 
-export default {
+export default defineComponent({
   emits: ["addNode", "renameNode", "closeProject", "openProject"],
 
   components: { GraphView },
@@ -239,20 +244,21 @@ export default {
       maxWidth: 0,
       treeSize: 36,
       isTreeOpened: true,
+      showProjectMenu: true,
 
       // tree
-      projects: [],
-      expanded: [],
-      prvExpanded: [],
-      renamingNote: null,
+      projects: [] as ProjectUI[],
+      expanded: [] as string[],
+      prvExpanded: [] as string[],
+      renamingNote: null as QTreeNode | null,
 
       // graphview
       loadingGraph: true,
       isGraphViewOpened: false,
 
       // drag and drop
-      draggingNode: null,
-      dragoverNode: null,
+      draggingNode: null as QTreeNode | null,
+      dragoverNode: null as QTreeNode | null,
     };
   },
 
@@ -267,7 +273,7 @@ export default {
 
     await this.getProjectTree();
     let selected = this.stateStore.workingItemId;
-    let selectedNode = this.$refs.tree.getNodeByKey(selected);
+    let selectedNode = (this.$refs.tree as QTree).getNodeByKey(selected);
     if (!!selectedNode && selectedNode?.children?.length > 0)
       this.expanded.push(selected);
   },
@@ -279,12 +285,12 @@ export default {
   },
 
   watch: {
-    async "stateStore.openItemId"(id) {
+    async "stateStore.openItemId"(id: string) {
       if (!!!id) return;
-      let node = this.$refs.tree.getNodeByKey(id);
+      let node = (this.$refs.tree as QTree).getNodeByKey(id);
       if (!!node) return; // if project is active already, return
 
-      let item = await getProject(id);
+      let item = (await getProject(id)) as Project | Note;
       if (item?.dataType == "project") {
         this.stateStore.openedProjectIds.add(id);
         this.pushProjectNode(id);
@@ -294,13 +300,13 @@ export default {
       }
     },
 
-    isTreeOpened(opened) {
+    isTreeOpened(opened: boolean) {
       if (!opened) this.treeSize = 36;
       else if (opened && !this.isTreeOpened) this.treeSize = this.maxHeight;
       else this.treeSize = this.maxHeight / 2;
     },
 
-    isGraphViewOpened(opened) {
+    isGraphViewOpened(opened: boolean) {
       if (this.isTreeOpened) {
         if (opened) this.treeSize = this.maxHeight / 2;
         else this.treeSize = this.maxHeight;
@@ -314,18 +320,18 @@ export default {
   },
 
   methods: {
-    menuSwitch(node) {
+    menuSwitch(node: ProjectUI | Note) {
       if (node.dataType == "note") {
         // show context menu for notes
-        this.projectMenu = false;
+        this.showProjectMenu = false;
       } else {
         // show context menu for project
-        this.projectMenu = true;
+        this.showProjectMenu = true;
       }
     },
 
     async getProjectTree() {
-      this.projects = [];
+      this.projects = [] as ProjectUI[];
       for (let projectId of this.stateStore.openedProjectIds) {
         await this.pushProjectNode(projectId);
       }
@@ -336,8 +342,9 @@ export default {
       }
     },
 
-    async pushProjectNode(projectId) {
+    async pushProjectNode(projectId: string) {
       let project = await getProject(projectId);
+      if (project === undefined) return;
       let notes = await getNotes(projectId);
       this.projects.push({
         _id: project._id,
@@ -345,11 +352,11 @@ export default {
         label: project.title,
         children: notes,
         path: project.path,
-      });
+      } as ProjectUI);
       this.expanded.push(projectId);
 
       await this.$nextTick(); // wait until ui updates
-      let element = this.$refs.tree.$el.querySelector(
+      let element = (this.$refs.tree as QTree).$el.querySelector(
         `[item-id='${projectId}']`
       );
       this.$emit("addNode", element);
@@ -357,16 +364,18 @@ export default {
       for (let note of notes) {
         this.$emit(
           "addNode",
-          this.$refs.tree.$el.querySelector(`[item-id='${note._id}']`)
+          (this.$refs.tree as QTree).$el.querySelector(
+            `[item-id='${note._id}']`
+          )
         );
       }
     },
 
     /**
      * Receive updated project from other component and update the projectTree
-     * @param {Object} project
+     * @param project
      */
-    updateProject(project) {
+    updateProject(project: ProjectUI) {
       let idx = this.projects.findIndex((p) => p._id == project._id);
       // when updating project, be careful whether children property is undefined
       // the updateProject event emit from PDFReader has no children property
@@ -376,18 +385,19 @@ export default {
         label: project.title,
         children: project.children || this.projects[idx].children,
         path: project.path,
-      };
+      } as ProjectUI;
     },
 
-    selectItem(node) {
+    selectItem(node: ProjectUI | Note) {
       console.log(node);
       this.stateStore.workingItemId = node._id;
-      if (node.children?.length > 0) this.expanded.push(node._id);
+      if (node.dataType === "project" && node.children.length > 0)
+        this.expanded.push(node._id);
 
       this.$emit("openProject", node._id);
     },
 
-    async closeProject(projectId) {
+    async closeProject(projectId: string) {
       this.$emit("closeProject", projectId);
 
       let selected = this.stateStore.workingItemId;
@@ -404,9 +414,9 @@ export default {
       }, 50);
     },
 
-    async addNote(node) {
+    async addNote(node: ProjectUI) {
       // update db
-      let note = await addNote(node._id);
+      let note = (await addNote(node._id)) as Note;
       await createEdge(note);
       await appendEdgeTarget(note.projectId, note);
 
@@ -417,7 +427,7 @@ export default {
       this.setRenameNote(note);
     },
 
-    async deleteNote(node) {
+    async deleteNote(node: Note) {
       // update db
       await deleteNote(node._id);
       await deleteEdge(node._id); // delete edge of note
@@ -437,21 +447,21 @@ export default {
       }
     },
 
-    setRenameNote(node) {
+    setRenameNote(node: Note) {
       // set renaming note and show input
       this.renamingNote = node;
 
       setTimeout(() => {
         // wait till input appears
         // focus onto the input and select the text
-        let input = this.$refs.renameInput;
+        let input = this.$refs.renameInput as HTMLInputElement;
         input.focus();
         input.select();
       }, 100);
     },
 
     async renameNote() {
-      let renamingNote = this.renamingNote;
+      let renamingNote = this.renamingNote as Note;
       if (!!!renamingNote) return;
       // update db
       await updateNote(renamingNote);
@@ -460,22 +470,26 @@ export default {
         label: renamingNote.label,
         type: renamingNote.dataType,
       };
-      await updateEdge(renamingNote._id, { sourceNode, sourceNode });
+      await updateEdge(renamingNote._id, { sourceNode: sourceNode });
       await updateEdgeTarget(renamingNote.projectId, renamingNote);
 
       // update ui
       this.renamingNote = null;
-      let projectNode = this.$refs.tree.getNodeByKey(renamingNote.projectId);
+      let projectNode = (this.$refs.tree as QTree).getNodeByKey(
+        renamingNote.projectId
+      );
       sortTree(projectNode); // sort notes
 
       await this.$nextTick();
       this.$emit(
         "renameNode",
-        this.$refs.tree.$el.querySelector(`[item-id='${renamingNote._id}']`)
+        (this.$refs.tree as QTree).$el.querySelector(
+          `[item-id='${renamingNote._id}']`
+        )
       );
     },
   },
-};
+});
 </script>
 <style>
 .q-splitter__panel {

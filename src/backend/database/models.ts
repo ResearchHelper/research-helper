@@ -3,21 +3,29 @@ import { QTreeNode } from "quasar";
 
 // TODO: implement meta interface
 
-// TODO: implement reference interface
-
 export interface Author {
   family?: string;
   given?: string;
   literal?: string; // this exists only if family and given do not exist
 }
 
+interface Reference {
+  key: string; // identifier, usually DOI
+  DOI?: string;
+  author?: string;
+  year?: number;
+  "article-title"?: string;
+  "series-title"?: string;
+  unstructured?: string;
+}
+
 /**
  * Project datatype, goes into database
  */
 export interface Project {
-  _id?: string; // unique id
-  _rev?: string; // data version handled by database
-  dataType?: "project"; // for database search
+  _id: string; // unique id
+  _rev: string; // data version handled by database
+  dataType: "project"; // for database search
   type: string; // article / book / conference-paper ...
   title: string; // article / book title
   author: Author[]; // array of authors [{family: "Feng", given: "Feng"}, {literal: "John"}]
@@ -27,10 +35,9 @@ export interface Project {
   ISBN: string; // ISBN of a book
   URL: string; // URL to this article/book
   publisher: string; // publisher
-  reference: Map<string, any>[]; // reference objects
+  reference: Reference[]; // reference objects
   path: undefined | string; // attached file path
   tags: string[]; // user defined keywords for easier search
-  related: string[]; // array of related projectIDs
   folderIds: string[]; // array of folderIDs containing this project
 }
 
@@ -38,18 +45,18 @@ export interface Project {
  * Note datatype, both for database and for UI display
  */
 export interface Note {
-  _id?: string; // unique id handled by database
-  _rev?: string; // rev handled by database
-  dataType?: "note"; // for database search
+  _id: string; // unique id handled by database
+  _rev: string; // rev handled by database
+  dataType: "note"; // for database search
   projectId: string; // the project it belongs to
   path: string; // path to actual markdown file
   label: string; // markdown file name
 }
 
 /**
- * ProjectRow is for Tableview display use
+ * ProjectUI is for UI display use (TableView, ProjectTree)
  */
-export interface ProjectRow extends Project {
+export interface ProjectUI extends Project {
   label: string;
   children: Note[];
 }
@@ -58,9 +65,9 @@ export interface ProjectRow extends Project {
  * Folder is datatype that goes into database
  */
 export interface Folder {
-  _id?: string; // uid managed by db
-  _rev?: string; // rev handled by database
-  dataType?: "folder"; // for database search
+  _id: string; // uid managed by db
+  _rev: string; // rev handled by database
+  dataType: "folder"; // for database search
   label: string; // folder name
   icon: string; // folder icon in treeview
   children: string[]; // folderId list
@@ -71,9 +78,9 @@ export interface Folder {
  * but it is for UI display.
  */
 export interface FolderTreeNode extends QTreeNode {
-  _id?: string; // uid managed by db
-  _rev?: string; // rev handled by database
-  dataType?: "folder"; // for database search
+  _id: string; // uid managed by db
+  _rev: string; // rev handled by database
+  dataType: "folder"; // for database search
   children: FolderTreeNode[];
 }
 
@@ -84,9 +91,9 @@ export interface Node {
 }
 
 export interface Edge {
-  _id?: string; // handled by db
-  _rev?: string; // handled by db
-  dataType?: "edge"; // for database search
+  _id: string; // handled by db
+  _rev: string; // handled by db
+  dataType: "edge"; // for database search
   type: "link" | "reference"; //
   source: string; // source id
   targets: string[]; // array of target ids
@@ -95,9 +102,9 @@ export interface Edge {
 }
 
 export interface PDFState {
-  _id?: string; // handled by db
-  _rev?: string; // handled by db
-  dataType?: "pdfState"; // for database search
+  _id: string; // handled by db
+  _rev: string; // handled by db
+  dataType: "pdfState"; // for database search
   projectId: string; // the corresponding project id
   pagesCount: number; // total pages of the pdf
   currentPageNumber: number; // current page of the pdf
@@ -122,9 +129,9 @@ export interface Rect {
  * Goes into database and UI display
  */
 export interface Annotation {
-  _id?: string; // handled by db
-  _rev?: string; // handled by db
-  dataType?: "pdfAnnotation"; // for database search
+  _id: string; // handled by db
+  _rev: string; // handled by db
+  dataType: "pdfAnnotation"; // for database search
   projectId: string; // which project (pdf)
   pageNumber: number; // on which page
   content: string; // comments of the annotation
@@ -168,9 +175,9 @@ export interface Settings {
 }
 
 export interface AppState {
-  _id?: "appState";
-  _rev?: string;
-  dataType?: "appState";
+  _id: "appState";
+  _rev: string;
+  dataType: "appState";
   leftMenuSize: number;
   showLeftMenu: boolean; // is leftmenu expanded
   selectedFolderId: string;

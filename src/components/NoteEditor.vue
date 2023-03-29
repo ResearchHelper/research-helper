@@ -4,11 +4,16 @@
     ref="vditor"
   ></div>
 </template>
-<script>
+<script lang="ts">
+// types
+import { defineComponent } from "vue";
+import { Note, Project } from "src/backend/database";
+// vditor
 import Vditor from "vditor";
 import "src/css/vditor/index.css";
 import darkContent from "src/css/vditor/dark.css?raw";
 import lightContent from "src/css/vditor/light.css?raw";
+// db related
 import { useStateStore } from "src/stores/appState";
 import {
   loadNote,
@@ -20,10 +25,14 @@ import {
 
 import { updateEdge } from "src/backend/project/graph";
 import { getAllProjects } from "src/backend/project/project";
+// util
 import { debounce } from "quasar";
 
-export default {
-  props: { noteId: String, hasToolbar: Boolean },
+export default defineComponent({
+  props: {
+    noteId: { type: String, required: true },
+    hasToolbar: { type: Boolean, required: true },
+  },
 
   setup() {
     const stateStore = useStateStore();
@@ -32,33 +41,33 @@ export default {
 
   data() {
     return {
-      currentNote: null,
-      editor: "",
+      currentNote: {} as Note,
+      editor: undefined as any, // vditor class
       showEditor: false,
+      linkBase: "",
 
-      notes: [],
-      projects: [],
-      hints: [],
+      notes: [] as Note[],
+      projects: [] as Project[],
+      hints: [] as { value: string; html: string }[],
     };
   },
 
   watch: {
-    "stateStore.settings.theme"(theme) {
+    "stateStore.settings.theme"(theme: string) {
       this.setTheme(theme);
-    },
-
-    "$el.clientWidth"(width) {
-      console.log(width);
     },
   },
 
   async mounted() {
-    this.currentNote = await getNote(this.noteId);
-    this.dirPath = window.path.dirname(this.currentNote.path);
+    this.currentNote = (await getNote(this.noteId)) as Note;
+    this.linkBase = window.path.dirname(this.currentNote.path);
     if (process.env.DEV) {
-      this.dirPath = "file://" + this.dirPath;
+      this.linkBase = "file://" + this.linkBase;
     }
-    this.$refs.vditor.setAttribute("id", `vditor-${this.noteId}`);
+    (this.$refs.vditor as HTMLElement).setAttribute(
+      "id",
+      `vditor-${this.noteId}`
+    );
     this.showEditor = true;
     this.initEditor();
     await this.$nextTick();
@@ -78,7 +87,14 @@ export default {
      * Initialization of vditor
      ************************************************/
     initEditor() {
-      let toolbar = [];
+      let toolbar = [] as (
+        | {
+            name: string;
+            tipPosition?: string;
+            tip?: string;
+          }
+        | "|"
+      )[];
       if (this.hasToolbar)
         toolbar = [
           {
@@ -105,7 +121,7 @@ export default {
           pin: true,
         },
         toolbar: toolbar,
-        lang: this.stateStore.settings.language,
+        lang: this.stateStore.settings.language as keyof II18n,
         tab: "    ", // use 4 spaces as tab
         preview: {
           math: {
@@ -114,7 +130,7 @@ export default {
           },
           markdown: {
             // in DEV mode, load local files instead of server path
-            linkBase: this.dirPath,
+            linkBase: this.linkBase,
           },
           hljs: {
             // enable line number in code block
@@ -152,24 +168,26 @@ export default {
         input: () => {
           this.saveContent();
           this.changeLinks();
-          this.addImgResizer();
+          this.addImgResizer(this.$refs.vditor as HTMLElement);
         },
         upload: {
           accept: "image/*",
-          handler: (files) => {
+          handler: (files: File[]): null => {
             for (let file of files) {
               uploadImage(this.noteId, file).then((uploaded) => {
+                if (uploaded === undefined) return;
                 this.editor.insertValue(
                   `![${uploaded.imgName}](./img/${uploaded.imgName})`
                 );
               });
             }
+            return null;
           },
         },
       });
     },
 
-    setTheme(theme) {
+    setTheme(theme: string) {
       // this is used to set code theme
       if (!!this.editor) {
         this.editor.setTheme(
@@ -178,13 +196,12 @@ export default {
           theme === "dark" ? "native" : "emacs"
         );
       }
-      // must append editorStyle before contentStyle
-      // otherwise the texts are dark
+
       let contentStyle = document.getElementById("vditor-content-style");
       if (contentStyle === null) {
         contentStyle = document.createElement("style");
         contentStyle.id = "vditor-content-style";
-        contentStyle.type = "text/css";
+        (contentStyle as HTMLStyleElement).type = "text/css";
         document.head.append(contentStyle);
       }
 
@@ -206,7 +223,7 @@ export default {
       let content = await loadNote(this.noteId);
       this.editor.setValue(content);
       this.changeLinks();
-      this.addImgResizer();
+      this.addImgResizer(this.$refs.vditor as HTMLElement);
     },
 
     async _saveContent() {
@@ -229,8 +246,8 @@ export default {
       let html = parser.parseFromString(this.editor.getHTML(), "text/html");
       let linkNodes = html.querySelectorAll("a");
       for (let node of linkNodes) {
-        let href = node.getAttribute("href");
-        href = href.replace(this.dirPath + window.path.sep, "");
+        let href = (node as HTMLAnchorElement).getAttribute("href") as string;
+        href = href.replace(this.linkBase + window.path.sep, "");
         try {
           new URL(href);
           // this is a valid url, do nothing
@@ -260,19 +277,21 @@ export default {
      * Modify the default click link behavior
      *****************************************/
     _changeLinks() {
-      let vditor = this.$refs.vditor;
-      let linkNodes = vditor.querySelectorAll("[data-type='a']");
+      let vditor = this.$refs.vditor as HTMLElement;
+      let linkNodes = vditor.querySelectorAll(
+        "[data-type='a']"
+      ) as NodeListOf<HTMLElement>;
       for (let linkNode of linkNodes) {
         linkNode.onclick = (e) => this.clickLink(e, linkNode);
       }
     },
 
-    async clickLink(e, linkNode) {
+    async clickLink(e: MouseEvent, linkNode: HTMLElement) {
       e.stopImmediatePropagation(); // stop propagating the click event
       this.editor.blur(); // save the content before jumping
 
-      let link = linkNode.querySelector(
-        "span.vditor-ir__marker--link"
+      let link = (
+        linkNode.querySelector("span.vditor-ir__marker--link") as HTMLElement
       ).innerText;
       try {
         // valid external url, open it externally
@@ -281,7 +300,6 @@ export default {
       } catch (error) {
         // we just want the document, both getProject or getNote are good
         this.stateStore.openItemId = link;
-        console.log("item id");
       }
     },
 
@@ -289,11 +307,11 @@ export default {
      * Add image resize handle on each image in the note
      ********************************************/
     _addImgResizer() {
-      let vditor = this.$refs.vditor;
+      let vditor = this.$refs.vditor as HTMLElement;
       let imgs = vditor.querySelectorAll("img");
       for (let img of imgs) {
-        let p = img.parentElement.parentElement;
-        if (!!p.onmouseover) continue;
+        let p = img.parentElement?.parentElement;
+        if (!!!p || !!p.onmouseover) continue;
         // add this only if the image does not have it
         p.onmouseenter = () => {
           let dragHandle = document.createElement("div");
@@ -305,7 +323,7 @@ export default {
           dragHandle.style.left = `${-0.05 * img.width}px`;
           dragHandle.style.width = `${5}px`;
           dragHandle.style.height = `${img.height / 3}px`;
-          dragHandle.style.zIndex = 10000;
+          dragHandle.style.zIndex = "10000";
           dragHandle.style.cursor = "ew-resize";
 
           dragHandle.onmousedown = (e) => {
@@ -332,9 +350,9 @@ export default {
               document.onmouseup = null;
             };
           };
-          p.append(dragHandle);
+          (p as HTMLElement).append(dragHandle);
 
-          p.onmouseleave = () => {
+          (p as HTMLElement).onmouseleave = () => {
             dragHandle.remove();
           };
         };
@@ -347,15 +365,17 @@ export default {
 
     /**
      * Return a filtered list of projects / notes according to key
-     * @param {string} key
+     * @param key - keywords to filter
      */
-    filterHints(key) {
+    filterHints(key: string) {
       this.hints = [];
-      for (let item of this.projects.concat(this.notes)) {
-        if (item.dataType == "project") item.label = item.title;
-        if (item.label.toLocaleLowerCase().indexOf(key) > -1) {
+      let items: (Project | Note)[] = this.projects.concat(this.notes);
+      for (let item of items) {
+        let label =
+          item.dataType === "project" ? item.title : (item as Note).label;
+        if (label.toLocaleLowerCase().indexOf(key) > -1) {
           this.hints.push({
-            value: `[${item.label}](${item._id})`,
+            value: `[${label}](${item._id})`,
             html: `<p class="ellipsis"><strong>${item.dataType}</strong>: ${item.label}</p>`,
           });
         }
@@ -363,7 +383,7 @@ export default {
       return this.hints;
     },
   },
-};
+});
 </script>
 <style>
 pre.vditor-reset {
