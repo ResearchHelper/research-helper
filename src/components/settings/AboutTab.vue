@@ -42,8 +42,9 @@
     </q-card>
   </div>
 </template>
-<script>
-export default {
+<script lang="ts">
+import { defineComponent } from "vue";
+export default defineComponent({
   data() {
     return {
       version: "",
@@ -56,12 +57,10 @@ export default {
     this.version = window.updater.versionInfo();
 
     window.updater.updateAvailable((event, isAvailable) => {
-      console.log("isavailable", isAvailable)
       this.isUpdateAvailable = isAvailable;
     });
 
     window.updater.updateMessage((event, info) => {
-      console.log(info);
       this.updateMsg = info;
     });
   },
@@ -75,7 +74,7 @@ export default {
       window.updater.downloadUpdate();
     },
   },
-};
+});
 </script>
 <style scoped>
 .card {

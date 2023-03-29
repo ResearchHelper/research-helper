@@ -126,7 +126,11 @@
     </q-card>
   </div>
 </template>
-<script>
+<script lang="ts">
+// types
+import { defineComponent } from "vue";
+import { Project, Note } from "src/backend/database";
+// db
 import { useStateStore } from "src/stores/appState";
 import { updateAppState } from "src/backend/appState";
 import { moveFolder } from "src/backend/project/file";
@@ -134,7 +138,7 @@ import { getAllProjects } from "src/backend/project/project";
 import { getAllNotes } from "src/backend/project/note";
 import { db } from "src/backend/database";
 
-export default {
+export default defineComponent({
   setup() {
     const stateStore = useStateStore();
     return { stateStore };
@@ -143,10 +147,9 @@ export default {
   data() {
     return {
       showProgressDialog: false,
-      error: "",
+      error: null as Error | null,
 
       progress: 1.0,
-      textsize: 16,
 
       languageOptions: [
         { value: "en_US", label: this.$t("english-en_us") },
@@ -171,7 +174,7 @@ export default {
         }
         return result;
       },
-      set(option) {
+      set(option: { value: "en_US" | "zh_CN"; label: string }) {
         this.stateStore.settings.language = option.value;
         this.changeLanguage(option.value);
       },
@@ -187,7 +190,7 @@ export default {
         }
         return result;
       },
-      set(option) {
+      set(option: { value: "dark" | "light"; label: string }) {
         this.stateStore.settings.theme = option.value;
         this.changeTheme(option.value);
       },
@@ -197,25 +200,25 @@ export default {
       get() {
         return parseFloat(this.stateStore.settings.fontSize);
       },
-      set(size) {
-        this.stateStore.settings.fontSize = size + "px";
+      set(size: number) {
+        this.stateStore.settings.fontSize = `${size}px`;
         this.changeFontSize(size);
       },
     },
   },
 
   methods: {
-    changeFontSize(size) {
-      document.documentElement.style.fontSize = size + "px";
+    changeFontSize(size: number) {
+      document.documentElement.style.fontSize = `${size}px`;
       this.saveAppState();
     },
 
-    changeLanguage(locale) {
+    changeLanguage(locale: "en_US" | "zh_CN") {
       this.$i18n.locale = locale;
       this.saveAppState();
     },
 
-    changeTheme(theme) {
+    changeTheme(theme: "dark" | "light") {
       switch (theme) {
         case "dark":
           this.$q.dark.set(true);
@@ -228,42 +231,39 @@ export default {
       this.saveAppState();
     },
 
-    async changePath() {
+    async changePath(newStoragePath: string) {
       // update db
-      this.oldStoragePath = this.stateStore.settings.storagePath;
-      this.stateStore.settings.storagePath = this.storagePath;
+      let oldStoragePath = this.stateStore.settings.storagePath;
+      this.stateStore.settings.storagePath = newStoragePath;
       await this.saveAppState();
-      await this.moveFiles();
+      await this.moveFiles(oldStoragePath, newStoragePath);
     },
 
     async showFolderPicker() {
       let result = window.fileBrowser.showFolderPicker();
       if (result !== undefined && !!result[0]) {
-        this.storagePath = result[0]; // do not update texts in label yet
-        await this.changePath();
+        let storagePath = result[0]; // do not update texts in label yet
+        await this.changePath(storagePath);
       }
     },
 
-    async moveFiles() {
+    async moveFiles(oldPath: string, newPath: string) {
       // show progress bar
       this.showProgressDialog = true;
 
       // move files
-      moveFolder(this.oldStoragePath, this.stateStore.settings.storagePath);
+      moveFolder(oldPath, newPath);
 
       // update file paths in db
       let projects = await getAllProjects();
       let notes = await getAllNotes();
-      let items = projects.concat(notes);
+      let items: (Project | Note)[] = projects.concat(notes);
 
       let n = items.length;
       for (let [index, item] of items.entries()) {
         if (!!!item.path) continue;
 
-        item.path = item.path.replace(
-          this.oldStoragePath,
-          this.stateStore.settings.storagePath
-        );
+        item.path = item.path.replace(oldPath, newPath);
         this.progress = index / n;
       }
 
@@ -271,7 +271,7 @@ export default {
         await db.bulkDocs(items);
         this.progress = 1.0;
       } catch (error) {
-        this.error = error;
+        this.error = error as Error;
       }
     },
 
@@ -280,7 +280,7 @@ export default {
       await updateAppState(state);
     },
   },
-};
+});
 </script>
 
 <style scoped>

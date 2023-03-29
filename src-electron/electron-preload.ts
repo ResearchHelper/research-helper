@@ -70,7 +70,7 @@ const updater = {
     ipcRenderer.on("updateMessage", callback);
   },
 
-  updateAvailable(callback: (e: Event, msg: string) => void) {
+  updateAvailable(callback: (e: Event, available: boolean) => void) {
     ipcRenderer.on("updateAvailable", callback);
   },
 
