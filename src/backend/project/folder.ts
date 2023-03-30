@@ -1,11 +1,11 @@
-import { db, Folder, FolderTreeNode } from "../database";
+import { db, Folder } from "../database";
 import { sortTree } from "./utils";
 
 /**
  * Get the folder tree
  * @returns tree
  */
-async function getFolderTree(): Promise<FolderTreeNode[] | undefined> {
+async function getFolderTree(): Promise<Folder[] | undefined> {
   try {
     let result = await db.find({
       selector: {
@@ -19,11 +19,12 @@ async function getFolderTree(): Promise<FolderTreeNode[] | undefined> {
       // create library folder for user if there is none
       let library = {
         _id: "library",
+        _rev: "",
         label: "Library",
         icon: "home",
         children: [],
         dataType: "folder",
-      } as FolderTreeNode;
+      } as Folder;
       await db.put(library);
       return [library];
     }
@@ -33,16 +34,16 @@ async function getFolderTree(): Promise<FolderTreeNode[] | undefined> {
     for (let doc of docs) folders[doc._id] = doc as Folder;
 
     // create tree using depth first search
-    function _dfs(root: Folder, folderTreeRoot: FolderTreeNode) {
+    function _dfs(root: Folder, folderTreeRoot: Folder) {
       Object.assign(folderTreeRoot, root);
       folderTreeRoot.children = [];
       for (let [i, childId] of root.children.entries()) {
-        folderTreeRoot.children.push({} as FolderTreeNode);
-        _dfs(folders[childId], folderTreeRoot.children[i]);
+        folderTreeRoot.children.push({} as Folder);
+        _dfs(folders[childId as string], folderTreeRoot.children[i] as Folder);
       }
     }
 
-    let tree = {} as FolderTreeNode;
+    let tree = {} as Folder;
     _dfs(folders["library"], tree);
     sortTree(tree);
 
@@ -83,7 +84,7 @@ async function addFolder(parentId: string) {
  * @param folderId
  * @param props - Folder
  */
-async function updateFolder(folderId: string, props: { label?: string }) {
+async function updateFolder(folderId: string, props: { [key: string]: any }) {
   try {
     let folder: Folder = await db.get(folderId);
     for (let key in props) {
@@ -126,7 +127,7 @@ async function deleteFolder(folderId: string) {
     function _dfs(root: Folder) {
       db.remove(root as PouchDB.Core.RemoveDocument);
       for (let childId of root.children) {
-        _dfs(folders[childId]);
+        _dfs(folders[childId as string]);
       }
     }
 

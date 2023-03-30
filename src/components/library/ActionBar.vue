@@ -1,6 +1,7 @@
 <template>
   <q-toolbar class="q-px-none">
     <q-file
+      v-model="files"
       :multiple="multiple"
       :accept="accept"
       :append="false"
@@ -112,10 +113,14 @@
   </q-toolbar>
 </template>
 
-<script>
+<script lang="ts">
+// types
+import { defineComponent } from "vue";
+import { QFile } from "quasar";
+// db
 import { useStateStore } from "src/stores/appState";
 
-export default {
+export default defineComponent({
   props: { rightMenuSize: Number, searchString: String },
   emits: [
     "update:searchString",
@@ -138,6 +143,7 @@ export default {
       multiple: true,
       accept: "",
       fileType: "",
+      files: [] as File[],
     };
   },
 
@@ -148,7 +154,7 @@ export default {
   },
 
   methods: {
-    async showFilePicker(fileType) {
+    async showFilePicker(fileType: string) {
       switch (fileType) {
         case "file":
           this.multiple = true;
@@ -162,22 +168,22 @@ export default {
       }
       this.fileType = fileType;
       await this.$nextTick(); // wait until the acceptType is set
-      this.$refs.filePicker.$el.click();
+      (this.$refs.filePicker as QFile).$el.click();
     },
 
     addEmpty() {
       this.$emit("addEmptyProject");
     },
 
-    addByFiles(file) {
+    addByFiles(file: File[] | File) {
       switch (this.fileType) {
         case "file":
           // in this case, file is an array of File objects
-          this.$emit("addByFiles", file);
+          this.$emit("addByFiles", file as File[]);
           break;
 
         case "collection":
-          this.$emit("addByCollection", file);
+          this.$emit("addByCollection", file as File);
           break;
       }
     },
@@ -186,7 +192,7 @@ export default {
       this.$emit("showIdentifierDialog");
     },
   },
-};
+});
 </script>
 
 <style lang="scss">

@@ -262,6 +262,11 @@ export default defineComponent({
     tab() {
       if (this.tab === "reference") this.getReferences();
     },
+
+    "meta.title"(title: string) {
+      if (this.meta === undefined) return;
+      this.meta.label = title;
+    },
   },
 
   computed: {
@@ -296,7 +301,8 @@ export default defineComponent({
     async modifyInfo(updateEdgeData: boolean) {
       if (this.meta === undefined) return;
       // update db and also update rev in this.project
-      this.meta = (await updateProject(this.meta as Project)) as Project;
+      let newMeta = (await updateProject(this.meta as Project)) as Project;
+      this.meta._rev = newMeta._rev;
 
       if (updateEdgeData) {
         let sourceNode = {

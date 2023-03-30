@@ -98,8 +98,8 @@
           'bg-primary':
             props.key === stateStore.selectedItemId && isClickingPDF,
         }"
-        @click="this.isClickingPDF = true"
-        @renameFile="(meta) => renameFromMeta(meta)"
+        @click="isClickingPDF = true"
+        @renameFile="(project) => renameFromMeta(project)"
       />
       <!-- Notes -->
       <TableItemRow
@@ -125,10 +125,12 @@
       >
         <q-td colspan="100%">
           <div
+            style="font-size: 0.8rem"
             :style="`width: ${
-              $refs.table.$el.getBoundingClientRect().width * 0.8
-            }px;`"
-            class="q-px-lg ellipsis text-grey text-capitalize"
+              ($refs.table as QTable).$el.getBoundingClientRect().width * 0.8
+            }px;`
+            "
+            class="q-px-lg ellipsis text-grey"
             v-html="expansionText[props.rowIndex]"
           ></div>
         </q-td>
@@ -137,11 +139,15 @@
   </q-table>
 </template>
 
-<script>
+<script lang="ts">
+// types
+import { defineComponent, PropType } from "vue";
+import { Project, Note, Author } from "src/backend/database";
+import { QTable, QTableColumn, QTableProps } from "quasar";
+// components
 import TableProjectMenu from "./TableProjectMenu.vue";
 import TableItemRow from "./TableItemRow.vue";
-
-import { copyToClipboard } from "quasar";
+// db
 import { useStateStore } from "src/stores/appState";
 import { updateProject } from "src/backend/project/project";
 import { addNote, deleteNote, updateNote } from "src/backend/project/note";
@@ -153,10 +159,16 @@ import {
   updateEdgeTarget,
   deleteEdgeTarget,
 } from "src/backend/project/graph";
+// utils
+import { copyToClipboard } from "quasar";
 import { renameFile, copyFile } from "src/backend/project/file";
 
-export default {
-  props: { searchString: String, projects: Array, selectedProject: Object },
+export default defineComponent({
+  props: {
+    searchString: { type: String, required: true },
+    projects: { type: Array as PropType<Project[]>, required: true },
+    selectedProject: { type: Object as PropType<Project>, required: false },
+  },
   emits: ["dragProject", "update:projects", "update:selectedProject"],
 
   components: {
@@ -178,19 +190,21 @@ export default {
           field: "title",
           label: this.$t("title"),
           align: "left",
+          sortable: true,
         },
         {
           name: "author",
           field: "author",
           label: this.$t("author"),
           align: "left",
+          sortable: true,
         },
-      ],
+      ] as QTableColumn[],
       isClickingPDF: false,
 
       // for search
       showExpansion: false,
-      expansionText: [],
+      expansionText: [] as string[],
     };
   },
 
@@ -199,7 +213,7 @@ export default {
       get() {
         return this.projects;
       },
-      set(newRows) {
+      set(newRows: Project[]) {
         this.$emit("update:projects", newRows);
       },
     },
@@ -208,7 +222,7 @@ export default {
       get() {
         return this.selectedProject;
       },
-      set(newRow) {
+      set(newRow: Project) {
         this.$emit("update:selectedProject", newRow);
       },
     },
@@ -221,59 +235,68 @@ export default {
 
     /**
      * Attach file to a project
-     * @param {boolean} replaceStoredCopy
-     * @param {string} rowId
+     * @param replaceStoredCopy - want to replace file in storage folder?
+     * @param rowId - projectId
      */
-    async attachFile(replaceStoredCopy, rowId) {
+    async attachFile(replaceStoredCopy: boolean, rowId: string) {
+      if (this.selectedRow === undefined) return;
       let filePaths = window.fileBrowser.showFilePicker();
       if (filePaths?.length === 1) {
         let dstPath = filePaths[0];
-        if (replaceStoredCopy) dstPath = await copyFile(dstPath, rowId);
+        if (replaceStoredCopy)
+          dstPath = (await copyFile(dstPath, rowId)) as string;
         this.selectedRow.path = dstPath;
-        let row = await updateProject(this.selectedRow);
+        let row = (await updateProject(this.selectedRow)) as Project;
         this.selectedRow._rev = row._rev;
       }
     },
 
     /**
      * Rename attached file from Metadata
-     * @param {Object} - meta infos
+     * @param row - project with meta
      */
-    async renameFromMeta(meta) {
+    async renameFromMeta(row: Project) {
+      if (row.path === undefined) return;
+      if (this.selectedRow === undefined) return;
       let author = "";
-      let year = meta.year || "Unknown";
-      let title = meta.title;
-      let extname = window.path.extname(meta.path);
-      if (meta.author.length === 0) {
+      let year = row.year || "Unknown";
+      let title = row.title;
+      let extname = window.path.extname(row.path);
+      if (row.author.length === 0) {
         // no author
         author = "Unknown";
       } else {
         // 1 author
-        let author0 = meta.author[0];
-        author = !!author0.family ? author0.family : author0.literal;
+        let author0 = row.author[0];
+        author = !!author0.family
+          ? author0.family
+          : (author0.literal as string);
 
         // more than 1 authors
-        if (meta.author.length > 1) author += " et al.";
+        if (row.author.length > 1) author += " et al.";
       }
       let fileName = `${author} - ${year} - ${title}${extname}`;
 
       // update ui and backend
-      meta.path = renameFile(meta.path, fileName);
-      meta = await updateProject(meta);
-      this.selectedRow._rev = meta._rev;
+      row.path = renameFile(row.path, fileName);
+      row = (await updateProject(row)) as Project;
+      this.selectedRow._rev = row._rev;
     },
 
     /**
      * Add note to a project
-     * @param {string} projectId
+     * @param projectId
      */
-    async addNote(projectId) {
+    async addNote(projectId: string) {
+      if (this.selectedRow === undefined) return;
       // update db
-      let note = await addNote(projectId);
+      let note = (await addNote(projectId)) as Note;
       await createEdge(note);
       await appendEdgeTarget(note.projectId, note);
 
       // update ui
+      if (this.selectedRow.children === undefined)
+        this.selectedRow.children = [] as Note[];
       this.selectedRow.children.push(note);
       this.stateStore.selectedItemId = note._id;
 
@@ -283,9 +306,9 @@ export default {
 
     /**
      * Delete note from a project
-     * @param {Object} note
+     * @param note - note to be deleted
      */
-    async deleteNote(note) {
+    async deleteNote(note: Note) {
       // update db
       await deleteNote(note._id);
       await deleteEdge(note._id);
@@ -293,6 +316,7 @@ export default {
 
       // update ui
       let row = this.rows.find((p) => p._id == note.projectId);
+      if (row === undefined || row.children === undefined) return;
       row.children = row.children.filter((n) => n._id != note._id);
 
       // update projectTree ui
@@ -301,9 +325,9 @@ export default {
 
     /**
      * Rename a note from table
-     * @param {Object} note
+     * @param note - note to be renamed
      */
-    async renameNote(note) {
+    async renameNote(note: Note) {
       // update db
       await updateNote(note);
       let sourceNode = {
@@ -325,10 +349,10 @@ export default {
 
     /**
      * Select a row in the table
-     * @param {Object} row
-     * @param {number} rowIndex
+     * @param row
+     * @param rowIndex
      */
-    clickProject(row, rowIndex) {
+    clickProject(row: Project, rowIndex: number) {
       console.log(row);
       this.stateStore.selectedItemId = row._id;
 
@@ -339,19 +363,18 @@ export default {
 
     /**
      * Double-click a row in the table
-     * @param {Object} row
+     * @param row
      */
-    dblclickProject(row) {
+    dblclickProject(row: Project) {
       this.stateStore.openItemId = row._id;
     },
 
     /**
      * Select the row and show context menu
-     * @param {Object} row
-     * @param {number} rowIndex
+     * @param row - row to be select
+     * @param rowIndex
      */
-    toggleContextMenu(row, rowIndex) {
-      this.showContextMenu = true;
+    toggleContextMenu(row: Project, rowIndex: number) {
       this.clickProject(row, rowIndex);
     },
 
@@ -364,12 +387,17 @@ export default {
 
     /**
      * Filter method for the table
-     * @param {Array} rows - array of projects
-     * @param {String | Object} terms - terms to filter with (is essentially the 'filter' prop value)
-     * @param {Array} cols - array of columns
-     * @param {Function} getCellValue - optional function to get a cell value
+     * @param rows - array of projects
+     * @param terms - terms to filter with (is essentially the 'filter' prop value)
+     * @param cols - array of columns
+     * @param getCellValue - optional function to get a cell value
      */
-    searchProject(rows, terms, cols, getCellValue) {
+    searchProject(
+      rows: Project[],
+      terms: string,
+      cols: QTableColumn[],
+      getCellValue: (col: QTableColumn, row: Project) => any
+    ) {
       this.expansionText = [];
       let text = "";
       let re = RegExp(terms, "i"); // case insensitive
@@ -382,7 +410,9 @@ export default {
               re,
               `<span class="bg-primary">${terms}</span>`
             );
-            this.expansionText.push(`${prop}: ${text}`);
+            this.expansionText.push(
+              `${prop.charAt(0).toUpperCase() + prop.slice(1)}: ${text}`
+            );
             return true;
           }
         }
@@ -391,7 +421,7 @@ export default {
         for (let tag of row.tags) {
           if (tag.search(re) != -1) {
             text = tag.replace(re, `<span class="bg-primary">${terms}</span>`);
-            this.expansionText.push("tag: " + text);
+            this.expansionText.push("Tag: " + text);
             return true;
           }
         }
@@ -403,18 +433,18 @@ export default {
             re,
             `<span class="bg-primary">${terms}</span>`
           );
-          this.expansionText.push(`authors: ${text}`);
+          this.expansionText.push(`Authors: ${text}`);
           return true;
         }
 
         // search notes
-        for (let note of row.children) {
+        for (let note of row.children as Note[]) {
           if (note.label.search(re) != -1) {
             text = note.label.replace(
               re,
               `<span class="bg-primary">${terms}</span>`
             );
-            this.expansionText.push(`note: ${text}`);
+            this.expansionText.push(`Note: ${text}`);
             return true;
           }
         }
@@ -428,9 +458,9 @@ export default {
     /**
      * Convert array of author objects to string
      * authors = [{family: "Feng", given: "Hunt"}, {literal: "Hunt Feng"}, ...]
-     * @param {Array} authors
+     * @param authors
      */
-    authorString(authors) {
+    authorString(authors: Author[]) {
       if (!!!authors?.length) return "";
 
       let names = [];
@@ -448,9 +478,9 @@ export default {
 
     /**
      * Drag event starts and set draggingProject
-     * @param {string} projectId
+     * @param projectId
      */
-    onDragStart(projectId) {
+    onDragStart(projectId: string) {
       this.$emit("dragProject", projectId);
     },
 
@@ -461,7 +491,7 @@ export default {
       this.$emit("dragProject", "");
     },
   },
-};
+});
 </script>
 
 <style lang="scss">

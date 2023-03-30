@@ -205,7 +205,7 @@
 <script lang="ts">
 // types
 import { defineComponent } from "vue";
-import { Note, Project, ProjectUI } from "src/backend/database";
+import { Note, Project } from "src/backend/database";
 import { QTree, QTreeNode } from "quasar";
 // components
 import GraphView from "./GraphView.vue";
@@ -247,7 +247,7 @@ export default defineComponent({
       showProjectMenu: true,
 
       // tree
-      projects: [] as ProjectUI[],
+      projects: [] as Project[],
       expanded: [] as string[],
       prvExpanded: [] as string[],
       renamingNote: null as QTreeNode | null,
@@ -320,7 +320,7 @@ export default defineComponent({
   },
 
   methods: {
-    menuSwitch(node: ProjectUI | Note) {
+    menuSwitch(node: Project | Note) {
       if (node.dataType == "note") {
         // show context menu for notes
         this.showProjectMenu = false;
@@ -331,7 +331,7 @@ export default defineComponent({
     },
 
     async getProjectTree() {
-      this.projects = [] as ProjectUI[];
+      this.projects = [] as Project[];
       for (let projectId of this.stateStore.openedProjectIds) {
         await this.pushProjectNode(projectId);
       }
@@ -352,7 +352,7 @@ export default defineComponent({
         label: project.title,
         children: notes,
         path: project.path,
-      } as ProjectUI);
+      } as Project);
       this.expanded.push(projectId);
 
       await this.$nextTick(); // wait until ui updates
@@ -375,7 +375,7 @@ export default defineComponent({
      * Receive updated project from other component and update the projectTree
      * @param project
      */
-    updateProject(project: ProjectUI) {
+    updateProject(project: Project) {
       let idx = this.projects.findIndex((p) => p._id == project._id);
       // when updating project, be careful whether children property is undefined
       // the updateProject event emit from PDFReader has no children property
@@ -385,10 +385,10 @@ export default defineComponent({
         label: project.title,
         children: project.children || this.projects[idx].children,
         path: project.path,
-      } as ProjectUI;
+      } as Project;
     },
 
-    selectItem(node: ProjectUI | Note) {
+    selectItem(node: Project | Note) {
       console.log(node);
       this.stateStore.workingItemId = node._id;
       if (node.dataType === "project" && node.children.length > 0)
@@ -414,7 +414,7 @@ export default defineComponent({
       }, 50);
     },
 
-    async addNote(node: ProjectUI) {
+    async addNote(node: Project) {
       // update db
       let note = (await addNote(node._id)) as Note;
       await createEdge(note);

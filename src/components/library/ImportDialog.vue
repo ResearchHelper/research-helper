@@ -35,7 +35,9 @@
 </template>
 
 <script>
-export default {
+import { defineComponent } from "vue";
+
+export default defineComponent({
   props: { show: Boolean },
   emits: ["update:show", "confirm"],
 
@@ -54,5 +56,5 @@ export default {
       this.$emit("update:show", false);
     },
   },
-};
+});
 </script>

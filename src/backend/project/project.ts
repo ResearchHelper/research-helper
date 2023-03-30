@@ -1,4 +1,4 @@
-import { db, Project } from "../database";
+import { db, Meta, Project } from "../database";
 import { uid } from "quasar";
 import { createProjectFolder, deleteProjectFolder } from "./file";
 
@@ -14,6 +14,8 @@ async function addProject(folderId: string): Promise<Project | void> {
     let project = {} as Project;
     project._id = uid();
     project.dataType = "project";
+    project.label = "New Project";
+    project.children = [];
     project.type = "";
     project.title = "New Project";
     project.author = [];
@@ -103,8 +105,10 @@ async function updateProject(project: Project): Promise<Project | void> {
  * @param {Object} meta
  * @returns {Project} modifiedProject
  */
-// TODO: use Meta interface later
-async function updateProjectByMeta(project: Project, meta: any) {
+async function updateProjectByMeta(project: Project, meta: Meta) {
+  // also update ui label
+  project.label = project.title;
+  // update meta
   project.type = meta.type || "";
   project.title = meta.title || "";
   project.author = meta.author || [];

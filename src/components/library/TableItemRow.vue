@@ -19,7 +19,7 @@
           v-if="renaming"
           v-model="label"
           @blur="renameNote"
-          @keydown.enter="$refs.renameInput.blur()"
+          @keydown.enter="($refs.renameInput as HTMLInputElement).blur()"
           ref="renameInput"
         />
         <div
@@ -44,7 +44,7 @@
           class="col"
           style="font-size: 1rem"
         >
-          {{ basename(item.path) }}
+          {{ label }}
         </div>
       </div>
     </q-td>
@@ -110,25 +110,38 @@
     </q-menu>
   </q-tr>
 </template>
-<script>
+<script lang="ts">
+// types
+import { defineComponent, PropType } from "vue";
+import { Project, Note } from "src/backend/database";
+// db
 import { useStateStore } from "src/stores/appState";
 import { copyToClipboard } from "quasar";
 
-export default {
-  props: { item: Object },
+export default defineComponent({
+  props: {
+    item: { type: Object as PropType<Project | Note>, required: true },
+  },
   emits: ["renameNote", "deleteNote", "renameFile"],
 
   data() {
     return {
       renaming: false,
-      label: this.item.label,
+      label: "",
     };
+  },
+
+  mounted() {
+    if (this.item.dataType === "note") {
+      this.label = this.item.label;
+    } else if (this.item.dataType === "project") {
+      this.label = window.path.basename(this.item.path as string);
+    }
   },
 
   setup() {
     const stateStore = useStateStore();
-    const basename = window.path.basename;
-    return { stateStore, basename };
+    return { stateStore };
   },
 
   methods: {
@@ -148,7 +161,7 @@ export default {
       this.renaming = true;
 
       setTimeout(() => {
-        let input = this.$refs.renameInput;
+        let input = this.$refs.renameInput as HTMLInputElement;
         input.focus();
         input.select();
       }, 100);
@@ -170,5 +183,5 @@ export default {
       this.$emit("renameFile", this.item);
     },
   },
-};
+});
 </script>

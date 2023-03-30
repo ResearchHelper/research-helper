@@ -1,7 +1,4 @@
 import { QTreeNode } from "quasar";
-// TODO: implement tree interface
-
-// TODO: implement meta interface
 
 export interface Author {
   family?: string;
@@ -20,25 +17,20 @@ interface Reference {
 }
 
 /**
- * Project datatype, goes into database
+ * Meta datatype
  */
-export interface Project {
-  _id: string; // unique id
-  _rev: string; // data version handled by database
-  dataType: "project"; // for database search
+export interface Meta {
   type: string; // article / book / conference-paper ...
   title: string; // article / book title
   author: Author[]; // array of authors [{family: "Feng", given: "Feng"}, {literal: "John"}]
   abstract: string; // article abstract
   year: number | string; // year of published
+  issued?: { "date-parts": any }; // issued date
   DOI: string; // Digital Object Identity
   ISBN: string; // ISBN of a book
   URL: string; // URL to this article/book
   publisher: string; // publisher
   reference: Reference[]; // reference objects
-  path: undefined | string; // attached file path
-  tags: string[]; // user defined keywords for easier search
-  folderIds: string[]; // array of folderIDs containing this project
 }
 
 /**
@@ -54,15 +46,25 @@ export interface Note {
 }
 
 /**
- * ProjectUI is for UI display use (TableView, ProjectTree)
+ * Project datatype, goes into database
  */
-export interface ProjectUI extends Project {
+export interface Project extends Meta {
+  _id: string; // unique id
+  _rev: string; // data version handled by database
+  dataType: "project"; // for database search
   label: string;
-  children: Note[];
+  children?: Note[];
+  path: undefined | string; // attached file path
+  tags: string[]; // user defined keywords for easier search
+  folderIds: string[]; // array of folderIDs containing this project
+  // index signature, so we can access property like this project[key]
+  [k: string]: any;
 }
 
 /**
- * Folder is datatype that goes into database
+ * Folder is for both database and UI display use
+ * when saving to database, children: string[] is a list of subfolder ids
+ * when displaying on UI, children: Folder[] is a list of Folder objects
  */
 export interface Folder {
   _id: string; // uid managed by db
@@ -70,20 +72,12 @@ export interface Folder {
   dataType: "folder"; // for database search
   label: string; // folder name
   icon: string; // folder icon in treeview
-  children: string[]; // folderId list
+  children: (string | Folder)[]; // folderId list or Folder object list
 }
 
-/**
- * FolderTreeNode is similar to Folder,
- * but it is for UI display.
- */
-export interface FolderTreeNode extends QTreeNode {
-  _id: string; // uid managed by db
-  _rev: string; // rev handled by database
-  dataType: "folder"; // for database search
-  children: FolderTreeNode[];
-}
-
+/******************************************
+ * For GraphView
+ ******************************************/
 export interface Node {
   id: string; // id of the node
   label: string; // label of the node
@@ -101,6 +95,9 @@ export interface Edge {
   targetNodes: Node[]; // array of target Nodes
 }
 
+/****************************************
+ * PDF Reader
+ ****************************************/
 export interface PDFState {
   _id: string; // handled by db
   _rev: string; // handled by db
@@ -164,9 +161,9 @@ export interface PDFSearch {
   entireWord: boolean;
 }
 
-/**
+/**************************************************
  * App global settings
- */
+ **************************************************/
 export interface Settings {
   theme: "dark" | "light"; // dark by default
   language: "en_US" | "zh_CN"; // en_US by default

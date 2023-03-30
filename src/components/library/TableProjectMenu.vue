@@ -26,7 +26,7 @@
       </q-item>
       <q-item
         clickable
-        @mouseover="$refs.submenu.show()"
+        @mouseover="($refs.submenu as QMenu).show()"
       >
         <q-item-section>
           {{ !!row.path ? $t("replace-file") : $t("attach-file") }}
@@ -104,12 +104,17 @@
     </q-list>
   </q-menu>
 </template>
-<script>
+<script lang="ts">
+// types
+import { defineComponent, PropType } from "vue";
+import { Project } from "src/backend/database";
+import { QMenu } from "quasar";
+// db
 import { copyToClipboard } from "quasar";
 import { useStateStore } from "src/stores/appState";
 
-export default {
-  props: { row: Object },
+export default defineComponent({
+  props: { row: { type: Object as PropType<Project>, required: true } },
   emits: [
     "openItem",
     "deleteItem",
@@ -142,7 +147,7 @@ export default {
       copyToClipboard(this.row._id);
     },
 
-    deleteItem(deleteFromDB) {
+    deleteItem(deleteFromDB: boolean) {
       this.$bus.emit("showDeleteDialog", this.row, deleteFromDB);
     },
 
@@ -156,7 +161,7 @@ export default {
       this.attachFile(replaceStoredCopy);
     },
 
-    attachFile(replaceStoredCopy) {
+    attachFile(replaceStoredCopy: boolean) {
       this.$emit("attachFile", replaceStoredCopy);
     },
 
@@ -164,5 +169,5 @@ export default {
       this.$bus.emit("showSearchMetaDialog");
     },
   },
-};
+});
 </script>

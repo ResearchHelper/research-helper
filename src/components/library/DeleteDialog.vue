@@ -54,8 +54,10 @@
     </q-card>
   </q-dialog>
 </template>
-<script>
-export default {
+<script lang="ts">
+import { defineComponent } from "vue";
+
+export default defineComponent({
   props: { show: Boolean, projectTitle: String, deleteFromDB: Boolean },
   emits: ["update:show", "confirm"],
 
@@ -71,5 +73,5 @@ export default {
       this.$emit("update:show", false);
     },
   },
-};
+});
 </script>
