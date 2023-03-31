@@ -1,6 +1,12 @@
 <template>
   <!-- systembar: 32px, tab: 36px  -->
   <q-scroll-area style="height: 100%">
+    <div
+      v-if="annots.length === 0"
+      style="font-size: 1rem"
+    >
+      No annotations on this PDF
+    </div>
     <q-list
       ref="annotationList"
       dense
@@ -24,17 +30,22 @@
   </q-scroll-area>
 </template>
 
-<script>
+<script lang="ts">
+import { defineComponent, PropType } from "vue";
+import { Annotation } from "src/backend/database";
 import AnnotCard from "./AnnotCard.vue";
 
-export default {
-  props: { selectedAnnotId: String, annots: Array },
+export default defineComponent({
+  props: {
+    selectedAnnotId: String,
+    annots: { type: Array as PropType<Annotation[]>, required: true },
+  },
   emits: ["update:selectedAnnotId", "update", "delete"],
 
   components: { AnnotCard },
 
   methods: {
-    clickAnnotCard(annotId) {
+    clickAnnotCard(annotId: string) {
       this.$emit("update:selectedAnnotId", annotId);
     },
 
@@ -52,16 +63,13 @@ export default {
       // no need to update ui since annots list is managed by annotManager
     },
 
-    /**
-     * update list
-     */
     updateList() {
-      for (let card of this.$refs.cards) {
+      for (let card of this.$refs.cards as (typeof AnnotCard)[]) {
         card.getContent();
       }
     },
   },
-};
+});
 </script>
 
 <style scoped>

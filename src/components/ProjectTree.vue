@@ -132,7 +132,7 @@
                 <!-- add item-id and type for access of drag source -->
                 <div
                   v-else
-                  style="width: calc(100% - 1.2rem)"
+                  style="width: calc(100% - 1.2rem); font-size: 1rem"
                   class="ellipsis"
                   :item-id="prop.key"
                   :type="prop.node.dataType"

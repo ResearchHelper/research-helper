@@ -14,7 +14,12 @@
     ref="tree"
   >
     <template v-slot:default-header="prop">
-      <div class="ellipsis">{{ prop.node.label }}</div>
+      <div
+        style="font-size: 1rem"
+        class="ellipsis"
+      >
+        {{ prop.node.label }}
+      </div>
     </template>
   </q-tree>
 </template>

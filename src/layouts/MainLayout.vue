@@ -396,7 +396,7 @@ export default defineComponent({
      */
     onItemDestroyed(id: string) {
       setTimeout(() => {
-        let treeEl = (this.$refs.tree as typeof GLayout). .$el;
+        let treeEl = (this.$refs.tree as typeof GLayout).$el;
         let element = treeEl.querySelector(`[item-id='${id}']`);
         this.addDragSource(element, true);
       }, 100);

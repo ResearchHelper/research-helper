@@ -95,7 +95,7 @@ function deleteFile(filePath: string) {
 function renameFile(filePath: string, fileName: string) {
   try {
     let dirname = path.dirname(filePath);
-    let newPath = path.join(dirname, fileName);
+    let newPath = path.join(dirname, fileName.replace("/", ""));
     fs.renameSync(filePath, newPath);
     return newPath;
   } catch (error) {

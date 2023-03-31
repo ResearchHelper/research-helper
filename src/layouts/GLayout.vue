@@ -400,7 +400,6 @@ onMounted(() => {
   GLayout.beforeVirtualRectingEvent = handleBeforeVirtualRectingEvent;
 
   GLayout.on("focus", (e) => {
-    console.log("focus", e);
     let target = e.target as ComponentItem | RowOrColumn | Stack;
     if (!target.isComponent) return;
     let state = (target as ComponentItem).container.state as Json;

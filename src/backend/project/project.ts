@@ -92,8 +92,11 @@ async function deleteProject(
  */
 async function updateProject(project: Project): Promise<Project | void> {
   try {
+    let oldProject = await db.get(project._id);
+    project._rev = oldProject._rev;
     let result = await db.put(project);
-    return await db.get(result.id);
+    project._rev = result.rev;
+    return await project;
   } catch (error) {
     console.log(error);
   }

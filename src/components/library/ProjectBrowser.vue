@@ -72,6 +72,7 @@
               background: var(--color-library-tableview-bkgd);
             "
             @dragProject="(key) => onDragProject(key)"
+            @refreshTable="getProjects"
             ref="table"
           />
         </template>
@@ -118,7 +119,6 @@
 // types
 import { defineComponent } from "vue";
 import { Folder, Project } from "src/backend/database";
-import { QTable } from "quasar";
 // components
 import ActionBar from "src/components/library/ActionBar.vue";
 import TableView from "src/components/library/TableView.vue";
@@ -236,6 +236,7 @@ export default defineComponent({
      ************************************************/
 
     async getProjects() {
+      this.projects = [];
       // get projects and their notes
       this.projects = await getProjectsByFolderId(
         this.stateStore.selectedFolderId
@@ -303,7 +304,6 @@ export default defineComponent({
             let content = await page.getTextContent();
             for (let item of content.items) {
               let identifier = null;
-              console.log(item);
               // match ISBN-10 or ISBN-13
               let isbns = item.str.match(
                 /^ISBN.* (?=(?:\D*\d){10}(?:(?:\D*\d){3})?$)[\d-]+$/

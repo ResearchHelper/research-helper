@@ -14,7 +14,10 @@
         :annot-card-id="annot._id"
         class="row justify-between items-center"
       >
-        <div class="q-mr-md">
+        <div
+          style="font-size: 1rem"
+          class="q-mr-md"
+        >
           {{ annot.type.toUpperCase() + " - page" + annot.pageNumber }}
         </div>
 
@@ -47,6 +50,7 @@
     <pre
       ref="content"
       style="
+        font-size: 1rem;
         min-height: 5em;
         max-width: 50vw;
         max-height: 30vh;
@@ -60,6 +64,7 @@
   </q-card>
 </template>
 <script>
+import { defineComponent } from "vue";
 import { debounce } from "quasar";
 import { getAnnotationById } from "src/backend/pdfreader/annotation";
 import renderMathInElement from "katex/dist/contrib/auto-render";
@@ -67,8 +72,8 @@ import "katex/dist/katex.min.css";
 
 import AnnotMenu from "./AnnotMenu.vue";
 
-export default {
-  props: { annotId: String, style: String },
+export default defineComponent({
+  props: { annotId: { type: String, required: true }, style: String },
   emits: ["close", "update", "delete"],
 
   components: {
@@ -78,7 +83,7 @@ export default {
   data() {
     return {
       editing: false,
-      annot: null,
+      annot: undefined,
     };
   },
 
@@ -89,6 +94,7 @@ export default {
 
   created() {
     const _saveContent = () => {
+      if (this.annot === undefined) return;
       this.$emit("update", {
         id: this.annot._id,
         data: { content: this.annot.content },
@@ -140,5 +146,5 @@ export default {
       this.$emit("delete", params);
     },
   },
-};
+});
 </script>

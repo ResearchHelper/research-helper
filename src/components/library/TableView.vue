@@ -99,7 +99,7 @@
             props.key === stateStore.selectedItemId && isClickingPDF,
         }"
         @click="isClickingPDF = true"
-        @renameFile="(project) => renameFromMeta(project)"
+        @renameFile="renameFromMeta(props.row, props.rowIndex)"
       />
       <!-- Notes -->
       <TableItemRow
@@ -169,7 +169,12 @@ export default defineComponent({
     projects: { type: Array as PropType<Project[]>, required: true },
     selectedProject: { type: Object as PropType<Project>, required: false },
   },
-  emits: ["dragProject", "update:projects", "update:selectedProject"],
+  emits: [
+    "dragProject",
+    "update:projects",
+    "update:selectedProject",
+    "refreshTable",
+  ],
 
   components: {
     TableProjectMenu,
@@ -254,10 +259,10 @@ export default defineComponent({
     /**
      * Rename attached file from Metadata
      * @param row - project with meta
+     * @param rowIndex - for immediate UI update
      */
-    async renameFromMeta(row: Project) {
+    async renameFromMeta(row: Project, rowIndex: number) {
       if (row.path === undefined) return;
-      if (this.selectedRow === undefined) return;
       let author = "";
       let year = row.year || "Unknown";
       let title = row.title;
@@ -279,8 +284,8 @@ export default defineComponent({
 
       // update ui and backend
       row.path = renameFile(row.path, fileName);
-      row = (await updateProject(row)) as Project;
-      this.selectedRow._rev = row._rev;
+      await updateProject(row);
+      this.$emit("refreshTable");
     },
 
     /**
