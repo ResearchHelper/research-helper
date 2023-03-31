@@ -52,6 +52,9 @@ import {
   LogicalZIndex,
   VirtualLayout,
   ResolvedLayoutConfig,
+  ComponentItem,
+  RowOrColumn,
+  Stack,
 } from "golden-layout";
 import GLComponent from "src/pages/GLComponent.vue";
 
@@ -74,9 +77,13 @@ const GLRoot = ref<null | HTMLElement>(null);
 let GLayout: VirtualLayout;
 const GlcKeyPrefix = readonly(ref("glc_"));
 
-const AllComponents = ref({});
-const MapComponents = ref({});
-let IdToRef = {};
+const AllComponents = ref(
+  {} as { [refId: number]: { component: any; id: string } }
+);
+const MapComponents = ref(
+  {} as { [refId: number]: { container: ComponentContainer; glc: any } }
+);
+const IdToRef = {} as { [id: string]: number };
 const UnusedIndexes: number[] = [];
 let CurIndex = 0;
 let GlBoundingClientRect: DOMRect;
@@ -89,13 +96,13 @@ const initialized = ref(false);
  *******************/
 watch(initialized, (initialized) => {
   // after initialized, focus the workingItem
-  if (initialized) focusById(props.workingItemId);
+  if (initialized) focusById(props.workingItemId as string);
 });
 
 // must use a getter to get props.workingItemId
 watch(
   () => props.workingItemId,
-  (id) => focusById(id)
+  (id) => focusById(id as string)
 );
 
 /*******************
@@ -120,9 +127,9 @@ const addComponent = (componentType: string, title: string, id: string) => {
 
 /**
  *
- * @param {String} componentType Vue document name
- * @param {String} title Tab title
- * @param {String} id projectId or noteId
+ * @param componentType - Vue document name
+ * @param title - Tab title
+ * @param id - projectId or noteId
  */
 const addGLComponent = async (
   componentType: string,
@@ -154,23 +161,36 @@ const loadGLLayout = async (
       ? LayoutConfig.fromResolved(layoutConfig as ResolvedLayoutConfig)
       : layoutConfig
   ) as LayoutConfig;
-  let contents = [config.root.content];
+  if (config.root === undefined) return;
+  let contents = [config.root.content] as (
+    | RowOrColumnItemConfig[]
+    | StackItemConfig[]
+    | ComponentItemConfig[]
+  )[];
 
   let index = 0;
   while (contents.length > 0) {
-    const content = contents.shift();
+    const content = contents.shift() as
+      | RowOrColumnItemConfig[]
+      | StackItemConfig[]
+      | ComponentItemConfig[];
     for (let itemConfig of content) {
       if (itemConfig.type == "component") {
         index = addComponent(
-          itemConfig.componentType,
-          itemConfig.title,
-          itemConfig.componentState.id
+          itemConfig.componentType as string,
+          itemConfig.title as string,
+          (itemConfig.componentState as Json).id as string
         );
         if (typeof itemConfig.componentState == "object")
-          itemConfig.componentState["refId"] = index;
+          (itemConfig.componentState as Json)["refId"] = index;
         else itemConfig.componentState = { refId: index };
       } else if (itemConfig.content.length > 0) {
-        contents.push(itemConfig.content);
+        contents.push(
+          itemConfig.content as
+            | RowOrColumnItemConfig[]
+            | StackItemConfig[]
+            | ComponentItemConfig[]
+        );
       }
     }
   }
@@ -213,15 +233,15 @@ const removeGLComponent = (removeId: string) => {
 /**
  * Add drag source to the entries in projectTree.
  * After a window is closed, if the entry is still in projectTree, then add component only.
- * @param {HTMLElement} element
- * @param {Map} componentType
- * @param {Map} componentState
- * @param {String} title
+ * @param element
+ * @param componentType
+ * @param componentState
+ * @param title
  */
 const addGLDragSource = async (
   element: HTMLElement,
-  componentType: Map,
-  componentState: Map,
+  componentType: string,
+  componentState: { refId: number; id: string },
   title: string,
   addComponentOnly = false
 ) => {
@@ -265,7 +285,8 @@ onMounted(() => {
     width: number,
     height: number
   ) => {
-    const component = MapComponents.value[container.state.refId];
+    let refId = (container.state as Json).refId as number;
+    const component = MapComponents.value[refId];
     if (!component || !component?.glc) {
       throw new Error(
         "handleContainerVirtualRectingRequiredEvent: Component not found"
@@ -283,7 +304,8 @@ onMounted(() => {
     container: ComponentContainer,
     visible: boolean
   ) => {
-    const component = MapComponents.value[container.state.refId];
+    let refId = (container.state as Json).refId as number;
+    const component = MapComponents.value[refId];
     if (!component || !component?.glc) {
       throw new Error(
         "handleContainerVirtualVisibilityChangeRequiredEvent: Component not found"
@@ -297,7 +319,8 @@ onMounted(() => {
     logicalZIndex: LogicalZIndex,
     defaultZIndex: string
   ) => {
-    const component = MapComponents.value[container.state.refId];
+    let refId = (container.state as Json).refId as number;
+    const component = MapComponents.value[refId];
     if (!component || !component?.glc) {
       throw new Error(
         "handleContainerVirtualZIndexChangeRequiredEvent: Component not found"
@@ -323,9 +346,9 @@ onMounted(() => {
     let ref = GlcKeyPrefix.value + refId;
     const component = instance?.refs[ref];
 
-    MapComponents.value[container.state.refId] = {
+    MapComponents.value[refId] = {
       container: container,
-      glc: component[0],
+      glc: (component as any)[0],
     };
 
     container.virtualRectingRequiredEvent = (container, width, height) =>
@@ -352,8 +375,9 @@ onMounted(() => {
   };
 
   const unbindComponentEventListener = (container: ComponentContainer) => {
-    let refId = container.state.refId;
-    let removeId = container.state.id;
+    let state = container.state as Json;
+    let refId = state.refId as number;
+    let removeId = state.id as string;
     const component = MapComponents.value[refId];
     if (!component || !component?.glc) {
       throw new Error("handleUnbindComponentEvent: Component not found");
@@ -376,19 +400,23 @@ onMounted(() => {
   GLayout.beforeVirtualRectingEvent = handleBeforeVirtualRectingEvent;
 
   GLayout.on("focus", (e) => {
-    let state = e.target.container.state;
-    emit("update:workingItemId", state.id);
+    console.log("focus", e);
+    let target = e.target as ComponentItem | RowOrColumn | Stack;
+    if (!target.isComponent) return;
+    let state = (target as ComponentItem).container.state as Json;
+    emit("update:workingItemId", state.id as string);
     emit("layoutchanged");
   });
 
-  GLayout.on("componentCreated", (e) => {
-    // record id-refid pair
-    let state = e.target.container.state;
-    IdToRef[state.id] = state.refId;
+  GLayout.on("itemCreated", (e) => {
+    let target = e.target as ComponentItem | RowOrColumn | Stack;
+    if (!target.isComponent) return;
+    let state = (target as ComponentItem).container.state as Json;
+    IdToRef[state.id as string] = state.refId as number;
   });
 
   GLayout.on("activeContentItemChanged", (e) => {
-    let state = e.container.state;
+    let state = e.container.state as Json;
     emit("update:workingItemId", state.id);
     nextTick(() => {
       // wait until layout is updated
@@ -397,13 +425,11 @@ onMounted(() => {
     });
   });
 
-  // itemDestroyed
-  GLayout.on("beforeItemDestroyed", (e) => {
-    if (e.target.type != "component") return;
-  });
   GLayout.on("itemDestroyed", (e) => {
-    if (e.target.type != "component") return;
-    emit("itemdestroyed", e.target.container.state.id);
+    let target = e.target as ComponentItem | RowOrColumn | Stack;
+    if (!target.isComponent) return;
+    let state = (target as ComponentItem).container.state as Json;
+    emit("itemdestroyed", state.id);
   });
 });
 

@@ -96,13 +96,18 @@
   </q-splitter>
 </template>
 
-<script>
+<script lang="ts">
+// types
+import { defineComponent } from "vue";
+import { Project, Note } from "src/backend/database";
+// components
 import ProjectTree from "src/components/ProjectTree.vue";
 import WelcomeCarousel from "src/components/WelcomeCarousel.vue";
+// GoldenLayout
 import GLayout from "./GLayout.vue";
 import "src/css/goldenlayout/base.scss";
 import "src/css/goldenlayout/theme.scss";
-
+// db
 import { useStateStore } from "src/stores/appState";
 import { getProject } from "src/backend/project/project";
 import { getNotes } from "src/backend/project/note";
@@ -113,7 +118,7 @@ import {
   updateAppState,
 } from "src/backend/appState";
 
-export default {
+export default defineComponent({
   components: {
     GLayout,
     ProjectTree,
@@ -140,7 +145,7 @@ export default {
         return this.leftMenuSize > 0;
       },
 
-      set(visible) {
+      set(visible: boolean) {
         this.stateStore.showLeftMenu = visible;
         if (visible) {
           // if visible, the left menu has at least 10 unit width
@@ -169,7 +174,7 @@ export default {
         return;
       }
       this.setComponent(id).then(() => {
-        this.stateStore.openItemId = null;
+        this.stateStore.openItemId = "";
       });
     },
 
@@ -218,7 +223,7 @@ export default {
      * Load and apply settings
      */
 
-    changeTheme(theme) {
+    changeTheme(theme: string) {
       switch (theme) {
         case "dark":
           this.$q.dark.set(true);
@@ -230,16 +235,12 @@ export default {
       }
     },
 
-    changeLanguage(locale) {
+    changeLanguage(locale: string) {
       this.$i18n.locale = locale;
     },
 
-    changeFontSize(fontSize) {
+    changeFontSize(fontSize: string) {
       document.documentElement.style.fontSize = fontSize;
-    },
-
-    changeStoragePath(path) {
-      this.welcomeCarousel = false;
     },
 
     /*****************************************************************
@@ -249,9 +250,9 @@ export default {
     /**
      * Set focus to component with specified id
      * create it if it doesn't exist
-     * @param {String} id
+     * @param id - itemId
      */
-    async setComponent(id) {
+    async setComponent(id: string) {
       let componentType = "";
       let title = "";
       switch (id) {
@@ -268,7 +269,7 @@ export default {
           title = this.$t("settings");
           break;
         default:
-          let item = await getProject(id);
+          let item = (await getProject(id)) as Project | Note;
           if (item.dataType == "project") {
             componentType = "ReaderPage";
             title = item.title;
@@ -286,9 +287,9 @@ export default {
 
     /**
      * Closing the project need to close the related windows
-     * @param {string} id
+     * @param id - itemId
      */
-    async removeComponent(id) {
+    async removeComponent(id: string) {
       this.$refs.layout.removeGLComponent(id);
       let item = await getProject(id);
       // item might be undefined, use ?.
@@ -316,7 +317,7 @@ export default {
      * Layout and AppState
      ***************************************************/
 
-    async resizeLeftMenu(size) {
+    async resizeLeftMenu(size: number) {
       this.$refs.layout.resize();
       this.stateStore.leftMenuSize = size > 10 ? size : 10;
     },
@@ -362,10 +363,10 @@ export default {
 
     /**
      * Add dragSource to the rows in projectTree
-     * @param {HTMLElement} element
-     * @param {boolean} addComponentOnly
+     * @param element - element to be drag
+     * @param addComponentOnly - after a component is drag, we only need to add another component without dragsource
      */
-    addDragSource(element, addComponentOnly = false) {
+    addDragSource(element: HTMLElement, addComponentOnly = false) {
       // FIXME multi-windows with same id is not well supported
       // think about a good way to do this
       // can we view the same "Object" in different windows ?
@@ -391,15 +392,15 @@ export default {
     /**
      * After a window is closed (but the project is not closed yet,
      * we need to add a void component so we can drag that project to open window again
-     * @param {string} id
+     * @param id - itemId
      */
-    onItemDestroyed(id) {
+    onItemDestroyed(id: string) {
       setTimeout(() => {
-        let treeEl = this.$refs.tree.$el;
+        let treeEl = (this.$refs.tree as typeof GLayout). .$el;
         let element = treeEl.querySelector(`[item-id='${id}']`);
         this.addDragSource(element, true);
       }, 100);
     },
   },
-};
+});
 </script>
