@@ -166,6 +166,7 @@ export default defineComponent({
 
   watch: {
     async "stateStore.openItemId"(id) {
+      console.log("id", id);
       if (!!!id) return;
       let item = await getProject(id);
       if (item?.dataType === "project" && !item?.path) {
@@ -173,9 +174,10 @@ export default defineComponent({
         this.stateStore.workingItemId = id;
         return;
       }
-      this.setComponent(id).then(() => {
-        this.stateStore.openItemId = "";
-      });
+      await this.setComponent(id);
+      // this.setComponent(id).then(() => {
+      //   this.stateStore.openItemId = "";
+      // });
     },
 
     "stateStore.openedProjectIds": {

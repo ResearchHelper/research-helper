@@ -56,11 +56,13 @@ async function deleteNote(noteId: string) {
  * Update information of a note in database
  * @param {Note} note
  */
-async function updateNote(newNote: Note) {
+async function updateNote(newNote: Note): Promise<Note | undefined> {
   try {
     let note: Note = await db.get(newNote._id);
     newNote._rev = note._rev;
-    await db.put(newNote);
+    let result = await db.put(newNote);
+    newNote._rev = result.rev;
+    return newNote;
   } catch (error) {
     console.log(error);
   }

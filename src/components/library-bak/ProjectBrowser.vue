@@ -72,6 +72,7 @@
               background: var(--color-library-tableview-bkgd);
             "
             @dragProject="(key) => onDragProject(key)"
+            @refreshTable="getProjects"
             ref="table"
           />
         </template>
@@ -116,17 +117,8 @@
 
 <script lang="ts">
 // types
-import { defineComponent, computed } from "vue";
-import { Folder, Project, Note } from "src/backend/database";
-import {
-  KEY_metaDialog,
-  KEY_deleteDialog,
-  KEY_attachFile,
-  KEY_renameFromMeta,
-  KEY_addNote,
-  KEY_renameNote,
-  KEY_deleteNote,
-} from "./injectKeys";
+import { defineComponent } from "vue";
+import { Folder, Project } from "src/backend/database";
 // components
 import ActionBar from "src/components/library/ActionBar.vue";
 import TableView from "src/components/library/TableView.vue";
@@ -146,23 +138,11 @@ import {
   getProjectsByFolderId,
   deleteProject,
 } from "src/backend/project/project";
-import {
-  getNotes,
-  addNote,
-  updateNote,
-  deleteNote,
-} from "src/backend/project/note";
-import {
-  createEdge,
-  updateEdge,
-  deleteEdge,
-  appendEdgeTarget,
-  updateEdgeTarget,
-  deleteEdgeTarget,
-} from "src/backend/project/graph";
+import { getNotes } from "src/backend/project/note";
+import { createEdge, updateEdge, deleteEdge } from "src/backend/project/graph";
 import { useStateStore } from "src/stores/appState";
 import { getMeta, exportMeta, importMeta } from "src/backend/project/meta";
-import { copyFile, renameFile } from "src/backend/project/file";
+import { copyFile } from "src/backend/project/file";
 // util (to scan identifier in PDF)
 import * as pdfjsLib from "pdfjs-dist";
 pdfjsLib.GlobalWorkerOptions.workerSrc =
@@ -217,29 +197,33 @@ export default defineComponent({
     };
   },
 
+  provide() {
+    return {
+      updateProjectUI: (project: Project, index: number) => {
+        this.projects[index] = project;
+      },
+      showDeleteDialog: this.showDeleteDialog,
+      showSearchMetaDialog: this.showSearchMetaDialog,
+    };
+  },
+
   watch: {
     async "stateStore.selectedFolderId"(folderId, _) {
       await this.getProjects();
     },
   },
 
-  provide() {
-    return {
-      // for projectRow
-      [KEY_deleteDialog]: this.showDeleteDialog,
-      [KEY_metaDialog]: this.showSearchMetaDialog,
-      [KEY_addNote]: this.addNote,
-      [KEY_attachFile]: this.attachFile,
+  mounted() {
+    this.$bus.on("showDeleteDialog", this.showDeleteDialog);
+    this.$bus.on("showSearchMetaDialog", this.showSearchMetaDialog);
 
-      // for itemRow
-      [KEY_renameNote]: this.renameNote,
-      [KEY_deleteNote]: this.deleteNote,
-      [KEY_renameFromMeta]: this.renameFromMeta,
-    };
+    this.getProjects();
   },
 
-  mounted() {
-    this.getProjects();
+  beforeUnmount() {
+    // must provide the callback function so it can properly remove the listener
+    this.$bus.off("showDeleteDialog", this.showDeleteDialog);
+    this.$bus.off("showSearchMetaDialog", this.showSearchMetaDialog);
   },
 
   methods: {
@@ -258,7 +242,7 @@ export default defineComponent({
     },
 
     /************************************************
-     * Projects (get, add, delete, update, attachFile, renameFromMeta)
+     * Projects (get, add, delete, update, attachFile)
      ************************************************/
 
     async getProjects() {
@@ -477,149 +461,12 @@ export default defineComponent({
       }
     },
 
-    async updateProject(
-      project: Project,
-      updateEdgeData = false,
-      index?: number
-    ) {
+    async updateProject(project: Project, index: number) {
       // update db
       project = (await updateProject(project)) as Project;
-      if (updateEdgeData) {
-        await updateEdge(project._id, {
-          sourceNode: {
-            id: project._id,
-            label: project.title,
-            type: "project",
-          },
-        });
-      }
 
       // update ui
-      if (index === undefined)
-        index = this.projects.findIndex((p) => p._id === project._id);
-      else if (index === -1) index = this.projects.length;
       this.projects[index] = project;
-    },
-
-    async attachFile(
-      replaceStoredCopy: boolean,
-      projectId: string,
-      index?: number
-    ) {
-      let filePaths = window.fileBrowser.showFilePicker();
-      if (filePaths?.length === 1) {
-        // find index
-        if (index === undefined)
-          index = this.projects.findIndex((p) => p._id === projectId);
-        else if (index === -1) index = this.projects.length;
-
-        let dstPath = filePaths[0];
-        if (replaceStoredCopy)
-          dstPath = (await copyFile(dstPath, projectId)) as string;
-        this.projects[index].path = dstPath;
-        this.projects[index] = (await updateProject(
-          this.projects[index]
-        )) as Project;
-      }
-    },
-
-    /**
-     * Rename PDF file form meta
-     * @param row
-     * @param index
-     */
-    async renameFromMeta(project: Project, index?: number) {
-      if (project.path === undefined) return;
-      let author = "";
-      let year = project.year || "Unknown";
-      let title = project.title;
-      let extname = window.path.extname(project.path);
-      if (project.author.length === 0) {
-        // no author
-        author = "Unknown";
-      } else {
-        // 1 author
-        let author0 = project.author[0];
-        author = !!author0.family
-          ? author0.family
-          : (author0.literal as string);
-
-        // more than 1 authors
-        if (project.author.length > 1) author += " et al.";
-      }
-      let fileName = `${author} - ${year} - ${title}${extname}`;
-
-      // update backend
-      project.path = renameFile(project.path, fileName);
-      project = (await updateProject(project)) as Project;
-
-      // update ui
-      if (index === undefined)
-        index = this.projects.findIndex((p) => p._id === project._id);
-      else if (index === -1) index = this.projects.length;
-      this.projects[index] = project;
-    },
-
-    /******************************************************
-     * Note (add, delete, update)
-     *******************************************************/
-    async addNote(projectId: string, index?: number) {
-      // update db
-      let note = (await addNote(projectId)) as Note;
-      await createEdge(note);
-      await appendEdgeTarget(note.projectId, note);
-
-      // update ui
-      if (index === undefined)
-        index = this.projects.findIndex((p) => p._id === projectId);
-      else if (index === -1) index = this.projects.length;
-      this.projects[index].children?.push(note);
-      this.stateStore.selectedItemId = note._id;
-
-      // update projectTree ui
-      this.$bus.emit("updateProject", this.projects[index]);
-    },
-
-    async renameNote(note: Note, index?: number) {
-      // update db
-      note = (await updateNote(note)) as Note;
-      let sourceNode = {
-        id: note._id,
-        label: note.label,
-        type: note.dataType,
-      };
-      await updateEdge(note._id, { sourceNode: sourceNode });
-      await updateEdgeTarget(note.projectId, note);
-
-      // update ui
-      if (index === undefined)
-        index = this.projects.findIndex((p) => p._id === note.projectId);
-      else if (index === -1) index = this.projects.length;
-      let project = this.projects[index];
-      if (project.children === undefined) return;
-      let noteIndex = project.children.findIndex((n) => n._id === note._id);
-      if (noteIndex !== undefined) project.children[noteIndex] = note;
-
-      this.$bus.emit("updateProject", project); // to update ui of projectTree
-    },
-
-    async deleteNote(note: Note, index?: number) {
-      // update db
-      await deleteNote(note._id);
-      await deleteEdge(note._id);
-      await deleteEdgeTarget(note.projectId, note._id);
-
-      // update ui
-      if (index === undefined)
-        index = this.projects.findIndex((p) => p._id === note.projectId);
-      else if (index === -1) index = this.projects.length;
-      let project = this.projects[index];
-      if (project.children === undefined) return;
-      project.children = project.children.filter((n) => n._id != note._id);
-      console.log("project.children after filter", project.children);
-
-      // update projectTree ui
-      this.$bus.emit("updateProject", project);
     },
 
     /************************************************************

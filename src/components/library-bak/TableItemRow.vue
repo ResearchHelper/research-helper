@@ -18,7 +18,7 @@
         <input
           v-if="renaming"
           v-model="label"
-          @blur="onRenameNote"
+          @blur="renameNote"
           @keydown.enter="($refs.renameInput as HTMLInputElement).blur()"
           ref="renameInput"
         />
@@ -112,13 +112,8 @@
 </template>
 <script lang="ts">
 // types
-import { defineComponent, inject, PropType } from "vue";
+import { defineComponent, PropType } from "vue";
 import { Project, Note } from "src/backend/database";
-import {
-  KEY_deleteNote,
-  KEY_renameFromMeta,
-  KEY_renameNote,
-} from "./injectKeys";
 // db
 import { useStateStore } from "src/stores/appState";
 import { copyToClipboard } from "quasar";
@@ -127,44 +122,26 @@ export default defineComponent({
   props: {
     item: { type: Object as PropType<Project | Note>, required: true },
   },
-  emits: ["renameFile"],
+  emits: ["renameNote", "deleteNote", "renameFile"],
 
   data() {
     return {
       renaming: false,
+      label: "",
     };
   },
 
-  computed: {
-    // label has to be reactive
-    // once this.item.path is changed
-    // we also need to change the label
-    label(): string {
-      let _label = "";
-      if (this.item.dataType === "note") {
-        _label = this.item.label;
-      } else if (this.item.dataType === "project") {
-        _label = window.path.basename(this.item.path as string);
-      }
-      return _label;
-    },
+  mounted() {
+    if (this.item.dataType === "note") {
+      this.label = this.item.label;
+    } else if (this.item.dataType === "project") {
+      this.label = window.path.basename(this.item.path as string);
+    }
   },
 
   setup() {
     const stateStore = useStateStore();
-    const renameNote = inject(KEY_renameNote) as (
-      note: Note,
-      index?: number
-    ) => void;
-    const deleteNote = inject(KEY_deleteNote) as (
-      note: Note,
-      index?: number
-    ) => void;
-    const renameFromMeta = inject(KEY_renameFromMeta) as (
-      project: Project,
-      index?: number
-    ) => void;
-    return { stateStore, renameNote, deleteNote, renameFromMeta };
+    return { stateStore };
   },
 
   methods: {
@@ -177,7 +154,7 @@ export default defineComponent({
     },
 
     openItem() {
-      this.stateStore.openItem(this.item._id);
+      this.stateStore.openItemId = this.item._id;
     },
 
     setRenaming() {
@@ -190,20 +167,20 @@ export default defineComponent({
       }, 100);
     },
 
-    onRenameNote() {
-      let note = this.item as Note;
+    renameNote() {
+      let note = this.item;
       note.label = this.label;
-      this.renameNote(note);
+      this.$emit("renameNote", note);
 
       this.renaming = false;
     },
 
     async deleteItem() {
-      this.deleteNote(this.item as Note);
+      this.$emit("deleteNote", this.item);
     },
 
     async renameFile() {
-      this.renameFromMeta(this.item as Project);
+      this.$emit("renameFile", this.item);
     },
   },
 });

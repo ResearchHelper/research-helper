@@ -51,5 +51,13 @@ export const useStateStore = defineStore("stateStore", {
         settings: this.settings as Settings,
       } as AppState;
     },
+
+    openItem(itemId: string) {
+      this.openItemId = itemId;
+      // set this to empty, so that user can reopen the same project
+      setTimeout(() => {
+        this.openItemId = "";
+      }, 100);
+    },
   },
 });

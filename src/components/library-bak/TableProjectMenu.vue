@@ -9,7 +9,7 @@
       <q-item
         clickable
         v-close-popup
-        @click="copyProjectId"
+        @click="copyItemId"
       >
         <q-item-section>{{ $t("copy-project-id") }}</q-item-section>
       </q-item>
@@ -20,7 +20,7 @@
         v-if="row.dataType === 'project'"
         clickable
         v-close-popup
-        @click="onAddNote()"
+        @click="addNote"
       >
         <q-item-section> {{ $t("add-note") }} </q-item-section>
       </q-item>
@@ -45,7 +45,7 @@
               clickable
               v-close-popup
             >
-              <q-item-section @click="onAttachFile(true)">
+              <q-item-section @click="replaceStoredFileCopy">
                 {{
                   !!row.path
                     ? $t("replace-stored-copy-of-file")
@@ -57,7 +57,7 @@
               clickable
               v-close-popup
             >
-              <q-item-section @click="onAttachFile(false)">
+              <q-item-section @click="replaceLinkToFile">
                 {{
                   !!row.path
                     ? $t("replace-path-to-file")
@@ -73,7 +73,7 @@
       <q-item
         clickable
         v-close-popup
-        @click="openProject"
+        @click="openItem"
       >
         <q-item-section>{{ $t("open-project") }}</q-item-section>
       </q-item>
@@ -81,7 +81,7 @@
       <q-item
         clickable
         v-close-popup
-        @click="searchMeta"
+        @click="showSearchMetaDialog"
       >
         <q-item-section>{{ $t("search-meta-info") }}</q-item-section>
       </q-item>
@@ -90,14 +90,14 @@
         v-if="stateStore.selectedFolderId != 'library'"
         clickable
         v-close-popup
-        @click="deleteProject(false)"
+        @click="deleteItem(false)"
       >
         <q-item-section>{{ $t("delete-from-folder") }}</q-item-section>
       </q-item>
       <q-item
         clickable
         v-close-popup
-        @click="deleteProject(true)"
+        @click="deleteItem(true)"
       >
         <q-item-section>{{ $t("delete-from-database") }}</q-item-section>
       </q-item>
@@ -106,26 +106,22 @@
 </template>
 <script lang="ts">
 // types
-import { defineComponent, inject, PropType } from "vue";
+import { defineComponent, PropType } from "vue";
 import { Project } from "src/backend/database";
-import { QMenu, QTableProps } from "quasar";
-import {
-  KEY_metaDialog,
-  KEY_deleteDialog,
-  KEY_addNote,
-  KEY_attachFile,
-} from "./injectKeys";
+import { QMenu } from "quasar";
 // db
 import { copyToClipboard } from "quasar";
 import { useStateStore } from "src/stores/appState";
 
 export default defineComponent({
-  props: {
-    row: { type: Object as PropType<Project>, required: true },
-    rowIndex: { type: Number, required: true },
-    props: { type: Object as PropType<QTableProps> },
-  },
-  emits: ["expandRow"],
+  props: { row: { type: Object as PropType<Project>, required: true } },
+  emits: [
+    "openItem",
+    "deleteItem",
+    "deleteItemFromDB",
+    "addNote",
+    "attachFile",
+  ],
 
   data() {
     return {
@@ -135,67 +131,42 @@ export default defineComponent({
 
   setup() {
     const stateStore = useStateStore();
-    // dialogs
-    const showSearchMetaDialog = inject(KEY_metaDialog) as () => void;
-    const showDeleteDialog = inject(KEY_deleteDialog) as (
-      project: Project,
-      deleteFromDB: boolean
-    ) => void;
-    // note
-    const addNote = inject(KEY_addNote) as (
-      projectId: string,
-      index?: number
-    ) => void;
-    const attachFile = inject(KEY_attachFile) as (
-      replace: boolean,
-      projectId: string,
-      index?: number
-    ) => void;
-    return {
-      stateStore,
-      showSearchMetaDialog,
-      showDeleteDialog,
-      addNote,
-      attachFile,
-    };
+    return { stateStore };
   },
 
   methods: {
-    onAddNote() {
-      this.addNote(this.row._id, this.rowIndex);
-      this.expandRow(true);
+    addNote() {
+      this.$emit("addNote", this.row);
     },
 
-    expandRow(isExpand: boolean) {
-      this.$emit("expandRow", isExpand);
+    openItem() {
+      this.$emit("openItem", this.row);
     },
 
-    openProject() {
-      this.stateStore.openItem(this.row._id);
-    },
-
-    copyProjectId() {
+    copyItemId() {
       copyToClipboard(this.row._id);
     },
 
-    deleteProject(deleteFromDB: boolean) {
-      this.showDeleteDialog(this.row, deleteFromDB);
+    deleteItem(deleteFromDB: boolean) {
+      this.$bus.emit("showDeleteDialog", this.row, deleteFromDB);
     },
 
-    /**
-     * Update a project by meta
-     */
-    searchMeta() {
-      this.showSearchMetaDialog();
+    replaceLinkToFile() {
+      let replaceStoredCopy = false;
+      this.attachFile(replaceStoredCopy);
     },
 
-    /**
-     * Attach PDF to a project
-     * @param replaceStoredCopy - replace the copy in storage?
-     */
-    onAttachFile(replaceStoredCopy: boolean) {
-      this.attachFile(replaceStoredCopy, this.row._id, this.rowIndex);
-      this.expandRow(true);
+    replaceStoredFileCopy() {
+      let replaceStoredCopy = true;
+      this.attachFile(replaceStoredCopy);
+    },
+
+    attachFile(replaceStoredCopy: boolean) {
+      this.$emit("attachFile", replaceStoredCopy);
+    },
+
+    showSearchMetaDialog() {
+      this.$bus.emit("showSearchMetaDialog");
     },
   },
 });
