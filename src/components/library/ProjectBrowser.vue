@@ -243,23 +243,28 @@ export default defineComponent({
   },
 
   methods: {
-    /******************************************
-     * Eventbus methods
-     ******************************************/
+    /************************************************
+     * Projects (get, add, delete, update, attachFile, renameFromMeta)
+     ************************************************/
+
+    /**
+     * Delete project
+     * @param project
+     * @param deleteFromDB
+     */
     showDeleteDialog(project: Project, deleteFromDB: boolean) {
       this.deleteDialog = true;
       this.project = project;
       this.deleteFromDB = deleteFromDB;
     },
 
+    /**
+     * Update project by meta
+     */
     showSearchMetaDialog() {
       let createProject = false;
       this.showIdentifierDialog(createProject);
     },
-
-    /************************************************
-     * Projects (get, add, delete, update, attachFile, renameFromMeta)
-     ************************************************/
 
     async getProjects() {
       this.projects = [];
@@ -475,30 +480,6 @@ export default defineComponent({
           await deleteEdge(note._id);
         }
       }
-    },
-
-    async updateProject(
-      project: Project,
-      updateEdgeData = false,
-      index?: number
-    ) {
-      // update db
-      project = (await updateProject(project)) as Project;
-      if (updateEdgeData) {
-        await updateEdge(project._id, {
-          sourceNode: {
-            id: project._id,
-            label: project.title,
-            type: "project",
-          },
-        });
-      }
-
-      // update ui
-      if (index === undefined)
-        index = this.projects.findIndex((p) => p._id === project._id);
-      else if (index === -1) index = this.projects.length;
-      this.projects[index] = project;
     },
 
     async attachFile(

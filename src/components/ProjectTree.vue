@@ -379,11 +379,15 @@ export default defineComponent({
       let idx = this.projects.findIndex((p) => p._id == project._id);
       // when updating project, be careful whether children property is undefined
       // the updateProject event emit from PDFReader has no children property
+      let children =
+        (project.children?.length as number) > 0
+          ? project.children
+          : this.projects[idx].children;
       this.projects[idx] = {
         _id: project._id,
         dataType: project.dataType,
         label: project.title,
-        children: project.children || this.projects[idx].children,
+        children: children,
         path: project.path,
       } as Project;
     },
@@ -391,7 +395,7 @@ export default defineComponent({
     selectItem(node: Project | Note) {
       console.log(node);
       this.stateStore.workingItemId = node._id;
-      if (node.dataType === "project" && node.children.length > 0)
+      if (node.dataType === "project" && (node.children?.length as number) > 0)
         this.expanded.push(node._id);
 
       this.$emit("openProject", node._id);
@@ -421,7 +425,7 @@ export default defineComponent({
       await appendEdgeTarget(note.projectId, note);
 
       // update ui
-      node.children.push(note);
+      node.children?.push(note);
 
       await this.$nextTick(); // wait until ui updates
       this.setRenameNote(note);
@@ -434,10 +438,12 @@ export default defineComponent({
       await deleteEdgeTarget(node.projectId, node._id); // delete target from project's edge
 
       // update ui
-      let index = this.projects.findIndex((p) => p.children.indexOf(node) > -1);
+      let index = this.projects.findIndex(
+        (p) => (p.children as Note[]).indexOf(node) > -1
+      );
       let project = this.projects[index];
 
-      project.children = project.children.filter(
+      project.children = (project.children as Note[]).filter(
         (child) => child._id != node._id
       );
       if (project.children.length == 0) {

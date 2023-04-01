@@ -173,6 +173,8 @@ export default defineComponent({
      * @param rowIndex
      */
     toggleContextMenu(row: Project, rowIndex: number) {
+      // we must select the row first
+      // before using the functionalities in the menu
       this.clickProject(row, rowIndex);
     },
 

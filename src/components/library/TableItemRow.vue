@@ -35,7 +35,7 @@
       v-else
       colspan="100%"
     >
-      <div class="row">
+      <div class="row items-center">
         <q-icon
           style="font-size: 1rem; padding-right: 0.3rem"
           name="bi-file-pdf-fill"
@@ -132,6 +132,7 @@ export default defineComponent({
   data() {
     return {
       renaming: false,
+      newLabel: "",
     };
   },
 
@@ -139,14 +140,19 @@ export default defineComponent({
     // label has to be reactive
     // once this.item.path is changed
     // we also need to change the label
-    label(): string {
-      let _label = "";
-      if (this.item.dataType === "note") {
-        _label = this.item.label;
-      } else if (this.item.dataType === "project") {
-        _label = window.path.basename(this.item.path as string);
-      }
-      return _label;
+    label: {
+      get() {
+        let _label = "";
+        if (this.item.dataType === "note") {
+          _label = this.item.label;
+        } else if (this.item.dataType === "project") {
+          _label = window.path.basename(this.item.path as string);
+        }
+        return _label;
+      },
+      set(newLabel: string) {
+        this.newLabel = newLabel;
+      },
     },
   },
 
@@ -192,7 +198,7 @@ export default defineComponent({
 
     onRenameNote() {
       let note = this.item as Note;
-      note.label = this.label;
+      note.label = this.newLabel;
       this.renameNote(note);
 
       this.renaming = false;

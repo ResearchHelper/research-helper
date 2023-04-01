@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import { AppState, Settings } from "src/backend/database";
+import { AppState, Project, Settings } from "src/backend/database";
 
 export const useStateStore = defineStore("stateStore", {
   state: () => ({
@@ -58,6 +58,10 @@ export const useStateStore = defineStore("stateStore", {
       setTimeout(() => {
         this.openItemId = "";
       }, 100);
+    },
+
+    updateOpenedProject(project: Project) {
+      // Do we need this?
     },
   },
 });
