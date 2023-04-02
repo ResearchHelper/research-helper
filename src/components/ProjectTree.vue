@@ -379,6 +379,7 @@ export default defineComponent({
       let idx = this.projects.findIndex((p) => p._id == project._id);
       // when updating project, be careful whether children property is undefined
       // the updateProject event emit from PDFReader has no children property
+      if (idx === -1) return;
       let children =
         (project.children?.length as number) > 0
           ? project.children

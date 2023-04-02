@@ -368,6 +368,8 @@ export default defineComponent({
         } catch (error) {
           this.error = error as Error;
           this.errorDialog = true;
+          // refresh table
+          await this.getProjects();
         }
       }
     },
@@ -450,6 +452,8 @@ export default defineComponent({
       } catch (error) {
         this.error = error as Error;
         this.errorDialog = true;
+        // refresh table
+        await this.getProjects();
       }
     },
 
