@@ -8,9 +8,15 @@
   "scripts": {
     "lint": "eslint --ext .js,.ts,.vue ./",
     "format": "prettier --write \"**/*.{js,ts,vue,scss,html,md,json}\" --ignore-path .gitignore",
-    "test": "echo \"No test specified\" && exit 0",
+    "test": "echo \"See package.json => scripts for available tests.\" && exit 0",
     "dev": "yarn run pouchdb-server --port 3000 -d remote_database &  quasar dev -m electron",
-    "debug": "quasar build -m electron -T AppImage --debug"
+    "debug": "quasar build -m electron -T AppImage --debug",
+    "test:unit": "vitest",
+    "test:unit:ci": "vitest run",
+    "test:e2e": "cross-env NODE_ENV=test start-test \"quasar dev\" http-get://localhost:9000 \"cypress open --e2e\"",
+    "test:e2e:ci": "cross-env NODE_ENV=test start-test \"quasar dev\" http-get://localhost:9000 \"cypress run --e2e\"",
+    "test:component": "cross-env NODE_ENV=test cypress open --component",
+    "test:component:ci": "cross-env NODE_ENV=test cypress run --component"
   },
   "dependencies": {
     "@citation-js/plugin-isbn": "^0.3.1",
@@ -37,21 +43,28 @@
   "devDependencies": {
     "@intlify/vite-plugin-vue-i18n": "^3.3.1",
     "@quasar/app-vite": "^1.0.0",
+    "@quasar/quasar-app-extension-testing": "^2.1.0",
+    "@quasar/quasar-app-extension-testing-e2e-cypress": "^5.1.0",
+    "@quasar/quasar-app-extension-testing-unit-vitest": "^0.1.0",
     "@types/cytoscape": "^3.19.9",
     "@types/node": "^12.20.21",
     "@types/pouchdb": "^6.4.0",
     "@typescript-eslint/eslint-plugin": "^5.10.0",
     "@typescript-eslint/parser": "^5.10.0",
+    "@vue/test-utils": "^2.0.0",
     "autoprefixer": "^10.4.2",
+    "cypress": "^12.2.0",
     "electron": "^23.1.4",
     "electron-builder": "^23.6.0",
     "electron-packager": "^15.2.0",
     "eslint": "^8.10.0",
     "eslint-config-prettier": "^8.1.0",
+    "eslint-plugin-cypress": "^2.12.1",
     "eslint-plugin-vue": "^9.0.0",
     "pouchdb-server": "^4.2.0",
     "prettier": "^2.5.1",
-    "typescript": "^4.5.4"
+    "typescript": "^4.5.4",
+    "vitest": "^0.15.0"
   },
   "engines": {
     "node": "^18 || ^16 || ^14.19",
