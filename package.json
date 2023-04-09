@@ -5,6 +5,7 @@
   "productName": "Research Helper",
   "author": "Hunt Feng <spacecurvature@gmail.com>",
   "private": false,
+  "license": "AGPL-3.0",
   "scripts": {
     "lint": "eslint --ext .js,.ts,.vue ./",
     "format": "prettier --write \"**/*.{js,ts,vue,scss,html,md,json}\" --ignore-path .gitignore",

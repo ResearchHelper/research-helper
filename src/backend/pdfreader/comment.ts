@@ -56,8 +56,8 @@ function comment(
   let img = document.createElement("img");
   img.src = commentIcon;
   img.style.position = "absolute";
-  img.style.left = `0px`;
-  img.style.top = `0px`;
+  img.style.left = "0px";
+  img.style.top = "0px";
 
   section.append(img);
 
