@@ -4,7 +4,7 @@
     "baseUrl": ".",
     "allowSyntheticDefaultImports": true,
     "lib": ["DOM.Iterable"],
-    "types": ["cypress"]
+    "types": ["cypress", "node"]
   },
-  "include": ["cypress.d.ts"]
+  "include": ["test/**/*.ts", "src/**/*.ts", "cypress.d.ts"]
 }
