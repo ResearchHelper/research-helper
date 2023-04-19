@@ -25,13 +25,13 @@ declare module "vue-i18n" {
   export interface DefineNumberFormat {}
 }
 /* eslint-enable @typescript-eslint/no-empty-interface */
+// also export i18n for testing use
+export const i18n = createI18n({
+  locale: "en_US",
+  messages,
+});
 
 export default boot(({ app }) => {
-  const i18n = createI18n({
-    locale: "en_US",
-    messages,
-  });
-
   // Set i18n instance on app
   app.use(i18n);
 });
