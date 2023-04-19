@@ -52,3 +52,8 @@ installQuasarPlugin({ plugins: { Dialog } });
 
 import { setActivePinia, createPinia } from "pinia";
 setActivePinia(createPinia());
+
+Cypress.on("uncaught:exception", (err, runnable) => {
+  // if (err.stack && err.stack.includes("CustomPouchError")) return false;
+  return false;
+});

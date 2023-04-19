@@ -17,7 +17,7 @@ db.createIndex({
   },
 });
 
-if (process.env.DEV || process.env.DEBUGGING) {
+if ((process.env.DEV || process.env.DEBUGGING) && !process.env.TEST) {
   // for debug use
   const remotedb = new PouchDB("http://localhost:3000/mydb");
   PouchDB.sync("mydb", "http://localhost:3000/mydb", {

@@ -14,6 +14,7 @@
     "debug": "quasar build -m electron -T AppImage --debug",
     "test:unit": "vitest",
     "test:unit:ci": "vitest run",
+    "posttest:unit:ci": "rm -rf mydb*",
     "test:e2e": "cross-env NODE_ENV=test start-test \"quasar dev\" http-get://localhost:9000 \"cypress open --e2e\"",
     "test:e2e:ci": "cross-env NODE_ENV=test start-test \"quasar dev\" http-get://localhost:9000 \"cypress run --e2e\"",
     "test:component": "cross-env NODE_ENV=test cypress open --component",
