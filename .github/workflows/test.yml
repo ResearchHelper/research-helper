@@ -16,5 +16,5 @@ jobs:
           node-version: 16
 
       - name: Test Electron app
-      - run: yarn test:unit:ci
-      - run: yarn test:component:ci
+        run: yarn test:unit:ci
+        run: yarn test:component:ci
