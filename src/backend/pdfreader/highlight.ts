@@ -6,7 +6,6 @@ import { Annotation, Rect } from "../database";
  */
 function getSelectionRects(): Rect[] {
   let selection = window.getSelection();
-  console.log(selection);
   if (!!!selection) return [];
   let range = selection.getRangeAt(0);
   // convert DOMRectList to Array since we need filter function
@@ -16,8 +15,6 @@ function getSelectionRects(): Rect[] {
   rects = rects.filter((rect) => {
     return rect.width > 0.5 && rect.height > 0;
   });
-
-  console.log("rects1", rects);
 
   // remove repeated rectangles
   let left: number;
@@ -29,17 +26,20 @@ function getSelectionRects(): Rect[] {
     if (index === 0) {
       left = rect.left;
       top = rect.top;
-      return rect;
+      prvRectWidth = rect.width;
+      return true;
     } else {
       dx = Math.abs(rect.left - left); // Number-undefined = NaN = Number
       dy = Math.abs(rect.top - top);
       left = rect.left;
       top = rect.top;
-      return dx > prvRectWidth / 2 || dy > rect.height / 2;
+      if (dx > prvRectWidth / 2 || dy > rect.height / 2) {
+        prvRectWidth = rect.width;
+        return true;
+      }
     }
   });
 
-  // TODO: we can make it more robust, do this later
   // join rectangles
   let newRects = [];
   let len = 0;
@@ -136,4 +136,43 @@ function highlight(
   return { annot: annot, doms: doms };
 }
 
-export { highlight };
+function highlightRect(
+  container: HTMLElement,
+  annot: Annotation,
+  fromDB = false
+): { annot: Annotation; doms: HTMLElement[] } | undefined {
+  if (!!!annot._id) return;
+
+  let annotationEditorLayer = container
+    ?.querySelector(`div.page[data-page-number='${annot.pageNumber}']`)
+    ?.querySelector(".annotationEditorLayer") as HTMLElement;
+
+  let doms = [];
+
+  // update UI
+  if (!fromDB)
+    annot.rect = selectionCoordinates(
+      annot.rect as Rect,
+      annotationEditorLayer
+    );
+  let section = document.createElement("section");
+  section.setAttribute("annotation-id", annot._id);
+  section.style.position = "absolute";
+  // using percentage since it's invariant under scale change
+  section.style.left = `${annot.rect.left}%`;
+  section.style.top = `${annot.rect.top}%`;
+  section.style.width = `${annot.rect.width}%`;
+  section.style.height = `${annot.rect.height}%`;
+  section.style.pointerEvents = "auto";
+  section.style.cursor = "pointer";
+  section.className = "highlightAnnotation";
+  section.style.backgroundColor = annot.color;
+  section.style.mixBlendMode = "multiply";
+
+  // put dom on the annotation layer
+  annotationEditorLayer.appendChild(section);
+  doms.push(section);
+  return { annot: annot, doms: doms };
+}
+
+export { highlight, highlightRect };

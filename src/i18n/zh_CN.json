@@ -106,5 +106,6 @@
   "attach-stored-copy-of-file": "附加文件到数据库",
   "attach-path-to-file": "附加文件路径",
   "replace-path-to-file": "替换文件路径",
-  "reference": "引用文献"
+  "reference": "引用文献",
+  "rectangle": "矩形高亮"
 }

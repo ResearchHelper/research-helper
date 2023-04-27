@@ -50,14 +50,7 @@
         >
           <ColorPicker
             @selected="
-              (color) =>
-                createAnnot({
-                  pageNumber: selectionPage,
-                  left: null,
-                  top: null,
-                  tool: 'highlight',
-                  color: color,
-                })
+              (color) => createAnnot('highlight', color, selectionPage, {})
             "
           />
         </div>
@@ -139,7 +132,9 @@
   </q-splitter>
 </template>
 
-<script>
+<script lang="ts">
+import { defineComponent } from "vue";
+
 import PDFToolBar from "./PDFToolBar.vue";
 import MetaInfoTab from "../MetaInfoTab.vue";
 import PDFTOC from "./PDFTOC.vue";
@@ -152,7 +147,7 @@ import { useStateStore } from "src/stores/appState";
 import { getProject } from "src/backend/project/project";
 import { AnnotManager } from "src/backend/pdfreader/annotManager";
 
-export default {
+export default defineComponent({
   props: { projectId: String },
 
   components: {
@@ -216,18 +211,63 @@ export default {
       // draw annotations from db
       this.annotManager.drawAnnots(e.pageNumber);
 
-      // draw annotations when mouse is up
-      e.source.div.onmouseup = async (ev) =>
-        await this.createAnnot({
-          pageNumber: e.pageNumber,
-          left: ev.clientX,
-          top: ev.clientY,
-          tool: this.pdfState.tool,
-          color: this.pdfState.color,
-        });
+      // handle user's mouse event
+      e.source.div.onmousedown = (ev) => {
+        // determine if user is clicking on an annotation
+        let clickedAnnotId: string | null =
+          ev.target.getAttribute("annotation-id") ||
+          ev.target.parentNode.getAttribute("annotation-id");
 
-      // highlight any active annotation (wait until annot layer is ready)
-      this.annotManager.setActiveAnnot(this.selectedAnnotId);
+        // temporary rectangle for rectangular highlight
+        let x1 = ev.clientX;
+        let y1 = ev.clientY;
+        let tempRect: HTMLElement;
+        if (!clickedAnnotId && this.pdfState.tool === "rectangle") {
+          let annotLayer = this.$refs.viewerContainer
+            .querySelector(
+              `div.page[data-page-number='${this.pdfState.currentPageNumber}']`
+            )
+            .querySelector(".annotationEditorLayer") as HTMLElement;
+          let layerRect = annotLayer.getBoundingClientRect();
+          tempRect = document.createElement("div");
+          tempRect.style.position = "absolute";
+          tempRect.style.background = this.pdfState.color;
+          tempRect.style.mixBlendMode = "multiply";
+          tempRect.style.left = `${x1 - layerRect.x}px`;
+          tempRect.style.top = `${y1 - layerRect.y}px`;
+          annotLayer.append(tempRect);
+          e.source.div.onmousemove = (ev) => {
+            ev.preventDefault();
+            tempRect.style.width = `${ev.clientX - x1}px`;
+            tempRect.style.height = `${ev.clientY - y1}px`;
+          };
+        }
+
+        // draw annotations when mouse is up
+        e.source.div.onmouseup = async (ev) => {
+          if (!clickedAnnotId) {
+            if (this.pdfState.tool === "cursor") {
+              // toggle menu under text selection
+              this.selectionPage = e.pageNumber;
+              this.selectedAnnotId = e.pageNumber;
+            } else {
+              await this.createAnnot(
+                this.pdfState.tool,
+                this.pdfState.color,
+                e.pageNumber,
+                { x1, y1, x2: ev.clientX, y2: ev.clientY }
+              );
+            }
+          }
+          e.source.div.onmousemove = undefined;
+          if (tempRect) tempRect.remove();
+          // highlight any active annotation (wait until annot layer is ready)
+          this.selectedAnnotId = clickedAnnotId;
+          this.annotManager.setActiveAnnot(this.selectedAnnotId);
+          // toogle annotmenu under annotation / text selection
+          this.toggleMenu();
+        };
+      };
     });
 
     this.pdfApp.eventBus.on("pagechanging", (e) => {
@@ -369,21 +409,13 @@ export default {
     /**********************************
      * AnnotManager
      **********************************/
-    async createAnnot(annot) {
-      await this.annotManager.create(
-        annot.pageNumber,
-        annot.left,
-        annot.top,
-        annot.tool,
-        annot.color
-      );
-      if (this.pdfState.tool == "comment") this.pdfState.tool = "cursor";
-
-      setTimeout(() => {
-        this.selectedAnnotId = this.annotManager.selected;
-        this.selectionPage = annot.pageNumber; // for colorpicker
-        this.toggleMenu();
-      }, 50);
+    async createAnnot(
+      tool: "highlight" | "comment",
+      color: string,
+      pageNumber: number,
+      corner: { x1: number; y1: number; x2: number; y2: number }
+    ) {
+      await this.annotManager.create(tool, color, pageNumber, corner);
     },
 
     async updateAnnot(params) {
@@ -477,7 +509,7 @@ export default {
       }
     },
   },
-};
+});
 </script>
 
 <style lang="scss">

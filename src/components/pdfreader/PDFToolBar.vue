@@ -40,6 +40,11 @@
           slot: AnnotationType.HIGHLIGHT,
         },
         {
+          value: AnnotationType.RECTANGLE,
+          icon: 'crop_3_2',
+          slot: AnnotationType.RECTANGLE,
+        },
+        {
           value: AnnotationType.COMMENT,
           icon: 'comment',
           slot: AnnotationType.COMMENT,
@@ -51,6 +56,9 @@
       </template>
       <template v-slot:highlight>
         <q-tooltip>{{ $t("highlight") }}</q-tooltip>
+      </template>
+      <template v-slot:rectangle>
+        <q-tooltip>{{ $t("rectangle") }}</q-tooltip>
       </template>
       <template v-slot:comment>
         <q-tooltip>{{ $t("comment") }}</q-tooltip>

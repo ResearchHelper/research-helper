@@ -1,12 +1,13 @@
 import { uid } from "quasar";
 import { db, Annotation } from "../database";
 import { comment } from "./comment";
-import { highlight } from "./highlight";
+import { highlight, highlightRect } from "./highlight";
 
 const AnnotationType = {
   NONE: "cursor",
   COMMENT: "comment",
   HIGHLIGHT: "highlight",
+  RECTANGLE: "rectangle",
 };
 
 /**
@@ -102,6 +103,9 @@ async function createAnnotation(
       break;
     case AnnotationType.COMMENT:
       result = comment(container, annot, fromDB);
+      break;
+    case AnnotationType.RECTANGLE:
+      result = highlightRect(container, annot, fromDB);
       break;
     default:
       result = { annot: {}, doms: [] };

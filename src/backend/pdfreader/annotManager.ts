@@ -162,32 +162,40 @@ class AnnotManager {
 
   /**
    * Create annot on specified page and coordinate
-   * @param pageNumber
-   * @param clientX
-   * @param clientY
    * @param tool
    * @param color
+   * @param pageNumber
+   * @param left
+   * @param top
+   * @param right - (optional)
+   * @param bottom - (optional)
    */
   async create(
-    pageNumber: number,
-    clientX: number,
-    clientY: number,
     tool: "highlight" | "comment",
-    color: string
+    color: string,
+    pageNumber: number,
+    corner: { x1: number; y1: number; x2: number; y2: number }
   ) {
     let rect = null;
-    if (tool == AnnotationType.COMMENT) {
+    if (tool === AnnotationType.COMMENT) {
       rect = {
-        left: clientX,
-        top: clientY,
+        left: corner.x2,
+        top: corner.y2,
         width: 40,
         height: 40,
+      } as Rect;
+    } else if (tool === AnnotationType.RECTANGLE) {
+      rect = {
+        left: Math.min(corner.x1, corner.x2),
+        top: Math.min(corner.y1, corner.y2),
+        width: Math.abs(corner.x1 - corner.x2),
+        height: Math.abs(corner.y1 - corner.y2),
       } as Rect;
     }
 
     let doms = await this._create({
       type: tool,
-      rect: rect, // only for comment annotation
+      rect: rect, // for comment or rectangle
       color: color,
       pageNumber: pageNumber,
     } as Annotation);
