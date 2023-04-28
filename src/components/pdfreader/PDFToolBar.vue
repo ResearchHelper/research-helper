@@ -5,7 +5,7 @@
       <input
         style="height: 1.5rem; width: 3rem"
         :value="pageLabel"
-        @keydown.enter="(e) => changePage(e.target.value)"
+        @keydown.enter="(e: KeyboardEvent) => changePage((e.target as HTMLInputElement).value)"
       />
       <span v-if="!!pageLabels">
         {{
@@ -30,9 +30,9 @@
       toggle-color="primary"
       :options="[
         {
-          value: AnnotationType.NONE,
+          value: AnnotationType.CURSOR,
           icon: 'navigation',
-          slot: AnnotationType.NONE,
+          slot: AnnotationType.CURSOR,
         },
         {
           value: AnnotationType.HIGHLIGHT,
@@ -81,7 +81,7 @@
         >
           <ColorPicker
             @selected="
-              (color) => {
+              (color: string) => {
                 state.color = color;
                 $emit('update:pdfState', state);
               }
@@ -290,15 +290,17 @@
   </q-toolbar>
 </template>
 
-<script>
+<script lang="ts">
+import { defineComponent, PropType } from "vue";
+import { AnnotationType, PDFState } from "src/backend/database";
+
 import { useStateStore } from "src/stores/appState";
-import { AnnotationType } from "src/backend/pdfreader/annotation";
 import ColorPicker from "./ColorPicker.vue";
 
-export default {
+export default defineComponent({
   props: {
-    pdfState: Object,
-    pageLabels: Array,
+    pdfState: { type: Object as PropType<PDFState>, required: true },
+    pageLabels: { required: true, type: Object as PropType<string[]> },
     matchesCount: Object,
     rightMenuSize: Number,
   },
@@ -329,7 +331,7 @@ export default {
         caseSensitive: false,
         entireWord: false,
       },
-      state: {},
+      state: {} as PDFState,
       showRightMenu: false,
 
       fullscreen: false,
@@ -376,7 +378,7 @@ export default {
 
     pageLabel() {
       let pageNumber = this.pdfState.currentPageNumber;
-      if (!!this.pageLabels) {
+      if (this.pageLabels?.length > 0) {
         return this.pageLabels[pageNumber - 1];
       } else {
         return pageNumber;
@@ -389,9 +391,9 @@ export default {
   },
 
   methods: {
-    changePage(pageLabel) {
+    changePage(pageLabel: string) {
       let pageNumber = 1;
-      if (!!this.pageLabels) {
+      if (this.pageLabels.length > 0) {
         // If pageLabels exists
         let pageIndex = this.pageLabels.indexOf(pageLabel);
         if (pageIndex === -1) return; // do nothing if not finding the label
@@ -406,7 +408,6 @@ export default {
     },
 
     clearSearch() {
-      this.readyForSearch = false;
       this.$emit("searchText", { query: "" });
     },
 
@@ -422,5 +423,5 @@ export default {
       this.fullscreen = false;
     },
   },
-};
+});
 </script>

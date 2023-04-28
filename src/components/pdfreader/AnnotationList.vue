@@ -17,12 +17,10 @@
         :key="annot._id"
       >
         <AnnotCard
-          :annotId="annot._id"
+          :annot="annot"
           :style="'width: 100%'"
           :class="{ activeAnnotation: selectedAnnotId === annot._id }"
-          @update="(params) => updateAnnot(params)"
-          @delete="(params) => deleteAnnot(params)"
-          @click="clickAnnotCard(annot._id)"
+          @click="setActiveAnnot(annot._id)"
           ref="cards"
         />
       </q-item>
@@ -30,46 +28,21 @@
   </q-scroll-area>
 </template>
 
-<script lang="ts">
-import { defineComponent, PropType } from "vue";
+<script setup lang="ts">
+import { inject } from "vue";
 import { Annotation } from "src/backend/database";
+import {
+  KEY_annots,
+  KEY_selectedAnnotId,
+  KEY_setActiveAnnot,
+} from "./injectKeys";
+
 import AnnotCard from "./AnnotCard.vue";
 
-export default defineComponent({
-  props: {
-    selectedAnnotId: String,
-    annots: { type: Array as PropType<Annotation[]>, required: true },
-  },
-  emits: ["update:selectedAnnotId", "update", "delete"],
+let selectedAnnotId = inject(KEY_selectedAnnotId) as string;
+let annots = inject(KEY_annots) as Annotation[];
 
-  components: { AnnotCard },
-
-  methods: {
-    clickAnnotCard(annotId: string) {
-      this.$emit("update:selectedAnnotId", annotId);
-    },
-
-    updateAnnot(params) {
-      // update db
-      this.$emit("update", params);
-
-      // ui update is already taken care by the AnnotCard
-    },
-
-    deleteAnnot(params) {
-      // update db
-      this.$emit("delete", params);
-
-      // no need to update ui since annots list is managed by annotManager
-    },
-
-    updateList() {
-      for (let card of this.$refs.cards as (typeof AnnotCard)[]) {
-        card.getContent();
-      }
-    },
-  },
-});
+const setActiveAnnot = inject(KEY_setActiveAnnot) as (id: string) => void;
 </script>
 
 <style scoped>

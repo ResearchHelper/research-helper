@@ -2,7 +2,7 @@
   <!-- show this after rightMenu is shown, 
     otherwise autogrow extends to full-height -->
   <q-tabs
-    v-if="meta !== undefined && meta.reference.length > 0"
+    v-if="!!meta && meta.reference.length > 0"
     v-model="tab"
     dense
     no-caps

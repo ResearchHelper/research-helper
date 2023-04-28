@@ -29,9 +29,9 @@
           icon="more_vert"
         >
           <AnnotMenu
-            :annotId="annotId"
-            @update="(params) => updateAnnot(params)"
-            @delete="(params) => deleteAnnot(params)"
+            @changeColor="(color: string) => updateAnnot({id: annotId, data:{color: color}})"
+            @deleteAnnot="() => deleteAnnot(annotId)"
+            @copyID="copyToClipboard(annotId)"
           />
         </q-btn>
       </div>
@@ -43,8 +43,7 @@
       autogrow
       autofocus
       input-style="font-size: 1rem"
-      v-model="annot.content"
-      @update:model-value="onInput"
+      v-model="annotContent"
       @blur="editing = false"
     />
     <pre
@@ -59,92 +58,63 @@
         border: 0.1rem dashed grey;
       "
       class="q-mx-xs q-my-xs"
-      >{{ annot.content }}</pre
+      >{{ annotContent }}</pre
     >
   </q-card>
 </template>
-<script>
-import { defineComponent } from "vue";
-import { debounce } from "quasar";
-import { getAnnotationById } from "src/backend/pdfreader/annotation";
-import renderMathInElement from "katex/dist/contrib/auto-render";
-import "katex/dist/katex.min.css";
+<script setup lang="ts">
+import { ref, inject, onMounted, nextTick, PropType, computed } from "vue";
+import { Annotation } from "src/backend/database";
+import { KEY_deleteAnnot, KEY_updateAnnot } from "./injectKeys";
 
 import AnnotMenu from "./AnnotMenu.vue";
 
-export default defineComponent({
-  props: { annotId: { type: String, required: true }, style: String },
-  emits: ["close", "update", "delete"],
+import { debounce, copyToClipboard } from "quasar";
+import renderMathInElement from "katex/dist/contrib/auto-render";
+import "katex/dist/katex.min.css";
 
-  components: {
-    AnnotMenu,
+const props = defineProps({
+  annot: { type: Object as PropType<Annotation>, required: true },
+  style: String,
+});
+
+const editing = ref(false);
+const content = ref(null); // ref to the <pre> tag
+
+const annotContent = computed({
+  get() {
+    liveRender(); // render immediately after get content
+    return props.annot.content;
   },
-
-  data() {
-    return {
-      editing: false,
-      annot: undefined,
-    };
-  },
-
-  async mounted() {
-    await this.getContent();
-    await this.liveRender();
-  },
-
-  created() {
-    const _saveContent = () => {
-      if (this.annot === undefined) return;
-      this.$emit("update", {
-        id: this.annot._id,
-        data: { content: this.annot.content },
-      });
-    };
-
-    this.saveContent = debounce(_saveContent, 200);
-  },
-
-  methods: {
-    async getContent() {
-      this.annot = await getAnnotationById(this.annotId);
-    },
-
-    async onInput() {
-      await this.saveContent();
-      await this.liveRender();
-    },
-
-    async liveRender() {
-      await this.$nextTick();
-      renderMathInElement(this.$refs.content, {
-        delimiters: [
-          { left: "$$", right: "$$", display: true },
-          { left: "$", right: "$", display: false },
-          { left: "\\(", right: "\\)", display: false },
-          { left: "\\[", right: "\\]", display: true },
-        ],
-        ignoredTags: [
-          "script",
-          "noscript",
-          "style",
-          "textarea",
-          "code",
-          "option",
-        ],
-        throwOnError: false,
-      });
-    },
-
-    updateAnnot(params) {
-      for (let key in params.data) {
-        this.annot[key] = params.data[key];
-      }
-      this.$emit("update", params);
-    },
-
-    deleteAnnot(params) {
-      this.$emit("delete", params);
-    },
+  set(content) {
+    saveContent(content);
   },
 });
+
+const updateAnnot = inject(KEY_updateAnnot) as (params: any) => void;
+const deleteAnnot = inject(KEY_deleteAnnot) as (id: string) => void;
+
+const _saveContent = (content: string) => {
+  if (props.annot === undefined) return;
+  updateAnnot({
+    id: props.annot._id,
+    data: { content: content },
+  });
+};
+
+const saveContent = debounce(_saveContent, 200) as (content: string) => void;
+
+const liveRender = async () => {
+  await nextTick();
+  renderMathInElement(content.value, {
+    delimiters: [
+      { left: "$$", right: "$$", display: true },
+      { left: "$", right: "$", display: false },
+      { left: "\\(", right: "\\)", display: false },
+      { left: "\\[", right: "\\]", display: true },
+    ],
+    ignoredTags: ["script", "noscript", "style", "textarea", "code", "option"],
+    throwOnError: false,
+  });
+};
 </script>

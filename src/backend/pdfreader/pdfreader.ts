@@ -4,7 +4,6 @@ pdfjsLib.GlobalWorkerOptions.workerSrc =
   "node_modules/pdfjs-dist/build/pdf.worker.min.js";
 
 import { PeekManager } from "./pdfpeek";
-import { AnnotationType } from "./annotation";
 import { db, PDFSearch, PDFState, TOCNode } from "../database";
 import { debounce } from "quasar";
 
@@ -186,9 +185,11 @@ class PDFApplication {
     }
   }
 
-  async getPageLabels(): Promise<string[] | null> {
-    if (this.pdfDocument === undefined) return null;
-    return await this.pdfDocument.getPageLabels();
+  async getPageLabels(): Promise<string[]> {
+    if (this.pdfDocument === undefined) return [];
+    let labels = await this.pdfDocument.getPageLabels();
+    if (labels === null) labels = [];
+    return labels;
   }
 
   async getTOC(): Promise<TOCNode[]> {
@@ -288,4 +289,4 @@ class PDFApplication {
   }
 }
 
-export { PDFApplication, AnnotationType };
+export { PDFApplication };

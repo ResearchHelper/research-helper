@@ -109,7 +109,7 @@ export interface PDFState {
   // if scale is not the first two options, then scaleValue === scale.toString()
   currentScaleValue: "page-width" | "page-height" | string;
   spreadMode: 0 | 1 | 2; // 0: no spread, 1: odd spread, 2: even spread
-  tool: "cursor" | "highlight" | "comment";
+  tool: AnnotationType;
   color: string; // hex value
   scrollLeft: number; // current scrollLeft position
   scrollTop: number; // current scrollTop position
@@ -120,6 +120,13 @@ export interface Rect {
   left: number;
   top: number;
   width: number;
+}
+
+export enum AnnotationType {
+  CURSOR = "cursor",
+  COMMENT = "comment",
+  HIGHLIGHT = "highlight",
+  RECTANGLE = "rectangle",
 }
 
 /**
@@ -133,9 +140,8 @@ export interface Annotation {
   pageNumber: number; // on which page
   content: string; // comments of the annotation
   color: string; // hex value
-  rect: Rect | null | undefined; // deprecated soon, now is only used by comment
   rects: Rect[]; // a multiline highlight annotation has more than 1 rect
-  type: "highlight" | "comment";
+  type: AnnotationType;
 }
 
 /**
