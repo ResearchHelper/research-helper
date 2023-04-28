@@ -53,13 +53,11 @@ async function addAnnotation(annot: Annotation) {
  */
 async function updateAnnotation(
   id: string,
-  props: Annotation
+  props: { color?: string; content?: string; rects?: Rect[] }
 ): Promise<Annotation | undefined> {
   try {
     let annot = (await db.get(id)) as Annotation;
-    for (let key in props) {
-      annot[key] = props[key];
-    }
+    Object.assign(annot, props);
     await db.put(annot);
     return db.get(annot._id);
   } catch (err) {
@@ -98,17 +96,15 @@ function createAnnotation(
   tool: AnnotationType,
   color: string,
   projectId: string,
-  corner: { x1: number; y1: number; x2: number; y2: number }
-): Annotation {
+  corner: { x1: number; y1: number; x2: number; y2: number } | null
+): Annotation | null {
   // get rects according to tools
   let rects = [] as Rect[];
   switch (tool) {
-    case AnnotationType.HIGHLIGHT:
-      rects = getSelectionRects();
-      break;
     case AnnotationType.COMMENT:
       // width and height are the same as commentIcon
       // so we don't need to set them
+      if (corner === null) return {} as Annotation;
       rects[0] = {
         left: corner.x2,
         top: corner.y2,
@@ -117,6 +113,7 @@ function createAnnotation(
       };
       break;
     case AnnotationType.RECTANGLE:
+      if (corner === null) return {} as Annotation;
       rects[0] = {
         left: Math.min(corner.x1, corner.x2),
         top: Math.min(corner.y1, corner.y2),
@@ -124,6 +121,16 @@ function createAnnotation(
         height: Math.abs(corner.y1 - corner.y2),
       };
       break;
+    default:
+      // cursor select, highlight, underline
+      rects = getSelectionRects();
+      break;
+  }
+
+  // returns null if user just clicked somewhere on the page
+  if (rects.length === 0) return null;
+  else if (rects.length === 1) {
+    if (rects[0].width < 1 || rects[0].height < 1) return null;
   }
 
   // transform rects to percentage relative to annotLayer
@@ -158,14 +165,17 @@ function drawAnnotation(
 ): HTMLElement[] {
   let doms = [] as HTMLElement[];
   switch (annot.type) {
-    case AnnotationType.HIGHLIGHT:
-      doms = highlight(container, annot);
-      break;
     case AnnotationType.COMMENT:
       doms = comment(container, annot);
       break;
     case AnnotationType.RECTANGLE:
       doms = rectangle(container, annot);
+      break;
+    case AnnotationType.HIGHLIGHT:
+      doms = highlight(container, annot);
+      break;
+    case AnnotationType.UNDERLINE:
+      doms = underline(container, annot);
       break;
   }
 

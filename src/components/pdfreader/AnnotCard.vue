@@ -29,9 +29,9 @@
           icon="more_vert"
         >
           <AnnotMenu
-            @changeColor="(color: string) => updateAnnot({id: annotId, data:{color: color}})"
-            @deleteAnnot="() => deleteAnnot(annotId)"
-            @copyID="copyToClipboard(annotId)"
+            @changeColor="(color: string) => updateAnnot({id: annot._id, data:{color: color}})"
+            @deleteAnnot="() => deleteAnnot(annot._id)"
+            @copyID="copyToClipboard(annot._id)"
           />
         </q-btn>
       </div>
@@ -63,7 +63,7 @@
   </q-card>
 </template>
 <script setup lang="ts">
-import { ref, inject, onMounted, nextTick, PropType, computed } from "vue";
+import { ref, inject, nextTick, PropType, computed } from "vue";
 import { Annotation } from "src/backend/database";
 import { KEY_deleteAnnot, KEY_updateAnnot } from "./injectKeys";
 

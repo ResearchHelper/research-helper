@@ -5,7 +5,6 @@ import { Rect } from "../database";
  * @returns selection rectangles
  */
 function getSelectionRects(): Rect[] {
-  console.log("here");
   let selection = window.getSelection();
   if (!!!selection) return [];
   let range = selection.getRangeAt(0);

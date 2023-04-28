@@ -24,21 +24,20 @@
   </q-tree>
 </template>
 
-<script>
-export default {
-  props: { outline: Array },
+<script setup lang="ts">
+import { onMounted, PropType, ref } from "vue";
+import { TOCNode } from "src/backend/database";
+import { QTree } from "quasar";
 
-  data() {
-    return {
-      selected: null,
-    };
-  },
-
-  methods: {
-    clickTOC(nodeKey) {
-      let node = this.$refs.tree.getNodeByKey(nodeKey);
-      this.$emit("clickTOC", node);
-    },
-  },
+const props = defineProps({
+  outline: { type: Object as PropType<TOCNode[]>, required: true },
+});
+const emit = defineEmits(["clickTOC"]);
+const selected = ref(null);
+const tree = ref(null);
+const clickTOC = (nodeKey: string) => {
+  if (tree.value === null) return;
+  let node = (tree.value as QTree).getNodeByKey(nodeKey);
+  emit("clickTOC", node);
 };
 </script>

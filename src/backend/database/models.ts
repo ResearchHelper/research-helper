@@ -127,6 +127,7 @@ export enum AnnotationType {
   COMMENT = "comment",
   HIGHLIGHT = "highlight",
   RECTANGLE = "rectangle",
+  UNDERLINE = "underline",
 }
 
 /**

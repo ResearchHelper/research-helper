@@ -58,7 +58,7 @@
 </template>
 
 <script setup lang="ts">
-import { inject, ref } from "vue";
+import { inject, onMounted, Ref, ref } from "vue";
 import { Annotation, Project, TOCNode } from "src/backend/database";
 import {
   KEY_annots,
@@ -75,9 +75,9 @@ import AnnotationList from "./AnnotationList.vue";
 const rightMenuTab = ref("metaInfoTab");
 
 let selectedAnnotId = inject(KEY_selectedAnnotId) as string;
-let annots = inject(KEY_annots) as Annotation[];
-let outline = inject(KEY_outline) as TOCNode[];
-let project = inject(KEY_project) as Project;
+const annots = inject(KEY_annots) as Ref<Annotation[]>;
+const outline = inject(KEY_outline) as Ref<TOCNode[]>;
+const project = inject(KEY_project) as Ref<Project>;
 
 const clickTOC = inject(KEY_clickTOC) as (node: TOCNode) => void;
 </script>

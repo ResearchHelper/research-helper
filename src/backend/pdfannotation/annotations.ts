@@ -12,6 +12,10 @@ export function comment(
     ?.querySelector(`div.page[data-page-number='${annot.pageNumber}']`)
     ?.querySelector(".annotationEditorLayer") as HTMLElement;
 
+  let existed = !!annotationEditorLayer.querySelector(
+    `section[annotation-id='${annot._id}']`
+  );
+
   // update UI
   let section = document.createElement("section");
   section.setAttribute("annotation-id", annot._id);
@@ -35,7 +39,7 @@ export function comment(
   img.draggable = false; // only the section tag to be draggable
   section.append(img);
 
-  annotationEditorLayer.appendChild(section);
+  if (!existed) annotationEditorLayer.appendChild(section);
 
   return [section];
 }
@@ -49,6 +53,10 @@ export function highlight(
   let annotationEditorLayer = container
     ?.querySelector(`div.page[data-page-number='${annot.pageNumber}']`)
     ?.querySelector(".annotationEditorLayer") as HTMLElement;
+
+  let existed = !!annotationEditorLayer.querySelector(
+    `section[annotation-id='${annot._id}]'`
+  );
 
   let doms = [] as HTMLElement[];
   for (let rect of annot.rects) {
@@ -68,7 +76,7 @@ export function highlight(
     section.style.mixBlendMode = "multiply";
 
     // put dom on the annotation layer
-    annotationEditorLayer.appendChild(section);
+    if (!existed) annotationEditorLayer.appendChild(section);
     doms.push(section);
   }
 
@@ -84,6 +92,10 @@ export function rectangle(
   let annotationEditorLayer = container
     ?.querySelector(`div.page[data-page-number='${annot.pageNumber}']`)
     ?.querySelector(".annotationEditorLayer") as HTMLElement;
+
+  let existed = !!annotationEditorLayer.querySelector(
+    `section[annotation-id='${annot._id}']`
+  );
 
   // update UI
   let section = document.createElement("section");
@@ -101,17 +113,9 @@ export function rectangle(
   section.className = "rectangleAnnotation";
 
   // put dom on the annotation layer
-  annotationEditorLayer.appendChild(section);
+  if (!existed) annotationEditorLayer.appendChild(section);
 
   return [section];
-}
-
-export function strike(
-  container: HTMLElement,
-  annot: Annotation
-): HTMLElement[] {
-  // TODO
-  return [];
 }
 
 export function underline(
@@ -123,6 +127,10 @@ export function underline(
   let annotationEditorLayer = container
     ?.querySelector(`div.page[data-page-number='${annot.pageNumber}']`)
     ?.querySelector(".annotationEditorLayer") as HTMLElement;
+
+  let existed = !!annotationEditorLayer.querySelector(
+    `section[annotation-id='${annot._id}']`
+  );
 
   let doms = [] as HTMLElement[];
   for (let rect of annot.rects) {
@@ -143,7 +151,7 @@ export function underline(
     section.className = "underlineAnnotation";
 
     // put dom on the annotation layer
-    annotationEditorLayer.appendChild(section);
+    if (!existed) annotationEditorLayer.appendChild(section);
     doms.push(section);
   }
 

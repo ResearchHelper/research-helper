@@ -31,7 +31,7 @@
       :options="[
         {
           value: AnnotationType.CURSOR,
-          icon: 'navigation',
+          icon: 'bi-cursor-text',
           slot: AnnotationType.CURSOR,
         },
         {
@@ -40,8 +40,13 @@
           slot: AnnotationType.HIGHLIGHT,
         },
         {
+          value: AnnotationType.UNDERLINE,
+          icon: 'format_underlined',
+          slot: AnnotationType.UNDERLINE,
+        },
+        {
           value: AnnotationType.RECTANGLE,
-          icon: 'crop_3_2',
+          icon: 'rectangle',
           slot: AnnotationType.RECTANGLE,
         },
         {

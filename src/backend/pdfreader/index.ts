@@ -196,7 +196,7 @@ class PDFApplication {
     if (this.pdfDocument === undefined) return [];
 
     function _dfs(oldNodes: TOCNode[]): TOCNode[] {
-      const tree = [];
+      const tree = [] as TOCNode[];
       for (let k in oldNodes) {
         let node = {
           label: oldNodes[k].title,
