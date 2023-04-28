@@ -7,17 +7,16 @@
       size="sm"
       padding="sm"
       square
-      @click="$emit('selected', color)"
+      @click="selectColor(color)"
     ></q-btn>
   </div>
 </template>
 
-<script>
-export default {
-  data() {
-    return {
-      colors: ["#ffff00", "#019a9d", "#d9b801", "#e8045a", "#b2028a"],
-    };
-  },
+<script setup lang="ts">
+import { ref } from "vue";
+const colors = ref(["#ffff00", "#019a9d", "#d9b801", "#e8045a", "#b2028a"]);
+const emit = defineEmits(["selected"]);
+const selectColor = (color: string) => {
+  emit("selected", color);
 };
 </script>

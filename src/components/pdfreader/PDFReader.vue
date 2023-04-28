@@ -13,13 +13,15 @@
           top: 0;
           background: var(--color-pdfreader-toolbar-bkgd);
         "
-        v-model:pdfState="pdfState"
+        :pdfState="pdfState"
         :pageLabels="pageLabels"
         :rightMenuSize="rightMenuSize"
         :matchesCount="matchesCount"
         @changePageNumber="changePageNumber"
         @changeScale="changeScale"
         @changeSpreadMode="changeSpreadMode"
+        @changeTool="changeTool"
+        @changeColor="changeColor"
         @searchText="searchText"
         @changeMatch="changeMatch"
         @toggleRightMenu="toggleRightMenu"
@@ -75,6 +77,7 @@ import {
   PDFSearch,
   PDFState,
   Project,
+  SpreadMode,
   TOCNode,
 } from "src/backend/database";
 import {
@@ -91,6 +94,9 @@ import {
   KEY_annots,
   KEY_setActiveAnnot,
   KEY_selectedAnnotId,
+  KEY_createAnnot,
+  KEY_toggleMenu,
+  KEY_getAnnot,
 } from "./injectKeys";
 
 import PDFToolBar from "./PDFToolBar.vue";
@@ -99,7 +105,6 @@ import AnnotCard from "./AnnotCard.vue";
 import ColorPicker from "./ColorPicker.vue";
 
 import { PDFApplication } from "src/backend/pdfreader";
-import { useStateStore } from "src/stores/appState";
 import { getProject } from "src/backend/project/project";
 
 import {
@@ -111,8 +116,6 @@ import {
   drawAnnotation,
   enableDragToMove,
 } from "src/backend/pdfannotation";
-
-const stateStore = useStateStore();
 
 /**
  * Props, Data, and component refs
@@ -171,6 +174,7 @@ async function loadPDF(id: string) {
  **********************************/
 function changePageNumber(pageNumber: number) {
   pdfApp.changePageNumber(pageNumber);
+  // pdfState is modified in pagechanging event
 }
 function changeScale(params: {
   delta?: number;
@@ -178,9 +182,11 @@ function changeScale(params: {
   scale?: number;
 }) {
   pdfApp.changeScale(params);
+  // pdfState is modified in scalechanging event
 }
-function changeSpreadMode(spreadMode: number) {
+function changeSpreadMode(spreadMode: SpreadMode) {
   pdfApp.changeSpreadMode(spreadMode);
+  pdfState.spreadMode = spreadMode;
 }
 
 /**********************************
@@ -203,6 +209,14 @@ function clickTOC(node: TOCNode) {
 /**********************************
  * Annotation
  **********************************/
+function changeColor(color: string) {
+  pdfState.color = color;
+}
+
+function changeTool(tool: AnnotationType) {
+  pdfState.tool = tool;
+}
+
 function getAnnot(annotId: string): Annotation {
   return annots.value.find((annot) => annot._id === annotId) as Annotation;
 }
@@ -244,6 +258,7 @@ async function createAnnot(
     props.projectId,
     corner
   );
+  console.log(annot);
 
   if (!annot) return;
   // update ui
@@ -324,7 +339,7 @@ async function deleteAnnot(id: string) {
 }
 
 /*******************************
- * AnnotCard & ColorPicker
+ * AnnotCard & ColorPicker for text selection
  *******************************/
 async function toggleMenu() {
   // close all menus first
@@ -404,10 +419,13 @@ function toggleRightMenu(visible: boolean) {
 /**
  * Provides
  */
+provide(KEY_getAnnot, getAnnot);
+provide(KEY_createAnnot, updateAnnot);
 provide(KEY_updateAnnot, updateAnnot);
 provide(KEY_deleteAnnot, deleteAnnot);
-provide(KEY_clickTOC, clickTOC);
 provide(KEY_setActiveAnnot, setActiveAnnot);
+provide(KEY_toggleMenu, toggleMenu);
+provide(KEY_clickTOC, clickTOC);
 provide(KEY_selectedAnnotId, selectedAnnotId);
 provide(KEY_outline, outline);
 provide(KEY_project, project);
@@ -545,6 +563,7 @@ onMounted(async () => {
       pageLabels: string | null;
       previous: number;
     }) => {
+      // update pdfState when scrolling
       pdfState.currentPageNumber = e.pageNumber;
       // if the pdf is initially loaded, scroll to last position
       // this line is here because if the scrollto is called too early
@@ -567,6 +586,7 @@ onMounted(async () => {
       scale: number;
       presetValue: string | undefined;
     }) => {
+      // let pdfApp calculate the scale, then change the pdfState
       pdfState.currentScale = e.scale;
       if (e.presetValue) pdfState.currentScaleValue = e.presetValue;
     }

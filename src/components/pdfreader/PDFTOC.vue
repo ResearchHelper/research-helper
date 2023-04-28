@@ -25,7 +25,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, PropType, ref } from "vue";
+import { PropType, ref } from "vue";
 import { TOCNode } from "src/backend/database";
 import { QTree } from "quasar";
 

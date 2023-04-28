@@ -21,8 +21,8 @@
 
     <!-- tools -->
     <q-btn-toggle
-      v-model="state.tool"
-      @update:model-value="$emit('update:pdfState', state)"
+      :model-value="pdfState.tool"
+      @update:model-value="(tool: string) => $emit('changeTool', tool)"
       :ripple="false"
       flat
       size="0.7rem"
@@ -85,12 +85,7 @@
           style="width: 10rem"
         >
           <ColorPicker
-            @selected="
-              (color: string) => {
-                state.color = color;
-                $emit('update:pdfState', state);
-              }
-            "
+            @selected="(color: string) => $emit('changeColor', color)"
           />
         </q-item>
       </q-menu>
@@ -167,13 +162,8 @@
               { label: $t('odd-spreads'), value: 1 },
               { label: $t('even-spreads'), value: 2 },
             ]"
-            v-model="state.spreadMode"
-            @update:model-value="
-              () => {
-                $emit('update:pdfState', state);
-                $emit('changeSpreadMode', state.spreadMode);
-              }
-            "
+            :model-value="pdfState.spreadMode"
+            @update:model-value="(mode: number) => $emit('changeSpreadMode', mode)"
           />
         </q-item>
       </q-list>
@@ -286,7 +276,7 @@
       padding="xs"
       toggle-color="primary"
       :options="[{ value: true, icon: 'list' }]"
-      @update:model-value="$emit('toggleRightMenu', showRightMenu)"
+      @update:model-value="(showRightMenu: boolean) => $emit('toggleRightMenu', showRightMenu)"
     >
       <template v-slot:default>
         <q-tooltip>{{ $t("toggle-right-menu") }}</q-tooltip>
@@ -295,138 +285,110 @@
   </q-toolbar>
 </template>
 
-<script lang="ts">
-import { defineComponent, PropType } from "vue";
+<script setup lang="ts">
+import { computed, onMounted, PropType, reactive, ref, watch } from "vue";
 import { AnnotationType, PDFState } from "src/backend/database";
 
-import { useStateStore } from "src/stores/appState";
 import ColorPicker from "./ColorPicker.vue";
+import { useI18n } from "vue-i18n";
+import { useQuasar } from "quasar";
 
-export default defineComponent({
-  props: {
-    pdfState: { type: Object as PropType<PDFState>, required: true },
-    pageLabels: { required: true, type: Object as PropType<string[]> },
-    matchesCount: Object,
-    rightMenuSize: Number,
-  },
-  emits: [
-    "update:pdfState",
-    "changePageNumber",
-    "changeScale",
-    "changeSpreadMode",
-    "searchText",
-    "changeMatch",
-    "toggleRightMenu",
-  ],
+const $q = useQuasar();
+const { t } = useI18n({ useScope: "global" });
 
-  components: {
-    ColorPicker,
-  },
-
-  setup() {
-    const stateStore = useStateStore();
-    return { stateStore, AnnotationType };
-  },
-
-  data() {
-    return {
-      search: {
-        query: "",
-        highlightAll: true,
-        caseSensitive: false,
-        entireWord: false,
-      },
-      state: {} as PDFState,
-      showRightMenu: false,
-
-      fullscreen: false,
-    };
-  },
-
-  watch: {
-    rightMenuSize(size) {
-      this.showRightMenu = size > 0;
-    },
-
-    pdfState: {
-      handler(state) {
-        this.state = state;
-      },
-      deep: true,
-    },
-
-    search: {
-      handler(newSearch) {
-        this.$emit("searchText", newSearch);
-      },
-      deep: true,
-    },
-  },
-
-  computed: {
-    searchSummary() {
-      let text = "";
-      let matchesCount = this.matchesCount;
-      if (!!matchesCount) {
-        if (matchesCount.total != 0) {
-          text = this.$t("matchescount-current-of-matchescount-total-matches", [
-            matchesCount.current,
-            matchesCount.total,
-          ]);
-        } else {
-          text = this.$t("phrase-not-found");
-        }
-      }
-
-      return text;
-    },
-
-    pageLabel() {
-      let pageNumber = this.pdfState.currentPageNumber;
-      if (this.pageLabels?.length > 0) {
-        return this.pageLabels[pageNumber - 1];
-      } else {
-        return pageNumber;
-      }
-    },
-  },
-
-  mounted() {
-    this.state = this.pdfState;
-  },
-
-  methods: {
-    changePage(pageLabel: string) {
-      let pageNumber = 1;
-      if (this.pageLabels.length > 0) {
-        // If pageLabels exists
-        let pageIndex = this.pageLabels.indexOf(pageLabel);
-        if (pageIndex === -1) return; // do nothing if not finding the label
-        pageNumber = pageIndex + 1;
-      } else {
-        // If there are no pageLabels
-        pageNumber = parseInt(pageLabel);
-      }
-      this.state.currentPageNumber = pageNumber;
-      this.$emit("update:pdfState", this.state);
-      this.$emit("changePageNumber", this.state.currentPageNumber);
-    },
-
-    clearSearch() {
-      this.$emit("searchText", { query: "" });
-    },
-
-    async requestFullscreen() {
-      await this.$q.fullscreen.request();
-      // after successfully fullscreened, remove leftmenu
-      this.fullscreen = true;
-    },
-
-    async exitFullscreen() {
-      await this.$q.fullscreen.exit();
-      // after exit fullscreen, show leftmenu again
-      this.fullscreen = false;
-    },
-  },
+/**
+ * Props, emits, data
+ */
+const props = defineProps({
+  pdfState: { type: Object as PropType<PDFState>, required: true },
+  pageLabels: { type: Object as PropType<string[]>, required: true },
+  matchesCount: Object as PropType<{ current: number; total: number }>,
+  rightMenuSize: { type: Number, required: true },
 });
+
+const emit = defineEmits([
+  "changePageNumber",
+  "changeScale",
+  "changeSpreadMode",
+  "changeTool",
+  "changeColor",
+  "searchText",
+  "changeMatch",
+  "toggleRightMenu",
+]);
+
+const search = reactive({
+  query: "",
+  highlightAll: true,
+  caseSensitive: false,
+  entireWord: false,
+});
+const showRightMenu = ref(false);
+const fullscreen = ref(false);
+
+watch(
+  () => props.rightMenuSize,
+  (size: number) => {
+    showRightMenu.value = size > 0;
+  }
+);
+watch(search, (newSearch) => {
+  emit("searchText", newSearch);
+});
+
+const searchSummary = computed(() => {
+  let text = "";
+  let matchesCount = props.matchesCount;
+  if (!!matchesCount) {
+    if (matchesCount.total != 0) {
+      text = t("matchescount-current-of-matchescount-total-matches", [
+        matchesCount.current,
+        matchesCount.total,
+      ]);
+    } else {
+      text = t("phrase-not-found");
+    }
+  }
+
+  return text;
+});
+
+const pageLabel = computed(() => {
+  let pageNumber = props.pdfState.currentPageNumber;
+  if (props.pageLabels?.length > 0) {
+    return props.pageLabels[pageNumber - 1];
+  } else {
+    return pageNumber;
+  }
+});
+
+function changePage(pageLabel: string) {
+  let pageNumber = 1;
+  if (props.pageLabels.length > 0) {
+    // If pageLabels exists
+    let pageIndex = props.pageLabels.indexOf(pageLabel);
+    if (pageIndex === -1) return; // do nothing if not finding the label
+    pageNumber = pageIndex + 1;
+  } else {
+    // If there are no pageLabels
+    pageNumber = parseInt(pageLabel);
+  }
+  emit("changePageNumber", pageNumber);
+}
+
+function clearSearch() {
+  emit("searchText", { query: "" });
+}
+
+async function requestFullscreen() {
+  await $q.fullscreen.request();
+  // after successfully fullscreened, remove leftmenu
+  fullscreen.value = true;
+}
+
+async function exitFullscreen() {
+  await $q.fullscreen.exit();
+  // after exit fullscreen, show leftmenu again
+  fullscreen.value = false;
+}
 </script>

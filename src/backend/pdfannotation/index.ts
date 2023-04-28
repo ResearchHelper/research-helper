@@ -129,7 +129,7 @@ function createAnnotation(
 
   // returns null if user just clicked somewhere on the page
   if (rects.length === 0) return null;
-  else if (rects.length === 1) {
+  else if (rects.length === 1 && tool !== AnnotationType.COMMENT) {
     if (rects[0].width < 1 || rects[0].height < 1) return null;
   }
 

@@ -108,7 +108,7 @@ export interface PDFState {
   currentScale: number; // zoom scale of the pdf
   // if scale is not the first two options, then scaleValue === scale.toString()
   currentScaleValue: "page-width" | "page-height" | string;
-  spreadMode: 0 | 1 | 2; // 0: no spread, 1: odd spread, 2: even spread
+  spreadMode: SpreadMode; // 0: no spread, 1: odd spread, 2: even spread
   tool: AnnotationType;
   color: string; // hex value
   scrollLeft: number; // current scrollLeft position
@@ -128,6 +128,12 @@ export enum AnnotationType {
   HIGHLIGHT = "highlight",
   RECTANGLE = "rectangle",
   UNDERLINE = "underline",
+}
+
+export enum SpreadMode {
+  NO_SPREAD,
+  ODD_SPREAD,
+  EVEN_SPREAD,
 }
 
 /**

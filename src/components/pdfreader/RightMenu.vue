@@ -58,7 +58,7 @@
 </template>
 
 <script setup lang="ts">
-import { inject, onMounted, Ref, ref } from "vue";
+import { inject, Ref, ref } from "vue";
 import { Annotation, Project, TOCNode } from "src/backend/database";
 import {
   KEY_annots,

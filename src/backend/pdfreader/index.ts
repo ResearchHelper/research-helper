@@ -4,7 +4,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc =
   "node_modules/pdfjs-dist/build/pdf.worker.min.js";
 
 import { PeekManager } from "./pdfpeek";
-import { db, PDFSearch, PDFState, TOCNode } from "../database";
+import { db, PDFSearch, PDFState, SpreadMode, TOCNode } from "../database";
 import { debounce } from "quasar";
 
 class PDFApplication {
@@ -143,7 +143,7 @@ class PDFApplication {
     this.pdfViewer.currentPageNumber = pageNumber;
   }
 
-  changeSpreadMode(spreadMode: number) {
+  changeSpreadMode(spreadMode: SpreadMode) {
     this.pdfViewer.spreadMode = spreadMode;
   }
 
