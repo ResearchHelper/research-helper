@@ -90,5 +90,8 @@ module.exports = {
 
     // can't use "any" explicitly in the code
     "@typescript-eslint/no-explicit-any": "off",
+
+    // turn off no-namespace lint error for cypress
+    "@typescript-eslint/no-namespace": "off",
   },
 };

@@ -45,6 +45,7 @@
           type="text"
           v-model="meta.title"
           @blur="modifyInfo(true)"
+          data-testid="title"
         ></textarea>
       </div>
 
@@ -76,6 +77,7 @@
           :placeholder="$t('first-last-last-first')"
           v-model.trim="name"
           @keydown.enter="addAuthor"
+          data-testid="author-input"
         />
       </div>
 
@@ -89,6 +91,7 @@
           :label="author"
           removable
           @remove="removeAuthor(index)"
+          :data-testid="`q-chip-${index}`"
         />
       </div>
 
@@ -375,7 +378,7 @@ export default defineComponent({
     },
 
     async getReferences() {
-      if (!!!this.meta?.reference || this.references.length > 0) return;
+      if (!!!this.meta?.reference || this.references.length === 0) return;
 
       for (let i in this.meta.reference) {
         this.references.push({ text: "", link: "" });
