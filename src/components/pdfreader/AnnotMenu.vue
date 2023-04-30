@@ -1,5 +1,5 @@
 <template>
-  <q-menu>
+  <q-menu data-cy="annot-menu">
     <q-list dense>
       <q-item>
         <ColorPicker @selected="(color: string) => changeColor(color)" />

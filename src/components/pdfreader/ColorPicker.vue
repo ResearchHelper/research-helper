@@ -8,6 +8,7 @@
       padding="sm"
       square
       @click="selectColor(color)"
+      :data-cy="`btn-${color}`"
     ></q-btn>
   </div>
 </template>

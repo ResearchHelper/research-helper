@@ -27,6 +27,7 @@
           padding="none"
           :ripple="false"
           icon="more_vert"
+          data-cy="btn-menu"
         >
           <AnnotMenu
             @changeColor="(color: string) => updateAnnot({id: annot._id, data:{color: color}})"
@@ -58,6 +59,7 @@
         border: 0.1rem dashed grey;
       "
       class="q-mx-xs q-my-xs"
+      data-cy="annot-content"
       >{{ annotContent }}</pre
     >
   </q-card>

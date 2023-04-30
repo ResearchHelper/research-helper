@@ -1,0 +1,74 @@
+[
+  {
+    "type": "rectangle",
+    "rects": [
+      {
+        "left": 24.679878048780488,
+        "top": 31.216931216931215,
+        "width": 61.34146341463415,
+        "height": 20.861678004535147
+      }
+    ],
+    "color": "#ffff00",
+    "pageNumber": 1,
+    "projectId": "ca21eedf-ba19-4751-b573-7044664c0cbc",
+    "dataType": "pdfAnnotation",
+    "content": "$$\\int f$$",
+    "_id": "0126d19a-7f00-475b-885d-fd618b38760d",
+    "_rev": "14-3b28cb8d5fbc78b9484f7e9011556f51"
+  },
+  {
+    "type": "underline",
+    "rects": [
+      {
+        "left": 41.98180408012576,
+        "top": 11.206774376417233,
+        "width": 11.28570556640625,
+        "height": 2.1164021164021163
+      }
+    ],
+    "color": "#019a9d",
+    "pageNumber": 1,
+    "projectId": "ca21eedf-ba19-4751-b573-7044664c0cbc",
+    "dataType": "pdfAnnotation",
+    "content": "",
+    "_id": "4a8b4ab3-ce5d-49e4-ad27-5e5fcc49945e",
+    "_rev": "2-f47659b0475c5bd6e3cebc4f61b6e9bf"
+  },
+  {
+    "type": "highlight",
+    "rects": [
+      {
+        "left": 57.10368086652058,
+        "top": 5.144557823129252,
+        "width": 6.409190108136433,
+        "height": 2.1164021164021163
+      }
+    ],
+    "color": "#e8045a",
+    "pageNumber": 1,
+    "projectId": "ca21eedf-ba19-4751-b573-7044664c0cbc",
+    "dataType": "pdfAnnotation",
+    "content": "$\\omega$",
+    "_id": "58287536-7c58-4838-9235-66dbaf6a1889",
+    "_rev": "14-620539dbaefb3f54f264ed6021eb158d"
+  },
+  {
+    "type": "comment",
+    "rects": [
+      {
+        "left": 74.8780487804878,
+        "top": 25.09448223733938,
+        "width": 40,
+        "height": 40
+      }
+    ],
+    "color": "#e8045a",
+    "pageNumber": 1,
+    "projectId": "ca21eedf-ba19-4751-b573-7044664c0cbc",
+    "dataType": "pdfAnnotation",
+    "content": "123\n456",
+    "_id": "c0e3e1a5-2bc9-4ff0-926b-2ff7b773fe7f",
+    "_rev": "7-b3d34f5f5cea784afb9fb7c283828f58"
+  }
+]

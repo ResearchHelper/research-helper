@@ -1,7 +1,7 @@
 <template>
   <q-toolbar style="min-height: unset; height: 36px; background: #222222">
     <!-- navigation -->
-    <div>
+    <div data-cy="page-control">
       <input
         style="height: 1.5rem; width: 3rem"
         :value="pageLabel"
@@ -97,6 +97,7 @@
       icon="visibility"
       size="0.7rem"
       padding="xs"
+      data-cy="btn-dropdown-view"
     >
       <template v-slot:label
         ><q-tooltip>{{ $t("view") }}</q-tooltip></template
@@ -134,7 +135,7 @@
           >
             <q-tooltip>{{ $t("zoom-out") }}</q-tooltip>
           </q-btn>
-          <div>
+          <div data-cy="scale">
             {{ Math.trunc(pdfState.currentScale * 100) + "%" }}
           </div>
           <q-btn
@@ -164,6 +165,7 @@
             ]"
             :model-value="pdfState.spreadMode"
             @update:model-value="(mode: number) => $emit('changeSpreadMode', mode)"
+            data-cy="btn-toggle-spread"
           />
         </q-item>
       </q-list>
@@ -286,7 +288,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, PropType, reactive, ref, watch } from "vue";
+import { computed, PropType, reactive, ref, watch } from "vue";
 import { AnnotationType, PDFState } from "src/backend/database";
 
 import ColorPicker from "./ColorPicker.vue";
@@ -302,7 +304,10 @@ const { t } = useI18n({ useScope: "global" });
 const props = defineProps({
   pdfState: { type: Object as PropType<PDFState>, required: true },
   pageLabels: { type: Object as PropType<string[]>, required: true },
-  matchesCount: Object as PropType<{ current: number; total: number }>,
+  matchesCount: {
+    type: Object as PropType<{ current: number; total: number }>,
+    required: false,
+  },
   rightMenuSize: { type: Number, required: true },
 });
 
