@@ -10,12 +10,11 @@ jobs:
       - name: Check out Git repository
         uses: actions/checkout@v3
 
-      - name: Install Node.js, NPM and Yarn
+      - name: Setup Node.js & yarn install if no cache exists
         uses: actions/setup-node@v3
         with:
           node-version: 16
-          cache: yarn
-      - run: yarn
+      - run: yarn install --frozen-lockfile
 
       - name: Unit test
         run: yarn test:unit:ci
