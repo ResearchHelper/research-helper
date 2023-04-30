@@ -490,12 +490,7 @@ export default defineComponent({
       sortTree(projectNode); // sort notes
 
       await this.$nextTick();
-      this.$emit(
-        "renameNode",
-        (this.$refs.tree as QTree).$el.querySelector(
-          `[item-id='${renamingNote._id}']`
-        )
-      );
+      this.$emit("renameNode", renamingNote);
     },
   },
 });

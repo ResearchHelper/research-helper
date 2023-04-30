@@ -1,4 +1,9 @@
 import { QTreeNode } from "quasar";
+import { LayoutConfig, ResolvedLayoutConfig } from "golden-layout";
+
+/***********************************
+ * Project, Note, Folder and related data types
+ ***********************************/
 
 export interface Author {
   family?: string;
@@ -195,6 +200,13 @@ export interface AppState {
   workingItemId: string;
   openedProjectIds: string[];
   settings: Settings;
+}
+
+export interface Layout {
+  _id: "layout";
+  _rev: string;
+  dataType: "layout";
+  config: LayoutConfig | ResolvedLayoutConfig;
 }
 
 /*******************

@@ -1,4 +1,5 @@
 /* eslint-disable */
+import { Window } from "src-electron/electron-preload";
 
 declare namespace NodeJS {
   interface ProcessEnv {
