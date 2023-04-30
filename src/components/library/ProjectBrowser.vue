@@ -104,7 +104,7 @@
             >
               <MetaInfoTab
                 v-if="!!rightMenuSize && !($refs.table as typeof TableView).isClickingPDF"
-                v-model:project="selectedProject"
+                :project="selectedProject"
               />
             </q-tab-panel>
           </q-tab-panels>
@@ -447,7 +447,10 @@ export default defineComponent({
               this.selectedProject[prop] = project[prop];
           }
           // update projectree ui
-          this.$bus.emit("updateProject", this.selectedProject);
+          this.$bus.emit("updateProject", {
+            source: "ProjectBrowser",
+            data: this.selectedProject,
+          });
         }
       } catch (error) {
         this.error = error as Error;
@@ -468,7 +471,10 @@ export default defineComponent({
         (p) => p._id != (this.selectedProject as Project)._id
       );
       // update projectTree ui
-      this.$bus.emit("deleteProject", this.selectedProject._id);
+      this.$bus.emit("deleteProject", {
+        source: "ProjectBrowser",
+        data: this.selectedProject._id,
+      });
 
       // update db
       await this.$nextTick(); // wait until the ui closes all windows
@@ -562,7 +568,10 @@ export default defineComponent({
       this.stateStore.selectedItemId = note._id;
 
       // update projectTree ui
-      this.$bus.emit("updateProject", this.projects[index]);
+      this.$bus.emit("updateProject", {
+        source: "ProjectBrowser",
+        data: this.projects[index],
+      });
     },
 
     async renameNote(note: Note, index?: number) {
@@ -585,7 +594,10 @@ export default defineComponent({
       let noteIndex = project.children.findIndex((n) => n._id === note._id);
       if (noteIndex !== undefined) project.children[noteIndex] = note;
 
-      this.$bus.emit("updateProject", project); // to update ui of projectTree
+      this.$bus.emit("updateProject", {
+        source: "ProjectBrowser",
+        data: project,
+      }); // to update ui of projectTree
     },
 
     async deleteNote(note: Note, index?: number) {
@@ -604,7 +616,10 @@ export default defineComponent({
       console.log("project.children after filter", project.children);
 
       // update projectTree ui
-      this.$bus.emit("updateProject", project);
+      this.$bus.emit("updateProject", {
+        source: "ProjectBrowser",
+        data: project,
+      });
     },
 
     /************************************************************

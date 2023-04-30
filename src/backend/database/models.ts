@@ -128,6 +128,7 @@ export enum AnnotationType {
   HIGHLIGHT = "highlight",
   RECTANGLE = "rectangle",
   UNDERLINE = "underline",
+  STRIKEOUT = "strikeout",
 }
 
 export enum SpreadMode {
@@ -194,4 +195,13 @@ export interface AppState {
   workingItemId: string;
   openedProjectIds: string[];
   settings: Settings;
+}
+
+/*******************
+ * EventBus
+ *******************/
+export interface BusEvent {
+  source: string; // from which component
+  target?: string; // to which component
+  data?: any;
 }

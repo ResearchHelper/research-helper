@@ -36,21 +36,18 @@
           class="pdfViewer"
         ></div>
         <AnnotCard
-          v-if="showAnnotCard"
+          v-if="showAnnotCard && selectedAnnotId"
           :style="style"
           :annot="getAnnot(selectedAnnotId)"
         />
-        <div
-          v-if="showColorPicker"
+        <FloatingMenu
+          v-if="showFloatingMenu"
           :style="style"
-          class="q-px-sm q-py-xs"
-        >
-          <ColorPicker
-            @selected="
-            (color: string) => {createAnnot(AnnotationType.HIGHLIGHT, color, selectionPage, null); toggleMenu()}
-          "
-          />
-        </div>
+          @highlightText="(color: string) => {
+              createAnnot(AnnotationType.HIGHLIGHT, color, selectionPage, null); 
+              toggleFloatingMenu();
+            }"
+        />
       </div>
 
       <div
@@ -95,14 +92,13 @@ import {
   KEY_setActiveAnnot,
   KEY_selectedAnnotId,
   KEY_createAnnot,
-  KEY_toggleMenu,
   KEY_getAnnot,
 } from "./injectKeys";
 
 import PDFToolBar from "./PDFToolBar.vue";
 import RightMenu from "./RightMenu.vue";
 import AnnotCard from "./AnnotCard.vue";
-import ColorPicker from "./ColorPicker.vue";
+import FloatingMenu from "./FloatingMenu.vue";
 
 import { PDFApplication } from "src/backend/pdfreader";
 import { getProject } from "src/backend/project/project";
@@ -116,6 +112,7 @@ import {
   drawAnnotation,
   enableDragToMove,
 } from "src/backend/pdfannotation";
+import { copyToClipboard } from "quasar";
 
 /**
  * Props, Data, and component refs
@@ -145,7 +142,7 @@ const selectedAnnotId = ref("");
 
 // annot card & colorpicker
 const showAnnotCard = ref(false);
-const showColorPicker = ref(false);
+const showFloatingMenu = ref(false);
 const selectionPage = ref(0);
 const style = ref("");
 
@@ -245,8 +242,7 @@ async function createAnnot(
   tool: AnnotationType,
   color: string,
   pageNumber: number,
-  corner: { x1: number; y1: number; x2: number; y2: number } | null,
-  setActive = false
+  corner: { x1: number; y1: number; x2: number; y2: number } | null
 ) {
   if (viewerContainer.value === null) return;
 
@@ -258,12 +254,11 @@ async function createAnnot(
     props.projectId,
     corner
   );
-  console.log(annot);
 
   if (!annot) return;
   // update ui
   annots.value.push(annot); // update list
-  drawAnnot(annot, setActive); // draw it on pdf
+  drawAnnot(annot); // draw it on pdf
   window.getSelection()?.empty(); // clear any text selection
   // update db
   await addAnnotation(annot);
@@ -273,7 +268,7 @@ async function createAnnot(
  * Draw annotation on annotationEditorLayer
  * @param annot
  */
-async function drawAnnot(annot: Annotation, setActive = false) {
+async function drawAnnot(annot: Annotation) {
   if (viewerContainer.value === null) return;
 
   let doms = drawAnnotation(viewerContainer.value as HTMLElement, annot);
@@ -292,12 +287,6 @@ async function drawAnnot(annot: Annotation, setActive = false) {
   ) {
     enableDragToMove(doms[0]);
   }
-
-  // if we should set this annot to active after draw
-  if (setActive) {
-    setActiveAnnot(doms[0].getAttribute("annotation-id") as string);
-    toggleMenu();
-  }
 }
 
 async function updateAnnot(params: { id: string; data: any }) {
@@ -313,7 +302,12 @@ async function updateAnnot(params: { id: string; data: any }) {
     document
       .querySelectorAll(`section[annotation-id="${id}"]`)
       .forEach((dom) => {
-        (dom as HTMLElement).style.background = data.color;
+        if (
+          annot.type === AnnotationType.UNDERLINE ||
+          annot.type === AnnotationType.STRIKEOUT
+        )
+          (dom as HTMLElement).style.borderBottomColor = data.color;
+        else (dom as HTMLElement).style.background = data.color;
       });
   }
   // update AnnotationList UI
@@ -339,13 +333,21 @@ async function deleteAnnot(id: string) {
 }
 
 /*******************************
- * AnnotCard & ColorPicker for text selection
+ * AnnotCard & FloatingMenu
  *******************************/
-async function toggleMenu() {
+/**
+ * Toggle Floating Menu after text selection
+ * @param page - the pageNumber where the selection is on
+ */
+async function toggleFloatingMenu(page?: number) {
   // close all menus first
   showAnnotCard.value = false;
-  showColorPicker.value = false;
+  showFloatingMenu.value = false;
   await nextTick();
+
+  // close floatingMenu if pageNumber (means no selection)
+  if (!page) return;
+  selectionPage.value = page;
 
   let hasSelection = false;
   let selection = window.getSelection();
@@ -362,23 +364,35 @@ async function toggleMenu() {
     }
   }
 
-  if (!!selectedAnnotId.value) {
-    // show annot card
-    let doms = document.querySelectorAll(
-      `section[annotation-id="${selectedAnnotId.value}"]`
-    );
-    rects = [];
-    for (let dom of doms) rects.push(dom.getBoundingClientRect());
-    showAnnotCard.value = true;
-    setStyle(rects);
-  } else if (hasSelection) {
-    // if user has selection, show colorpicker
-    showColorPicker.value = true;
-    setStyle(rects);
+  if (hasSelection) {
+    showFloatingMenu.value = true;
+    setPosition(rects);
   }
 }
 
-function setStyle(rects: DOMRect[] | DOMRectList) {
+async function toggleAnnotCard() {
+  // close all menus first
+  showAnnotCard.value = false;
+  showFloatingMenu.value = false;
+  await nextTick();
+
+  if (!selectedAnnotId.value) return;
+
+  // show annot card
+  let doms = document.querySelectorAll(
+    `section[annotation-id="${selectedAnnotId.value}"]`
+  );
+  let rects = [];
+  for (let dom of doms) rects.push(dom.getBoundingClientRect());
+  showAnnotCard.value = true;
+  setPosition(rects);
+}
+
+/**
+ * Set position of FloatingMenu / AnnotCard
+ * @param rects - doms of text selections / annotation
+ */
+function setPosition(rects: DOMRect[] | DOMRectList) {
   if (viewer.value === null) return;
 
   let bgRect = (viewer.value as HTMLElement).getBoundingClientRect();
@@ -420,11 +434,10 @@ function toggleRightMenu(visible: boolean) {
  * Provides
  */
 provide(KEY_getAnnot, getAnnot);
-provide(KEY_createAnnot, updateAnnot);
+provide(KEY_createAnnot, createAnnot);
 provide(KEY_updateAnnot, updateAnnot);
 provide(KEY_deleteAnnot, deleteAnnot);
 provide(KEY_setActiveAnnot, setActiveAnnot);
-provide(KEY_toggleMenu, toggleMenu);
 provide(KEY_clickTOC, clickTOC);
 provide(KEY_selectedAnnotId, selectedAnnotId);
 provide(KEY_outline, outline);
@@ -434,8 +447,6 @@ provide(KEY_annots, annots);
 /**
  * Watchers
  */
-
-// TODO when project is updated, notify the entire app
 
 watch(pdfState, (state) => {
   // pdfState is reactive, so it's deep wather automatically
@@ -531,11 +542,13 @@ onMounted(async () => {
         // draw annotations when mouse is up
         e.source.div.onmouseup = async (ev) => {
           if (clickedAnnotId) {
-            setActiveAnnot(clickedAnnotId as string);
+            setActiveAnnot(clickedAnnotId);
+            toggleAnnotCard();
           } else {
+            setActiveAnnot("");
             if (pdfState.tool === AnnotationType.CURSOR) {
               // toggle menu under text selection
-              selectionPage.value = e.pageNumber;
+              toggleFloatingMenu(e.pageNumber);
             } else {
               await createAnnot(pdfState.tool, pdfState.color, e.pageNumber, {
                 x1,
@@ -543,14 +556,10 @@ onMounted(async () => {
                 x2: ev.clientX,
                 y2: ev.clientY,
               });
-              window.getSelection()?.empty();
             }
-            setActiveAnnot(clickedAnnotId as string);
           }
           e.source.div.onmousemove = null;
           if (tempRect) tempRect.remove();
-          // toogle annotmenu under annotation / text selection
-          toggleMenu();
         };
       };
     }

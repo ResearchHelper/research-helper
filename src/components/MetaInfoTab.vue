@@ -273,13 +273,10 @@ export default defineComponent({
   },
 
   computed: {
-    meta: {
-      get() {
-        return this.project;
-      },
-      set(newMeta: Project) {
-        this.$emit("update:project", newMeta);
-      },
+    meta() {
+      // meta is a const object
+      // we can still write to its project
+      return this.project;
     },
 
     authors() {
@@ -306,6 +303,11 @@ export default defineComponent({
       // update db and also update rev in this.project
       let newMeta = (await updateProject(this.meta as Project)) as Project;
       this.meta._rev = newMeta._rev;
+
+      this.$bus.emit("updateProject", {
+        source: "MetaInfoTab",
+        data: this.meta,
+      });
 
       if (updateEdgeData) {
         let sourceNode = {

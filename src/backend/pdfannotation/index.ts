@@ -6,7 +6,7 @@ import {
   highlight,
   rectangle,
   underline,
-  strike,
+  strikeout,
 } from "./annotations";
 
 async function getAnnotation(annotId: string): Promise<Annotation | undefined> {
@@ -176,6 +176,9 @@ function drawAnnotation(
       break;
     case AnnotationType.UNDERLINE:
       doms = underline(container, annot);
+      break;
+    case AnnotationType.STRIKEOUT:
+      doms = strikeout(container, annot);
       break;
   }
 

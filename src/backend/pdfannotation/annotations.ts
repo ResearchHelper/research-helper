@@ -157,3 +157,43 @@ export function underline(
 
   return doms;
 }
+
+export function strikeout(
+  container: HTMLElement,
+  annot: Annotation
+): HTMLElement[] {
+  if (!!!annot._id) return [];
+
+  let annotationEditorLayer = container
+    ?.querySelector(`div.page[data-page-number='${annot.pageNumber}']`)
+    ?.querySelector(".annotationEditorLayer") as HTMLElement;
+
+  let existed = !!annotationEditorLayer.querySelector(
+    `section[annotation-id='${annot._id}']`
+  );
+
+  let doms = [] as HTMLElement[];
+  for (let rect of annot.rects) {
+    // update UI
+    let section = document.createElement("section");
+    section.setAttribute("annotation-id", annot._id);
+    section.style.position = "absolute";
+    // using percentage since it's invariant under scale change
+    section.style.left = `${rect.left}%`;
+    section.style.top = `${rect.top}%`;
+    section.style.width = `${rect.width}%`;
+    section.style.height = `${rect.height / 2}%`; // so that the bottom line is in the middle of text
+    section.style.pointerEvents = "auto";
+    section.style.cursor = "pointer";
+    section.style.borderBottomStyle = "solid";
+    section.style.borderBottomColor = annot.color;
+    section.style.borderBottomWidth = "2px";
+    section.className = "strikeoutAnnotation";
+
+    // put dom on the annotation layer
+    if (!existed) annotationEditorLayer.appendChild(section);
+    doms.push(section);
+  }
+
+  return doms;
+}

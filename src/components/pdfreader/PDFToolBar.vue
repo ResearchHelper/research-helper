@@ -45,6 +45,11 @@
           slot: AnnotationType.UNDERLINE,
         },
         {
+          value: AnnotationType.STRIKEOUT,
+          icon: 'format_strikethrough',
+          slot: AnnotationType.STRIKEOUT,
+        },
+        {
           value: AnnotationType.RECTANGLE,
           icon: 'rectangle',
           slot: AnnotationType.RECTANGLE,
@@ -61,6 +66,12 @@
       </template>
       <template v-slot:highlight>
         <q-tooltip>{{ $t("highlight") }}</q-tooltip>
+      </template>
+      <template v-slot:underline>
+        <q-tooltip>{{ $t("underline") }}</q-tooltip>
+      </template>
+      <template v-slot:strikeout>
+        <q-tooltip>{{ $t("strikeout") }}</q-tooltip>
       </template>
       <template v-slot:rectangle>
         <q-tooltip>{{ $t("rectangle") }}</q-tooltip>

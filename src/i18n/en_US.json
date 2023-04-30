@@ -108,5 +108,8 @@
   "attach-path-to-file": "Attach Path to File",
   "replace-path-to-file": "Replace Path to File",
   "reference": "References",
-  "rectangle": "Rectangle"
+  "rectangle": "Rectangle",
+  "copy": "Copy",
+  "strikeout": "Strikeout",
+  "underline": "Underline"
 }

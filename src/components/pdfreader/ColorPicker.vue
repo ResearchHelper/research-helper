@@ -1,5 +1,8 @@
 <template>
-  <div class="full-width row justify-between items-center">
+  <div
+    class="row justify-between items-center"
+    style="width: 128px"
+  >
     <q-btn
       v-for="color in colors"
       :key="color"

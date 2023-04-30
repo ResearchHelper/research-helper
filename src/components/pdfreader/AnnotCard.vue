@@ -30,8 +30,8 @@
           data-cy="btn-menu"
         >
           <AnnotMenu
-            @changeColor="(color: string) => updateAnnot({id: annot._id, data:{color: color}})"
-            @deleteAnnot="() => deleteAnnot(annot._id)"
+            @changeColor="(color: string) => changeColor(color)"
+            @deleteAnnot="deleteAnnot()"
             @copyID="copyToClipboard(annot._id)"
           />
         </q-btn>
@@ -76,7 +76,7 @@ import renderMathInElement from "katex/dist/contrib/auto-render";
 import "katex/dist/katex.min.css";
 
 const props = defineProps({
-  annot: { type: Object as PropType<Annotation>, required: true },
+  annot: Object as PropType<Annotation>,
   style: String,
 });
 
@@ -86,19 +86,19 @@ const content = ref(null); // ref to the <pre> tag
 const annotContent = computed({
   get() {
     liveRender(); // render immediately after get content
-    return props.annot.content;
+    return !!props.annot ? props.annot.content : "";
   },
   set(content) {
     saveContent(content);
   },
 });
 
-const updateAnnot = inject(KEY_updateAnnot) as (params: any) => void;
-const deleteAnnot = inject(KEY_deleteAnnot) as (id: string) => void;
+const _updateAnnot = inject(KEY_updateAnnot) as (params: any) => void;
+const _deleteAnnot = inject(KEY_deleteAnnot) as (id: string) => void;
 
 const _saveContent = (content: string) => {
   if (props.annot === undefined) return;
-  updateAnnot({
+  _updateAnnot({
     id: props.annot._id,
     data: { content: content },
   });
@@ -118,5 +118,15 @@ const liveRender = async () => {
     ignoredTags: ["script", "noscript", "style", "textarea", "code", "option"],
     throwOnError: false,
   });
+};
+
+const changeColor = (color: string) => {
+  if (props.annot === undefined) return;
+  _updateAnnot({ id: props.annot._id, data: { color: color } });
+};
+
+const deleteAnnot = () => {
+  if (props.annot === undefined) return;
+  _deleteAnnot(props.annot._id);
 };
 </script>
