@@ -98,7 +98,7 @@
 
 <script setup lang="ts">
 // types
-import { Project, Note } from "src/backend/database";
+import { Project, Note, BusEvent } from "src/backend/database";
 // components
 import ProjectTree from "src/components/ProjectTree.vue";
 import WelcomeCarousel from "src/components/WelcomeCarousel.vue";
@@ -116,13 +116,24 @@ import {
   getAppState,
   updateAppState,
 } from "src/backend/appState";
-import { computed, nextTick, onMounted, ref, watch } from "vue";
+// utils
+import {
+  computed,
+  inject,
+  nextTick,
+  onBeforeUnmount,
+  onMounted,
+  ref,
+  watch,
+} from "vue";
 import { useQuasar } from "quasar";
 import { useI18n } from "vue-i18n";
+import { EventBus } from "quasar";
 
 const stateStore = useStateStore();
 const $q = useQuasar();
 const { locale, t } = useI18n({ useScope: "global" });
+const bus = inject("bus") as EventBus;
 
 /*************************************************
  * Component refs, data, computed values
@@ -269,13 +280,17 @@ async function removeComponent(id: string) {
 /**
  * After renaming a row in projectTree, we need to rename the window title.
  * And we need to add dragsource again
- * @param element
+ * @param item
  */
-async function editComponentState(element: HTMLElement) {
-  let id = element.getAttribute("item-id");
-  let title = element.innerText;
-  if (!layout.value || !id) return;
-  layout.value.renameGLComponent(id, title);
+async function editComponentState(item: Project | Note | undefined) {
+  if (!layout.value || !item) return;
+  layout.value.renameGLComponent(item._id, item.label);
+  let config = layout.value.getLayoutConfig();
+  await updateLayout(config);
+
+  // add dragsource
+  if (!projectTree.value) return;
+  let element = projectTree.value.$el.querySelector(`[item-id='${item._id}']`);
   addDragSource(element);
 }
 
@@ -334,7 +349,7 @@ async function saveAppState() {
  * @param addComponentOnly - after a component is drag, we only need to add another component without dragsource
  */
 function addDragSource(element: HTMLElement, addComponentOnly = false) {
-  // FIXME multi-windows with same id is not well supported
+  // TODO multi-windows with same id is not well supported
   // think about a good way to do this
   // can we view the same "Object" in different windows ?
   // so that we don't need to worry about update conflict
@@ -403,5 +418,12 @@ onMounted(async () => {
   // the openItemIds are ready
   // we can load the projectTree
   ready.value = true;
+
+  // event bus
+  bus.on("updateProject", (e: BusEvent) => editComponentState(e.data));
+});
+
+onBeforeUnmount(() => {
+  bus.off("updateProject", (e: BusEvent) => editComponentState(e.data));
 });
 </script>
