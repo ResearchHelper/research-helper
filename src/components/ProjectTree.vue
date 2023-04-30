@@ -205,7 +205,7 @@
 <script lang="ts">
 // types
 import { defineComponent } from "vue";
-import { Note, Project } from "src/backend/database";
+import { BusEvent, Note, Project } from "src/backend/database";
 import { QTree, QTreeNode } from "quasar";
 // components
 import GraphView from "./GraphView.vue";
@@ -267,9 +267,9 @@ export default defineComponent({
     this.maxHeight = this.$el.offsetHeight - 36;
     this.treeSize = this.maxHeight;
 
-    // events emited from other components (TableView.vuew)
-    this.$bus.on("updateProject", this.updateProject);
-    this.$bus.on("deleteProject", this.closeProject);
+    // events emited from other components (TableView.vue)
+    this.$bus.on("updateProject", (e: BusEvent) => this.updateProject(e));
+    this.$bus.on("deleteProject", (e: BusEvent) => this.closeProject(e.data));
 
     await this.getProjectTree();
     let selected = this.stateStore.workingItemId;
@@ -280,8 +280,8 @@ export default defineComponent({
 
   beforeUnmount() {
     // not necessary for this component, but a good habit
-    this.$bus.off("updateProject", this.updateProject);
-    this.$bus.off("deleteProject", this.closeProject);
+    this.$bus.off("updateProject", (e: BusEvent) => this.updateProject(e));
+    this.$bus.off("deleteProject", (e: BusEvent) => this.closeProject(e.data));
   },
 
   watch: {
@@ -375,15 +375,17 @@ export default defineComponent({
      * Receive updated project from other component and update the projectTree
      * @param project
      */
-    updateProject(project: Project) {
+    updateProject(event: BusEvent) {
+      let source = event.source;
+      let project = event.data;
+      if (!project) return;
       let idx = this.projects.findIndex((p) => p._id == project._id);
-      // when updating project, be careful whether children property is undefined
-      // the updateProject event emit from PDFReader has no children property
       if (idx === -1) return;
-      let children =
-        (project.children?.length as number) > 0
-          ? project.children
-          : this.projects[idx].children;
+
+      // when updating project, be careful whether children property is undefined
+      // the updateProject event emit from PDFReader has empty children property
+      let children = this.projects[idx].children;
+      if (source === "ProjectBrowser") children = project.children;
       this.projects[idx] = {
         _id: project._id,
         dataType: project.dataType,

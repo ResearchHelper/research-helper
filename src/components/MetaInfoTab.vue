@@ -2,7 +2,7 @@
   <!-- show this after rightMenu is shown, 
     otherwise autogrow extends to full-height -->
   <q-tabs
-    v-if="meta !== undefined && meta.reference.length > 0"
+    v-if="!!meta && meta.reference.length > 0"
     v-model="tab"
     dense
     no-caps
@@ -45,6 +45,7 @@
           type="text"
           v-model="meta.title"
           @blur="modifyInfo(true)"
+          data-cy="title"
         ></textarea>
       </div>
 
@@ -76,6 +77,7 @@
           :placeholder="$t('first-last-last-first')"
           v-model.trim="name"
           @keydown.enter="addAuthor"
+          data-cy="author-input"
         />
       </div>
 
@@ -89,6 +91,7 @@
           :label="author"
           removable
           @remove="removeAuthor(index)"
+          :data-cy="`q-chip-${index}`"
         />
       </div>
 
@@ -270,13 +273,10 @@ export default defineComponent({
   },
 
   computed: {
-    meta: {
-      get() {
-        return this.project;
-      },
-      set(newMeta: Project) {
-        this.$emit("update:project", newMeta);
-      },
+    meta() {
+      // meta is a const object
+      // we can still write to its project
+      return this.project;
     },
 
     authors() {
@@ -303,6 +303,11 @@ export default defineComponent({
       // update db and also update rev in this.project
       let newMeta = (await updateProject(this.meta as Project)) as Project;
       this.meta._rev = newMeta._rev;
+
+      this.$bus.emit("updateProject", {
+        source: "MetaInfoTab",
+        data: this.meta,
+      });
 
       if (updateEdgeData) {
         let sourceNode = {
@@ -375,7 +380,7 @@ export default defineComponent({
     },
 
     async getReferences() {
-      if (!!!this.meta?.reference || this.references.length > 0) return;
+      if (!!!this.meta?.reference || this.references.length === 0) return;
 
       for (let i in this.meta.reference) {
         this.references.push({ text: "", link: "" });

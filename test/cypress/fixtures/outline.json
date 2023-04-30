@@ -1,0 +1,3246 @@
+[
+  {
+    "label": "Geometry, Topology and Physics",
+    "children": [
+      {
+        "label": "Contents",
+        "children": [],
+        "ref": {
+          "num": 9,
+          "gen": 0
+        }
+      },
+      {
+        "label": "Preface to the First Edition",
+        "children": [],
+        "ref": {
+          "num": 19,
+          "gen": 0
+        }
+      },
+      {
+        "label": "Preface to the Second Edition",
+        "children": [],
+        "ref": {
+          "num": 21,
+          "gen": 0
+        }
+      },
+      {
+        "label": "How to Read This Book",
+        "children": [],
+        "ref": {
+          "num": 23,
+          "gen": 0
+        }
+      },
+      {
+        "label": "Notation and Conventions",
+        "children": [],
+        "ref": {
+          "num": 24,
+          "gen": 0
+        }
+      }
+    ],
+    "ref": {
+      "num": 6,
+      "gen": 0
+    }
+  },
+  {
+    "label": "Chapter 1: Quantum Physics",
+    "children": [
+      {
+        "label": "1.1 Analytical mechanics",
+        "children": [
+          {
+            "label": "1.1.1 Newtonian mechanics",
+            "children": [],
+            "ref": {
+              "num": 25,
+              "gen": 0
+            }
+          },
+          {
+            "label": "1.1.2 Lagrangian formalism",
+            "children": [],
+            "ref": {
+              "num": 26,
+              "gen": 0
+            }
+          },
+          {
+            "label": "1.1.3 Hamiltonian formalism",
+            "children": [],
+            "ref": {
+              "num": 29,
+              "gen": 0
+            }
+          }
+        ],
+        "ref": {
+          "num": 25,
+          "gen": 0
+        }
+      },
+      {
+        "label": "1.2 Canonical quantization",
+        "children": [
+          {
+            "label": "1.2.1 Hilbert space, bras and kets",
+            "children": [],
+            "ref": {
+              "num": 33,
+              "gen": 0
+            }
+          },
+          {
+            "label": "1.2.2 Axioms of canonical quantization",
+            "children": [],
+            "ref": {
+              "num": 34,
+              "gen": 0
+            }
+          },
+          {
+            "label": "1.2.3 Heisenberg equation, Heisenberg picture and Schr¨odinger picture",
+            "children": [],
+            "ref": {
+              "num": 37,
+              "gen": 0
+            }
+          },
+          {
+            "label": "1.2.4 Wavefunction",
+            "children": [],
+            "ref": {
+              "num": 37,
+              "gen": 0
+            }
+          },
+          {
+            "label": "1.2.5 Harmonic oscillator",
+            "children": [],
+            "ref": {
+              "num": 41,
+              "gen": 0
+            }
+          }
+        ],
+        "ref": {
+          "num": 33,
+          "gen": 0
+        }
+      },
+      {
+        "label": "1.3 Path integral quantization of a Bose particle",
+        "children": [
+          {
+            "label": "1.3.1 Path integral quantization",
+            "children": [],
+            "ref": {
+              "num": 43,
+              "gen": 0
+            }
+          },
+          {
+            "label": "1.3.2 Imaginary time and partition function",
+            "children": [],
+            "ref": {
+              "num": 50,
+              "gen": 0
+            }
+          },
+          {
+            "label": "1.3.3 Time-ordered product and generating functional",
+            "children": [],
+            "ref": {
+              "num": 52,
+              "gen": 0
+            }
+          }
+        ],
+        "ref": {
+          "num": 43,
+          "gen": 0
+        }
+      },
+      {
+        "label": "1.4 Harmonic oscillator",
+        "children": [
+          {
+            "label": "1.4.1 Transition amplitude",
+            "children": [],
+            "ref": {
+              "num": 55,
+              "gen": 0
+            }
+          },
+          {
+            "label": "1.4.2 Partition function",
+            "children": [],
+            "ref": {
+              "num": 59,
+              "gen": 0
+            }
+          }
+        ],
+        "ref": {
+          "num": 55,
+          "gen": 0
+        }
+      },
+      {
+        "label": "1.5 Path integral quantization of a Fermi particle",
+        "children": [
+          {
+            "label": "1.5.1 Fermionic harmonic oscillator",
+            "children": [],
+            "ref": {
+              "num": 63,
+              "gen": 0
+            }
+          },
+          {
+            "label": "1.5.2 Calculus of Grassmann numbers",
+            "children": [],
+            "ref": {
+              "num": 64,
+              "gen": 0
+            }
+          },
+          {
+            "label": "1.5.3 Differentiation",
+            "children": [],
+            "ref": {
+              "num": 65,
+              "gen": 0
+            }
+          },
+          {
+            "label": "1.5.4 Integration",
+            "children": [],
+            "ref": {
+              "num": 66,
+              "gen": 0
+            }
+          },
+          {
+            "label": "1.5.5 Delta-function",
+            "children": [],
+            "ref": {
+              "num": 67,
+              "gen": 0
+            }
+          },
+          {
+            "label": "1.5.6 Gaussian integral",
+            "children": [],
+            "ref": {
+              "num": 68,
+              "gen": 0
+            }
+          },
+          {
+            "label": "1.5.7 Functional derivative",
+            "children": [],
+            "ref": {
+              "num": 69,
+              "gen": 0
+            }
+          },
+          {
+            "label": "1.5.8 Complex conjugation",
+            "children": [],
+            "ref": {
+              "num": 69,
+              "gen": 0
+            }
+          },
+          {
+            "label": "1.5.9 Coherent states and completeness relation",
+            "children": [],
+            "ref": {
+              "num": 70,
+              "gen": 0
+            }
+          },
+          {
+            "label": "1.5.10 Partition function of a fermionic oscillator",
+            "children": [],
+            "ref": {
+              "num": 71,
+              "gen": 0
+            }
+          }
+        ],
+        "ref": {
+          "num": 62,
+          "gen": 0
+        }
+      },
+      {
+        "label": "1.6 Quantization of a scalar field",
+        "children": [
+          {
+            "label": "1.6.1 Free scalar field",
+            "children": [],
+            "ref": {
+              "num": 75,
+              "gen": 0
+            }
+          },
+          {
+            "label": "1.6.2 Interacting scalar field",
+            "children": [],
+            "ref": {
+              "num": 78,
+              "gen": 0
+            }
+          }
+        ],
+        "ref": {
+          "num": 75,
+          "gen": 0
+        }
+      },
+      {
+        "label": "1.7 Quantization of a Dirac field",
+        "children": [],
+        "ref": {
+          "num": 79,
+          "gen": 0
+        }
+      },
+      {
+        "label": "1.8 Gauge theories",
+        "children": [
+          {
+            "label": "1.8.1 Abelian gauge theories",
+            "children": [],
+            "ref": {
+              "num": 80,
+              "gen": 0
+            }
+          },
+          {
+            "label": "1.8.2 Non-Abelian gauge theories",
+            "children": [],
+            "ref": {
+              "num": 82,
+              "gen": 0
+            }
+          },
+          {
+            "label": "1.8.3 Higgs fields",
+            "children": [],
+            "ref": {
+              "num": 84,
+              "gen": 0
+            }
+          }
+        ],
+        "ref": {
+          "num": 80,
+          "gen": 0
+        }
+      },
+      {
+        "label": "1.9 Magnetic monopoles",
+        "children": [
+          {
+            "label": "1.9.1 Dirac monopole",
+            "children": [],
+            "ref": {
+              "num": 85,
+              "gen": 0
+            }
+          },
+          {
+            "label": "1.9.2 The Wu–Yang monopole",
+            "children": [],
+            "ref": {
+              "num": 86,
+              "gen": 0
+            }
+          },
+          {
+            "label": "1.9.3 Charge quantization",
+            "children": [],
+            "ref": {
+              "num": 86,
+              "gen": 0
+            }
+          }
+        ],
+        "ref": {
+          "num": 84,
+          "gen": 0
+        }
+      },
+      {
+        "label": "1.10 Instantons",
+        "children": [
+          {
+            "label": "1.10.1 Introduction",
+            "children": [],
+            "ref": {
+              "num": 87,
+              "gen": 0
+            }
+          },
+          {
+            "label": "1.10.2 The (anti-)self-dual solution",
+            "children": [],
+            "ref": {
+              "num": 88,
+              "gen": 0
+            }
+          }
+        ],
+        "ref": {
+          "num": 87,
+          "gen": 0
+        }
+      },
+      {
+        "label": "Problems",
+        "children": [],
+        "ref": {
+          "num": 90,
+          "gen": 0
+        }
+      }
+    ],
+    "ref": {
+      "num": 25,
+      "gen": 0
+    }
+  },
+  {
+    "label": "Chapter 2: Mathematical Preliminaries",
+    "children": [
+      {
+        "label": "2.1 Maps",
+        "children": [
+          {
+            "label": "2.1.1 Definitions",
+            "children": [],
+            "ref": {
+              "num": 91,
+              "gen": 0
+            }
+          },
+          {
+            "label": "2.1.2 Equivalence relation and equivalence class",
+            "children": [],
+            "ref": {
+              "num": 94,
+              "gen": 0
+            }
+          }
+        ],
+        "ref": {
+          "num": 91,
+          "gen": 0
+        }
+      },
+      {
+        "label": "2.2 Vector spaces",
+        "children": [
+          {
+            "label": "2.2.1 Vectors and vector spaces",
+            "children": [],
+            "ref": {
+              "num": 99,
+              "gen": 0
+            }
+          },
+          {
+            "label": "2.2.2 Linear maps, images and kernels",
+            "children": [],
+            "ref": {
+              "num": 100,
+              "gen": 0
+            }
+          },
+          {
+            "label": "2.2.3 Dual vector space",
+            "children": [],
+            "ref": {
+              "num": 101,
+              "gen": 0
+            }
+          },
+          {
+            "label": "2.2.4 Inner product and adjoint",
+            "children": [],
+            "ref": {
+              "num": 102,
+              "gen": 0
+            }
+          },
+          {
+            "label": "2.2.5 Tensors",
+            "children": [],
+            "ref": {
+              "num": 104,
+              "gen": 0
+            }
+          }
+        ],
+        "ref": {
+          "num": 99,
+          "gen": 0
+        }
+      },
+      {
+        "label": "2.3 Topological spaces",
+        "children": [
+          {
+            "label": "2.3.1 Definitions",
+            "children": [],
+            "ref": {
+              "num": 105,
+              "gen": 0
+            }
+          },
+          {
+            "label": "2.3.2 Continuous maps",
+            "children": [],
+            "ref": {
+              "num": 106,
+              "gen": 0
+            }
+          },
+          {
+            "label": "2.3.3 Neighbourhoods and Hausdorff spaces",
+            "children": [],
+            "ref": {
+              "num": 106,
+              "gen": 0
+            }
+          },
+          {
+            "label": "2.3.4 Closed set",
+            "children": [],
+            "ref": {
+              "num": 107,
+              "gen": 0
+            }
+          },
+          {
+            "label": "2.3.5 Compactness",
+            "children": [],
+            "ref": {
+              "num": 107,
+              "gen": 0
+            }
+          },
+          {
+            "label": "2.3.6 Connectedness",
+            "children": [],
+            "ref": {
+              "num": 109,
+              "gen": 0
+            }
+          }
+        ],
+        "ref": {
+          "num": 105,
+          "gen": 0
+        }
+      },
+      {
+        "label": "2.4 Homeomorphisms and topological invariants",
+        "children": [
+          {
+            "label": "2.4.1 Homeomorphisms",
+            "children": [],
+            "ref": {
+              "num": 109,
+              "gen": 0
+            }
+          },
+          {
+            "label": "2.4.2 Topological invariants",
+            "children": [],
+            "ref": {
+              "num": 110,
+              "gen": 0
+            }
+          },
+          {
+            "label": "2.4.3 Homotopy type",
+            "children": [],
+            "ref": {
+              "num": 112,
+              "gen": 0
+            }
+          },
+          {
+            "label": "2.4.4 Euler characteristic: an example",
+            "children": [],
+            "ref": {
+              "num": 112,
+              "gen": 0
+            }
+          }
+        ],
+        "ref": {
+          "num": 109,
+          "gen": 0
+        }
+      },
+      {
+        "label": "Problems",
+        "children": [],
+        "ref": {
+          "num": 115,
+          "gen": 0
+        }
+      }
+    ],
+    "ref": {
+      "num": 91,
+      "gen": 0
+    }
+  },
+  {
+    "label": "Chapter 3: Homology Groups",
+    "children": [
+      {
+        "label": "3.1 Abelian groups",
+        "children": [
+          {
+            "label": "3.1.1 Elementary group theory",
+            "children": [],
+            "ref": {
+              "num": 117,
+              "gen": 0
+            }
+          },
+          {
+            "label": "3.1.2 Finitely generated Abelian groups and free Abelian groups",
+            "children": [],
+            "ref": {
+              "num": 120,
+              "gen": 0
+            }
+          },
+          {
+            "label": "3.1.3 Cyclic groups",
+            "children": [],
+            "ref": {
+              "num": 120,
+              "gen": 0
+            }
+          }
+        ],
+        "ref": {
+          "num": 117,
+          "gen": 0
+        }
+      },
+      {
+        "label": "3.2 Simplexes and simplicial complexes",
+        "children": [
+          {
+            "label": "3.2.1 Simplexes",
+            "children": [],
+            "ref": {
+              "num": 122,
+              "gen": 0
+            }
+          },
+          {
+            "label": "3.2.2 Simplicial complexes and polyhedra",
+            "children": [],
+            "ref": {
+              "num": 123,
+              "gen": 0
+            }
+          }
+        ],
+        "ref": {
+          "num": 122,
+          "gen": 0
+        }
+      },
+      {
+        "label": "3.3 Homology groups of simplicial complexes",
+        "children": [
+          {
+            "label": "3.3.1 Oriented simplexes",
+            "children": [],
+            "ref": {
+              "num": 124,
+              "gen": 0
+            }
+          },
+          {
+            "label": "3.3.2 Chain group, cycle group and boundary group",
+            "children": [],
+            "ref": {
+              "num": 126,
+              "gen": 0
+            }
+          },
+          {
+            "label": "3.3.3 Homology groups",
+            "children": [],
+            "ref": {
+              "num": 130,
+              "gen": 0
+            }
+          },
+          {
+            "label": "3.3.4 Computation of H0(K)",
+            "children": [],
+            "ref": {
+              "num": 134,
+              "gen": 0
+            }
+          },
+          {
+            "label": "3.3.5 More homology computations",
+            "children": [],
+            "ref": {
+              "num": 135,
+              "gen": 0
+            }
+          }
+        ],
+        "ref": {
+          "num": 124,
+          "gen": 0
+        }
+      },
+      {
+        "label": "3.4 General properties of homology groups",
+        "children": [
+          {
+            "label": "3.4.1 Connectedness and homology groups",
+            "children": [],
+            "ref": {
+              "num": 141,
+              "gen": 0
+            }
+          },
+          {
+            "label": "3.4.2 Structure of homology groups",
+            "children": [],
+            "ref": {
+              "num": 142,
+              "gen": 0
+            }
+          },
+          {
+            "label": "3.4.3 Betti numbers and the Euler–Poincaré theorem",
+            "children": [],
+            "ref": {
+              "num": 142,
+              "gen": 0
+            }
+          }
+        ],
+        "ref": {
+          "num": 141,
+          "gen": 0
+        }
+      },
+      {
+        "label": "Problems",
+        "children": [],
+        "ref": {
+          "num": 144,
+          "gen": 0
+        }
+      }
+    ],
+    "ref": {
+      "num": 117,
+      "gen": 0
+    }
+  },
+  {
+    "label": "Chapter 4: Homotopy Groups",
+    "children": [
+      {
+        "label": "4.1 Fundamental groups",
+        "children": [
+          {
+            "label": "4.1.1 Basic ideas",
+            "children": [],
+            "ref": {
+              "num": 145,
+              "gen": 0
+            }
+          },
+          {
+            "label": "4.1.2 Paths and loops",
+            "children": [],
+            "ref": {
+              "num": 146,
+              "gen": 0
+            }
+          },
+          {
+            "label": "4.1.3 Homotopy",
+            "children": [],
+            "ref": {
+              "num": 147,
+              "gen": 0
+            }
+          },
+          {
+            "label": "4.1.4 Fundamental groups",
+            "children": [],
+            "ref": {
+              "num": 149,
+              "gen": 0
+            }
+          }
+        ],
+        "ref": {
+          "num": 145,
+          "gen": 0
+        }
+      },
+      {
+        "label": "4.2 General properties of fundamental groups",
+        "children": [
+          {
+            "label": "4.2.1 Arcwise connectedness and fundamental groups",
+            "children": [],
+            "ref": {
+              "num": 151,
+              "gen": 0
+            }
+          },
+          {
+            "label": "4.2.2 Homotopic invariance of fundamental groups",
+            "children": [],
+            "ref": {
+              "num": 152,
+              "gen": 0
+            }
+          }
+        ],
+        "ref": {
+          "num": 151,
+          "gen": 0
+        }
+      },
+      {
+        "label": "4.3 Examples of fundamental groups",
+        "children": [
+          {
+            "label": "4.3.1 Fundamental group of torus",
+            "children": [],
+            "ref": {
+              "num": 157,
+              "gen": 0
+            }
+          }
+        ],
+        "ref": {
+          "num": 155,
+          "gen": 0
+        }
+      },
+      {
+        "label": "4.4 Fundamental groups of polyhedra",
+        "children": [
+          {
+            "label": "4.4.1 Free groups and relations",
+            "children": [],
+            "ref": {
+              "num": 158,
+              "gen": 0
+            }
+          },
+          {
+            "label": "4.4.2 Calculating fundamental groups of polyhedra",
+            "children": [],
+            "ref": {
+              "num": 160,
+              "gen": 0
+            }
+          },
+          {
+            "label": "4.4.3 Relations between H1(K) and π1(|K|)",
+            "children": [],
+            "ref": {
+              "num": 168,
+              "gen": 0
+            }
+          }
+        ],
+        "ref": {
+          "num": 158,
+          "gen": 0
+        }
+      },
+      {
+        "label": "4.5 Higher homotopy groups",
+        "children": [
+          {
+            "label": "4.5.1 Definitions",
+            "children": [],
+            "ref": {
+              "num": 170,
+              "gen": 0
+            }
+          }
+        ],
+        "ref": {
+          "num": 169,
+          "gen": 0
+        }
+      },
+      {
+        "label": "4.6 General properties of higher homotopy groups",
+        "children": [
+          {
+            "label": "4.6.1 Abelian nature of higher homotopy groups",
+            "children": [],
+            "ref": {
+              "num": 172,
+              "gen": 0
+            }
+          },
+          {
+            "label": "4.6.2 Arcwise connectedness and higher homotopy groups",
+            "children": [],
+            "ref": {
+              "num": 172,
+              "gen": 0
+            }
+          },
+          {
+            "label": "4.6.3 Homotopy invariance of higher homotopy groups",
+            "children": [],
+            "ref": {
+              "num": 172,
+              "gen": 0
+            }
+          },
+          {
+            "label": "4.6.4 Higher homotopy groups of a product space",
+            "children": [],
+            "ref": {
+              "num": 172,
+              "gen": 0
+            }
+          },
+          {
+            "label": "4.6.5 Universal covering spaces and higher homotopy groups",
+            "children": [],
+            "ref": {
+              "num": 172,
+              "gen": 0
+            }
+          }
+        ],
+        "ref": {
+          "num": 172,
+          "gen": 0
+        }
+      },
+      {
+        "label": "4.7 Examples of higher homotopy groups",
+        "children": [],
+        "ref": {
+          "num": 174,
+          "gen": 0
+        }
+      },
+      {
+        "label": "4.8 Orders in condensed matter systems",
+        "children": [
+          {
+            "label": "4.8.1 Order parameter",
+            "children": [],
+            "ref": {
+              "num": 177,
+              "gen": 0
+            }
+          },
+          {
+            "label": "4.8.2 Superfluid 4He and superconductors",
+            "children": [],
+            "ref": {
+              "num": 178,
+              "gen": 0
+            }
+          },
+          {
+            "label": "4.8.3 General consideration",
+            "children": [],
+            "ref": {
+              "num": 181,
+              "gen": 0
+            }
+          }
+        ],
+        "ref": {
+          "num": 177,
+          "gen": 0
+        }
+      },
+      {
+        "label": "4.9 Defects in nematic liquid crystals",
+        "children": [
+          {
+            "label": "4.9.1 Order parameter of nematic liquid crystals",
+            "children": [],
+            "ref": {
+              "num": 183,
+              "gen": 0
+            }
+          },
+          {
+            "label": "4.9.2 Line defects in nematic liquid crystals",
+            "children": [],
+            "ref": {
+              "num": 184,
+              "gen": 0
+            }
+          },
+          {
+            "label": "4.9.3 Point defects in nematic liquid crystals",
+            "children": [],
+            "ref": {
+              "num": 185,
+              "gen": 0
+            }
+          },
+          {
+            "label": "4.9.4 Higher dimensional texture",
+            "children": [],
+            "ref": {
+              "num": 186,
+              "gen": 0
+            }
+          }
+        ],
+        "ref": {
+          "num": 183,
+          "gen": 0
+        }
+      },
+      {
+        "label": "4.10 Textures in superfluid 3He-A",
+        "children": [
+          {
+            "label": "4.10.1 Superfluid 3He-A",
+            "children": [],
+            "ref": {
+              "num": 187,
+              "gen": 0
+            }
+          },
+          {
+            "label": "4.10.2 Line defects and non-singular vortices in 3He-A",
+            "children": [],
+            "ref": {
+              "num": 189,
+              "gen": 0
+            }
+          },
+          {
+            "label": "4.10.3 Shankar monopole in 3He-A",
+            "children": [],
+            "ref": {
+              "num": 190,
+              "gen": 0
+            }
+          }
+        ],
+        "ref": {
+          "num": 187,
+          "gen": 0
+        }
+      },
+      {
+        "label": "Problems",
+        "children": [],
+        "ref": {
+          "num": 191,
+          "gen": 0
+        }
+      }
+    ],
+    "ref": {
+      "num": 145,
+      "gen": 0
+    }
+  },
+  {
+    "label": "Chapter 5: Manifolds",
+    "children": [
+      {
+        "label": "5.1 Manifolds",
+        "children": [
+          {
+            "label": "5.1.1 Heuristic introduction",
+            "children": [],
+            "ref": {
+              "num": 193,
+              "gen": 0
+            }
+          },
+          {
+            "label": "5.1.2 Definitions",
+            "children": [],
+            "ref": {
+              "num": 195,
+              "gen": 0
+            }
+          },
+          {
+            "label": "5.1.3 Examples",
+            "children": [],
+            "ref": {
+              "num": 197,
+              "gen": 0
+            }
+          }
+        ],
+        "ref": {
+          "num": 193,
+          "gen": 0
+        }
+      },
+      {
+        "label": "5.2 The calculus on manifolds",
+        "children": [
+          {
+            "label": "5.2.1 Differentiable maps",
+            "children": [],
+            "ref": {
+              "num": 203,
+              "gen": 0
+            }
+          },
+          {
+            "label": "5.2.2 Vectors",
+            "children": [],
+            "ref": {
+              "num": 205,
+              "gen": 0
+            }
+          },
+          {
+            "label": "5.2.3 One-forms",
+            "children": [],
+            "ref": {
+              "num": 208,
+              "gen": 0
+            }
+          },
+          {
+            "label": "5.2.4 Tensors",
+            "children": [],
+            "ref": {
+              "num": 209,
+              "gen": 0
+            }
+          },
+          {
+            "label": "5.2.5 Tensor fields",
+            "children": [],
+            "ref": {
+              "num": 209,
+              "gen": 0
+            }
+          },
+          {
+            "label": "5.2.6 Induced maps",
+            "children": [],
+            "ref": {
+              "num": 210,
+              "gen": 0
+            }
+          },
+          {
+            "label": "5.2.7 Submanifolds",
+            "children": [],
+            "ref": {
+              "num": 212,
+              "gen": 0
+            }
+          }
+        ],
+        "ref": {
+          "num": 202,
+          "gen": 0
+        }
+      },
+      {
+        "label": "5.3 Flows and Lie derivatives",
+        "children": [
+          {
+            "label": "5.3.1 One-parameter group of transformations",
+            "children": [],
+            "ref": {
+              "num": 214,
+              "gen": 0
+            }
+          },
+          {
+            "label": "5.3.2 Lie derivatives",
+            "children": [],
+            "ref": {
+              "num": 215,
+              "gen": 0
+            }
+          }
+        ],
+        "ref": {
+          "num": 212,
+          "gen": 0
+        }
+      },
+      {
+        "label": "5.4 Differential forms",
+        "children": [
+          {
+            "label": "5.4.1 Definitions",
+            "children": [],
+            "ref": {
+              "num": 220,
+              "gen": 0
+            }
+          },
+          {
+            "label": "5.4.2 Exterior derivatives",
+            "children": [],
+            "ref": {
+              "num": 222,
+              "gen": 0
+            }
+          },
+          {
+            "label": "5.4.3 Interior product and Lie derivative of forms",
+            "children": [],
+            "ref": {
+              "num": 225,
+              "gen": 0
+            }
+          }
+        ],
+        "ref": {
+          "num": 220,
+          "gen": 0
+        }
+      },
+      {
+        "label": "5.5 Integration of differential forms",
+        "children": [
+          {
+            "label": "5.5.1 Orientation",
+            "children": [],
+            "ref": {
+              "num": 228,
+              "gen": 0
+            }
+          },
+          {
+            "label": "5.5.2 Integration of forms",
+            "children": [],
+            "ref": {
+              "num": 229,
+              "gen": 0
+            }
+          }
+        ],
+        "ref": {
+          "num": 228,
+          "gen": 0
+        }
+      },
+      {
+        "label": "5.6 Lie groups and Lie algebras",
+        "children": [
+          {
+            "label": "5.6.1 Lie groups",
+            "children": [],
+            "ref": {
+              "num": 231,
+              "gen": 0
+            }
+          },
+          {
+            "label": "5.6.2 Lie algebras",
+            "children": [],
+            "ref": {
+              "num": 233,
+              "gen": 0
+            }
+          },
+          {
+            "label": "5.6.3 The one-parameter subgroup",
+            "children": [],
+            "ref": {
+              "num": 236,
+              "gen": 0
+            }
+          },
+          {
+            "label": "5.6.4 Frames and structure equation",
+            "children": [],
+            "ref": {
+              "num": 239,
+              "gen": 0
+            }
+          }
+        ],
+        "ref": {
+          "num": 231,
+          "gen": 0
+        }
+      },
+      {
+        "label": "5.7 The action of Lie groups on manifolds",
+        "children": [
+          {
+            "label": "5.7.1 Definitions",
+            "children": [],
+            "ref": {
+              "num": 240,
+              "gen": 0
+            }
+          },
+          {
+            "label": "5.7.2 Orbits and isotropy groups",
+            "children": [],
+            "ref": {
+              "num": 243,
+              "gen": 0
+            }
+          },
+          {
+            "label": "5.7.3 Induced vector fields",
+            "children": [],
+            "ref": {
+              "num": 247,
+              "gen": 0
+            }
+          },
+          {
+            "label": "5.7.4 The adjoint representation",
+            "children": [],
+            "ref": {
+              "num": 248,
+              "gen": 0
+            }
+          }
+        ],
+        "ref": {
+          "num": 240,
+          "gen": 0
+        }
+      },
+      {
+        "label": "Problems",
+        "children": [],
+        "ref": {
+          "num": 248,
+          "gen": 0
+        }
+      }
+    ],
+    "ref": {
+      "num": 193,
+      "gen": 0
+    }
+  },
+  {
+    "label": "Chapter 6: de Rham Cohomology Groups",
+    "children": [
+      {
+        "label": "6.1 Stokes’ theorem",
+        "children": [
+          {
+            "label": "6.1.1 Preliminary consideration",
+            "children": [],
+            "ref": {
+              "num": 250,
+              "gen": 0
+            }
+          },
+          {
+            "label": "6.1.2 Stokes’ theorem",
+            "children": [],
+            "ref": {
+              "num": 252,
+              "gen": 0
+            }
+          }
+        ],
+        "ref": {
+          "num": 250,
+          "gen": 0
+        }
+      },
+      {
+        "label": "6.2 de Rham cohomology groups",
+        "children": [
+          {
+            "label": "6.2.1 Definitions",
+            "children": [],
+            "ref": {
+              "num": 254,
+              "gen": 0
+            }
+          },
+          {
+            "label": "6.2.2 Duality of Hr (M) and Hr (M); de Rham’s theorem",
+            "children": [],
+            "ref": {
+              "num": 257,
+              "gen": 0
+            }
+          }
+        ],
+        "ref": {
+          "num": 254,
+          "gen": 0
+        }
+      },
+      {
+        "label": "6.3 Poincaré’s lemma",
+        "children": [],
+        "ref": {
+          "num": 259,
+          "gen": 0
+        }
+      },
+      {
+        "label": "6.4 Structure of de Rham cohomology groups",
+        "children": [
+          {
+            "label": "6.4.1 Poincaré duality",
+            "children": [],
+            "ref": {
+              "num": 261,
+              "gen": 0
+            }
+          },
+          {
+            "label": "6.4.2 Cohomology rings",
+            "children": [],
+            "ref": {
+              "num": 262,
+              "gen": 0
+            }
+          },
+          {
+            "label": "6.4.3 The Künneth formula",
+            "children": [],
+            "ref": {
+              "num": 262,
+              "gen": 0
+            }
+          },
+          {
+            "label": "6.4.4 Pullback of de Rham cohomology groups",
+            "children": [],
+            "ref": {
+              "num": 264,
+              "gen": 0
+            }
+          },
+          {
+            "label": "6.4.5 Homotopy and H1(M)",
+            "children": [],
+            "ref": {
+              "num": 264,
+              "gen": 0
+            }
+          }
+        ],
+        "ref": {
+          "num": 261,
+          "gen": 0
+        }
+      }
+    ],
+    "ref": {
+      "num": 250,
+      "gen": 0
+    }
+  },
+  {
+    "label": "Chapter 7: Riemannian Geometry",
+    "children": [
+      {
+        "label": "7.1 Riemannian manifolds and pseudo-Riemannian manifolds",
+        "children": [
+          {
+            "label": "7.1.1 Metric tensors",
+            "children": [],
+            "ref": {
+              "num": 268,
+              "gen": 0
+            }
+          },
+          {
+            "label": "7.1.2 Induced metric",
+            "children": [],
+            "ref": {
+              "num": 270,
+              "gen": 0
+            }
+          }
+        ],
+        "ref": {
+          "num": 268,
+          "gen": 0
+        }
+      },
+      {
+        "label": "7.2 Parallel transport, connection and covariant derivative",
+        "children": [
+          {
+            "label": "7.2.1 Heuristic introduction",
+            "children": [],
+            "ref": {
+              "num": 271,
+              "gen": 0
+            }
+          },
+          {
+            "label": "7.2.2 Affine connections",
+            "children": [],
+            "ref": {
+              "num": 273,
+              "gen": 0
+            }
+          },
+          {
+            "label": "7.2.3 Parallel transport and geodesics",
+            "children": [],
+            "ref": {
+              "num": 274,
+              "gen": 0
+            }
+          },
+          {
+            "label": "7.2.4 The covariant derivative of tensor fields",
+            "children": [],
+            "ref": {
+              "num": 275,
+              "gen": 0
+            }
+          },
+          {
+            "label": "7.2.5 The transformation properties of connection coefficients",
+            "children": [],
+            "ref": {
+              "num": 276,
+              "gen": 0
+            }
+          },
+          {
+            "label": "7.2.6 The metric connection",
+            "children": [],
+            "ref": {
+              "num": 277,
+              "gen": 0
+            }
+          }
+        ],
+        "ref": {
+          "num": 271,
+          "gen": 0
+        }
+      },
+      {
+        "label": "7.3 Curvature and torsion",
+        "children": [
+          {
+            "label": "7.3.1 Definitions",
+            "children": [],
+            "ref": {
+              "num": 278,
+              "gen": 0
+            }
+          },
+          {
+            "label": "7.3.2 Geometrical meaning of the Riemann tensor and the torsion tensor",
+            "children": [],
+            "ref": {
+              "num": 280,
+              "gen": 0
+            }
+          },
+          {
+            "label": "7.3.3 The Ricci tensor and the scalar curvature",
+            "children": [],
+            "ref": {
+              "num": 284,
+              "gen": 0
+            }
+          }
+        ],
+        "ref": {
+          "num": 278,
+          "gen": 0
+        }
+      },
+      {
+        "label": "7.4 Levi-Civita connections",
+        "children": [
+          {
+            "label": "7.4.1 The fundamental theorem",
+            "children": [],
+            "ref": {
+              "num": 285,
+              "gen": 0
+            }
+          },
+          {
+            "label": "7.4.2 The Levi-Civita connection in the classical geometry of surfaces",
+            "children": [],
+            "ref": {
+              "num": 286,
+              "gen": 0
+            }
+          },
+          {
+            "label": "7.4.3 Geodesics",
+            "children": [],
+            "ref": {
+              "num": 287,
+              "gen": 0
+            }
+          },
+          {
+            "label": "7.4.4 The normal coordinate system",
+            "children": [],
+            "ref": {
+              "num": 290,
+              "gen": 0
+            }
+          },
+          {
+            "label": "7.4.5 Riemann curvature tensor with Levi-Civita connection",
+            "children": [],
+            "ref": {
+              "num": 292,
+              "gen": 0
+            }
+          }
+        ],
+        "ref": {
+          "num": 285,
+          "gen": 0
+        }
+      },
+      {
+        "label": "7.5 Holonomy",
+        "children": [],
+        "ref": {
+          "num": 295,
+          "gen": 0
+        }
+      },
+      {
+        "label": "7.6 Isometries and conformal transformations",
+        "children": [
+          {
+            "label": "7.6.1 Isometries",
+            "children": [],
+            "ref": {
+              "num": 297,
+              "gen": 0
+            }
+          },
+          {
+            "label": "7.6.2 Conformal transformations",
+            "children": [],
+            "ref": {
+              "num": 298,
+              "gen": 0
+            }
+          }
+        ],
+        "ref": {
+          "num": 297,
+          "gen": 0
+        }
+      },
+      {
+        "label": "7.7 Killing vector fields and conformal Killing vector fields",
+        "children": [
+          {
+            "label": "7.7.1 Killing vector fields",
+            "children": [],
+            "ref": {
+              "num": 303,
+              "gen": 0
+            }
+          },
+          {
+            "label": "7.7.2 Conformal Killing vector fields",
+            "children": [],
+            "ref": {
+              "num": 306,
+              "gen": 0
+            }
+          }
+        ],
+        "ref": {
+          "num": 303,
+          "gen": 0
+        }
+      },
+      {
+        "label": "7.8 Non-coordinate bases",
+        "children": [
+          {
+            "label": "7.8.1 Definitions",
+            "children": [],
+            "ref": {
+              "num": 307,
+              "gen": 0
+            }
+          },
+          {
+            "label": "7.8.2 Cartan’s structure equations",
+            "children": [],
+            "ref": {
+              "num": 308,
+              "gen": 0
+            }
+          },
+          {
+            "label": "7.8.3 The local frame",
+            "children": [],
+            "ref": {
+              "num": 309,
+              "gen": 0
+            }
+          },
+          {
+            "label": "7.8.4 The Levi-Civita connection in a non-coordinate basis",
+            "children": [],
+            "ref": {
+              "num": 311,
+              "gen": 0
+            }
+          }
+        ],
+        "ref": {
+          "num": 307,
+          "gen": 0
+        }
+      },
+      {
+        "label": "7.9 Differential forms and Hodge theory",
+        "children": [
+          {
+            "label": "7.9.1 Invariant volume elements",
+            "children": [],
+            "ref": {
+              "num": 313,
+              "gen": 0
+            }
+          },
+          {
+            "label": "7.9.2 Duality transformations (Hodge star)",
+            "children": [],
+            "ref": {
+              "num": 314,
+              "gen": 0
+            }
+          },
+          {
+            "label": "7.9.3 Inner products of r-forms",
+            "children": [],
+            "ref": {
+              "num": 315,
+              "gen": 0
+            }
+          },
+          {
+            "label": "7.9.4 Adjoints of exterior derivatives",
+            "children": [],
+            "ref": {
+              "num": 317,
+              "gen": 0
+            }
+          },
+          {
+            "label": "7.9.5 The Laplacian, harmonic forms and the Hodge decomposition theorem",
+            "children": [],
+            "ref": {
+              "num": 318,
+              "gen": 0
+            }
+          },
+          {
+            "label": "7.9.6 Harmonic forms and de Rham cohomology groups",
+            "children": [],
+            "ref": {
+              "num": 320,
+              "gen": 0
+            }
+          }
+        ],
+        "ref": {
+          "num": 313,
+          "gen": 0
+        }
+      },
+      {
+        "label": "7.10 Aspects of general relativity",
+        "children": [
+          {
+            "label": "7.10.1 Introduction to general relativity",
+            "children": [],
+            "ref": {
+              "num": 321,
+              "gen": 0
+            }
+          },
+          {
+            "label": "7.10.2 Einstein–Hilbert action",
+            "children": [],
+            "ref": {
+              "num": 322,
+              "gen": 0
+            }
+          },
+          {
+            "label": "7.10.3 Spinors in curved spacetime",
+            "children": [],
+            "ref": {
+              "num": 324,
+              "gen": 0
+            }
+          }
+        ],
+        "ref": {
+          "num": 321,
+          "gen": 0
+        }
+      },
+      {
+        "label": "7.11 Bosonic string theory",
+        "children": [
+          {
+            "label": "7.11.1 The string action",
+            "children": [],
+            "ref": {
+              "num": 327,
+              "gen": 0
+            }
+          },
+          {
+            "label": "7.11.2 Symmetries of the Polyakov strings",
+            "children": [],
+            "ref": {
+              "num": 329,
+              "gen": 0
+            }
+          }
+        ],
+        "ref": {
+          "num": 326,
+          "gen": 0
+        }
+      },
+      {
+        "label": "Problems",
+        "children": [],
+        "ref": {
+          "num": 331,
+          "gen": 0
+        }
+      }
+    ],
+    "ref": {
+      "num": 268,
+      "gen": 0
+    }
+  },
+  {
+    "label": "Chapter 8: Complex Manifolds",
+    "children": [
+      {
+        "label": "8.1 Complex manifolds",
+        "children": [
+          {
+            "label": "8.1.1 Definitions",
+            "children": [],
+            "ref": {
+              "num": 332,
+              "gen": 0
+            }
+          },
+          {
+            "label": "8.1.2 Examples",
+            "children": [],
+            "ref": {
+              "num": 333,
+              "gen": 0
+            }
+          }
+        ],
+        "ref": {
+          "num": 332,
+          "gen": 0
+        }
+      },
+      {
+        "label": "8.2 Calculus on complex manifolds",
+        "children": [
+          {
+            "label": "8.2.1 Holomorphic maps",
+            "children": [],
+            "ref": {
+              "num": 339,
+              "gen": 0
+            }
+          },
+          {
+            "label": "8.2.2 Complexifications",
+            "children": [],
+            "ref": {
+              "num": 340,
+              "gen": 0
+            }
+          },
+          {
+            "label": "8.2.3 Almost complex structure",
+            "children": [],
+            "ref": {
+              "num": 341,
+              "gen": 0
+            }
+          }
+        ],
+        "ref": {
+          "num": 339,
+          "gen": 0
+        }
+      },
+      {
+        "label": "8.3 Complex differential forms",
+        "children": [
+          {
+            "label": "8.3.1 Complexification of real differential forms",
+            "children": [],
+            "ref": {
+              "num": 344,
+              "gen": 0
+            }
+          },
+          {
+            "label": "8.3.2 Differential forms on complex manifolds",
+            "children": [],
+            "ref": {
+              "num": 345,
+              "gen": 0
+            }
+          },
+          {
+            "label": "8.3.3 Dolbeault operators",
+            "children": [],
+            "ref": {
+              "num": 346,
+              "gen": 0
+            }
+          }
+        ],
+        "ref": {
+          "num": 344,
+          "gen": 0
+        }
+      },
+      {
+        "label": "8.4 Hermitian manifolds and Hermitian differential geometry",
+        "children": [
+          {
+            "label": "8.4.1 The Hermitian metric",
+            "children": [],
+            "ref": {
+              "num": 349,
+              "gen": 0
+            }
+          },
+          {
+            "label": "8.4.2 Kähler form",
+            "children": [],
+            "ref": {
+              "num": 350,
+              "gen": 0
+            }
+          },
+          {
+            "label": "8.4.3 Covariant derivatives",
+            "children": [],
+            "ref": {
+              "num": 351,
+              "gen": 0
+            }
+          },
+          {
+            "label": "8.4.4 Torsion and curvature",
+            "children": [],
+            "ref": {
+              "num": 353,
+              "gen": 0
+            }
+          }
+        ],
+        "ref": {
+          "num": 348,
+          "gen": 0
+        }
+      },
+      {
+        "label": "8.5 Kähler manifolds and Kähler differential geometry",
+        "children": [
+          {
+            "label": "8.5.1 Definitions",
+            "children": [],
+            "ref": {
+              "num": 354,
+              "gen": 0
+            }
+          },
+          {
+            "label": "8.5.2 Kähler geometry",
+            "children": [],
+            "ref": {
+              "num": 358,
+              "gen": 0
+            }
+          },
+          {
+            "label": "8.5.3 The holonomy group of Kähler manifolds",
+            "children": [],
+            "ref": {
+              "num": 359,
+              "gen": 0
+            }
+          }
+        ],
+        "ref": {
+          "num": 354,
+          "gen": 0
+        }
+      },
+      {
+        "label": "8.6 Harmonic forms and ∂-cohomology groups",
+        "children": [
+          {
+            "label": "8.6.1 The adjoint operators ∂† and ∂†",
+            "children": [],
+            "ref": {
+              "num": 361,
+              "gen": 0
+            }
+          },
+          {
+            "label": "8.6.2 Laplacians and the Hodge theorem",
+            "children": [],
+            "ref": {
+              "num": 362,
+              "gen": 0
+            }
+          },
+          {
+            "label": "8.6.3 Laplacians on a Kähler manifold",
+            "children": [],
+            "ref": {
+              "num": 363,
+              "gen": 0
+            }
+          },
+          {
+            "label": "8.6.4 The Hodge numbers of Kähler manifolds",
+            "children": [],
+            "ref": {
+              "num": 363,
+              "gen": 0
+            }
+          }
+        ],
+        "ref": {
+          "num": 360,
+          "gen": 0
+        }
+      },
+      {
+        "label": "8.7 Almost complex manifolds",
+        "children": [
+          {
+            "label": "8.7.1 Definitions",
+            "children": [],
+            "ref": {
+              "num": 366,
+              "gen": 0
+            }
+          }
+        ],
+        "ref": {
+          "num": 365,
+          "gen": 0
+        }
+      },
+      {
+        "label": "8.8 Orbifolds",
+        "children": [
+          {
+            "label": "8.8.1 One-dimensional examples",
+            "children": [],
+            "ref": {
+              "num": 368,
+              "gen": 0
+            }
+          },
+          {
+            "label": "8.8.2 Three-dimensional examples",
+            "children": [],
+            "ref": {
+              "num": 370,
+              "gen": 0
+            }
+          }
+        ],
+        "ref": {
+          "num": 368,
+          "gen": 0
+        }
+      }
+    ],
+    "ref": {
+      "num": 332,
+      "gen": 0
+    }
+  },
+  {
+    "label": "Chapter 9: Fibre Bundles",
+    "children": [
+      {
+        "label": "9.1 Tangent bundles",
+        "children": [],
+        "ref": {
+          "num": 372,
+          "gen": 0
+        }
+      },
+      {
+        "label": "9.2 Fibre bundles",
+        "children": [
+          {
+            "label": "9.2.1 Definitions",
+            "children": [],
+            "ref": {
+              "num": 374,
+              "gen": 0
+            }
+          },
+          {
+            "label": "9.2.2 Reconstruction of fibre bundles",
+            "children": [],
+            "ref": {
+              "num": 377,
+              "gen": 0
+            }
+          },
+          {
+            "label": "9.2.3 Bundle maps",
+            "children": [],
+            "ref": {
+              "num": 378,
+              "gen": 0
+            }
+          },
+          {
+            "label": "9.2.4 Equivalent bundles",
+            "children": [],
+            "ref": {
+              "num": 379,
+              "gen": 0
+            }
+          },
+          {
+            "label": "9.2.5 Pullback bundles",
+            "children": [],
+            "ref": {
+              "num": 379,
+              "gen": 0
+            }
+          },
+          {
+            "label": "9.2.6 Homotopy axiom",
+            "children": [],
+            "ref": {
+              "num": 381,
+              "gen": 0
+            }
+          }
+        ],
+        "ref": {
+          "num": 374,
+          "gen": 0
+        }
+      },
+      {
+        "label": "9.3 Vector bundles",
+        "children": [
+          {
+            "label": "9.3.1 Definitions and examples",
+            "children": [],
+            "ref": {
+              "num": 381,
+              "gen": 0
+            }
+          },
+          {
+            "label": "9.3.2 Frames",
+            "children": [],
+            "ref": {
+              "num": 383,
+              "gen": 0
+            }
+          },
+          {
+            "label": "9.3.3 Cotangent bundles and dual bundles",
+            "children": [],
+            "ref": {
+              "num": 384,
+              "gen": 0
+            }
+          },
+          {
+            "label": "9.3.4 Sections of vector bundles",
+            "children": [],
+            "ref": {
+              "num": 385,
+              "gen": 0
+            }
+          },
+          {
+            "label": "9.3.5 The product bundle and Whitney sum bundle",
+            "children": [],
+            "ref": {
+              "num": 385,
+              "gen": 0
+            }
+          },
+          {
+            "label": "9.3.6 Tensor product bundles",
+            "children": [],
+            "ref": {
+              "num": 387,
+              "gen": 0
+            }
+          }
+        ],
+        "ref": {
+          "num": 381,
+          "gen": 0
+        }
+      },
+      {
+        "label": "9.4 Principal bundles",
+        "children": [
+          {
+            "label": "9.4.1 Definitions",
+            "children": [],
+            "ref": {
+              "num": 387,
+              "gen": 0
+            }
+          },
+          {
+            "label": "9.4.2 Associated bundles",
+            "children": [],
+            "ref": {
+              "num": 394,
+              "gen": 0
+            }
+          },
+          {
+            "label": "9.4.3 Triviality of bundles",
+            "children": [],
+            "ref": {
+              "num": 396,
+              "gen": 0
+            }
+          }
+        ],
+        "ref": {
+          "num": 387,
+          "gen": 0
+        }
+      },
+      {
+        "label": "Problems",
+        "children": [],
+        "ref": {
+          "num": 396,
+          "gen": 0
+        }
+      }
+    ],
+    "ref": {
+      "num": 372,
+      "gen": 0
+    }
+  },
+  {
+    "label": "Chapter 10: Connections on Fibre Bundles",
+    "children": [
+      {
+        "label": "10.1 Connections on principal bundles",
+        "children": [
+          {
+            "label": "10.1.1 Definitions",
+            "children": [],
+            "ref": {
+              "num": 399,
+              "gen": 0
+            }
+          },
+          {
+            "label": "10.1.2 The connection one-form",
+            "children": [],
+            "ref": {
+              "num": 400,
+              "gen": 0
+            }
+          },
+          {
+            "label": "10.1.3 The local connection form and gauge potential",
+            "children": [],
+            "ref": {
+              "num": 401,
+              "gen": 0
+            }
+          },
+          {
+            "label": "10.1.4 Horizontal lift and parallel transport",
+            "children": [],
+            "ref": {
+              "num": 405,
+              "gen": 0
+            }
+          }
+        ],
+        "ref": {
+          "num": 398,
+          "gen": 0
+        }
+      },
+      {
+        "label": "10.2 Holonomy",
+        "children": [
+          {
+            "label": "10.2.1 Definitions",
+            "children": [],
+            "ref": {
+              "num": 408,
+              "gen": 0
+            }
+          }
+        ],
+        "ref": {
+          "num": 408,
+          "gen": 0
+        }
+      },
+      {
+        "label": "10.3 Curvature",
+        "children": [
+          {
+            "label": "10.3.1 Covariant derivatives in principal bundles",
+            "children": [],
+            "ref": {
+              "num": 409,
+              "gen": 0
+            }
+          },
+          {
+            "label": "10.3.2 Curvature",
+            "children": [],
+            "ref": {
+              "num": 410,
+              "gen": 0
+            }
+          },
+          {
+            "label": "10.3.3 Geometrical meaning of the curvature and the Ambrose–Singer theorem",
+            "children": [],
+            "ref": {
+              "num": 412,
+              "gen": 0
+            }
+          },
+          {
+            "label": "10.3.4 Local form of the curvature",
+            "children": [],
+            "ref": {
+              "num": 413,
+              "gen": 0
+            }
+          },
+          {
+            "label": "10.3.5 The Bianchi identity",
+            "children": [],
+            "ref": {
+              "num": 414,
+              "gen": 0
+            }
+          }
+        ],
+        "ref": {
+          "num": 409,
+          "gen": 0
+        }
+      },
+      {
+        "label": "10.4 The covariant derivative on associated vector bundles",
+        "children": [
+          {
+            "label": "10.4.1 The covariant derivative on associated bundles",
+            "children": [],
+            "ref": {
+              "num": 415,
+              "gen": 0
+            }
+          },
+          {
+            "label": "10.4.2 A local expression for the covariant derivative",
+            "children": [],
+            "ref": {
+              "num": 417,
+              "gen": 0
+            }
+          },
+          {
+            "label": "10.4.3 Curvature rederived",
+            "children": [],
+            "ref": {
+              "num": 420,
+              "gen": 0
+            }
+          },
+          {
+            "label": "10.4.4 A connection which preserves the inner product",
+            "children": [],
+            "ref": {
+              "num": 420,
+              "gen": 0
+            }
+          },
+          {
+            "label": "10.4.5 Holomorphic vector bundles and Hermitian inner products",
+            "children": [],
+            "ref": {
+              "num": 421,
+              "gen": 0
+            }
+          }
+        ],
+        "ref": {
+          "num": 415,
+          "gen": 0
+        }
+      },
+      {
+        "label": "10.5 Gauge theories",
+        "children": [
+          {
+            "label": "10.5.1 U(1) gauge theory",
+            "children": [],
+            "ref": {
+              "num": 423,
+              "gen": 0
+            }
+          },
+          {
+            "label": "10.5.2 The Dirac magnetic monopole",
+            "children": [],
+            "ref": {
+              "num": 424,
+              "gen": 0
+            }
+          },
+          {
+            "label": "10.5.3 The Aharonov–Bohm effect",
+            "children": [],
+            "ref": {
+              "num": 426,
+              "gen": 0
+            }
+          },
+          {
+            "label": "10.5.4 Yang–Mills theory",
+            "children": [],
+            "ref": {
+              "num": 428,
+              "gen": 0
+            }
+          },
+          {
+            "label": "10.5.5 Instantons",
+            "children": [],
+            "ref": {
+              "num": 429,
+              "gen": 0
+            }
+          }
+        ],
+        "ref": {
+          "num": 423,
+          "gen": 0
+        }
+      },
+      {
+        "label": "10.6 Berry’s phase",
+        "children": [
+          {
+            "label": "10.6.1 Derivation of Berry’s phase",
+            "children": [],
+            "ref": {
+              "num": 434,
+              "gen": 0
+            }
+          },
+          {
+            "label": "10.6.2 Berry’s phase, Berry’s connection and Berry’s curvature",
+            "children": [],
+            "ref": {
+              "num": 435,
+              "gen": 0
+            }
+          }
+        ],
+        "ref": {
+          "num": 433,
+          "gen": 0
+        }
+      },
+      {
+        "label": "Problems",
+        "children": [],
+        "ref": {
+          "num": 442,
+          "gen": 0
+        }
+      }
+    ],
+    "ref": {
+      "num": 398,
+      "gen": 0
+    }
+  },
+  {
+    "label": "Chapter 11: Characteristic Classes",
+    "children": [
+      {
+        "label": "11.1 Invariant polynomials and the Chern–Weil homomorphism",
+        "children": [
+          {
+            "label": "11.1.1 Invariant polynomials",
+            "children": [],
+            "ref": {
+              "num": 444,
+              "gen": 0
+            }
+          }
+        ],
+        "ref": {
+          "num": 443,
+          "gen": 0
+        }
+      },
+      {
+        "label": "11.2 Chern classes",
+        "children": [
+          {
+            "label": "11.2.1 Definitions",
+            "children": [],
+            "ref": {
+              "num": 450,
+              "gen": 0
+            }
+          },
+          {
+            "label": "11.2.2 Properties of Chern classes",
+            "children": [],
+            "ref": {
+              "num": 452,
+              "gen": 0
+            }
+          },
+          {
+            "label": "11.2.3 Splitting principle",
+            "children": [],
+            "ref": {
+              "num": 453,
+              "gen": 0
+            }
+          },
+          {
+            "label": "11.2.4 Universal bundles and classifying spaces",
+            "children": [],
+            "ref": {
+              "num": 454,
+              "gen": 0
+            }
+          }
+        ],
+        "ref": {
+          "num": 450,
+          "gen": 0
+        }
+      },
+      {
+        "label": "11.3 Chern characters",
+        "children": [
+          {
+            "label": "11.3.1 Definitions",
+            "children": [],
+            "ref": {
+              "num": 455,
+              "gen": 0
+            }
+          },
+          {
+            "label": "11.3.2 Properties of the Chern characters",
+            "children": [],
+            "ref": {
+              "num": 458,
+              "gen": 0
+            }
+          },
+          {
+            "label": "11.3.3 Todd classes",
+            "children": [],
+            "ref": {
+              "num": 459,
+              "gen": 0
+            }
+          }
+        ],
+        "ref": {
+          "num": 455,
+          "gen": 0
+        }
+      },
+      {
+        "label": "11.4 Pontrjagin and Euler classes",
+        "children": [
+          {
+            "label": "11.4.1 Pontrjagin classes",
+            "children": [],
+            "ref": {
+              "num": 460,
+              "gen": 0
+            }
+          },
+          {
+            "label": "11.4.2 Euler classes",
+            "children": [],
+            "ref": {
+              "num": 463,
+              "gen": 0
+            }
+          },
+          {
+            "label": "11.4.3 Hirzebruch L-polynomial and Â-genus",
+            "children": [],
+            "ref": {
+              "num": 466,
+              "gen": 0
+            }
+          }
+        ],
+        "ref": {
+          "num": 460,
+          "gen": 0
+        }
+      },
+      {
+        "label": "11.5 Chern–Simons forms",
+        "children": [
+          {
+            "label": "11.5.1 Definition",
+            "children": [],
+            "ref": {
+              "num": 467,
+              "gen": 0
+            }
+          },
+          {
+            "label": "11.5.2 The Chern–Simons form of the Chern character",
+            "children": [],
+            "ref": {
+              "num": 468,
+              "gen": 0
+            }
+          },
+          {
+            "label": "11.5.3 Cartan’s homotopy operator and applications",
+            "children": [],
+            "ref": {
+              "num": 469,
+              "gen": 0
+            }
+          }
+        ],
+        "ref": {
+          "num": 467,
+          "gen": 0
+        }
+      },
+      {
+        "label": "11.6 Stiefel–Whitney classes",
+        "children": [
+          {
+            "label": "11.6.1 Spin bundles",
+            "children": [],
+            "ref": {
+              "num": 473,
+              "gen": 0
+            }
+          },
+          {
+            "label": "11.6.2 Čech cohomology groups",
+            "children": [],
+            "ref": {
+              "num": 473,
+              "gen": 0
+            }
+          },
+          {
+            "label": "11.6.3 Stiefel–Whitney classes",
+            "children": [],
+            "ref": {
+              "num": 474,
+              "gen": 0
+            }
+          }
+        ],
+        "ref": {
+          "num": 472,
+          "gen": 0
+        }
+      }
+    ],
+    "ref": {
+      "num": 443,
+      "gen": 0
+    }
+  },
+  {
+    "label": "Chapter 12: Index Theorems",
+    "children": [
+      {
+        "label": "12.1 Elliptic operators and Fredholm operators",
+        "children": [
+          {
+            "label": "12.1.1 Elliptic operators",
+            "children": [],
+            "ref": {
+              "num": 478,
+              "gen": 0
+            }
+          },
+          {
+            "label": "12.1.2 Fredholm operators",
+            "children": [],
+            "ref": {
+              "num": 480,
+              "gen": 0
+            }
+          },
+          {
+            "label": "12.1.3 Elliptic complexes",
+            "children": [],
+            "ref": {
+              "num": 481,
+              "gen": 0
+            }
+          }
+        ],
+        "ref": {
+          "num": 477,
+          "gen": 0
+        }
+      },
+      {
+        "label": "12.2 The Atiyah–Singer index theorem",
+        "children": [
+          {
+            "label": "12.2.1 Statement of the theorem",
+            "children": [],
+            "ref": {
+              "num": 483,
+              "gen": 0
+            }
+          }
+        ],
+        "ref": {
+          "num": 483,
+          "gen": 0
+        }
+      },
+      {
+        "label": "12.3 The de Rham complex",
+        "children": [],
+        "ref": {
+          "num": 484,
+          "gen": 0
+        }
+      },
+      {
+        "label": "12.4 The Dolbeault complex",
+        "children": [
+          {
+            "label": "12.4.1 The twisted Dolbeault complex and the Hirzebruch–Riemann–Roch theorem",
+            "children": [],
+            "ref": {
+              "num": 487,
+              "gen": 0
+            }
+          }
+        ],
+        "ref": {
+          "num": 486,
+          "gen": 0
+        }
+      },
+      {
+        "label": "12.5 The signature complex",
+        "children": [
+          {
+            "label": "12.5.1 The Hirzebruch signature",
+            "children": [],
+            "ref": {
+              "num": 488,
+              "gen": 0
+            }
+          },
+          {
+            "label": "12.5.2 The signature complex and the Hirzebruch signature theorem",
+            "children": [],
+            "ref": {
+              "num": 489,
+              "gen": 0
+            }
+          }
+        ],
+        "ref": {
+          "num": 488,
+          "gen": 0
+        }
+      },
+      {
+        "label": "12.6 Spin complexes",
+        "children": [
+          {
+            "label": "12.6.1 Dirac operator",
+            "children": [],
+            "ref": {
+              "num": 492,
+              "gen": 0
+            }
+          },
+          {
+            "label": "12.6.2 Twisted spin complexes",
+            "children": [],
+            "ref": {
+              "num": 495,
+              "gen": 0
+            }
+          }
+        ],
+        "ref": {
+          "num": 491,
+          "gen": 0
+        }
+      },
+      {
+        "label": "12.7 The heat kernel and generalized ζ -functions",
+        "children": [
+          {
+            "label": "12.7.1 The heat kernel and index theorem",
+            "children": [],
+            "ref": {
+              "num": 496,
+              "gen": 0
+            }
+          },
+          {
+            "label": "12.7.2 Spectral ζ -functions",
+            "children": [],
+            "ref": {
+              "num": 499,
+              "gen": 0
+            }
+          }
+        ],
+        "ref": {
+          "num": 496,
+          "gen": 0
+        }
+      },
+      {
+        "label": "12.8 The Atiyah–Patodi–Singer index theorem",
+        "children": [
+          {
+            "label": "12.8.1 η-invariant and spectral flow",
+            "children": [],
+            "ref": {
+              "num": 501,
+              "gen": 0
+            }
+          },
+          {
+            "label": "12.8.2 The Atiyah–Patodi–Singer (APS) index theorem",
+            "children": [],
+            "ref": {
+              "num": 502,
+              "gen": 0
+            }
+          }
+        ],
+        "ref": {
+          "num": 501,
+          "gen": 0
+        }
+      },
+      {
+        "label": "12.9 Supersymmetric quantum mechanics",
+        "children": [
+          {
+            "label": "12.9.1 Clifford algebra and fermions",
+            "children": [],
+            "ref": {
+              "num": 505,
+              "gen": 0
+            }
+          },
+          {
+            "label": "12.9.2 Supersymmetric quantum mechanics in flat space",
+            "children": [],
+            "ref": {
+              "num": 506,
+              "gen": 0
+            }
+          },
+          {
+            "label": "12.9.3 Supersymmetric quantum mechanics in a general manifold",
+            "children": [],
+            "ref": {
+              "num": 509,
+              "gen": 0
+            }
+          }
+        ],
+        "ref": {
+          "num": 505,
+          "gen": 0
+        }
+      },
+      {
+        "label": "12.10 Supersymmetric proof of index theorem",
+        "children": [
+          {
+            "label": "12.10.1 The index",
+            "children": [],
+            "ref": {
+              "num": 511,
+              "gen": 0
+            }
+          },
+          {
+            "label": "12.10.2 Path integral and index theorem",
+            "children": [],
+            "ref": {
+              "num": 514,
+              "gen": 0
+            }
+          }
+        ],
+        "ref": {
+          "num": 511,
+          "gen": 0
+        }
+      },
+      {
+        "label": "Problems",
+        "children": [],
+        "ref": {
+          "num": 524,
+          "gen": 0
+        }
+      }
+    ],
+    "ref": {
+      "num": 477,
+      "gen": 0
+    }
+  },
+  {
+    "label": "Chapter 13: Anomalies in Gauge Field Theories",
+    "children": [
+      {
+        "label": "13.1 Introduction",
+        "children": [],
+        "ref": {
+          "num": 525,
+          "gen": 0
+        }
+      },
+      {
+        "label": "13.2 Abelian anomalies",
+        "children": [
+          {
+            "label": "13.2.1 Fujikawa’s method",
+            "children": [],
+            "ref": {
+              "num": 527,
+              "gen": 0
+            }
+          }
+        ],
+        "ref": {
+          "num": 527,
+          "gen": 0
+        }
+      },
+      {
+        "label": "13.3 Non-Abelian anomalies",
+        "children": [],
+        "ref": {
+          "num": 532,
+          "gen": 0
+        }
+      },
+      {
+        "label": "13.4 The Wess–Zumino consistency conditions",
+        "children": [
+          {
+            "label": "13.4.1 The Becchi–Rouet–Stora operator and the Faddeev–Popov ghost",
+            "children": [],
+            "ref": {
+              "num": 536,
+              "gen": 0
+            }
+          },
+          {
+            "label": "13.4.2 The BRS operator, FP ghost and moduli space",
+            "children": [],
+            "ref": {
+              "num": 537,
+              "gen": 0
+            }
+          },
+          {
+            "label": "13.4.3 The Wess–Zumino conditions",
+            "children": [],
+            "ref": {
+              "num": 539,
+              "gen": 0
+            }
+          },
+          {
+            "label": "13.4.4 Descent equations and solutions ofWZ conditions",
+            "children": [],
+            "ref": {
+              "num": 539,
+              "gen": 0
+            }
+          }
+        ],
+        "ref": {
+          "num": 536,
+          "gen": 0
+        }
+      },
+      {
+        "label": "13.5 Abelian anomalies versus non-Abelian anomalies",
+        "children": [
+          {
+            "label": "13.5.1 m dimensions versus m + 2 dimensions",
+            "children": [],
+            "ref": {
+              "num": 544,
+              "gen": 0
+            }
+          }
+        ],
+        "ref": {
+          "num": 542,
+          "gen": 0
+        }
+      },
+      {
+        "label": "13.6 The parity anomaly in odd-dimensional spaces",
+        "children": [
+          {
+            "label": "13.6.1 The parity anomaly",
+            "children": [],
+            "ref": {
+              "num": 548,
+              "gen": 0
+            }
+          },
+          {
+            "label": "13.6.2 The dimensional ladder: 4–3–2",
+            "children": [],
+            "ref": {
+              "num": 549,
+              "gen": 0
+            }
+          }
+        ],
+        "ref": {
+          "num": 547,
+          "gen": 0
+        }
+      }
+    ],
+    "ref": {
+      "num": 525,
+      "gen": 0
+    }
+  },
+  {
+    "label": "Chapter 14: Bosonic String Theory",
+    "children": [
+      {
+        "label": "14.1 Differential geometry on Riemann surfaces",
+        "children": [
+          {
+            "label": "14.1.1 Metric and complex structure",
+            "children": [],
+            "ref": {
+              "num": 552,
+              "gen": 0
+            }
+          },
+          {
+            "label": "14.1.2 Vectors, forms and tensors",
+            "children": [],
+            "ref": {
+              "num": 553,
+              "gen": 0
+            }
+          },
+          {
+            "label": "14.1.3 Covariant derivatives",
+            "children": [],
+            "ref": {
+              "num": 555,
+              "gen": 0
+            }
+          },
+          {
+            "label": "14.1.4 The Riemann–Roch theorem",
+            "children": [],
+            "ref": {
+              "num": 557,
+              "gen": 0
+            }
+          }
+        ],
+        "ref": {
+          "num": 552,
+          "gen": 0
+        }
+      },
+      {
+        "label": "14.2 Quantum theory of bosonic strings",
+        "children": [
+          {
+            "label": "14.2.1 Vacuum amplitude of Polyakov strings",
+            "children": [],
+            "ref": {
+              "num": 559,
+              "gen": 0
+            }
+          },
+          {
+            "label": "14.2.2 Measures of integration",
+            "children": [],
+            "ref": {
+              "num": 562,
+              "gen": 0
+            }
+          },
+          {
+            "label": "14.2.3 Complex tensor calculus and string measure",
+            "children": [],
+            "ref": {
+              "num": 574,
+              "gen": 0
+            }
+          },
+          {
+            "label": "14.2.4 Moduli spaces of Riemann surfaces",
+            "children": [],
+            "ref": {
+              "num": 578,
+              "gen": 0
+            }
+          }
+        ],
+        "ref": {
+          "num": 559,
+          "gen": 0
+        }
+      },
+      {
+        "label": "14.3 One-loop amplitudes",
+        "children": [
+          {
+            "label": "14.3.1 Moduli spaces, CKV, Beltrami and quadratic differentials",
+            "children": [],
+            "ref": {
+              "num": 579,
+              "gen": 0
+            }
+          },
+          {
+            "label": "14.3.2 The evaluation of determinants",
+            "children": [],
+            "ref": {
+              "num": 581,
+              "gen": 0
+            }
+          }
+        ],
+        "ref": {
+          "num": 579,
+          "gen": 0
+        }
+      }
+    ],
+    "ref": {
+      "num": 552,
+      "gen": 0
+    }
+  },
+  {
+    "label": "References",
+    "children": [],
+    "ref": {
+      "num": 584,
+      "gen": 0
+    }
+  }
+]

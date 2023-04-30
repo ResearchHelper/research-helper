@@ -1,11 +1,11 @@
 <template>
   <q-toolbar style="min-height: unset; height: 36px; background: #222222">
     <!-- navigation -->
-    <div>
+    <div data-cy="page-control">
       <input
         style="height: 1.5rem; width: 3rem"
         :value="pageLabel"
-        @keydown.enter="(e) => changePage(e.target.value)"
+        @keydown.enter="(e: KeyboardEvent) => changePage((e.target as HTMLInputElement).value)"
       />
       <span v-if="!!pageLabels">
         {{
@@ -21,8 +21,8 @@
 
     <!-- tools -->
     <q-btn-toggle
-      v-model="state.tool"
-      @update:model-value="$emit('update:pdfState', state)"
+      :model-value="pdfState.tool"
+      @update:model-value="(tool: string) => $emit('changeTool', tool)"
       :ripple="false"
       flat
       size="0.7rem"
@@ -30,14 +30,29 @@
       toggle-color="primary"
       :options="[
         {
-          value: AnnotationType.NONE,
-          icon: 'navigation',
-          slot: AnnotationType.NONE,
+          value: AnnotationType.CURSOR,
+          icon: 'bi-cursor-text',
+          slot: AnnotationType.CURSOR,
         },
         {
           value: AnnotationType.HIGHLIGHT,
           icon: 'border_color',
           slot: AnnotationType.HIGHLIGHT,
+        },
+        {
+          value: AnnotationType.UNDERLINE,
+          icon: 'format_underlined',
+          slot: AnnotationType.UNDERLINE,
+        },
+        {
+          value: AnnotationType.STRIKEOUT,
+          icon: 'format_strikethrough',
+          slot: AnnotationType.STRIKEOUT,
+        },
+        {
+          value: AnnotationType.RECTANGLE,
+          icon: 'rectangle',
+          slot: AnnotationType.RECTANGLE,
         },
         {
           value: AnnotationType.COMMENT,
@@ -51,6 +66,15 @@
       </template>
       <template v-slot:highlight>
         <q-tooltip>{{ $t("highlight") }}</q-tooltip>
+      </template>
+      <template v-slot:underline>
+        <q-tooltip>{{ $t("underline") }}</q-tooltip>
+      </template>
+      <template v-slot:strikeout>
+        <q-tooltip>{{ $t("strikeout") }}</q-tooltip>
+      </template>
+      <template v-slot:rectangle>
+        <q-tooltip>{{ $t("rectangle") }}</q-tooltip>
       </template>
       <template v-slot:comment>
         <q-tooltip>{{ $t("comment") }}</q-tooltip>
@@ -72,12 +96,7 @@
           style="width: 10rem"
         >
           <ColorPicker
-            @selected="
-              (color) => {
-                state.color = color;
-                $emit('update:pdfState', state);
-              }
-            "
+            @selected="(color: string) => $emit('changeColor', color)"
           />
         </q-item>
       </q-menu>
@@ -89,6 +108,7 @@
       icon="visibility"
       size="0.7rem"
       padding="xs"
+      data-cy="btn-dropdown-view"
     >
       <template v-slot:label
         ><q-tooltip>{{ $t("view") }}</q-tooltip></template
@@ -126,7 +146,7 @@
           >
             <q-tooltip>{{ $t("zoom-out") }}</q-tooltip>
           </q-btn>
-          <div>
+          <div data-cy="scale">
             {{ Math.trunc(pdfState.currentScale * 100) + "%" }}
           </div>
           <q-btn
@@ -154,13 +174,9 @@
               { label: $t('odd-spreads'), value: 1 },
               { label: $t('even-spreads'), value: 2 },
             ]"
-            v-model="state.spreadMode"
-            @update:model-value="
-              () => {
-                $emit('update:pdfState', state);
-                $emit('changeSpreadMode', state.spreadMode);
-              }
-            "
+            :model-value="pdfState.spreadMode"
+            @update:model-value="(mode: number) => $emit('changeSpreadMode', mode)"
+            data-cy="btn-toggle-spread"
           />
         </q-item>
       </q-list>
@@ -273,7 +289,7 @@
       padding="xs"
       toggle-color="primary"
       :options="[{ value: true, icon: 'list' }]"
-      @update:model-value="$emit('toggleRightMenu', showRightMenu)"
+      @update:model-value="(showRightMenu: boolean) => $emit('toggleRightMenu', showRightMenu)"
     >
       <template v-slot:default>
         <q-tooltip>{{ $t("toggle-right-menu") }}</q-tooltip>
@@ -282,137 +298,113 @@
   </q-toolbar>
 </template>
 
-<script>
-import { useStateStore } from "src/stores/appState";
-import { AnnotationType } from "src/backend/pdfreader/annotation";
+<script setup lang="ts">
+import { computed, PropType, reactive, ref, watch } from "vue";
+import { AnnotationType, PDFState } from "src/backend/database";
+
 import ColorPicker from "./ColorPicker.vue";
+import { useI18n } from "vue-i18n";
+import { useQuasar } from "quasar";
 
-export default {
-  props: {
-    pdfState: Object,
-    pageLabels: Array,
-    matchesCount: Object,
-    rightMenuSize: Number,
+const $q = useQuasar();
+const { t } = useI18n({ useScope: "global" });
+
+/**
+ * Props, emits, data
+ */
+const props = defineProps({
+  pdfState: { type: Object as PropType<PDFState>, required: true },
+  pageLabels: { type: Object as PropType<string[]>, required: true },
+  matchesCount: {
+    type: Object as PropType<{ current: number; total: number }>,
+    required: false,
   },
-  emits: [
-    "update:pdfState",
-    "changePageNumber",
-    "changeScale",
-    "changeSpreadMode",
-    "searchText",
-    "changeMatch",
-    "toggleRightMenu",
-  ],
+  rightMenuSize: { type: Number, required: true },
+});
 
-  components: {
-    ColorPicker,
-  },
+const emit = defineEmits([
+  "changePageNumber",
+  "changeScale",
+  "changeSpreadMode",
+  "changeTool",
+  "changeColor",
+  "searchText",
+  "changeMatch",
+  "toggleRightMenu",
+]);
 
-  setup() {
-    const stateStore = useStateStore();
-    return { stateStore, AnnotationType };
-  },
+const search = reactive({
+  query: "",
+  highlightAll: true,
+  caseSensitive: false,
+  entireWord: false,
+});
+const showRightMenu = ref(false);
+const fullscreen = ref(false);
 
-  data() {
-    return {
-      search: {
-        query: "",
-        highlightAll: true,
-        caseSensitive: false,
-        entireWord: false,
-      },
-      state: {},
-      showRightMenu: false,
+watch(
+  () => props.rightMenuSize,
+  (size: number) => {
+    showRightMenu.value = size > 0;
+  }
+);
+watch(search, (newSearch) => {
+  emit("searchText", newSearch);
+});
 
-      fullscreen: false,
-    };
-  },
+const searchSummary = computed(() => {
+  let text = "";
+  let matchesCount = props.matchesCount;
+  if (!!matchesCount) {
+    if (matchesCount.total != 0) {
+      text = t("matchescount-current-of-matchescount-total-matches", [
+        matchesCount.current,
+        matchesCount.total,
+      ]);
+    } else {
+      text = t("phrase-not-found");
+    }
+  }
 
-  watch: {
-    rightMenuSize(size) {
-      this.showRightMenu = size > 0;
-    },
+  return text;
+});
 
-    pdfState: {
-      handler(state) {
-        this.state = state;
-      },
-      deep: true,
-    },
+const pageLabel = computed(() => {
+  let pageNumber = props.pdfState.currentPageNumber;
+  if (props.pageLabels?.length > 0) {
+    return props.pageLabels[pageNumber - 1];
+  } else {
+    return pageNumber;
+  }
+});
 
-    search: {
-      handler(newSearch) {
-        this.$emit("searchText", newSearch);
-      },
-      deep: true,
-    },
-  },
+function changePage(pageLabel: string) {
+  let pageNumber = 1;
+  if (props.pageLabels.length > 0) {
+    // If pageLabels exists
+    let pageIndex = props.pageLabels.indexOf(pageLabel);
+    if (pageIndex === -1) return; // do nothing if not finding the label
+    pageNumber = pageIndex + 1;
+  } else {
+    // If there are no pageLabels
+    pageNumber = parseInt(pageLabel);
+  }
+  emit("changePageNumber", pageNumber);
+}
 
-  computed: {
-    searchSummary() {
-      let text = "";
-      let matchesCount = this.matchesCount;
-      if (!!matchesCount) {
-        if (matchesCount.total != 0) {
-          text = this.$t("matchescount-current-of-matchescount-total-matches", [
-            matchesCount.current,
-            matchesCount.total,
-          ]);
-        } else {
-          text = this.$t("phrase-not-found");
-        }
-      }
+function clearSearch() {
+  emit("searchText", { query: "" });
+}
 
-      return text;
-    },
+async function requestFullscreen() {
+  await $q.fullscreen.request();
+  // after successfully fullscreened, remove leftmenu
+  fullscreen.value = true;
+}
 
-    pageLabel() {
-      let pageNumber = this.pdfState.currentPageNumber;
-      if (!!this.pageLabels) {
-        return this.pageLabels[pageNumber - 1];
-      } else {
-        return pageNumber;
-      }
-    },
-  },
-
-  mounted() {
-    this.state = this.pdfState;
-  },
-
-  methods: {
-    changePage(pageLabel) {
-      let pageNumber = 1;
-      if (!!this.pageLabels) {
-        // If pageLabels exists
-        let pageIndex = this.pageLabels.indexOf(pageLabel);
-        if (pageIndex === -1) return; // do nothing if not finding the label
-        pageNumber = pageIndex + 1;
-      } else {
-        // If there are no pageLabels
-        pageNumber = parseInt(pageLabel);
-      }
-      this.state.currentPageNumber = pageNumber;
-      this.$emit("update:pdfState", this.state);
-      this.$emit("changePageNumber", this.state.currentPageNumber);
-    },
-
-    clearSearch() {
-      this.readyForSearch = false;
-      this.$emit("searchText", { query: "" });
-    },
-
-    async requestFullscreen() {
-      await this.$q.fullscreen.request();
-      // after successfully fullscreened, remove leftmenu
-      this.fullscreen = true;
-    },
-
-    async exitFullscreen() {
-      await this.$q.fullscreen.exit();
-      // after exit fullscreen, show leftmenu again
-      this.fullscreen = false;
-    },
-  },
-};
+async function exitFullscreen() {
+  await $q.fullscreen.exit();
+  // after exit fullscreen, show leftmenu again
+  fullscreen.value = false;
+}
 </script>

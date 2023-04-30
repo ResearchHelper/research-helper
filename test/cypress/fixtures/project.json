@@ -1,0 +1,424 @@
+{
+  "_id": "test-project",
+  "label": "On quasineutral plasma flow in the magnetic nozzle",
+  "dataType": "project",
+  "tags": [],
+  "folderIds": ["library"],
+  "indexed": {
+    "date-parts": [[2023, 4, 20]],
+    "date-time": "2023-04-20T05:11:47Z",
+    "timestamp": 1681967507086
+  },
+  "reference-count": 41,
+  "publisher": "AIP Publishing",
+  "issue": "6",
+  "license": [
+    {
+      "start": {
+        "date-parts": [[2022, 6, 4]],
+        "date-time": "2022-06-04T00:00:00Z",
+        "timestamp": 1654300800000
+      },
+      "content-version": "am",
+      "delay-in-days": 368,
+      "URL": "https://publishing.aip.org/authors/rights-and-permissions"
+    }
+  ],
+  "funder": [
+    {
+      "DOI": "10.13039/501100015007",
+      "name": "RES'EAU-WaterNET",
+      "doi-asserted-by": "publisher"
+    },
+    {
+      "DOI": "10.13039/100000181",
+      "name": "Air Force Office of Scientific Research",
+      "doi-asserted-by": "publisher",
+      "award": ["FA9550-21-1-0031", "FA9550-15-1-0226"]
+    },
+    {
+      "DOI": "10.13039/100013020",
+      "name": "Compute Canada",
+      "doi-asserted-by": "publisher"
+    },
+    {
+      "DOI": "10.13039/100013020",
+      "name": "NSERC Canada",
+      "doi-asserted-by": "publisher"
+    }
+  ],
+  "content-domain": {
+    "domain": ["aip.scitation.org"],
+    "crossmark-restriction": true
+  },
+  "published-print": {
+    "date-parts": [[2021, 6]]
+  },
+  "DOI": "10.1063/5.0050226",
+  "type": "article-journal",
+  "created": {
+    "date-parts": [[2021, 6, 4]],
+    "date-time": "2021-06-04T13:04:46Z",
+    "timestamp": 1622811886000
+  },
+  "page": "060701",
+  "update-policy": "http://dx.doi.org/10.1063/aip-crossmark-policy-page",
+  "source": "Crossref",
+  "is-referenced-by-count": 5,
+  "title": "On quasineutral plasma flow in the magnetic nozzle",
+  "prefix": "10.1063",
+  "volume": "28",
+  "author": [
+    {
+      "ORCID": "http://orcid.org/0000-0002-4975-2743",
+      "authenticated-orcid": false,
+      "given": "A. I.",
+      "family": "Smolyakov",
+      "sequence": "first",
+      "affiliation": [
+        {
+          "name": "University of Saskatchewan, Saskatchewan, Saskatoon, Saskatchewan S7N 5E2, Canada"
+        }
+      ]
+    },
+    {
+      "given": "A.",
+      "family": "Sabo",
+      "sequence": "additional",
+      "affiliation": [
+        {
+          "name": "University of Saskatchewan, Saskatchewan, Saskatoon, Saskatchewan S7N 5E2, Canada"
+        }
+      ]
+    },
+    {
+      "ORCID": "http://orcid.org/0000-0002-9978-0507",
+      "authenticated-orcid": false,
+      "given": "P.",
+      "family": "Yushmanov",
+      "sequence": "additional",
+      "affiliation": [
+        {
+          "name": "TAE Technologies, 19631 Pauling, Foothill Ranch, California 92610, USA"
+        }
+      ]
+    },
+    {
+      "given": "S.",
+      "family": "Putvinskii",
+      "sequence": "additional",
+      "affiliation": [
+        {
+          "name": "TAE Technologies, 19631 Pauling, Foothill Ranch, California 92610, USA"
+        }
+      ]
+    }
+  ],
+  "member": "317",
+  "reference": [
+    {
+      "key": "c1/c1_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1063/1.4944029"
+    },
+    {
+      "key": "c2/c2_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1088/0741-3335/53/5/054019"
+    },
+    {
+      "key": "c3/c3_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1016/j.nme.2019.02.016"
+    },
+    {
+      "key": "c4/c4_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1063/1.1541333"
+    },
+    {
+      "key": "c5/c5_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1088/1361-6595/ab2d7d"
+    },
+    {
+      "key": "c6/c6_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1063/1.1803579"
+    },
+    {
+      "key": "c7/c7_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1063/1.1692519"
+    },
+    {
+      "key": "c8/c8_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1063/1.2179393"
+    },
+    {
+      "key": "c9/c9_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1063/1.1568342"
+    },
+    {
+      "key": "c10/c10_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1088/0963-0252/20/1/015007"
+    },
+    {
+      "key": "c11/c11_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1088/1741-4326/ab1f2c"
+    },
+    {
+      "key": "c12/c12_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1103/PhysRevLett.120.045001"
+    },
+    {
+      "key": "c13/c13_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1103/PhysRevE.101.053208"
+    },
+    {
+      "key": "c14/c14_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1103/PhysRevLett.96.065002"
+    },
+    {
+      "key": "c15/c15_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1103/PhysRevLett.46.115"
+    },
+    {
+      "key": "c16/c16_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1103/PhysRevLett.103.135002"
+    },
+    {
+      "key": "c17/c17_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1063/1.5026972"
+    },
+    {
+      "key": "c18/c18_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1088/1361-6595/ab7855"
+    },
+    {
+      "key": "c19/c19_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1063/1.3118625"
+    },
+    {
+      "key": "c20/c20_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1063/1.2907786"
+    },
+    {
+      "key": "c21/c21_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1088/1361-6595/aacd6d"
+    },
+    {
+      "key": "c22/c22_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1063/1.1557319"
+    },
+    {
+      "key": "c23/c23_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1103/PhysRevLett.65.175"
+    },
+    {
+      "key": "c24/c24_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1103/PhysRevLett.97.045003"
+    },
+    {
+      "key": "c25/c25_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1063/1.1371519"
+    },
+    {
+      "key": "c26/c26_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1063/1.1508774"
+    },
+    {
+      "key": "c27/c27_1",
+      "volume-title": "AIAA Propulsion and Energy Forum",
+      "author": "Smolyakov A.",
+      "year": "2019"
+    },
+    {
+      "key": "c28/c28_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1134/S1063780X20040108"
+    },
+    {
+      "key": "c29/c29_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1109/27.912945"
+    },
+    {
+      "key": "c30/c30_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1063/1.3691650"
+    },
+    {
+      "key": "c31/c31_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1063/1.1560922"
+    },
+    {
+      "key": "c32/c32_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1007/BF02124750"
+    },
+    {
+      "key": "c33/c33_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1063/1.2424558"
+    },
+    {
+      "key": "c34/c34_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1103/PhysRevLett.117.225003"
+    },
+    {
+      "key": "c35/c35_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1103/PhysRevLett.125.165001"
+    },
+    {
+      "key": "c36/c36_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1088/0963-0252/23/4/045014"
+    },
+    {
+      "key": "c37/c37_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1063/1.2903844"
+    },
+    {
+      "key": "c38/c38_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1063/1.3442736"
+    },
+    {
+      "key": "c39/c39_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1063/1.4994681"
+    },
+    {
+      "key": "c40/c40_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1063/5.0010135"
+    },
+    {
+      "key": "c41/c41_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1063/1.3594565"
+    }
+  ],
+  "container-title": "Physics of Plasmas",
+  "original-title": [],
+  "language": "en",
+  "link": [
+    {
+      "URL": "https://aip.scitation.org/doi/am-pdf/10.1063/5.0050226",
+      "content-type": "application/pdf",
+      "content-version": "am",
+      "intended-application": "syndication"
+    },
+    {
+      "URL": "https://aip.scitation.org/doi/pdf/10.1063/5.0050226",
+      "content-type": "unspecified",
+      "content-version": "vor",
+      "intended-application": "similarity-checking"
+    }
+  ],
+  "deposited": {
+    "date-parts": [[2023, 4, 19]],
+    "date-time": "2023-04-19T20:39:25Z",
+    "timestamp": 1681936765000
+  },
+  "score": 1,
+  "resource": {
+    "primary": {
+      "URL": "https://pubs.aip.org/aip/pop/article/972909"
+    }
+  },
+  "subtitle": [],
+  "short-title": [],
+  "issued": {
+    "date-parts": [[2021, 6]]
+  },
+  "references-count": 41,
+  "journal-issue": {
+    "issue": "6",
+    "published-print": {
+      "date-parts": [[2021, 6]]
+    }
+  },
+  "alternative-id": ["10.1063/5.0050226"],
+  "URL": "http://dx.doi.org/10.1063/5.0050226",
+  "relation": {},
+  "ISSN": ["1070-664X", "1089-7674"],
+  "subject": ["Condensed Matter Physics"],
+  "container-title-short": "Physics of Plasmas",
+  "published": {
+    "date-parts": [[2021, 6]]
+  },
+  "assertion": [
+    {
+      "value": "2021-03-15",
+      "order": 0,
+      "name": "received",
+      "label": "Received",
+      "group": {
+        "name": "publication_history",
+        "label": "Publication History"
+      }
+    },
+    {
+      "value": "2021-05-12",
+      "order": 2,
+      "name": "accepted",
+      "label": "Accepted",
+      "group": {
+        "name": "publication_history",
+        "label": "Publication History"
+      }
+    },
+    {
+      "value": "2021-06-04",
+      "order": 3,
+      "name": "published",
+      "label": "Published",
+      "group": {
+        "name": "publication_history",
+        "label": "Publication History"
+      }
+    }
+  ],
+  "_graph": [
+    {
+      "type": "@doi/id",
+      "data": "10.1063/5.0050226"
+    },
+    {
+      "type": "@else/list+object"
+    },
+    {
+      "type": "@doi/api",
+      "data": "https://doi.org/10.1063/5.0050226"
+    },
+    {
+      "type": "@csl/list+object"
+    }
+  ],
+  "id": "temp_id_9646292840350361"
+}

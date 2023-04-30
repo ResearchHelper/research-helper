@@ -32,14 +32,17 @@ function createWindow() {
     webPreferences: {
       contextIsolation: true,
       // More info: https://v2.quasar.dev/quasar-cli-vite/developing-electron-apps/electron-preload-script
-      preload: path.resolve(__dirname, process.env.QUASAR_ELECTRON_PRELOAD),
+      preload: path.resolve(
+        __dirname,
+        process.env.QUASAR_ELECTRON_PRELOAD as string
+      ),
       sandbox: false, // to be able to use @electron/remote in preload
       webSecurity: false, // to be able to load image in note editor in dev mode
     },
   });
 
   enable(mainWindow.webContents); // enable electron remote
-  mainWindow.loadURL(process.env.APP_URL);
+  mainWindow.loadURL(process.env.APP_URL as string);
 
   if (process.env.DEBUGGING) {
     // if on DEV or Production with debug enabled

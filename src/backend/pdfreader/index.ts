@@ -4,8 +4,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc =
   "node_modules/pdfjs-dist/build/pdf.worker.min.js";
 
 import { PeekManager } from "./pdfpeek";
-import { AnnotationType } from "./annotation";
-import { db, PDFSearch, PDFState, TOCNode } from "../database";
+import { db, PDFSearch, PDFState, SpreadMode, TOCNode } from "../database";
 import { debounce } from "quasar";
 
 class PDFApplication {
@@ -144,7 +143,7 @@ class PDFApplication {
     this.pdfViewer.currentPageNumber = pageNumber;
   }
 
-  changeSpreadMode(spreadMode: number) {
+  changeSpreadMode(spreadMode: SpreadMode) {
     this.pdfViewer.spreadMode = spreadMode;
   }
 
@@ -186,16 +185,18 @@ class PDFApplication {
     }
   }
 
-  async getPageLabels(): Promise<string[] | null> {
-    if (this.pdfDocument === undefined) return null;
-    return await this.pdfDocument.getPageLabels();
+  async getPageLabels(): Promise<string[]> {
+    if (this.pdfDocument === undefined) return [];
+    let labels = await this.pdfDocument.getPageLabels();
+    if (labels === null) labels = [];
+    return labels;
   }
 
   async getTOC(): Promise<TOCNode[]> {
     if (this.pdfDocument === undefined) return [];
 
     function _dfs(oldNodes: TOCNode[]): TOCNode[] {
-      const tree = [];
+      const tree = [] as TOCNode[];
       for (let k in oldNodes) {
         let node = {
           label: oldNodes[k].title,
@@ -288,4 +289,4 @@ class PDFApplication {
   }
 }
 
-export { PDFApplication, AnnotationType };
+export { PDFApplication };
