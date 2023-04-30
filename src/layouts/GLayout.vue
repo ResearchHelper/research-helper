@@ -154,10 +154,9 @@ const loadGLLayout = async (
 ) => {
   GLayout.clear();
   AllComponents.value = {};
-
   // When reloading a saved Layout, first convert the saved "Resolved Config" to a "Config" by calling LayoutConfig.fromResolved().
   const config = (
-    layoutConfig.resolved
+    (layoutConfig as ResolvedLayoutConfig).resolved
       ? LayoutConfig.fromResolved(layoutConfig as ResolvedLayoutConfig)
       : layoutConfig
   ) as LayoutConfig;
@@ -196,7 +195,6 @@ const loadGLLayout = async (
   }
 
   await nextTick(); // wait 1 tick for vue to add the dom
-
   await GLayout.loadLayout(config);
 
   // initialization complete, emit initialized

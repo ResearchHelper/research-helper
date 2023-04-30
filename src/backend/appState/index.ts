@@ -1,5 +1,5 @@
-import { db, AppState } from "../database";
-import { LayoutConfig } from "golden-layout";
+import { db, AppState, Layout } from "../database";
+import { LayoutConfig, ResolvedLayoutConfig } from "golden-layout";
 import { debounce } from "quasar";
 
 /*****************************
@@ -14,6 +14,7 @@ async function getAppState(): Promise<AppState> {
 
     let state: AppState = {
       _id: "appState",
+      _rev: "",
       dataType: "appState",
       leftMenuSize: 20,
       showLeftMenu: false,
@@ -44,13 +45,14 @@ const updateAppState = debounce(_updateAppState, 200);
  * Layout
  *****************************/
 
-async function getLayout() {
+async function getLayout(): Promise<Layout> {
   try {
-    return await db.get("layout");
+    return (await db.get("layout")) as Layout;
   } catch (error) {
     // cannot get layout
     let layout = {
       _id: "layout",
+      _rev: "",
       dataType: "layout",
       config: {
         settings: {
@@ -78,11 +80,11 @@ async function getLayout() {
     };
 
     await db.put(layout);
-    return layout;
+    return layout as Layout;
   }
 }
 
-async function _updateLayout(config: LayoutConfig) {
+async function _updateLayout(config: LayoutConfig | ResolvedLayoutConfig) {
   let layout: any = await db.get("layout");
   layout.config = config;
   await db.put(layout);

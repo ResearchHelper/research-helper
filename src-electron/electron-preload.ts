@@ -96,8 +96,11 @@ contextBridge.exposeInMainWorld("browser", browser);
 // auto updater
 contextBridge.exposeInMainWorld("updater", updater);
 
+// declare this global
 declare global {
-  interface Window {
+  // also export it
+  // we can import it in src/env.d.ts so we can intellisense
+  export interface Window {
     fs: typeof fs;
     path: typeof path;
     fileBrowser: typeof fileBrowser;
