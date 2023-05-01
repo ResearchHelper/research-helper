@@ -23,6 +23,7 @@
   "dependencies": {
     "@citation-js/plugin-isbn": "^0.3.1",
     "@electron/remote": "^2.0.8",
+    "@excalidraw/excalidraw": "^0.15.2",
     "@quasar/extras": "^1.15.8",
     "axios": "^0.21.1",
     "citation-js": "^0.6.5",
@@ -37,7 +38,10 @@
     "pouchdb": "^7.3.1",
     "pouchdb-find": "^7.3.1",
     "quasar": "^2.11.1",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
     "vditor": "3.8.17",
+    "veaury": "^2.3.12",
     "vue": "^3.0.0",
     "vue-i18n": "^9.0.0",
     "vue-router": "^4.0.0"

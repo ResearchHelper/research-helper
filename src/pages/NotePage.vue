@@ -7,7 +7,7 @@
 </template>
 <script lang="ts">
 import { defineComponent } from "vue";
-import NoteEditor from "src/components/NoteEditor.vue";
+import NoteEditor from "src/components/note/NoteEditor.vue";
 export default defineComponent({
   props: { itemId: String, visible: Boolean },
 

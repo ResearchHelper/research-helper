@@ -27,6 +27,15 @@
 
         <div>
           <q-btn
+            v-if="showTestBtn"
+            flat
+            square
+            label="Test"
+            @click="setComponent('test')"
+          >
+            <q-tooltip>Test Page</q-tooltip>
+          </q-btn>
+          <q-btn
             flat
             square
             icon="home"
@@ -141,6 +150,7 @@ const bus = inject("bus") as EventBus;
 const layout = ref<InstanceType<typeof GLayout> | null>(null);
 const projectTree = ref<InstanceType<typeof ProjectTree> | null>(null);
 
+const showTestBtn = process.env.DEV; // show testPage btn if in dev
 const welcomeCarousel = ref(false);
 const leftMenuSize = ref(0);
 const isUpdateAvailable = ref(false);
@@ -244,6 +254,10 @@ async function setComponent(id: string) {
     case "settings":
       componentType = "SettingsPage";
       title = t("settings");
+      break;
+    case "test": // for development testing
+      componentType = "TestPage";
+      title = t("test");
       break;
     default:
       let item = (await getProject(id)) as Project | Note;

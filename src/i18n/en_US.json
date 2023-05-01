@@ -111,5 +111,6 @@
   "rectangle": "Rectangle",
   "copy": "Copy",
   "strikeout": "Strikeout",
-  "underline": "Underline"
+  "underline": "Underline",
+  "test": "Test"
 }
