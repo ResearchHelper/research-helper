@@ -1,8 +1,7 @@
 <template>
-  <!-- noteId should be itemId -->
   <ExcalidrawReact
     v-if="visible"
-    :noteId="'testNote'"
+    :noteId="itemId"
   />
 </template>
 
