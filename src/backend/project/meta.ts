@@ -19,7 +19,7 @@ async function getMeta(
 ): Promise<any> {
   try {
     const data = await Cite.async(identifier);
-    if (format === "json") return data.data;
+    if (!format || format === "json") return data.data;
     else if (!options) return data.format(format);
     else return data.format(format, options);
   } catch (error) {

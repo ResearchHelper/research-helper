@@ -8,7 +8,7 @@
       name="start"
       class="column no-wrap flex-center"
     >
-      <h2>
+      <h2 data-cy="title">
         {{ $t("welcome-to-research-helper") }}
         <q-icon class="q-ml-lg">
           <img
@@ -45,6 +45,7 @@
         class="q-mt-xl"
         v-model="language"
         :options="languageOptions"
+        data-cy="language-select"
       />
       <q-btn
         unelevated

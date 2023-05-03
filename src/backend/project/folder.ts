@@ -84,12 +84,11 @@ async function addFolder(parentId: string) {
  * @param folderId
  * @param props - Folder
  */
-async function updateFolder(folderId: string, props: { [key: string]: any }) {
+async function updateFolder(folderId: string, props: Folder) {
   try {
     let folder: Folder = await db.get(folderId);
-    for (let key in props) {
-      folder[key] = props[key];
-    }
+    props._rev = folder._rev;
+    Object.assign(folder, props);
     let result = await db.put(folder);
     folder._rev = result.rev;
     return folder;

@@ -16,7 +16,10 @@
           {{ error.name }}
         </div>
       </q-card-section>
-      <q-card-section class="q-pt-none">
+      <q-card-section
+        class="q-pt-none"
+        data-cy="error-msg"
+      >
         {{ error.message }}
       </q-card-section>
       <q-card-actions align="right">
@@ -26,21 +29,20 @@
           :ripple="false"
           label="OK"
           @click="close"
+          data-cy="btn-ok"
         />
       </q-card-actions>
     </q-card>
   </q-dialog>
 </template>
-<script>
-import { defineComponent } from "vue";
-export default defineComponent({
-  props: { show: Boolean, error: Error },
-  emits: ["update:show"],
-
-  methods: {
-    close() {
-      this.$emit("update:show", false);
-    },
-  },
+<script setup lang="ts">
+const props = defineProps({
+  show: { type: Boolean, required: true },
+  error: { type: Error, required: true },
 });
+const emit = defineEmits(["update:show"]);
+
+const close = () => {
+  emit("update:show", false);
+};
 </script>
