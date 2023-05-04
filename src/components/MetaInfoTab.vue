@@ -262,9 +262,10 @@ import { updateProject } from "src/backend/project/project";
 import { updateEdge } from "src/backend/project/graph";
 import { getMeta } from "src/backend/project/meta";
 
+const componentName = "MetaInfoTab";
+
 const props = defineProps({ project: Object as PropType<Project> });
 const bus = inject("bus") as EventBus;
-
 const tab = ref("meta");
 const name = ref(""); // author name
 const tag = ref(""); // project tag
@@ -327,7 +328,7 @@ async function modifyInfo(updateEdgeData: boolean) {
   meta.value._rev = newMeta._rev;
 
   bus.emit("updateProject", {
-    source: "MetaInfoTab",
+    source: componentName,
     data: meta.value,
   });
 

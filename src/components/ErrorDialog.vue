@@ -36,9 +36,13 @@
   </q-dialog>
 </template>
 <script setup lang="ts">
+import type { PropType } from "vue";
 const props = defineProps({
   show: { type: Boolean, required: true },
-  error: Error,
+  error: {
+    type: Error as PropType<Error | null>,
+    required: true,
+  },
 });
 const emit = defineEmits(["update:show"]);
 

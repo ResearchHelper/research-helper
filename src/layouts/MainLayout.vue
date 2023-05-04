@@ -109,7 +109,7 @@
 // types
 import { Project, Note, BusEvent } from "src/backend/database";
 // components
-import ProjectTree from "src/components/ProjectTree.vue";
+import ProjectTree from "src/components/leftmenu/ProjectTree.vue";
 import WelcomeCarousel from "src/components/WelcomeCarousel.vue";
 // GoldenLayout
 import GLayout from "./GLayout.vue";

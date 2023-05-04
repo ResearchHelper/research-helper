@@ -226,7 +226,7 @@
 <script lang="ts">
 // types
 import { defineComponent } from "vue";
-import { BusEvent, Note, NoteType, Project } from "src/backend/database";
+import { BusEvent, Edge, Note, NoteType, Project } from "src/backend/database";
 import { QTree, QTreeNode } from "quasar";
 // components
 import GraphView from "./GraphView.vue";
@@ -367,13 +367,15 @@ export default defineComponent({
       let project = await getProject(projectId);
       if (project === undefined) return;
       let notes = await getNotes(projectId);
-      this.projects.push({
-        _id: project._id,
-        dataType: project.dataType,
-        label: project.title,
-        children: notes,
-        path: project.path,
-      } as Project);
+      // this.projects.push({
+      //   _id: project._id,
+      //   dataType: project.dataType,
+      //   label: project.title,
+      //   children: notes,
+      //   path: project.path,
+      // } as Project);
+      project.children = notes;
+      this.projects.push(project);
       this.expanded.push(projectId);
 
       await this.$nextTick(); // wait until ui updates
@@ -407,13 +409,14 @@ export default defineComponent({
       // the updateProject event emit from PDFReader has empty children property
       let children = this.projects[idx].children;
       if (source === "ProjectBrowser") children = project.children;
-      this.projects[idx] = {
-        _id: project._id,
-        dataType: project.dataType,
-        label: project.title,
-        children: children,
-        path: project.path,
-      } as Project;
+      // this.projects[idx] = {
+      //   _id: project._id,
+      //   dataType: project.dataType,
+      //   label: project.label,
+      //   children: children,
+      //   path: project.path,
+      // } as Project;
+      this.projects[idx] = project;
     },
 
     selectItem(node: Project | Note) {
@@ -500,18 +503,24 @@ export default defineComponent({
         label: renamingNote.label,
         type: renamingNote.dataType,
       };
-      await updateEdge(renamingNote._id, { sourceNode: sourceNode });
+      await updateEdge(renamingNote._id, { sourceNode: sourceNode } as Edge);
       await updateEdgeTarget(renamingNote.projectId, renamingNote);
 
       // update ui
       this.renamingNote = null;
-      let projectNode = (this.$refs.tree as QTree).getNodeByKey(
-        renamingNote.projectId
-      );
-      sortTree(projectNode); // sort notes
-
+      let project = this.projects.find((p) => p._id === renamingNote.projectId);
+      sortTree(project);
+      // let projectNode = (this.$refs.tree as QTree).getNodeByKey(
+      //   renamingNote.projectId
+      // );
+      // sortTree(projectNode); // sort notes
+      console.log("sending project", project);
       await this.$nextTick();
       this.$emit("renameNode", renamingNote);
+      this.$bus.emit("updateProject", {
+        source: "ProjectTree",
+        data: project,
+      });
     },
   },
 });

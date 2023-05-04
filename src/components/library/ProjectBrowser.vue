@@ -114,10 +114,25 @@
   </q-splitter>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
+import {
+  ref,
+  watch,
+  provide,
+  onMounted,
+  inject,
+  onBeforeUnmount,
+  nextTick,
+} from "vue";
 // types
-import { defineComponent, computed } from "vue";
-import { Folder, Project, Note, NoteType } from "src/backend/database";
+import {
+  Folder,
+  Project,
+  Note,
+  NoteType,
+  BusEvent,
+  Edge,
+} from "src/backend/database";
 import {
   KEY_metaDialog,
   KEY_deleteDialog,
@@ -127,6 +142,8 @@ import {
   KEY_renameNote,
   KEY_deleteNote,
 } from "./injectKeys";
+import { TextItem } from "pdfjs-dist/types/src/display/api";
+import { EventBus } from "quasar";
 // components
 import ActionBar from "src/components/library/ActionBar.vue";
 import TableView from "src/components/library/TableView.vue";
@@ -139,18 +156,18 @@ import ErrorDialog from "src/components/ErrorDialog.vue";
 import ImportDialog from "src/components/library/ImportDialog.vue";
 // db
 import {
-  addProject,
-  updateProject,
-  updateProjectByMeta,
-  getProject,
+  addProject as addProjectDB,
+  updateProject as updateProjectDB,
+  updateProjectByMeta as updateProjectByMetaDB,
+  getProject as getProjectDB,
   getProjectsByFolderId,
-  deleteProject,
+  deleteProject as deleteProjectDB,
 } from "src/backend/project/project";
 import {
-  getNotes,
-  addNote,
-  updateNote,
-  deleteNote,
+  getNotes as getNotesDB,
+  addNote as addNoteDB,
+  updateNote as updateNoteDB,
+  deleteNote as deleteNoteDB,
 } from "src/backend/project/note";
 import {
   createEdge,
@@ -168,518 +185,507 @@ import * as pdfjsLib from "pdfjs-dist";
 pdfjsLib.GlobalWorkerOptions.workerSrc =
   "node_modules/pdfjs-dist/build/pdf.worker.min.js";
 
-export default defineComponent({
-  setup() {
-    const stateStore = useStateStore();
-    // also return TableView so I can use its type in template
-    return { stateStore, TableView };
-  },
+const componentName = "ProjectBrowser";
+const stateStore = useStateStore();
 
-  components: {
-    ActionBar,
-    TableView,
-    TreeView,
-    ExportDialog,
-    MetaInfoTab,
-    IdentifierDialog,
-    DeleteDialog,
-    ErrorDialog,
-    ImportDialog,
-  },
+/*********************************
+ * Data
+ *********************************/
+// component refs
+const treeview = ref<typeof TreeView | null>(null);
 
-  data() {
-    return {
-      searchString: "",
-      projects: [] as Project[],
-      selectedProject: undefined as Project | undefined,
+// data
+const searchString = ref("");
+const projects = ref<Project[]>([]);
+const selectedProject = ref<Project | undefined>(undefined);
 
-      treeViewSize: 20,
-      rightMenuSize: 0,
-      prvRightMenuSize: 25,
+const treeViewSize = ref(20);
+const rightMenuSize = ref(0);
+const prvRightMenuSize = ref(25);
 
-      draggingProjectId: "",
+const draggingProjectId = ref("");
 
-      exportFolderDialog: false,
-      folder: null as Folder | null,
+const exportFolderDialog = ref(false);
+const folder = ref<Folder | null>(null);
 
-      deleteDialog: false,
-      project: null as Project | null,
-      deleteFromDB: false,
+const deleteDialog = ref(false);
+const project = ref<Project | null>(null);
+const deleteFromDB = ref(false);
 
-      identifierDialog: false,
-      createProject: false,
+const identifierDialog = ref(false);
+const createProject = ref(false);
 
-      errorDialog: false,
-      error: null as Error | null,
+const errorDialog = ref(false);
+const error = ref<Error | null>(null);
 
-      importDialog: false,
-      collection: null as File | null,
-    };
-  },
+const importDialog = ref(false);
+const collection = ref<File | null>(null);
 
-  watch: {
-    async "stateStore.selectedFolderId"(folderId, _) {
-      await this.getProjects();
-    },
-  },
+watch(
+  () => stateStore.selectedFolderId,
+  async (folderId: string) => {
+    await getProjects();
+  }
+);
 
-  provide() {
-    return {
-      // for projectRow
-      [KEY_deleteDialog]: this.showDeleteDialog,
-      [KEY_metaDialog]: this.showSearchMetaDialog,
-      [KEY_addNote]: this.addNote,
-      [KEY_attachFile]: this.attachFile,
+// for projectRow
+provide(KEY_deleteDialog, showDeleteDialog);
+provide(KEY_metaDialog, showSearchMetaDialog);
+provide(KEY_addNote, addNote);
+provide(KEY_attachFile, attachFile);
+// for itemRow
+provide(KEY_renameNote, renameNote);
+provide(KEY_deleteNote, deleteNote);
+provide(KEY_renameFromMeta, renameFromMeta);
 
-      // for itemRow
-      [KEY_renameNote]: this.renameNote,
-      [KEY_deleteNote]: this.deleteNote,
-      [KEY_renameFromMeta]: this.renameFromMeta,
-    };
-  },
+const bus = inject("bus") as EventBus;
 
-  mounted() {
-    this.getProjects();
-  },
+onMounted(() => {
+  getProjects();
+  bus.on("updateProject", (e: BusEvent) => {
+    if (e.source !== "ProjectTree") return;
+    let project = e.data;
+    let index = projects.value.findIndex((p) => p._id === project._id);
+    if (index === -1) return;
+    projects.value[index] = project;
+  });
+});
 
-  methods: {
-    /************************************************
-     * Projects (get, add, delete, update, attachFile, renameFromMeta)
-     ************************************************/
+onBeforeUnmount(() => {
+  bus.off("updateProject", (e: BusEvent) => {
+    if (e.source !== "ProjectTree") return;
+    let project = e.data;
+    let index = projects.value.findIndex((p) => p._id === project._id);
+    if (index === -1) return;
+    projects.value[index] = project;
+  });
+});
 
-    /**
-     * Delete project
-     * @param project
-     * @param deleteFromDB
-     */
-    showDeleteDialog(project: Project, deleteFromDB: boolean) {
-      this.deleteDialog = true;
-      this.project = project;
-      this.deleteFromDB = deleteFromDB;
-    },
+/************************************************
+ * Projects (get, add, delete, update, attachFile, renameFromMeta)
+ ************************************************/
 
-    /**
-     * Update project by meta
-     */
-    showSearchMetaDialog() {
-      let createProject = false;
-      this.showIdentifierDialog(createProject);
-    },
+/**
+ * Delete project
+ * @param project
+ * @param deleteFromDB
+ */
+function showDeleteDialog(_project: Project, _deleteFromDB: boolean) {
+  deleteDialog.value = true;
+  project.value = _project; // project to be delted
+  deleteFromDB.value = _deleteFromDB;
+}
 
-    async getProjects() {
-      this.projects = [];
-      // get projects and their notes
-      this.projects = await getProjectsByFolderId(
-        this.stateStore.selectedFolderId
-      );
-      for (let i in this.projects) {
-        // notes are the children of project
-        this.projects[i].children = await getNotes(this.projects[i]._id);
-      }
-    },
+/**
+ * Update project by meta
+ */
+function showSearchMetaDialog() {
+  let createProject = false;
+  showIdentifierDialog(createProject);
+}
 
-    /**
-     * Open identifier dialog.
-     * If createProject is true, the identifier will be used to create a new project
-     * otherwise the identifier will be used to update an existing project
-     * @param createProject
-     */
-    showIdentifierDialog(createProject: boolean) {
-      this.identifierDialog = true;
-      this.createProject = createProject;
-    },
+async function getProjects() {
+  projects.value = [];
+  // get projects and their notes
+  projects.value = await getProjectsByFolderId(stateStore.selectedFolderId);
+  for (let i in projects.value) {
+    // notes are the children of project
+    projects.value[i].children = await getNotesDB(projects.value[i]._id);
+  }
+}
 
-    showImportDialog(collection: File) {
-      this.importDialog = true;
-      this.collection = collection;
-    },
+/**
+ * Open identifier dialog.
+ * If createProject is true, the identifier will be used to create a new project
+ * otherwise the identifier will be used to update an existing project
+ * @param createProject
+ */
+function showIdentifierDialog(_createProject: boolean) {
+  identifierDialog.value = true;
+  createProject.value = _createProject;
+}
 
-    /**
-     * Add an empty project to table
-     */
-    async addEmptyProject() {
-      // udpate db
-      let project = (await addProject(
-        this.stateStore.selectedFolderId
+function showImportDialog(_collection: File) {
+  importDialog.value = true;
+  collection.value = _collection;
+}
+
+/**
+ * Add an empty project to table
+ */
+async function addEmptyProject() {
+  // udpate db
+  let project = (await addProjectDB(stateStore.selectedFolderId)) as Project;
+  await createEdge(project);
+
+  // update ui
+  projects.value.push(project);
+}
+
+/**
+ * Add projects by importing files
+ * @param files - pdfs imported
+ */
+async function addProjectsByFiles(files: File[]) {
+  for (let file of files) {
+    try {
+      // update db
+      let project = (await addProjectDB(
+        stateStore.selectedFolderId
       )) as Project;
+      project.path = (await copyFile(file.path, project._id)) as string;
+      project.title = window.path.basename(project.path, ".pdf");
+      project = (await updateProjectDB(project)) as Project;
+
+      // get meta
+      let buffer = window.fs.readFileSync(file.path);
+      let pdf = await pdfjsLib.getDocument({ data: buffer }).promise;
+      for (
+        let pageNumber = 1;
+        pageNumber <= Math.min(10, pdf.numPages);
+        pageNumber++
+      ) {
+        let page = await pdf.getPage(pageNumber);
+        let content = await page.getTextContent();
+        for (let item of content.items) {
+          let identifier = null;
+          // match ISBN-10 or ISBN-13
+          let isbns = (item as TextItem).str.match(
+            /^ISBN.* (?=(?:\D*\d){10}(?:(?:\D*\d){3})?$)[\d-]+$/
+          );
+          if (!!isbns) {
+            let matched = isbns[0].match(
+              /(?=(?:\D*\d){10}(?:(?:\D*\d){3})?$)[\d-]+/
+            );
+            if (matched) identifier = matched[0];
+          }
+          // match DOI
+          let dois = (item as TextItem).str.match(/^http.*doi.*/);
+          if (!!dois) identifier = dois[0];
+
+          // update project meta
+          if (!!identifier) {
+            console.log(identifier);
+            let metas = await getMeta(identifier, "json");
+            let meta = metas[0];
+            project = (await updateProjectByMetaDB(project, meta)) as Project;
+
+            break;
+          }
+        }
+      }
+
+      // create edge
       await createEdge(project);
 
       // update ui
-      this.projects.push(project);
-    },
+      projects.value.push(project);
+    } catch (_error) {
+      error.value = _error as Error;
+      errorDialog.value = true;
+      // refresh table
+      await getProjects();
+    }
+  }
+}
 
-    /**
-     * Add projects by importing files
-     * @param files - pdfs imported
-     */
-    async addProjectsByFiles(files: File[]) {
-      for (let file of files) {
-        try {
-          // update db
-          let project = (await addProject(
-            this.stateStore.selectedFolderId
-          )) as Project;
-          project.path = (await copyFile(file.path, project._id)) as string;
-          project.title = window.path.basename(project.path, ".pdf");
-          project = (await updateProject(project)) as Project;
+/**
+ * Add projects by a collection file (.bib, .ris, etc...)
+ * @param isCreateFolder
+ */
+async function addProjectsByCollection(isCreateFolder: boolean) {
+  if (collection.value === null) return;
+  // create folder if user wants to
+  if (isCreateFolder) {
+    if (!treeview.value) return;
+    let rootNode = treeview.value.$refs.tree.getNodeByKey("library");
+    let folderName = window.path.basename(
+      (collection.value as File).name,
+      window.path.extname(collection.value.name)
+    );
+    let focus = true;
+    await treeview.value.addFolder(rootNode, folderName, focus);
+  }
 
-          // get meta
-          let buffer = window.fs.readFileSync(file.path);
-          let pdf = await pdfjsLib.getDocument({ data: buffer }).promise;
-          for (
-            let pageNumber = 1;
-            pageNumber <= Math.min(10, pdf.numPages);
-            pageNumber++
-          ) {
-            let page = await pdf.getPage(pageNumber);
-            let content = await page.getTextContent();
-            for (let item of content.items) {
-              let identifier = null;
-              // match ISBN-10 or ISBN-13
-              let isbns = item.str.match(
-                /^ISBN.* (?=(?:\D*\d){10}(?:(?:\D*\d){3})?$)[\d-]+$/
-              );
-              if (!!isbns)
-                identifier = isbns[0].match(
-                  /(?=(?:\D*\d){10}(?:(?:\D*\d){3})?$)[\d-]+/
-                )[0];
+  await nextTick(); //wait until ui actions settled
 
-              // match DOI
-              let dois = item.str.match(/^http.*doi.*/);
-              if (!!dois) identifier = dois[0];
+  let metas = await importMeta(collection.value.path);
+  for (let meta of metas) {
+    // add a new project to db and update it with meta
+    let project = (await addProjectDB(stateStore.selectedFolderId)) as Project;
+    project = (await updateProjectByMetaDB(project, meta)) as Project;
+    await createEdge(project);
 
-              // update project meta
-              if (!!identifier) {
-                console.log(identifier);
-                let metas = await getMeta(identifier, "json");
-                let meta = metas[0];
-                project = (await updateProjectByMeta(project, meta)) as Project;
+    // update ui
+    projects.value.push(project);
+  }
 
-                break;
-              }
-            }
-          }
+  importDialog.value = false;
+  collection.value = null;
+}
 
-          // create edge
-          await createEdge(project);
+async function processIdentifier(identifier: string) {
+  if (!identifier) return;
 
-          // update ui
-          this.projects.push(project);
-        } catch (error) {
-          this.error = error as Error;
-          this.errorDialog = true;
-          // refresh table
-          await this.getProjects();
-        }
-      }
-    },
+  try {
+    let metas = await getMeta(identifier, "json");
+    let meta = metas[0];
 
-    /**
-     * Add projects by a collection file (.bib, .ris, etc...)
-     * @param isCreateFolder
-     */
-    async addProjectsByCollection(isCreateFolder: boolean) {
-      if (this.collection === null) return;
-      // create folder if user wants to
-      if (isCreateFolder) {
-        let treeview = this.$refs.tree as typeof TreeView;
-        let rootNode = treeview.$refs.tree.getNodeByKey("library");
-        let folderName = window.path.basename(
-          (this.collection as File).name,
-          window.path.extname(this.collection.name)
-        );
-        let focus = true;
-        await treeview.addFolder(rootNode, folderName, focus);
-      }
-
-      await this.$nextTick(); //wait until ui actions settled
-
-      let metas = await importMeta(this.collection.path);
-      for (let meta of metas) {
-        // add a new project to db and update it with meta
-        let project = (await addProject(
-          this.stateStore.selectedFolderId
-        )) as Project;
-        project = (await updateProjectByMeta(project, meta)) as Project;
-        await createEdge(project);
-
-        // update ui
-        this.projects.push(project);
-      }
-
-      this.importDialog = false;
-      this.collection = null;
-    },
-
-    async processIdentifier(identifier: string) {
-      if (!identifier) return;
-
-      try {
-        let metas = await getMeta(identifier, "json");
-        let meta = metas[0];
-
-        if (this.createProject) {
-          // add a new project to db and update it with meta
-          let project = (await addProject(
-            this.stateStore.selectedFolderId
-          )) as Project;
-          console.log("project", project);
-          project = (await updateProjectByMeta(project, meta)) as Project;
-          await createEdge(project);
-
-          // update ui
-          this.projects.push(project);
-        } else {
-          // update an existing project meta
-          let project = (await getProject(
-            this.stateStore.selectedItemId
-          )) as Project;
-          project = (await updateProjectByMeta(project, meta)) as Project;
-          let sourceNode = {
-            id: project._id,
-            label: project.title,
-            type: "project",
-          };
-          await updateEdge(project._id, { sourceNode: sourceNode });
-
-          // update tableview UI
-          if (this.selectedProject !== undefined) {
-            for (let prop in project)
-              this.selectedProject[prop] = project[prop];
-          }
-          // update projectree ui
-          this.$bus.emit("updateProject", {
-            source: "ProjectBrowser",
-            data: this.selectedProject,
-          });
-        }
-      } catch (error) {
-        this.error = error as Error;
-        this.errorDialog = true;
-        // refresh table
-        await this.getProjects();
-      }
-    },
-
-    /**
-     * Delete a project from the current folder,
-     * if deleteFromDB is true, delete the project from database and remove the actual files
-     */
-    async deleteProject() {
-      if (this.selectedProject === undefined) return;
-      // update ui
-      this.projects = this.projects.filter(
-        (p) => p._id != (this.selectedProject as Project)._id
-      );
-      // update projectTree ui
-      this.$bus.emit("deleteProject", {
-        source: "ProjectBrowser",
-        data: this.selectedProject._id,
-      });
-
-      // update db
-      await this.$nextTick(); // wait until the ui closes all windows
-      let notes = await getNotes(this.selectedProject._id);
-      await deleteProject(
-        this.selectedProject._id,
-        this.deleteFromDB,
-        this.stateStore.selectedFolderId
-      );
-      if (this.deleteFromDB) {
-        await deleteEdge(this.selectedProject._id);
-        for (let note of notes) {
-          await deleteEdge(note._id);
-        }
-      }
-    },
-
-    async attachFile(
-      replaceStoredCopy: boolean,
-      projectId: string,
-      index?: number
-    ) {
-      let filePaths = window.fileBrowser.showFilePicker();
-      if (filePaths?.length === 1) {
-        // find index
-        if (index === undefined)
-          index = this.projects.findIndex((p) => p._id === projectId);
-        else if (index === -1) index = this.projects.length;
-
-        let dstPath = filePaths[0];
-        if (replaceStoredCopy)
-          dstPath = (await copyFile(dstPath, projectId)) as string;
-        this.projects[index].path = dstPath;
-        this.projects[index] = (await updateProject(
-          this.projects[index]
-        )) as Project;
-      }
-    },
-
-    /**
-     * Rename PDF file form meta
-     * @param row
-     * @param index
-     */
-    async renameFromMeta(project: Project, index?: number) {
-      if (project.path === undefined) return;
-      let author = "";
-      let year = project.year || "Unknown";
-      let title = project.title;
-      let extname = window.path.extname(project.path);
-      if (project.author.length === 0) {
-        // no author
-        author = "Unknown";
-      } else {
-        // 1 author
-        let author0 = project.author[0];
-        author = !!author0.family
-          ? author0.family
-          : (author0.literal as string);
-
-        // more than 1 authors
-        if (project.author.length > 1) author += " et al.";
-      }
-      let fileName = `${author} - ${year} - ${title}${extname}`;
-
-      // update backend
-      project.path = renameFile(project.path, fileName);
-      project = (await updateProject(project)) as Project;
+    if (createProject.value) {
+      // add a new project to db and update it with meta
+      let project = (await addProjectDB(
+        stateStore.selectedFolderId
+      )) as Project;
+      console.log("project", project);
+      project = (await updateProjectByMetaDB(project, meta)) as Project;
+      await createEdge(project);
 
       // update ui
-      if (index === undefined)
-        index = this.projects.findIndex((p) => p._id === project._id);
-      else if (index === -1) index = this.projects.length;
-      this.projects[index] = project;
-    },
-
-    /******************************************************
-     * Note (add, delete, update)
-     *******************************************************/
-    async addNote(projectId: string, type: NoteType, index?: number) {
-      // update db
-      let note = (await addNote(projectId, type)) as Note;
-      await createEdge(note);
-      await appendEdgeTarget(note.projectId, note);
-
-      // update ui
-      if (index === undefined)
-        index = this.projects.findIndex((p) => p._id === projectId);
-      else if (index === -1) index = this.projects.length;
-      // new project does not have children property
-      if (!this.projects[index].children)
-        this.projects[index].children = [] as Note[];
-      this.projects[index].children?.push(note);
-      console.log("current project", this.projects[index]);
-      this.stateStore.selectedItemId = note._id;
-
-      // update projectTree ui
-      this.$bus.emit("updateProject", {
-        source: "ProjectBrowser",
-        data: this.projects[index],
-      });
-    },
-
-    async renameNote(note: Note, index?: number) {
-      // update db
-      note = (await updateNote(note)) as Note;
+      projects.value.push(project);
+    } else {
+      // update an existing project meta
+      let project = (await getProjectDB(stateStore.selectedItemId)) as Project;
+      project = (await updateProjectByMetaDB(project, meta)) as Project;
       let sourceNode = {
-        id: note._id,
-        label: note.label,
-        type: note.dataType,
+        id: project._id,
+        label: project.title,
+        type: "project",
       };
-      await updateEdge(note._id, { sourceNode: sourceNode });
-      await updateEdgeTarget(note.projectId, note);
+      await updateEdge(project._id, { sourceNode: sourceNode } as Edge);
 
-      // update ui
-      if (index === undefined)
-        index = this.projects.findIndex((p) => p._id === note.projectId);
-      else if (index === -1) index = this.projects.length;
-      let project = this.projects[index];
-      if (project.children === undefined) return;
-      let noteIndex = project.children.findIndex((n) => n._id === note._id);
-      if (noteIndex !== undefined) project.children[noteIndex] = note;
-
-      this.$bus.emit("updateProject", {
-        source: "ProjectBrowser",
-        data: project,
-      }); // to update ui of projectTree
-    },
-
-    async deleteNote(note: Note, index?: number) {
-      // update db
-      await deleteNote(note._id);
-      await deleteEdge(note._id);
-      await deleteEdgeTarget(note.projectId, note._id);
-
-      // update ui
-      if (index === undefined)
-        index = this.projects.findIndex((p) => p._id === note.projectId);
-      else if (index === -1) index = this.projects.length;
-      let project = this.projects[index];
-      if (project.children === undefined) return;
-      project.children = project.children.filter((n) => n._id != note._id);
-      console.log("project.children after filter", project.children);
-
-      // update projectTree ui
-      this.$bus.emit("updateProject", {
-        source: "ProjectBrowser",
-        data: project,
-      });
-    },
-
-    /************************************************************
-     * TableView
-     ************************************************************/
-
-    /**
-     * As a bridge to notify TreeView about the drag event
-     * @param key
-     */
-    onDragProject(key: string) {
-      this.draggingProjectId = key;
-      if (!!!key) (this.$refs.tree as typeof TreeView).onDragEnd(null);
-    },
-
-    /**********************************************************
-     * TreeView
-     **********************************************************/
-
-    showExportFolderDialog(folder: Folder) {
-      this.folder = folder;
-      this.exportFolderDialog = true;
-    },
-
-    /**
-     * Export a folder as a collection of references
-     * @param format - citation.js suported format
-     * @param options - extra options
-     */
-    async exportFolder(
-      format: string,
-      options: { format?: string; template?: string }
-    ) {
-      if (!!!this.folder) return;
-
-      await exportMeta(this.folder, format, options);
-    },
-
-    /**************************************************
-     * MetaInfoTab
-     **************************************************/
-
-    /**
-     * Toggle RightMenu and record its size
-     * @param visible
-     */
-    toggleRightMenu(visible: boolean) {
-      if (visible) {
-        this.rightMenuSize = this.prvRightMenuSize;
-      } else {
-        // record the rightmenu size for next use
-        this.prvRightMenuSize = this.rightMenuSize;
-        this.rightMenuSize = 0;
+      // update tableview UI
+      if (selectedProject.value !== undefined) {
+        for (let prop in project) selectedProject.value[prop] = project[prop];
       }
-    },
-  },
-});
+      // update projectree ui
+      bus.emit("updateProject", {
+        source: componentName,
+        data: selectedProject.value,
+      });
+    }
+  } catch (_error) {
+    error.value = _error as Error;
+    errorDialog.value = true;
+    // refresh table
+    await getProjects();
+  }
+}
+
+/**
+ * Delete a project from the current folder,
+ * if deleteFromDB is true, delete the project from database and remove the actual files
+ */
+async function deleteProject() {
+  if (selectedProject.value === undefined) return;
+  // update ui
+  projects.value = projects.value.filter(
+    (p) => p._id != (selectedProject.value as Project)._id
+  );
+  // update projectTree ui
+  bus.emit("deleteProject", {
+    source: componentName,
+    data: selectedProject.value._id,
+  });
+
+  // update db
+  await nextTick(); // wait until the ui closes all windows
+  let notes = await getNotesDB(selectedProject.value._id);
+  await deleteProjectDB(
+    selectedProject.value._id,
+    deleteFromDB.value,
+    stateStore.selectedFolderId
+  );
+  if (deleteFromDB.value) {
+    await deleteEdge(selectedProject.value._id);
+    for (let note of notes) {
+      await deleteEdge(note._id);
+    }
+  }
+}
+
+async function attachFile(
+  replaceStoredCopy: boolean,
+  projectId: string,
+  index?: number
+) {
+  let filePaths = window.fileBrowser.showFilePicker();
+  if (filePaths?.length === 1) {
+    // find index
+    if (index === undefined)
+      index = projects.value.findIndex((p) => p._id === projectId);
+    else if (index === -1) index = projects.value.length;
+
+    let dstPath = filePaths[0];
+    if (replaceStoredCopy)
+      dstPath = (await copyFile(dstPath, projectId)) as string;
+    projects.value[index].path = dstPath;
+    projects.value[index] = (await updateProjectDB(
+      projects.value[index]
+    )) as Project;
+  }
+}
+
+/**
+ * Rename PDF file form meta
+ * @param row
+ * @param index
+ */
+async function renameFromMeta(project: Project, index?: number) {
+  if (project.path === undefined) return;
+  let author = "";
+  let year = project.year || "Unknown";
+  let title = project.title;
+  let extname = window.path.extname(project.path);
+  if (!project.author || project.author.length === 0) {
+    // no author
+    author = "Unknown";
+  } else {
+    // 1 author
+    let author0 = project.author[0];
+    author = !!author0.family ? author0.family : (author0.literal as string);
+
+    // more than 1 authors
+    if (project.author.length > 1) author += " et al.";
+  }
+  let fileName = `${author} - ${year} - ${title}${extname}`;
+
+  // update backend
+  project.path = renameFile(project.path, fileName);
+  project = (await updateProjectDB(project)) as Project;
+
+  // update ui
+  if (index === undefined)
+    index = projects.value.findIndex((p) => p._id === project._id);
+  else if (index === -1) index = projects.value.length;
+  projects.value[index] = project;
+}
+
+/******************************************************
+ * Note (add, delete, update)
+ *******************************************************/
+async function addNote(projectId: string, type: NoteType, index?: number) {
+  // update db
+  let note = (await addNoteDB(projectId, type)) as Note;
+  await createEdge(note);
+  await appendEdgeTarget(note.projectId, note);
+
+  // update ui
+  if (index === undefined)
+    index = projects.value.findIndex((p) => p._id === projectId);
+  else if (index === -1) index = projects.value.length;
+  // new project does not have children property
+  if (!projects.value[index].children)
+    projects.value[index].children = [] as Note[];
+  projects.value[index].children?.push(note);
+  console.log("current project", projects.value[index]);
+  stateStore.selectedItemId = note._id;
+
+  // update projectTree ui
+  bus.emit("updateProject", {
+    source: componentName,
+    data: projects.value[index],
+  });
+}
+
+async function renameNote(note: Note, index?: number) {
+  // update db
+  note = (await updateNoteDB(note)) as Note;
+  let sourceNode = {
+    id: note._id,
+    label: note.label,
+    type: note.dataType,
+  };
+  await updateEdge(note._id, { sourceNode: sourceNode } as Edge);
+  await updateEdgeTarget(note.projectId, note);
+
+  // update ui
+  if (index === undefined)
+    index = projects.value.findIndex((p) => p._id === note.projectId);
+  else if (index === -1) index = projects.value.length;
+  let project = projects.value[index];
+  if (project.children === undefined) return;
+  let noteIndex = project.children.findIndex((n) => n._id === note._id);
+  if (noteIndex !== undefined) project.children[noteIndex] = note;
+
+  bus.emit("updateProject", {
+    source: componentName,
+    data: project,
+  }); // to update ui of projectTree
+}
+
+async function deleteNote(note: Note, index?: number) {
+  // update db
+  await deleteNoteDB(note._id);
+  await deleteEdge(note._id);
+  await deleteEdgeTarget(note.projectId, note._id);
+
+  // update ui
+  if (index === undefined)
+    index = projects.value.findIndex((p) => p._id === note.projectId);
+  else if (index === -1) index = projects.value.length;
+  let project = projects.value[index];
+  if (project.children === undefined) return;
+  project.children = project.children.filter((n) => n._id != note._id);
+  console.log("project.children after filter", project.children);
+
+  // update projectTree ui
+  bus.emit("updateProject", {
+    source: componentName,
+    data: project,
+  });
+}
+
+/************************************************************
+ * TableView
+ ************************************************************/
+
+/**
+ * As a bridge to notify TreeView about the drag event
+ * @param key
+ */
+function onDragProject(key: string) {
+  draggingProjectId.value = key;
+  if (!!!key && treeview.value) treeview.value.onDragEnd(null);
+}
+
+/**********************************************************
+ * TreeView
+ **********************************************************/
+
+function showExportFolderDialog(_folder: Folder) {
+  folder.value = _folder;
+  exportFolderDialog.value = true;
+}
+
+/**
+ * Export a folder as a collection of references
+ * @param format - citation.js suported format
+ * @param options - extra options
+ */
+async function exportFolder(
+  format: string,
+  options: { format?: string; template?: string }
+) {
+  if (!!!folder.value) return;
+
+  await exportMeta(folder.value, format, options);
+}
+
+/**************************************************
+ * MetaInfoTab
+ **************************************************/
+
+/**
+ * Toggle RightMenu and record its size
+ * @param visible
+ */
+function toggleRightMenu(visible: boolean) {
+  if (visible) {
+    rightMenuSize.value = prvRightMenuSize.value;
+  } else {
+    // record the rightmenu size for next use
+    prvRightMenuSize.value = rightMenuSize.value;
+    rightMenuSize.value = 0;
+  }
+}
 </script>
