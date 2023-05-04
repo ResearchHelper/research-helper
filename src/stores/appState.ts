@@ -8,7 +8,6 @@ export const useStateStore = defineStore("stateStore", {
     // layout
     leftMenuSize: 20,
     showLeftMenu: false,
-    visibility: new Map<string, boolean>(),
 
     // tree view
     selectedFolderId: "library",
@@ -17,7 +16,8 @@ export const useStateStore = defineStore("stateStore", {
     selectedItemId: "", // select from tableview
     workingItemId: "library", // workingItem
     openedProjectIds: new Set<string>(), // for projectTree
-    openItemId: "", // communicate between layout and deep vue component
+    openItemId: "", // communicate between layout and deep component
+    closeItemId: "", // communicate between layout and deep component
 
     // settings
     settings: {
@@ -55,14 +55,14 @@ export const useStateStore = defineStore("stateStore", {
 
     openItem(itemId: string) {
       this.openItemId = itemId;
-      // set this to empty, so that user can reopen the same project
+      // set this to empty, so that user can reopen the same item as 1 second
       setTimeout(() => {
         this.openItemId = "";
-      }, 100);
+      }, 1000);
     },
 
-    updateOpenedProject(project: Project) {
-      // Do we need this?
+    closeItem(itemId: string) {
+      this.closeItemId = itemId;
     },
   },
 });

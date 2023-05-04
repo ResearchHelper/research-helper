@@ -1,13 +1,10 @@
 <template>
   <ProjectBrowser v-if="visible" />
 </template>
-<script>
-import { defineComponent, onMounted } from "vue";
+<script setup lang="ts">
 import ProjectBrowser from "src/components/library/ProjectBrowser.vue";
-
-export default defineComponent({
-  // every page has two props
-  props: { itemId: String, visible: Boolean },
-  components: { ProjectBrowser },
+const props = defineProps({
+  itemId: { type: String, required: true },
+  visible: { type: Boolean, required: true },
 });
 </script>

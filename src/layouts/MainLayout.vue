@@ -13,7 +13,7 @@
       >
         <div>
           <q-btn-toggle
-            v-model="leftMenu"
+            v-model="isLeftMenuVisible"
             unelevated
             square
             :ripple="false"
@@ -81,14 +81,11 @@
         @update:model-value="(size) => resizeLeftMenu(size)"
       >
         <template v-slot:before>
-          <ProjectTree
+          <LeftMenu
             v-if="ready"
             style="height: 100vh"
-            @addNode="(element) => addDragSource(element)"
             @renameNode="(node) => editComponentState(node)"
-            @openProject="(projectId) => (stateStore.openItemId = projectId)"
-            @closeProject="(projectId) => removeComponent(projectId)"
-            ref="projectTree"
+            ref="leftMenu"
           />
         </template>
         <template v-slot:after>
@@ -96,7 +93,6 @@
             style="width: 100%; height: 100vh"
             v-model:workingItemId="stateStore.workingItemId"
             @layoutchanged="onLayoutChanged"
-            @itemdestroyed="onItemDestroyed"
             ref="layout"
           ></GLayout>
         </template>
@@ -109,7 +105,8 @@
 // types
 import { Project, Note, BusEvent } from "src/backend/database";
 // components
-import ProjectTree from "src/components/leftmenu/ProjectTree.vue";
+// import ProjectTree from "src/components/leftmenu/ProjectTree.vue";
+import LeftMenu from "src/components/leftmenu/LeftMenu.vue";
 import WelcomeCarousel from "src/components/WelcomeCarousel.vue";
 // GoldenLayout
 import GLayout from "./GLayout.vue";
@@ -148,7 +145,7 @@ const bus = inject("bus") as EventBus;
  * Component refs, data, computed values
  *************************************************/
 const layout = ref<InstanceType<typeof GLayout> | null>(null);
-const projectTree = ref<InstanceType<typeof ProjectTree> | null>(null);
+const leftMenu = ref<InstanceType<typeof LeftMenu> | null>(null);
 
 const showTestBtn = process.env.DEV || process.env.DEBUGGING; // show testPage btn if in dev
 const showWelcomeCarousel = ref(false);
@@ -156,7 +153,7 @@ const leftMenuSize = ref(0);
 const isUpdateAvailable = ref(false);
 const ready = ref(false);
 
-const leftMenu = computed({
+const isLeftMenuVisible = computed({
   get() {
     return leftMenuSize.value > 0;
   },
@@ -192,6 +189,14 @@ watch(
       return;
     }
     await setComponent(id);
+  }
+);
+
+watch(
+  () => stateStore.closeItemId,
+  async (id: string) => {
+    if (!!!id) return;
+    await removeComponent(id);
   }
 );
 
@@ -298,7 +303,6 @@ async function removeComponent(id: string) {
 
 /**
  * After renaming a row in projectTree, we need to rename the window title.
- * And we need to add dragsource again
  * @param item
  */
 async function editComponentState(item: Project | Note | undefined) {
@@ -306,11 +310,6 @@ async function editComponentState(item: Project | Note | undefined) {
   layout.value.renameGLComponent(item._id, item.label);
   let config = layout.value.getLayoutConfig();
   await updateLayout(config);
-
-  // add dragsource
-  if (!projectTree.value) return;
-  let element = projectTree.value.$el.querySelector(`[item-id='${item._id}']`);
-  addDragSource(element);
 }
 
 /***************************************************
@@ -356,52 +355,6 @@ async function saveAppState() {
   }
   let state = stateStore.saveState();
   await updateAppState(state);
-}
-
-/*******************************************
- * Drag and drop to GLayout to add component
- *******************************************/
-
-/**
- * Add dragSource to the rows in projectTree
- * @param element - element to be drag
- * @param addComponentOnly - after a component is drag, we only need to add another component without dragsource
- */
-function addDragSource(element: HTMLElement, addComponentOnly = false) {
-  // TODO multi-windows with same id is not well supported
-  // think about a good way to do this
-  // can we view the same "Object" in different windows ?
-  // so that we don't need to worry about update conflict
-  if (!!!element) return;
-  element.style.userSelect = "none";
-  return;
-
-  // if (!!!element) return;
-
-  // let type = element.getAttribute("type");
-  // let id = element.getAttribute("item-id");
-  // let componentType = type == "project" ? "ReaderPage" : "NotePage";
-  // this.$refs.layout.addGLDragSource(
-  //   element,
-  //   componentType,
-  //   { id: id },
-  //   element.innerText,
-  //   addComponentOnly
-  // );
-}
-
-/**
- * After a window is closed (but the project is not closed yet,
- * we need to add a void component so we can drag that project to open window again
- * @param id - itemId
- */
-function onItemDestroyed(id: string) {
-  setTimeout(() => {
-    if (!projectTree.value) return;
-    let treeEl = projectTree.value.$el;
-    let element = treeEl.querySelector(`[item-id='${id}']`);
-    addDragSource(element, true);
-  }, 100);
 }
 
 /*************************************************

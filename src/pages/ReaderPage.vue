@@ -5,15 +5,10 @@
   />
 </template>
 
-<script lang="ts">
-import { defineComponent } from "vue";
+<script setup lang="ts">
 import PDFReader from "src/components/pdfreader/PDFReader.vue";
-
-export default defineComponent({
-  props: { itemId: String, visible: Boolean },
-
-  components: {
-    PDFReader,
-  },
+const props = defineProps({
+  itemId: { type: String, required: true },
+  visible: { type: Boolean, required: true },
 });
 </script>

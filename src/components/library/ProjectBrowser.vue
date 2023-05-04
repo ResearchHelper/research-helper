@@ -216,7 +216,7 @@ const identifierDialog = ref(false);
 const createProject = ref(false);
 
 const errorDialog = ref(false);
-const error = ref<Error | null>(null);
+const error = ref<Error | undefined>(undefined);
 
 const importDialog = ref(false);
 const collection = ref<File | null>(null);

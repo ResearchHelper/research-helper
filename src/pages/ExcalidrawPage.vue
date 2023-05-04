@@ -6,10 +6,13 @@
 </template>
 
 <script setup lang="ts">
-// veaury and excalidraw
+import { onMounted, ref, watch } from "vue";
 import { applyPureReactInVue } from "veaury";
 import CustomExcalidraw from "src/components/note/CustomExcalidraw";
-import { onMounted, ref } from "vue";
+import { useStateStore } from "src/stores/appState";
+
+const stateStore = useStateStore();
+
 const props = defineProps({
   visible: { type: Boolean, reqruied: true },
   itemId: { type: String, required: true },
@@ -17,6 +20,14 @@ const props = defineProps({
 
 const ExcalidrawReact = applyPureReactInVue(CustomExcalidraw);
 const show = ref(props.visible);
+
+// if closing project from project tree
+watch(
+  () => stateStore.closeItemId,
+  (id: string) => {
+    if (id === props.itemId) show.value = false;
+  }
+);
 
 onMounted(() => {
   // MUST STOP render the react component before this vue component is unmounted
