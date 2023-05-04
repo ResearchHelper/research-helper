@@ -4,7 +4,6 @@ import {
   MainMenu,
   serializeAsJSON,
   serializeLibraryAsJSON,
-  loadLibraryFromBlob,
 } from "@excalidraw/excalidraw";
 import "src/css/excalidraw/theme.scss";
 import { debounce, uid } from "quasar";
@@ -56,7 +55,7 @@ export default function CustomExcalidraw(props: {
     state: ExcalidrawState,
     files: BinaryFiles
   ) {
-    if (!notePath) return;
+    if (!notePath && !ready) return;
     try {
       let jsonString = serializeAsJSON(elements, state, files, "local");
       let json = JSON.parse(jsonString);
@@ -73,20 +72,20 @@ export default function CustomExcalidraw(props: {
     files: BinaryFiles
   ) => void;
 
-  async function loadExcalidrawLibrary(): Promise<LibraryItems> {
-    let items = [] as LibraryItems;
+  function loadExcalidrawLibrary(): LibraryItems {
     let storagePath = stateStore.settings.storagePath;
-    let folderPath = path.join(storagePath, "excalidrawlibs");
-    if (!fs.existsSync(folderPath)) return items;
+    let filePath = path.join(storagePath, "library.excalidrawlib");
+    if (!fs.existsSync(filePath)) return [] as LibraryItems;
+    return JSON.parse(fs.readFileSync(filePath, "utf8"))
+      .libraryItems as LibraryItems;
 
-    let libs = fs.readdirSync(folderPath);
-    for (let lib of libs) {
-      let filePath = path.join(folderPath, lib);
-      let blob = new Blob([fs.readFileSync(filePath)]);
-      items = items.concat(await loadLibraryFromBlob(blob));
-    }
-
-    return items;
+    // let libs = fs.readdirSync(folderPath);
+    // for (let lib of libs) {
+    //   let filePath = path.join(folderPath, lib);
+    //   let json = JSON.parse(fs.readFileSync(filePath, "utf8"));
+    //   items = items.concat(json.libraryItems);
+    // }
+    // return items;
   }
 
   function saveExcalidrawLibrary(items: LibraryItems) {
@@ -99,9 +98,7 @@ export default function CustomExcalidraw(props: {
     }
     let storagePath = stateStore.settings.storagePath;
     try {
-      let folderPath = path.join(storagePath, "excalidrawlibs");
-      if (!fs.existsSync(folderPath)) fs.mkdirSync(folderPath);
-      let filePath = path.join(folderPath, uid() + ".excalidrawlib");
+      let filePath = path.join(storagePath, "library.excalidrawlib");
       let jsonString = serializeLibraryAsJSON(items);
       fs.writeFileSync(filePath, jsonString);
     } catch (error) {
@@ -111,15 +108,16 @@ export default function CustomExcalidraw(props: {
 
   useEffect(() => {
     getNote(props.noteId).then((note: Note | undefined) => {
-      if (!note) return;
+      if (!note || notePath) return;
       setNotePath(note.path);
     });
   }, [props.noteId]);
 
   const initialData = loadExcalidraw();
   if (initialData) initialData.libraryItems = loadExcalidrawLibrary();
+  console.log("initialData", initialData);
 
-  return !!notePath && props.visible ? (
+  return notePath && props.visible ? (
     <Excalidraw
       ref={(api: ExcalidrawImperativeAPI) => {
         setExcalidrawAPI(api);

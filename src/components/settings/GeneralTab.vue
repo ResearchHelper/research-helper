@@ -133,7 +133,7 @@ import { Project, Note } from "src/backend/database";
 // db
 import { useStateStore } from "src/stores/appState";
 import { updateAppState } from "src/backend/appState";
-import { moveFolder } from "src/backend/project/file";
+import { changePath } from "src/backend/project/file";
 import { getAllProjects } from "src/backend/project/project";
 import { getAllNotes } from "src/backend/project/note";
 import { db } from "src/backend/database";
@@ -257,9 +257,9 @@ export default defineComponent({
       let current = 0;
 
       // move excalidrawlibs
-      let oldExcalidrawLib = window.path.join(oldPath, "excalidrawlibs");
-      let newExcalidrawLib = window.path.join(newPath, "excalidrawlibs");
-      moveFolder(oldExcalidrawLib, newExcalidrawLib);
+      let oldExcalidrawLib = window.path.join(oldPath, "library.excalidrawlib");
+      let newExcalidrawLib = window.path.join(newPath, "library.excalidrawlib");
+      changePath(oldExcalidrawLib, newExcalidrawLib);
       current++;
       this.progress = current / total;
 
@@ -268,7 +268,7 @@ export default defineComponent({
         if (!!!project.path) continue;
         let oldProjectFolder = window.path.join(oldPath, project._id);
         let newProjectFolder = window.path.join(newPath, project._id);
-        moveFolder(oldProjectFolder, newProjectFolder);
+        changePath(oldProjectFolder, newProjectFolder);
         project.path = project.path.replace(oldPath, newPath);
         current++;
         this.progress = current / total;

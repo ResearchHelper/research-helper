@@ -8,6 +8,7 @@ export const useStateStore = defineStore("stateStore", {
     // layout
     leftMenuSize: 20,
     showLeftMenu: false,
+    visibility: new Map<string, boolean>(),
 
     // tree view
     selectedFolderId: "library",

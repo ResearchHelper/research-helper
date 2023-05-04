@@ -117,7 +117,7 @@ function renameFile(filePath: string, fileName: string) {
  * @param srcPath source path
  * @param dstPath destination path
  */
-function moveFolder(srcPath: string, dstPath: string) {
+function changePath(srcPath: string, dstPath: string) {
   try {
     if (!fs) return;
     fs.renameSync(srcPath, dstPath);
@@ -133,5 +133,5 @@ export {
   createFile,
   deleteFile,
   renameFile,
-  moveFolder,
+  changePath,
 };

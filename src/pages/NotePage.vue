@@ -5,13 +5,11 @@
     :noteId="itemId"
   />
 </template>
-<script lang="ts">
-import { defineComponent } from "vue";
+<script setup lang="ts">
 import NoteEditor from "src/components/note/NoteEditor.vue";
-export default defineComponent({
-  props: { itemId: String, visible: Boolean },
-
-  components: { NoteEditor },
+const props = defineProps({
+  itemId: { type: String, required: true },
+  visible: Boolean,
 });
 </script>
 <style lang="scss">
