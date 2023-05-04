@@ -61,71 +61,60 @@
     </q-carousel-slide>
   </q-carousel>
 </template>
-<script lang="ts">
-import { defineComponent } from "vue";
-import { useStateStore } from "src/stores/appState";
+<script setup lang="ts">
+import { ref, computed } from "vue";
 import { updateAppState } from "src/backend/appState";
+import { useStateStore } from "src/stores/appState";
+import { useI18n } from "vue-i18n";
+const { t, locale } = useI18n({ useScope: "global" });
 
-export default defineComponent({
-  props: { modelValue: Boolean },
-  emits: ["update:modelValue"],
+const props = defineProps({ modelValue: { type: Boolean, required: true } });
+const emit = defineEmits(["update:modelValue"]);
 
-  setup() {
-    const stateStore = useStateStore();
-    return { stateStore };
-  },
+const stateStore = useStateStore();
 
-  data() {
-    return {
-      path: "",
-      languageOptions: [
-        { value: "en_US", label: this.$t("english-en_us") },
-        { value: "zh_CN", label: this.$t("zhong-wen-zhcn") },
-      ],
-    };
-  },
+const path = ref("");
+const languageOptions = ref([
+  { value: "en_US", label: t("english-en_us") },
+  { value: "zh_CN", label: t("zhong-wen-zhcn") },
+]);
 
-  computed: {
-    language: {
-      get() {
-        let result = null;
-        for (let option of this.languageOptions) {
-          if (option.value === this.stateStore.settings.language) {
-            result = option;
-          }
-        }
-        return result;
-      },
-      set(option: { value: "en_US" | "zh_CN"; label: string }) {
-        this.stateStore.settings.language = option.value;
-        this.changeLanguage(option.value);
-      },
-    },
-  },
-
-  methods: {
-    async saveAppState() {
-      let state = this.stateStore.saveState();
-      await updateAppState(state);
-    },
-
-    changeLanguage(locale: "en_US" | "zh_CN") {
-      this.$i18n.locale = locale;
-      this.saveAppState();
-    },
-
-    changeStoragePath() {
-      let result = window.fileBrowser.showFolderPicker();
-      if (result !== undefined && !!result[0]) {
-        this.path = result[0];
-        this.stateStore.settings.storagePath = this.path;
-        this.saveAppState();
+const language = computed({
+  get() {
+    let result = null;
+    for (let option of languageOptions.value) {
+      if (option.value === stateStore.settings.language) {
+        result = option;
       }
-    },
-
-    start() {
-      this.$emit("update:modelValue", false);
-    },
+    }
+    return result as { value: "en_US" | "zh_CN"; label: string };
+  },
+  set(option: { value: "en_US" | "zh_CN"; label: string }) {
+    stateStore.settings.language = option.value;
+    changeLanguage(option.value);
   },
 });
+
+async function saveAppState() {
+  let state = stateStore.saveState();
+  await updateAppState(state);
+}
+
+function changeLanguage(language: "en_US" | "zh_CN") {
+  locale.value = language;
+  saveAppState();
+}
+
+function changeStoragePath() {
+  let result = window.fileBrowser.showFolderPicker();
+  if (result !== undefined && !!result[0]) {
+    path.value = result[0];
+    stateStore.settings.storagePath = path.value;
+    saveAppState();
+  }
+}
+
+function start() {
+  emit("update:modelValue", false);
+}
 </script>

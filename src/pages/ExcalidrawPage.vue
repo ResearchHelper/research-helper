@@ -1,6 +1,7 @@
 <template>
+  <div></div>
   <ExcalidrawReact
-    v-if="visible"
+    :visible="visible"
     :noteId="itemId"
   />
 </template>
@@ -10,10 +11,10 @@
 import { applyPureReactInVue } from "veaury";
 import CustomExcalidraw from "src/components/note/CustomExcalidraw";
 
-const ExcalidrawReact = applyPureReactInVue(CustomExcalidraw);
-
 const props = defineProps({
-  visible: Boolean,
+  visible: { type: Boolean, reqruied: true },
   itemId: { type: String, required: true },
 });
+
+const ExcalidrawReact = applyPureReactInVue(CustomExcalidraw);
 </script>

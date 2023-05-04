@@ -34,27 +34,19 @@
   </q-dialog>
 </template>
 
-<script>
-import { defineComponent } from "vue";
+<script setup lang="ts">
+import { ref } from "vue";
 
-export default defineComponent({
-  props: { show: Boolean },
-  emits: ["update:show", "confirm"],
+const props = defineProps({ show: Boolean });
+const emit = defineEmits(["update:show", "confirm"]);
 
-  data() {
-    return {
-      isCreateFolder: true,
-    };
-  },
+const isCreateFolder = ref(true);
 
-  methods: {
-    confirm() {
-      this.$emit("confirm", this.isCreateFolder);
-    },
+function confirm() {
+  emit("confirm", isCreateFolder.value);
+}
 
-    cancel() {
-      this.$emit("update:show", false);
-    },
-  },
-});
+function cancel() {
+  emit("update:show", false);
+}
 </script>

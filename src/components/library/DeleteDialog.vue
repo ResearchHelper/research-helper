@@ -54,24 +54,22 @@
     </q-card>
   </q-dialog>
 </template>
-<script lang="ts">
-import { defineComponent } from "vue";
-
-export default defineComponent({
-  props: { show: Boolean, projectTitle: String, deleteFromDB: Boolean },
-  emits: ["update:show", "confirm"],
-
-  methods: {
-    confirm() {
-      let deleteFromDB = true;
-      this.$emit("confirm", deleteFromDB);
-      this.$emit("update:show", false);
-    },
-
-    cancel() {
-      // do nothing, only close the dialog
-      this.$emit("update:show", false);
-    },
-  },
+<script setup lang="ts">
+const props = defineProps({
+  show: Boolean,
+  projectTitle: String,
+  deleteFromDB: Boolean,
 });
+const emit = defineEmits(["update:show", "confirm"]);
+
+function confirm() {
+  let deleteFromDB = true;
+  emit("confirm", deleteFromDB);
+  emit("update:show", false);
+}
+
+function cancel() {
+  // do nothing, only close the dialog
+  emit("update:show", false);
+}
 </script>

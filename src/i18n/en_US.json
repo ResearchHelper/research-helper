@@ -112,5 +112,6 @@
   "copy": "Copy",
   "strikeout": "Strikeout",
   "underline": "Underline",
-  "test": "Test"
+  "test": "Test",
+  "new-project": "New Project"
 }

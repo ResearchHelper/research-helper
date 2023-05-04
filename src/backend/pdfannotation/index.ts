@@ -30,7 +30,19 @@ async function getAnnotations(
       selector: { dataType: "pdfAnnotation", projectId: projectId },
     });
 
-    return result.docs as Annotation[];
+    // to be compatiblle with earlier version 1.0.0-beta
+    let updateFlag = false;
+    let annots = result.docs as Annotation[];
+    for (let annot of annots) {
+      if (annot.type === AnnotationType.COMMENT && !annot.rects) {
+        annot.rects = [(annot as Annotation & { rect: Rect }).rect];
+        delete (annot as Annotation & { rect?: Rect }).rect;
+        updateFlag = true;
+      }
+    }
+    if (updateFlag) db.bulkDocs(annots);
+
+    return annots;
   } catch (err) {
     console.log(err);
   }

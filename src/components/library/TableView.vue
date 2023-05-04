@@ -12,14 +12,14 @@
     row-key="_id"
     :wrap-cells="true"
     :filter="searchString"
-    :filter-method="searchProject"
+    :filter-method="(searchProject as any)"
     ref="table"
   >
     <template v-slot:header="props">
       <q-tr :props="props">
         <q-th auto-width></q-th>
         <q-th
-          v-for="col in props.cols"
+          v-for="col in (props.cols as Array<{name: string, label:string}>)"
           :key="col.name"
           :props="props"
         >
@@ -30,7 +30,7 @@
     <template v-slot:body="props">
       <!-- ProjectRow -->
       <TableProjectRow
-        :props="props"
+        :tableProps="props"
         no-hover
         style="cursor: pointer"
         class="tableview-row"
@@ -63,7 +63,7 @@
       <!-- Notes -->
       <TableItemRow
         v-show="props.expand"
-        v-for="note in props.row.children"
+        v-for="note in (props.row.children as Note[])"
         :key="note._id"
         :item="note"
         :class="{
@@ -84,10 +84,10 @@
   </q-table>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 // types
-import { defineComponent, PropType } from "vue";
-import { Project, Note, Author } from "src/backend/database";
+import { computed, PropType, ref } from "vue";
+import { Project, Note } from "src/backend/database";
 import { QTable, QTableColumn } from "quasar";
 // components
 import TableItemRow from "./TableItemRow.vue";
@@ -95,177 +95,162 @@ import TableSearchRow from "./TableSearchRow.vue";
 import TableProjectRow from "./TableProjectRow.vue";
 // db
 import { useStateStore } from "src/stores/appState";
+// utils
+import { useI18n } from "vue-i18n";
+const stateStore = useStateStore();
+const { t } = useI18n({ useScope: "global" });
 
-export default defineComponent({
-  props: {
-    searchString: { type: String, required: true },
-    projects: { type: Array as PropType<Project[]>, required: true },
-    selectedProject: { type: Object as PropType<Project>, required: false },
-  },
-  emits: ["dragProject", "update:projects", "update:selectedProject"],
-
-  components: {
-    TableItemRow,
-    TableSearchRow,
-    TableProjectRow,
-  },
-
-  setup() {
-    const stateStore = useStateStore();
-    return { stateStore };
-  },
-
-  data() {
-    return {
-      headers: [
-        {
-          name: "title",
-          field: "title",
-          label: this.$t("title"),
-          align: "left",
-          sortable: true,
-        },
-        {
-          name: "author",
-          field: "author",
-          label: this.$t("author"),
-          align: "left",
-          sortable: true,
-        },
-      ] as QTableColumn[],
-      isClickingPDF: false,
-
-      // for search
-      showExpansion: false,
-      expansionText: [] as string[],
-    };
-  },
-
-  methods: {
-    /*********************************************************
-     * ProjectRow (click, dblclick, contextmenu, drag & drop)
-     *********************************************************/
-
-    /**
-     * Select a row in the table
-     * @param row
-     * @param rowIndex
-     */
-    clickProject(row: Project, rowIndex: number) {
-      console.log(row);
-      this.stateStore.selectedItemId = row._id;
-      // ditinguish clicking project row or pdf row
-      this.isClickingPDF = false;
-      this.$emit("update:selectedProject", row);
-    },
-
-    /**
-     * Double-click a row in the table
-     * @param row
-     */
-    dblclickProject(row: Project) {
-      this.stateStore.openItem(row._id);
-    },
-
-    /**
-     * Select the row and show context menu
-     * @param row - row to be select
-     * @param rowIndex
-     */
-    toggleContextMenu(row: Project, rowIndex: number) {
-      // we must select the row first
-      // before using the functionalities in the menu
-      this.clickProject(row, rowIndex);
-    },
-
-    /**
-     * Drag event starts and set draggingProject
-     * @param projectId
-     */
-    onDragStart(projectId: string) {
-      this.$emit("dragProject", projectId);
-    },
-
-    /**
-     * Drag event ends and set draggingProjectId to ""
-     */
-    onDragEnd() {
-      this.$emit("dragProject", "");
-    },
-
-    /**
-     * Filter method for the table
-     * @param rows - array of projects
-     * @param terms - terms to filter with (is essentially the 'filter' prop value)
-     * @param cols - array of columns
-     * @param getCellValue - optional function to get a cell value
-     */
-    searchProject(
-      rows: Project[],
-      terms: string,
-      cols: QTableColumn[],
-      getCellValue: (col: QTableColumn, row: Project) => any
-    ) {
-      this.expansionText = [];
-      let text = "";
-      let re = RegExp(terms, "i"); // case insensitive
-      let filtered = rows.filter((row) => {
-        // search title, abstract, and year
-        for (let prop of ["title", "abstract", "DOI", "publisher"]) {
-          if (row[prop] === undefined) continue;
-          if (row[prop].search(re) != -1) {
-            text = row[prop].replace(
-              re,
-              `<span class="bg-primary">${terms}</span>`
-            );
-            this.expansionText.push(
-              `${prop.charAt(0).toUpperCase() + prop.slice(1)}: ${text}`
-            );
-            return true;
-          }
-        }
-
-        // search tags
-        for (let tag of row.tags) {
-          if (tag.search(re) != -1) {
-            text = tag.replace(re, `<span class="bg-primary">${terms}</span>`);
-            this.expansionText.push("Tag: " + text);
-            return true;
-          }
-        }
-
-        // search authors
-        let authors = (
-          this.$refs.projectRow as typeof TableProjectRow
-        ).authorString(row.author);
-        if (authors.search(re) != -1) {
-          text = authors.replace(
-            re,
-            `<span class="bg-primary">${terms}</span>`
-          );
-          this.expansionText.push(`Authors: ${text}`);
-          return true;
-        }
-
-        // search notes
-        for (let note of row.children as Note[]) {
-          if (note.label.search(re) != -1) {
-            text = note.label.replace(
-              re,
-              `<span class="bg-primary">${terms}</span>`
-            );
-            this.expansionText.push(`Note: ${text}`);
-            return true;
-          }
-        }
-
-        return false;
-      });
-      this.showExpansion = true;
-      return filtered;
-    },
-  },
+const props = defineProps({
+  searchString: { type: String, required: true },
+  projects: { type: Array as PropType<Project[]>, required: true },
+  selectedProject: { type: Object as PropType<Project>, required: false },
 });
+
+const emit = defineEmits([
+  "dragProject",
+  "update:projects",
+  "update:selectedProject",
+]);
+
+const projectRow = ref<typeof TableProjectRow | null>(null);
+const isClickingPDF = ref(false);
+const showExpansion = ref(false);
+const expansionText = ref<string[]>([]);
+
+const headers = computed(() => {
+  return [
+    {
+      name: "title",
+      field: "title",
+      label: t("title"),
+      align: "left",
+      sortable: true,
+    },
+    {
+      name: "author",
+      field: "author",
+      label: t("author"),
+      align: "left",
+      sortable: true,
+    },
+  ] as QTableColumn[];
+});
+
+/**
+ * Select a row in the table
+ * @param row
+ * @param rowIndex
+ */
+function clickProject(row: Project, rowIndex: number) {
+  console.log(row);
+  stateStore.selectedItemId = row._id;
+  // ditinguish clicking project row or pdf row
+  isClickingPDF.value = false;
+  emit("update:selectedProject", row);
+}
+
+/**
+ * Double-click a row in the table
+ * @param row
+ */
+function dblclickProject(row: Project) {
+  stateStore.openItem(row._id);
+}
+
+/**
+ * Select the row and show context menu
+ * @param row - row to be select
+ * @param rowIndex
+ */
+function toggleContextMenu(row: Project, rowIndex: number) {
+  // we must select the row first
+  // before using the functionalities in the menu
+  clickProject(row, rowIndex);
+}
+
+/**
+ * Drag event starts and set draggingProject
+ * @param projectId
+ */
+function onDragStart(projectId: string) {
+  emit("dragProject", projectId);
+}
+
+/**
+ * Drag event ends and set draggingProjectId to ""
+ */
+function onDragEnd() {
+  emit("dragProject", "");
+}
+
+/**
+ * Filter method for the table
+ * @param rows - array of projects
+ * @param terms - terms to filter with (is essentially the 'filter' prop value)
+ * @param cols - array of columns
+ * @param getCellValue - optional function to get a cell value
+ */
+function searchProject(
+  rows: Project[],
+  terms: string,
+  cols: QTableColumn[],
+  getCellValue: (col: QTableColumn, row: Project) => any
+) {
+  expansionText.value = [];
+  let text = "";
+  let re = RegExp(terms, "i"); // case insensitive
+  let filtered = rows.filter((row) => {
+    // search title, abstract, and year
+    for (let prop of ["title", "abstract", "DOI", "publisher"]) {
+      if (row[prop] === undefined) continue;
+      if (row[prop].search(re) != -1) {
+        text = row[prop].replace(
+          re,
+          `<span class="bg-primary">${terms}</span>`
+        );
+        expansionText.value.push(
+          `${prop.charAt(0).toUpperCase() + prop.slice(1)}: ${text}`
+        );
+        return true;
+      }
+    }
+
+    // search tags
+    for (let tag of row.tags) {
+      if (tag.search(re) != -1) {
+        text = tag.replace(re, `<span class="bg-primary">${terms}</span>`);
+        expansionText.value.push("Tag: " + text);
+        return true;
+      }
+    }
+
+    // search authors
+    if (projectRow.value) {
+      let authors = projectRow.value.authorString(row.author);
+      if (authors.search(re) != -1) {
+        text = authors.replace(re, `<span class="bg-primary">${terms}</span>`);
+        expansionText.value.push(`Authors: ${text}`);
+        return true;
+      }
+    }
+
+    // search notes
+    for (let note of row.children as Note[]) {
+      if (note.label.search(re) != -1) {
+        text = note.label.replace(
+          re,
+          `<span class="bg-primary">${terms}</span>`
+        );
+        expansionText.value.push(`Note: ${text}`);
+        return true;
+      }
+    }
+
+    return false;
+  });
+  showExpansion.value = true;
+  return filtered;
+}
 </script>
 
 <style lang="scss">

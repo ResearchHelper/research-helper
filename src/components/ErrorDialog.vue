@@ -13,14 +13,14 @@
             name="error"
             color="negative"
           />
-          {{ error.name }}
+          {{ error?.name || "Error" }}
         </div>
       </q-card-section>
       <q-card-section
         class="q-pt-none"
         data-cy="error-msg"
       >
-        {{ error.message }}
+        {{ error?.message || "" }}
       </q-card-section>
       <q-card-actions align="right">
         <q-btn
@@ -38,7 +38,7 @@
 <script setup lang="ts">
 const props = defineProps({
   show: { type: Boolean, required: true },
-  error: { type: Error, required: true },
+  error: Error,
 });
 const emit = defineEmits(["update:show"]);
 

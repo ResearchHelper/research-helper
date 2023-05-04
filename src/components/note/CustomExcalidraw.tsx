@@ -30,7 +30,10 @@ const fs = window.fs;
 const path = window.path;
 const stateStore = useStateStore();
 
-export default function CustomExcalidraw(props: { noteId: string }) {
+export default function CustomExcalidraw(props: {
+  visible: boolean;
+  noteId: string;
+}) {
   const [excalidrawAPI, setExcalidrawAPI] =
     useState<ExcalidrawImperativeAPI | null>(null);
   const [notePath, setNotePath] = useState<string>("");
@@ -39,8 +42,6 @@ export default function CustomExcalidraw(props: { noteId: string }) {
   function loadExcalidraw(): InitialData | undefined {
     if (!notePath) return;
     try {
-      // let blob = new Blob([fs.readFileSync(notePath)]);
-      // let scene = await loadFromBlob(blob, null, null);
       let scene = JSON.parse(fs.readFileSync(notePath, "utf8"));
       if (!scene.appState.theme)
         scene.appState.theme = stateStore.settings.theme;
@@ -118,7 +119,7 @@ export default function CustomExcalidraw(props: { noteId: string }) {
   const initialData = loadExcalidraw();
   if (initialData) initialData.libraryItems = loadExcalidrawLibrary();
 
-  return !!notePath ? (
+  return !!notePath && props.visible ? (
     <Excalidraw
       ref={(api: ExcalidrawImperativeAPI) => {
         setExcalidrawAPI(api);

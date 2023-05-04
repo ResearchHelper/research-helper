@@ -44,46 +44,37 @@
     </q-card>
   </q-dialog>
 </template>
-<script lang="ts">
-import { defineComponent } from "vue";
+<script setup lang="ts">
+import { ref } from "vue";
 
-export default defineComponent({
-  props: { show: Boolean },
-  emits: ["update:show", "confirm"],
+const props = defineProps({ show: Boolean });
+const emit = defineEmits(["update:show", "confirm"]);
 
-  data() {
-    return {
-      formats: [
-        { label: "Bibliography", value: "bibliography" },
-        { label: "BibTeX", value: "bibtex" },
-        { label: "BibLaTex", value: "biblatex" },
-        { label: "CLS-JSON", value: "json" },
-        { label: "RIS", value: "ris" },
-      ],
-      format: { label: "BibTeX", value: "bibtex" },
+const formats = ref([
+  { label: "Bibliography", value: "bibliography" },
+  { label: "BibTeX", value: "bibtex" },
+  { label: "BibLaTex", value: "biblatex" },
+  { label: "CLS-JSON", value: "json" },
+  { label: "RIS", value: "ris" },
+]);
+const format = ref({ label: "BibTeX", value: "bibtex" });
+const templates = ref([
+  { label: "APA", value: "apa" },
+  { label: "Vancouver", value: "vancouver" },
+  { label: "Havard1", value: "havard1" },
+]);
+const template = ref({ label: "APA", value: "apa" });
 
-      templates: [
-        { label: "APA", value: "apa" },
-        { label: "Vancouver", value: "vancouver" },
-        { label: "Havard1", value: "havard1" },
-      ],
-      template: { label: "APA", value: "apa" },
-    };
-  },
+function confirm() {
+  let options = null;
+  if (format.value.value === "bibliography")
+    options = { template: template.value.value };
+  emit("confirm", format.value.value, options);
+  emit("update:show", false);
+}
 
-  methods: {
-    confirm() {
-      let options = null;
-      if (this.format.value === "bibliography")
-        options = { template: this.template.value };
-      this.$emit("confirm", this.format.value, options);
-      this.$emit("update:show", false);
-    },
-
-    cancel() {
-      // do nothing, only close the dialog
-      this.$emit("update:show", false);
-    },
-  },
-});
+function cancel() {
+  // do nothing, only close the dialog
+  emit("update:show", false);
+}
 </script>

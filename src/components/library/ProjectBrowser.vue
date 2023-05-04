@@ -423,6 +423,7 @@ export default defineComponent({
           let project = (await addProject(
             this.stateStore.selectedFolderId
           )) as Project;
+          console.log("project", project);
           project = (await updateProjectByMeta(project, meta)) as Project;
           await createEdge(project);
 
@@ -564,7 +565,11 @@ export default defineComponent({
       if (index === undefined)
         index = this.projects.findIndex((p) => p._id === projectId);
       else if (index === -1) index = this.projects.length;
+      // new project does not have children property
+      if (!this.projects[index].children)
+        this.projects[index].children = [] as Note[];
       this.projects[index].children?.push(note);
+      console.log("current project", this.projects[index]);
       this.stateStore.selectedItemId = note._id;
 
       // update projectTree ui

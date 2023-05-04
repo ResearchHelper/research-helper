@@ -9,6 +9,8 @@ export interface Author {
   family?: string;
   given?: string;
   literal?: string; // this exists only if family and given do not exist
+  sequence?: string; // first / additional etc
+  affiliation?: string[];
 }
 
 interface Reference {
@@ -25,17 +27,28 @@ interface Reference {
  * Meta datatype
  */
 export interface Meta {
-  type: string; // article / book / conference-paper ...
+  id: string; // citation id
+  "citation-label": string; // citatin label
+  type?: string; // article / book / conference-paper ...
   title: string; // article / book title
-  author: Author[]; // array of authors [{family: "Feng", given: "Feng"}, {literal: "John"}]
-  abstract: string; // article abstract
-  year: number | string; // year of published
-  issued?: { "date-parts": any }; // issued date
-  DOI: string; // Digital Object Identity
-  ISBN: string; // ISBN of a book
-  URL: string; // URL to this article/book
-  publisher: string; // publisher
-  reference: Reference[]; // reference objects
+  author?: Author[]; // array of authors [{family: "Feng", given: "Feng"}, {literal: "John"}]
+  abstract?: string; // article abstract
+  year?: string;
+  issued?: { "date-parts": Array<any> }; // issued date
+  DOI?: string; // Digital Object Identity
+  ISBN?: string; // ISBN of a book
+  ISSN?: string;
+  URL?: string; // URL to this article/book
+  publisher?: string; // publisher
+  version?: string;
+  volume?: number;
+  keyword?: string;
+  "container-title": string; // journal name
+  "container-title-short": string;
+  page?: string;
+  source?: string;
+  language?: string;
+  reference?: Reference[]; // reference objects
 }
 
 /**

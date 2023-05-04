@@ -251,24 +251,40 @@ export default defineComponent({
       // show progress bar
       this.showProgressDialog = true;
 
-      // move files
-      moveFolder(oldPath, newPath);
+      let projects = (await getAllProjects()) as Project[];
+      let notes = (await getAllNotes()) as Note[];
+      let total = projects.length + notes.length + 1;
+      let current = 0;
 
-      // update file paths in db
-      let projects = await getAllProjects();
-      let notes = await getAllNotes();
-      let items: (Project | Note)[] = projects.concat(notes);
+      // move excalidrawlibs
+      let oldExcalidrawLib = window.path.join(oldPath, "excalidrawlibs");
+      let newExcalidrawLib = window.path.join(newPath, "excalidrawlibs");
+      moveFolder(oldExcalidrawLib, newExcalidrawLib);
+      current++;
+      this.progress = current / total;
 
-      let n = items.length;
-      for (let [index, item] of items.entries()) {
-        if (!!!item.path) continue;
+      // move project folders
+      for (let project of projects) {
+        if (!!!project.path) continue;
+        let oldProjectFolder = window.path.join(oldPath, project._id);
+        let newProjectFolder = window.path.join(newPath, project._id);
+        moveFolder(oldProjectFolder, newProjectFolder);
+        project.path = project.path.replace(oldPath, newPath);
+        current++;
+        this.progress = current / total;
+      }
 
-        item.path = item.path.replace(oldPath, newPath);
-        this.progress = index / n;
+      // change note paths
+      for (let note of notes) {
+        note.path = note.path.replace(oldPath, newPath);
+        current++;
+        this.progress = current / total;
       }
 
       try {
-        await db.bulkDocs(items);
+        // await db.bulkDocs(items);
+        await db.bulkDocs(projects);
+        await db.bulkDocs(notes);
         this.progress = 1.0;
       } catch (error) {
         this.error = error as Error;

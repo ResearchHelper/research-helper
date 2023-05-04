@@ -1,5 +1,5 @@
 <template>
-  <WelcomeCarousel v-model="welcomeCarousel" />
+  <WelcomeCarousel v-model="showWelcomeCarousel" />
 
   <q-splitter
     :model-value="56"
@@ -31,7 +31,7 @@
             flat
             square
             label="Test"
-            @click="setComponent('test')"
+            @click="stateStore.openItem('testNote')"
           >
             <q-tooltip>Test Page</q-tooltip>
           </q-btn>
@@ -150,8 +150,8 @@ const bus = inject("bus") as EventBus;
 const layout = ref<InstanceType<typeof GLayout> | null>(null);
 const projectTree = ref<InstanceType<typeof ProjectTree> | null>(null);
 
-const showTestBtn = process.env.DEV; // show testPage btn if in dev
-const welcomeCarousel = ref(false);
+const showTestBtn = process.env.DEV || process.env.DEBUGGING; // show testPage btn if in dev
+const showWelcomeCarousel = ref(false);
 const leftMenuSize = ref(0);
 const isUpdateAvailable = ref(false);
 const ready = ref(false);
@@ -256,7 +256,7 @@ async function setComponent(id: string) {
       title = t("settings");
       break;
     case "test": // for development testing
-      componentType = "TestPage";
+      componentType = "ExcalidrawPage";
       title = t("test");
       break;
     default:
@@ -265,8 +265,13 @@ async function setComponent(id: string) {
         componentType = "ReaderPage";
         title = item.title;
       } else if (item.dataType == "note") {
-        componentType = "NotePage";
-        title = item.label;
+        if (item.type === "excalidraw") {
+          componentType = "ExcalidrawPage";
+          title = item.label;
+        } else {
+          componentType = "NotePage";
+          title = item.label;
+        }
       }
       break;
   }
@@ -408,7 +413,7 @@ onMounted(async () => {
 
   // if there is no path, show welcome carousel
   if (!stateStore.settings.storagePath) {
-    welcomeCarousel.value = true;
+    showWelcomeCarousel.value = true;
   }
 
   // apply layout related settings
@@ -434,10 +439,16 @@ onMounted(async () => {
   ready.value = true;
 
   // event bus
-  bus.on("updateProject", (e: BusEvent) => editComponentState(e.data));
+  bus.on("updateProject", (e: BusEvent) => {
+    if ((e.data as Note | Project).dataType === "project")
+      editComponentState(e.data);
+  });
 });
 
 onBeforeUnmount(() => {
-  bus.off("updateProject", (e: BusEvent) => editComponentState(e.data));
+  bus.off("updateProject", (e: BusEvent) => {
+    if ((e.data as Note | Project).dataType === "project")
+      editComponentState(e.data);
+  });
 });
 </script>

@@ -113,88 +113,76 @@
   </q-toolbar>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 // types
-import { defineComponent } from "vue";
+import { nextTick, ref, watch } from "vue";
 import { QFile } from "quasar";
-// db
-import { useStateStore } from "src/stores/appState";
 
-export default defineComponent({
-  props: { rightMenuSize: Number, searchString: String },
-  emits: [
-    "update:searchString",
-    "toggleRightMenu",
-    "addEmptyProject",
-    "addByFiles",
-    "addByCollection",
-    "showIdentifierDialog",
-    "refreshTable",
-  ],
-
-  setup() {
-    const stateStore = useStateStore();
-    return { stateStore };
-  },
-
-  data() {
-    return {
-      showRightMenu: false,
-      multiple: true,
-      accept: "",
-      fileType: "",
-      files: [] as File[],
-    };
-  },
-
-  watch: {
-    rightMenuSize(size) {
-      this.showRightMenu = size > 0;
-    },
-  },
-
-  methods: {
-    async showFilePicker(fileType: string) {
-      switch (fileType) {
-        case "file":
-          this.multiple = true;
-          this.accept = ".pdf";
-          break;
-
-        case "collection":
-          this.multiple = false;
-          this.accept = ".bib, .ris, .json";
-          break;
-      }
-      this.fileType = fileType;
-      await this.$nextTick(); // wait until the acceptType is set
-      (this.$refs.filePicker as QFile).$el.click();
-    },
-
-    addEmpty() {
-      this.$emit("addEmptyProject");
-    },
-
-    addByFiles(file: File[] | File) {
-      switch (this.fileType) {
-        case "file":
-          // in this case, file is an array of File objects
-          this.$emit("addByFiles", file as File[]);
-          break;
-
-        case "collection":
-          this.$emit("addByCollection", file as File);
-          break;
-      }
-    },
-
-    addByID() {
-      this.$emit("showIdentifierDialog");
-    },
-  },
+const props = defineProps({
+  rightMenuSize: { type: Number, required: true },
+  searchString: String,
 });
-</script>
+const emit = defineEmits([
+  "update:searchString",
+  "toggleRightMenu",
+  "addEmptyProject",
+  "addByFiles",
+  "addByCollection",
+  "showIdentifierDialog",
+  "refreshTable",
+]);
 
+const filePicker = ref<QFile | null>(null);
+
+const showRightMenu = ref(false);
+const multiple = ref(true);
+const accept = ref("");
+const fileType = ref("");
+const files = ref<File[]>([]);
+
+watch(
+  () => props.rightMenuSize,
+  (size: number) => {
+    showRightMenu.value = size > 0;
+  }
+);
+
+async function showFilePicker(type: string) {
+  switch (type) {
+    case "file":
+      multiple.value = true;
+      accept.value = ".pdf";
+      break;
+    case "collection":
+      multiple.value = false;
+      accept.value = ".bib, .ris, .json";
+      break;
+  }
+  fileType.value = type;
+  await nextTick(); // wait until the acceptType is set
+  (filePicker.value as QFile).$el.click();
+}
+
+function addEmpty() {
+  emit("addEmptyProject");
+}
+
+function addByFiles(file: File[] | File) {
+  switch (fileType.value) {
+    case "file":
+      // in this case, file is an array of File objects
+      emit("addByFiles", file as File[]);
+      break;
+    case "collection":
+      emit("addByCollection", file as File);
+      break;
+  }
+}
+
+function addByID() {
+  emit("showIdentifierDialog");
+}
+</script>
 <style lang="scss">
 .actionbar-input {
   /* for sizing the q-input */
