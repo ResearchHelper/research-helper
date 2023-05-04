@@ -1,8 +1,8 @@
 <template>
   <WelcomeCarousel v-model="showWelcomeCarousel" />
-
+  <!-- 56px -->
   <q-splitter
-    :model-value="56"
+    :model-value="45"
     unit="px"
     :separator-style="{ cursor: 'default' }"
   >
@@ -14,6 +14,8 @@
         <div>
           <q-btn-toggle
             v-model="isLeftMenuVisible"
+            style="width: 45px"
+            spread
             unelevated
             square
             :ripple="false"
@@ -28,6 +30,7 @@
         <div>
           <q-btn
             v-if="showTestBtn"
+            style="width: 45px"
             flat
             square
             label="Test"
@@ -36,6 +39,7 @@
             <q-tooltip>Test Page</q-tooltip>
           </q-btn>
           <q-btn
+            style="width: 45px"
             flat
             square
             icon="home"
@@ -45,6 +49,7 @@
             <q-tooltip>{{ $t("library") }}</q-tooltip>
           </q-btn>
           <q-btn
+            style="width: 45px"
             flat
             square
             :ripple="false"
@@ -54,6 +59,7 @@
             <q-tooltip>{{ $t("help") }}</q-tooltip>
           </q-btn>
           <q-btn
+            style="width: 45px"
             flat
             square
             :ripple="false"
@@ -105,7 +111,6 @@
 // types
 import { Project, Note, BusEvent } from "src/backend/database";
 // components
-// import ProjectTree from "src/components/leftmenu/ProjectTree.vue";
 import LeftMenu from "src/components/leftmenu/LeftMenu.vue";
 import WelcomeCarousel from "src/components/WelcomeCarousel.vue";
 // GoldenLayout
@@ -147,11 +152,12 @@ const bus = inject("bus") as EventBus;
 const layout = ref<InstanceType<typeof GLayout> | null>(null);
 const leftMenu = ref<InstanceType<typeof LeftMenu> | null>(null);
 
-const showTestBtn = process.env.DEV || process.env.DEBUGGING; // show testPage btn if in dev
+const showTestBtn = process.env.DEV; // show testPage btn if in dev
 const showWelcomeCarousel = ref(false);
 const leftMenuSize = ref(0);
 const isUpdateAvailable = ref(false);
 const ready = ref(false);
+const btnClass = {};
 
 const isLeftMenuVisible = computed({
   get() {
@@ -405,3 +411,8 @@ onBeforeUnmount(() => {
   });
 });
 </script>
+<style lang="scss">
+.btn {
+  width: 45px !important;
+}
+</style>

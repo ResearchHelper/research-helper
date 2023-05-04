@@ -50,6 +50,7 @@ watch(
   (lang: string) => {
     if (!editor.value) return;
     editor.value.setValue(lang === "zh_CN" ? text_zh_CN : text_en_US);
+    changeLinks();
   }
 );
 
