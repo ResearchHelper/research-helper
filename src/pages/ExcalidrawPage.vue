@@ -1,5 +1,4 @@
 <template>
-  <div></div>
   <ExcalidrawReact
     :visible="visible"
     :noteId="itemId"

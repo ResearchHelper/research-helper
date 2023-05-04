@@ -60,6 +60,7 @@
                 @click="selectItem(prop.node)"
               >
                 <q-menu
+                  square
                   touch-position
                   context-menu
                   @before-show="menuSwitch(prop.node)"
@@ -72,9 +73,20 @@
                     <q-item
                       clickable
                       v-close-popup
-                      @click="addNote(prop.node)"
+                      @click="addNote(prop.node, NoteType.MARKDOWN)"
                     >
-                      <q-item-section> {{ $t("add-note") }} </q-item-section>
+                      <q-item-section>
+                        {{ $t("add-markdown-note") }}
+                      </q-item-section>
+                    </q-item>
+                    <q-item
+                      clickable
+                      v-close-popup
+                      @click="addNote(prop.node, NoteType.EXCALIDRAW)"
+                    >
+                      <q-item-section>
+                        {{ $t("add-excalidraw") }}
+                      </q-item-section>
                     </q-item>
                     <q-separator />
                     <q-item
@@ -111,14 +123,23 @@
                 </q-menu>
 
                 <q-icon
-                  v-if="prop.node.dataType == 'note'"
+                  v-if="prop.node.dataType === 'project'"
                   size="1.2rem"
-                  name="bi-file-earmark-text"
+                  name="import_contacts"
                 />
+                <q-icon
+                  v-else-if="
+                    prop.node.dataType === 'note' &&
+                    prop.node.type === NoteType.EXCALIDRAW
+                  "
+                  size="1.2rem"
+                  name="bi-easel"
+                />
+                <!-- markdown note -->
                 <q-icon
                   v-else
                   size="1.2rem"
-                  name="import_contacts"
+                  name="bi-file-earmark-text"
                 />
                 <!-- note icon has 1rem width -->
                 <input
@@ -205,7 +226,7 @@
 <script lang="ts">
 // types
 import { defineComponent } from "vue";
-import { BusEvent, Note, Project } from "src/backend/database";
+import { BusEvent, Note, NoteType, Project } from "src/backend/database";
 import { QTree, QTreeNode } from "quasar";
 // components
 import GraphView from "./GraphView.vue";
@@ -235,7 +256,7 @@ export default defineComponent({
 
   setup() {
     const stateStore = useStateStore();
-    return { stateStore };
+    return { stateStore, NoteType };
   },
 
   data() {
@@ -421,9 +442,9 @@ export default defineComponent({
       }, 50);
     },
 
-    async addNote(node: Project) {
+    async addNote(node: Project, type: NoteType) {
       // update db
-      let note = (await addNote(node._id)) as Note;
+      let note = (await addNote(node._id, type)) as Note;
       await createEdge(note);
       await appendEdgeTarget(note.projectId, note);
 

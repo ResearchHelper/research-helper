@@ -1,4 +1,4 @@
-import { db, Note } from "../database";
+import { db, Note, NoteType } from "../database";
 import { uid } from "quasar";
 import { Buffer } from "buffer";
 import { createFile, deleteFile } from "./file";
@@ -12,12 +12,16 @@ const path = window.path;
  * @param {string} projectId
  * @returns {Note} note
  */
-async function addNote(projectId: string): Promise<Note | undefined> {
+async function addNote(
+  projectId: string,
+  type: NoteType
+): Promise<Note | undefined> {
   try {
     let noteId: string = uid();
 
     // create actual file
-    let filePath: string = await createFile(projectId, noteId + ".md");
+    let extension = type === NoteType.EXCALIDRAW ? ".excalidraw" : ".md";
+    let filePath = (await createFile(projectId, noteId + extension)) as string;
 
     // add to db
     let note = {
@@ -26,6 +30,7 @@ async function addNote(projectId: string): Promise<Note | undefined> {
       projectId: projectId,
       label: "New Note",
       path: filePath,
+      type: type,
     };
     await db.put(note);
 

@@ -51,6 +51,11 @@ export interface Meta {
   reference?: Reference[]; // reference objects
 }
 
+export enum NoteType {
+  MARKDOWN = "markdown",
+  EXCALIDRAW = "excalidraw",
+}
+
 /**
  * Note datatype, both for database and for UI display
  */
@@ -61,7 +66,7 @@ export interface Note {
   projectId: string; // the project it belongs to
   path: string; // path to actual markdown file
   label: string; // markdown file name
-  type: "markdown" | "excalidraw";
+  type: NoteType;
 }
 
 /**

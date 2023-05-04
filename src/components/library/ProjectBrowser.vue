@@ -117,7 +117,7 @@
 <script lang="ts">
 // types
 import { defineComponent, computed } from "vue";
-import { Folder, Project, Note } from "src/backend/database";
+import { Folder, Project, Note, NoteType } from "src/backend/database";
 import {
   KEY_metaDialog,
   KEY_deleteDialog,
@@ -555,9 +555,9 @@ export default defineComponent({
     /******************************************************
      * Note (add, delete, update)
      *******************************************************/
-    async addNote(projectId: string, index?: number) {
+    async addNote(projectId: string, type: NoteType, index?: number) {
       // update db
-      let note = (await addNote(projectId)) as Note;
+      let note = (await addNote(projectId, type)) as Note;
       await createEdge(note);
       await appendEdgeTarget(note.projectId, note);
 

@@ -20,9 +20,17 @@
         v-if="row.dataType === 'project'"
         clickable
         v-close-popup
-        @click="onAddNote()"
+        @click="onAddNote(NoteType.MARKDOWN)"
       >
-        <q-item-section> {{ $t("add-note") }} </q-item-section>
+        <q-item-section> {{ $t("add-markdown-note") }} </q-item-section>
+      </q-item>
+      <q-item
+        v-if="row.dataType === 'project'"
+        clickable
+        v-close-popup
+        @click="onAddNote(NoteType.EXCALIDRAW)"
+      >
+        <q-item-section> {{ $t("add-excalidraw") }} </q-item-section>
       </q-item>
       <q-item
         clickable
@@ -107,7 +115,7 @@
 <script setup lang="ts">
 // types
 import { defineComponent, inject, PropType, ref } from "vue";
-import { Project } from "src/backend/database";
+import { NoteType, Project } from "src/backend/database";
 import { QMenu, QTableProps } from "quasar";
 import {
   KEY_metaDialog,
@@ -138,6 +146,7 @@ const showDeleteDialog = inject(KEY_deleteDialog) as (
 // note
 const addNote = inject(KEY_addNote) as (
   projectId: string,
+  type: NoteType,
   index?: number
 ) => void;
 const attachFile = inject(KEY_attachFile) as (
@@ -146,8 +155,8 @@ const attachFile = inject(KEY_attachFile) as (
   index?: number
 ) => void;
 
-function onAddNote() {
-  addNote(props.row._id, props.rowIndex);
+function onAddNote(type: NoteType) {
+  addNote(props.row._id, type, props.rowIndex);
   expandRow(true);
 }
 

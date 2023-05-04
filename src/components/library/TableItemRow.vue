@@ -12,6 +12,12 @@
     >
       <div class="row items-center">
         <q-icon
+          v-if="item.type === NoteType.EXCALIDRAW"
+          style="font-size: 1rem"
+          name="bi-easel-fill"
+        />
+        <q-icon
+          v-else
           style="font-size: 1rem"
           name="bi-file-text-fill"
         />
@@ -113,7 +119,7 @@
 <script setup lang="ts">
 // types
 import { computed, inject, PropType, ref } from "vue";
-import { Project, Note } from "src/backend/database";
+import { Project, Note, NoteType } from "src/backend/database";
 import {
   KEY_deleteNote,
   KEY_renameFromMeta,
