@@ -27,7 +27,7 @@
  *   }
  * }
  */
-import { contextBridge, shell, ipcRenderer } from "electron";
+import { contextBridge, shell, ipcRenderer, FileFilter } from "electron";
 import { app, dialog, BrowserWindow } from "@electron/remote";
 import fs from "fs";
 import path from "path";
@@ -42,14 +42,21 @@ const fileBrowser = {
     return result;
   },
 
-  showFilePicker(multiSelections = false) {
+  /**
+   * Show file browser
+   * multiSelections - can user select multiple files
+   * filters - e.g. [{ name: "*.pdf", extensions: ["pdf"] }]
+   * @param config 
+   * @returns filePaths
+   */
+  showFilePicker(config: {multiSelections: boolean, filters: FileFilter[] }): string[] | undefined {
     const mainWindow = BrowserWindow.getFocusedWindow();
     if (mainWindow === null) return;
     const result = dialog.showOpenDialogSync(mainWindow, {
-      properties: multiSelections
+      properties: config.multiSelections
         ? ["openFile", "multiSelections"]
         : ["openFile"],
-      filters: [{ name: "*.pdf", extensions: ["pdf"] }],
+      filters: config.filters,
     });
     return result;
   },

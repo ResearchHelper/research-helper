@@ -18,6 +18,7 @@ async function storagePath(): Promise<string> {
  */
 async function createProjectFolder(projectId: string) {
   try {
+    if (!path || !fs) return;
     let projectPath = path.join(await storagePath(), projectId);
     fs.mkdirSync(projectPath);
   } catch (error) {
@@ -31,6 +32,7 @@ async function createProjectFolder(projectId: string) {
  */
 async function deleteProjectFolder(projectId: string) {
   try {
+    if (!path || !fs) return;
     let dirPath = path.join(await storagePath(), projectId);
     fs.rmdirSync(dirPath, { recursive: true });
   } catch (error) {
@@ -49,6 +51,7 @@ async function copyFile(
   projectId: string
 ): Promise<string | undefined> {
   try {
+    if (!path || !fs) return;
     let fileName = path.basename(srcPath);
     let dstPath = path.join(await storagePath(), projectId, fileName);
     fs.copyFileSync(srcPath, dstPath);
@@ -64,8 +67,12 @@ async function copyFile(
  * @param fileName - the created file's name
  * @returns filePath - the created file's path
  */
-async function createFile(projectId: string, fileName: string): string {
+async function createFile(
+  projectId: string,
+  fileName: string
+): Promise<string | undefined> {
   try {
+    if (!path || !fs) return;
     let filePath = path.join(await storagePath(), projectId, fileName);
     fs.closeSync(fs.openSync(filePath, "w"));
     return filePath;
@@ -80,6 +87,7 @@ async function createFile(projectId: string, fileName: string): string {
  */
 function deleteFile(filePath: string) {
   try {
+    if (!fs) return;
     // we can ignore this error since rmSync is there
     fs.rmSync(filePath, { force: true });
   } catch (error) {
@@ -94,6 +102,7 @@ function deleteFile(filePath: string) {
  */
 function renameFile(filePath: string, fileName: string) {
   try {
+    if (!path || !fs) return;
     let dirname = path.dirname(filePath);
     let newPath = path.join(dirname, fileName.replace("/", ""));
     fs.renameSync(filePath, newPath);
@@ -108,11 +117,13 @@ function renameFile(filePath: string, fileName: string) {
  * @param srcPath source path
  * @param dstPath destination path
  */
-function moveFolder(srcPath: string, dstPath: string) {
+function changePath(srcPath: string, dstPath: string): Error | undefined {
   try {
+    if (!fs) return;
     fs.renameSync(srcPath, dstPath);
   } catch (error) {
     console.log(error);
+    return error as Error;
   }
 }
 
@@ -123,5 +134,5 @@ export {
   createFile,
   deleteFile,
   renameFile,
-  moveFolder,
+  changePath,
 };

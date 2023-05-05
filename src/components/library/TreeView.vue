@@ -27,11 +27,11 @@
               draggingNode != prop.node,
           }"
           draggable="true"
-          @dragstart="(e) => onDragStart(e, prop.node)"
-          @dragover="(e) => onDragOver(e, prop.node)"
-          @dragleave="(e) => onDragLeave(e, prop.node)"
-          @drop="(e) => onDrop(e, prop.node)"
-          @dragend="(e) => onDragEnd(e)"
+          @dragstart="(e: DragEvent) => onDragStart(e, prop.node)"
+          @dragover="(e: DragEvent) => onDragOver(e, prop.node)"
+          @dragleave="(e: DragEvent) => onDragLeave(e, prop.node)"
+          @drop="((e: DragEvent) => onDrop(e, prop.node) as any)"
+          @dragend="(e: DragEvent) => onDragEnd(e)"
         >
           <q-menu
             touch-position
@@ -97,18 +97,18 @@
   </div>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 // types
-import { defineComponent } from "vue";
+import { onMounted, ref } from "vue";
 import { Folder, Project } from "src/backend/database";
 import { QTree, QTreeNode } from "quasar";
 //db
 import { useStateStore } from "src/stores/appState";
 import {
   getFolderTree,
-  addFolder,
+  addFolder as addFolderDB,
   updateFolder,
-  deleteFolder,
+  deleteFolder as deleteFolderDB,
   moveFolderInto,
   getParentFolder,
 } from "src/backend/project/folder";
@@ -116,232 +116,236 @@ import { sortTree } from "src/backend/project/utils";
 import { getProject, updateProject } from "src/backend/project/project";
 import { updateAppState } from "src/backend/appState";
 
-export default defineComponent({
-  props: { draggingProjectId: String },
-  emits: ["exportFolder"],
+const stateStore = useStateStore();
 
-  setup() {
-    const stateStore = useStateStore();
-    return { stateStore };
-  },
+const props = defineProps({ draggingProjectId: String });
+const emit = defineEmits(["exportFolder"]);
 
-  data() {
-    return {
-      specialFolderIds: ["library"],
-      folders: [] as QTreeNode[],
-      expandedKeys: ["library"],
+const renameInput = ref<HTMLInputElement | null>(null);
+const tree = ref<QTree | null>(null);
 
-      renamingFolderId: "",
-      draggingNode: null as Folder | null,
-      dragoverNode: null as Folder | null,
-      enterTime: 0,
-    };
-  },
+const specialFolderIds = ref(["library"]);
+const folders = ref<QTreeNode[]>([]);
+const expandedKeys = ref(["library"]);
+const renamingFolderId = ref("");
+const draggingNode = ref<Folder | null>(null);
+const dragoverNode = ref<Folder | null>(null);
+const enterTime = ref(0);
 
-  async mounted() {
-    this.folders = (await getFolderTree()) as QTreeNode[];
-  },
+onMounted(async () => {
+  folders.value = (await getFolderTree()) as QTreeNode[];
+});
 
-  methods: {
-    async saveState() {
-      if (!this.stateStore.ready) return;
-      let state = this.stateStore.saveState();
-      await updateAppState(state);
-    },
+async function saveState() {
+  if (!stateStore.ready) return;
+  let state = stateStore.saveState();
+  await updateAppState(state);
+}
 
-    /**************************
-     * Add, delete, update, export
-     **************************/
+/**************************
+ * Add, delete, update, export
+ **************************/
 
-    /**
-     * Add folder to selected node
-     * @param parentNode
-     * @param label - folder name
-     */
-    async addFolder(parentNode: Folder, label?: string, focus?: boolean) {
-      // add to database
-      let node = (await addFolder(parentNode._id)) as Folder;
+/**
+ * Add folder to selected node
+ * @param parentNode
+ * @param label - folder name
+ */
+async function addFolder(parentNode: Folder, label?: string, focus?: boolean) {
+  // add to database
+  let node = (await addFolderDB(parentNode._id)) as Folder;
 
-      // set node label if we specify one
-      if (!!label) {
-        node.label = label;
-        node = (await updateFolder(node._id, { label: node.label })) as Folder;
+  // set node label if we specify one
+  if (!!label) {
+    node.label = label;
+    node = (await updateFolder(node._id, {
+      label: node.label,
+    } as Folder)) as Folder;
+  }
+
+  // add to UI and expand the parent folder
+  parentNode.children.push(node);
+  expandedKeys.value.push(parentNode._id);
+
+  // focus on it
+  if (focus) stateStore.selectedFolderId = node._id;
+
+  // rename it if label is empty
+  if (!!!label) setRenameFolder(node);
+}
+
+/**
+ * Delete selected folder
+ * @param node
+ */
+function deleteFolder(node: Folder) {
+  if (specialFolderIds.value.includes(node._id)) return;
+
+  // remove from ui
+  function _dfs(oldNode: Folder): Folder[] {
+    var newNode = [] as Folder[];
+    for (let n of oldNode.children) {
+      if ((n as Folder)._id !== node._id) {
+        // if (!newNode.children) newNode.children = [];
+        newNode.push({
+          _id: (n as Folder)._id,
+          icon: (n as Folder).icon,
+          label: (n as Folder).label,
+          children: _dfs(n as Folder),
+        } as Folder);
       }
+    }
+    return newNode;
+  }
+  folders.value[0].children = _dfs(folders.value[0] as Folder) as QTreeNode[];
 
-      // add to UI and expand the parent folder
-      parentNode.children.push(node);
-      this.expandedKeys.push(parentNode._id);
+  // remove from db
+  deleteFolderDB(node._id);
+}
 
-      // focus on it
-      if (focus) this.stateStore.selectedFolderId = node._id;
+/**
+ * Reveal input to rename for selected folder
+ * @param node
+ */
+function setRenameFolder(node: Folder) {
+  renamingFolderId.value = node._id;
 
-      // rename it if label is empty
-      if (!!!label) this.setRenameFolder(node);
-    },
+  setTimeout(() => {
+    // wait till input appears
+    // focus onto the input and select the text
+    let input = renameInput.value;
+    if (!input) return;
+    input.focus();
+    input.select();
+  }, 100);
+}
 
-    /**
-     * Delete selected folder
-     * @param node
-     */
-    deleteFolder(node: Folder) {
-      if (this.specialFolderIds.includes(node._id)) return;
+/**
+ * Hide input and update db and ui
+ */
+function renameFolder() {
+  if (!!!renamingFolderId.value) return;
+  if (!tree.value) return;
+  // update db
+  let node = tree.value.getNodeByKey(renamingFolderId.value);
+  updateFolder(node._id, { label: node.label } as Folder);
 
-      // remove from ui
-      function _dfs(oldNode: Folder): Folder[] {
-        var newNode = [] as Folder[];
-        for (let n of oldNode.children) {
-          if ((n as Folder)._id !== node._id) {
-            // if (!newNode.children) newNode.children = [];
-            newNode.push({
-              _id: (n as Folder)._id,
-              icon: (n as Folder).icon,
-              label: (n as Folder).label,
-              children: _dfs(n as Folder),
-            } as Folder);
-          }
-        }
-        return newNode;
-      }
-      this.folders[0].children = _dfs(this.folders[0] as Folder) as QTreeNode[];
+  // update ui
+  renamingFolderId.value = "";
 
-      // remove from db
-      deleteFolder(node._id);
-    },
+  // sort the tree
+  sortTree(folders.value[0] as Folder);
+}
 
-    /**
-     * Reveal input to rename for selected folder
-     * @param node
-     */
-    setRenameFolder(node: Folder) {
-      this.renamingFolderId = node._id;
+/**
+ * Export a collection of references
+ * @param folder
+ */
+function exportFolder(folder: Folder) {
+  emit("exportFolder", folder);
+}
 
-      setTimeout(() => {
-        // wait till input appears
-        // focus onto the input and select the text
-        let input = this.$refs.renameInput as HTMLInputElement;
-        input.focus();
-        input.select();
-      }, 100);
-    },
+/****************
+ * Drag and Drop
+ ****************/
 
-    /**
-     * Hide input and update db and ui
-     */
-    renameFolder() {
-      if (!!!this.renamingFolderId) return;
+/**
+ * On dragstart, set the dragging folder
+ * @param e - dragevent
+ * @param node - the folder user is dragging
+ */
+function onDragStart(e: DragEvent, node: Folder) {
+  draggingNode.value = node;
+}
 
-      // update db
-      let node = (this.$refs.tree as QTree).getNodeByKey(this.renamingFolderId);
-      updateFolder(node._id, { label: node.label });
+/**
+ * When dragging node is over the folder, highlight and expand it.
+ * @param e - dragevent
+ * @param node - the folder user is dragging
+ */
+function onDragOver(e: DragEvent, node: Folder) {
+  // enable drop on the node
+  e.preventDefault();
 
-      // update ui
-      this.renamingFolderId = "";
+  // hightlight the dragover folder
+  dragoverNode.value = node;
 
-      // sort the tree
-      sortTree(this.folders[0] as Folder);
-    },
+  // expand the node if this function is called over many times
+  enterTime.value++;
+  if (enterTime.value > 15) {
+    if (node._id in expandedKeys.value) return;
+    expandedKeys.value.push(node._id);
+  }
+}
 
-    /**
-     * Export a collection of references
-     * @param folder
-     */
-    exportFolder(folder: Folder) {
-      this.$emit("exportFolder", folder);
-    },
+/**
+ * When the dragging node leaves the folders, reset the timer
+ * @param e
+ * @param node
+ */
+function onDragLeave(e: DragEvent, node: Folder) {
+  enterTime.value = 0;
+}
 
-    /****************
-     * Drag and Drop
-     ****************/
+/**
+ * If draggingProjectId is not empty, then we are dropping project into folder
+ * Otherwise we are dropping folder into another folder
+ * @param e - dragevent
+ * @param node - the folder / project user is dragging
+ */
+async function onDrop(e: DragEvent, node: Folder) {
+  // record this first otherwise dragend events makes it null
+  let _dragoverNode = dragoverNode.value as Folder;
+  let _draggingNode = draggingNode.value as Folder;
+  let _draggingProjectId = props.draggingProjectId;
 
-    /**
-     * On dragstart, set the dragging folder
-     * @param e - dragevent
-     * @param node - the folder user is dragging
-     */
-    onDragStart(e: DragEvent, node: Folder) {
-      this.draggingNode = node;
-    },
+  if (!!_draggingProjectId) {
+    // drag and drop project into folder
+    let project = (await getProject(_draggingProjectId)) as Project;
+    if (!project.folderIds.includes(_dragoverNode._id)) {
+      project.folderIds.push(_dragoverNode._id);
+      await updateProject(project);
+    }
 
-    /**
-     * When dragging node is over the folder, highlight and expand it.
-     * @param e - dragevent
-     * @param node - the folder user is dragging
-     */
-    onDragOver(e: DragEvent, node: Folder) {
-      // enable drop on the node
-      e.preventDefault();
+    onDragEnd(e);
+  } else {
+    // drag folder into another folder
+    // update ui (do this first since parentfolder will change)
+    // if no dragging folder or droping a folder "into" itself, exit
+    if (_draggingNode === null || draggingNode.value == node) return;
+    if (!tree.value) return;
+    let dragParentFolder = (await getParentFolder(_draggingNode._id)) as Folder;
+    let dragParentNode = tree.value.getNodeByKey(
+      dragParentFolder._id
+    ) as Folder;
+    dragParentNode.children = dragParentNode.children.filter(
+      (folder) => (folder as Folder)._id != (_draggingNode as Folder)._id
+    );
+    node.children.push(_draggingNode);
 
-      // hightlight the dragover folder
-      this.dragoverNode = node;
+    // update db
+    await moveFolderInto(_draggingNode._id, node._id);
+  }
+}
 
-      // expand the node if this function is called over many times
-      this.enterTime++;
-      if (this.enterTime > 15) {
-        if (node._id in this.expandedKeys) return;
-        this.expandedKeys.push(node._id);
-      }
-    },
+/**
+ * Remove highlights
+ * @param e - dragevent
+ */
+function onDragEnd(e: DragEvent) {
+  draggingNode.value = null;
+  dragoverNode.value = null;
+}
 
-    /**
-     * When the dragging node leaves the folders, reset the timer
-     * @param e
-     * @param node
-     */
-    onDragLeave(e: DragEvent, node: Folder) {
-      this.enterTime = 0;
-    },
+function getLibraryNode() {
+  if (!tree.value) return;
+  return tree.value.getNodeByKey("library");
+}
 
-    /**
-     * If draggingProjectId is not empty, then we are dropping project into folder
-     * Otherwise we are dropping folder into another folder
-     * @param e - dragevent
-     * @param node - the folder / project user is dragging
-     */
-    async onDrop(e: DragEvent, node: Folder) {
-      if (this.draggingNode == node) return;
-      // record this first otherwise dragend events makes it null
-      let dragoverNode = this.dragoverNode as Folder;
-      let draggingNode = this.draggingNode;
-      let draggingProjectId = this.draggingProjectId;
-
-      if (!!draggingProjectId) {
-        // drag and drop project into folder
-        let project = (await getProject(draggingProjectId)) as Project;
-        if (!project.folderIds.includes(dragoverNode._id)) {
-          project.folderIds.push(dragoverNode._id);
-          await updateProject(project);
-        }
-
-        this.onDragEnd(e);
-      } else {
-        // drag folder into another folder
-        // update ui (do this first since parentfolder will change)
-        if (draggingNode === null) return;
-        let dragParentFolder = (await getParentFolder(
-          draggingNode._id
-        )) as Folder;
-        let dragParentNode = (this.$refs.tree as QTree).getNodeByKey(
-          dragParentFolder._id
-        ) as Folder;
-        dragParentNode.children = dragParentNode.children.filter(
-          (folder) => (folder as Folder)._id != (draggingNode as Folder)._id
-        );
-        node.children.push(draggingNode);
-
-        // update db
-        await moveFolderInto(draggingNode._id, node._id);
-      }
-    },
-
-    /**
-     * Remove highlights
-     * @param e - dragevent
-     */
-    onDragEnd(e: DragEvent) {
-      this.draggingNode = null;
-      this.dragoverNode = null;
-    },
-  },
+defineExpose({
+  getLibraryNode,
+  addFolder,
+  onDragEnd,
 });
 </script>
 <style lang="scss" scoped>

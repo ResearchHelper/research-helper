@@ -12,6 +12,12 @@
     >
       <div class="row items-center">
         <q-icon
+          v-if="item.type === NoteType.EXCALIDRAW"
+          style="font-size: 1rem"
+          name="bi-easel-fill"
+        />
+        <q-icon
+          v-else
           style="font-size: 1rem"
           name="bi-file-text-fill"
         />
@@ -110,10 +116,10 @@
     </q-menu>
   </q-tr>
 </template>
-<script lang="ts">
+<script setup lang="ts">
 // types
-import { defineComponent, inject, PropType } from "vue";
-import { Project, Note } from "src/backend/database";
+import { computed, inject, PropType, ref } from "vue";
+import { Project, Note, NoteType } from "src/backend/database";
 import {
   KEY_deleteNote,
   KEY_renameFromMeta,
@@ -123,94 +129,81 @@ import {
 import { useStateStore } from "src/stores/appState";
 import { copyToClipboard } from "quasar";
 
-export default defineComponent({
-  props: {
-    item: { type: Object as PropType<Project | Note>, required: true },
+const props = defineProps({
+  item: { type: Object as PropType<Project | Note>, required: true },
+});
+const stateStore = useStateStore();
+
+const newLabel = ref("");
+const renaming = ref(false);
+const renameInput = ref<HTMLInputElement | null>(null);
+
+// label has to be reactive
+// once props.item.path is changed
+// we also need to change the label
+const label = computed({
+  get() {
+    let _label = "";
+    if (props.item.dataType === "note") {
+      _label = props.item.label;
+    } else if (props.item.dataType === "project") {
+      _label = window.path.basename(props.item.path as string);
+    }
+    return _label;
   },
-  emits: ["renameFile"],
-
-  data() {
-    return {
-      renaming: false,
-      newLabel: "",
-    };
-  },
-
-  computed: {
-    // label has to be reactive
-    // once this.item.path is changed
-    // we also need to change the label
-    label: {
-      get() {
-        let _label = "";
-        if (this.item.dataType === "note") {
-          _label = this.item.label;
-        } else if (this.item.dataType === "project") {
-          _label = window.path.basename(this.item.path as string);
-        }
-        return _label;
-      },
-      set(newLabel: string) {
-        this.newLabel = newLabel;
-      },
-    },
-  },
-
-  setup() {
-    const stateStore = useStateStore();
-    const renameNote = inject(KEY_renameNote) as (
-      note: Note,
-      index?: number
-    ) => void;
-    const deleteNote = inject(KEY_deleteNote) as (
-      note: Note,
-      index?: number
-    ) => void;
-    const renameFromMeta = inject(KEY_renameFromMeta) as (
-      project: Project,
-      index?: number
-    ) => void;
-    return { stateStore, renameNote, deleteNote, renameFromMeta };
-  },
-
-  methods: {
-    copyID() {
-      copyToClipboard(this.item._id);
-    },
-
-    clickItem() {
-      this.stateStore.selectedItemId = this.item._id;
-    },
-
-    openItem() {
-      this.stateStore.openItem(this.item._id);
-    },
-
-    setRenaming() {
-      this.renaming = true;
-
-      setTimeout(() => {
-        let input = this.$refs.renameInput as HTMLInputElement;
-        input.focus();
-        input.select();
-      }, 100);
-    },
-
-    onRenameNote() {
-      let note = this.item as Note;
-      note.label = this.newLabel;
-      this.renameNote(note);
-
-      this.renaming = false;
-    },
-
-    async deleteItem() {
-      this.deleteNote(this.item as Note);
-    },
-
-    async renameFile() {
-      this.renameFromMeta(this.item as Project);
-    },
+  set(_newLabel: string) {
+    newLabel.value = _newLabel;
   },
 });
+
+const renameNote = inject(KEY_renameNote) as (
+  note: Note,
+  index?: number
+) => void;
+const deleteNote = inject(KEY_deleteNote) as (
+  note: Note,
+  index?: number
+) => void;
+const renameFromMeta = inject(KEY_renameFromMeta) as (
+  project: Project,
+  index?: number
+) => void;
+
+function copyID() {
+  copyToClipboard(props.item._id);
+}
+
+function clickItem() {
+  stateStore.selectedItemId = props.item._id;
+}
+
+function openItem() {
+  stateStore.openItem(props.item._id);
+}
+
+function setRenaming() {
+  renaming.value = true;
+
+  setTimeout(() => {
+    let input = renameInput.value as HTMLInputElement;
+    input.focus();
+    input.select();
+  }, 100);
+}
+
+function onRenameNote() {
+  let note = props.item as Note;
+  note.label = newLabel.value;
+  renameNote(note);
+
+  renaming.value = false;
+}
+
+async function deleteItem() {
+  deleteNote(props.item as Note);
+}
+
+async function renameFile() {
+  renameFromMeta(props.item as Project);
+}
 </script>

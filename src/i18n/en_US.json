@@ -23,7 +23,7 @@
   "delete": "Delete",
   "rename": "Rename",
   "close-project": "Close Project",
-  "add-note": "Add Note",
+  "add-markdown-note": "New Markdown",
   "active-projects": "Active Projects",
   "browse": "Browse",
   "select-a-folder-to-fill-up-your-knowledge": "Select a folder to fill up your knowledge",
@@ -111,5 +111,8 @@
   "rectangle": "Rectangle",
   "copy": "Copy",
   "strikeout": "Strikeout",
-  "underline": "Underline"
+  "underline": "Underline",
+  "test": "Test",
+  "new-project": "New Project",
+  "add-excalidraw": "New Excalidraw"
 }

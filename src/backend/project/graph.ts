@@ -48,12 +48,11 @@ async function deleteEdge(nodeId: string) {
  * @param nodeId - id of current node
  * @param props - properties to be changed
  */
-async function updateEdge(nodeId: string, props: { [k: string]: any }) {
+async function updateEdge(nodeId: string, props: Edge) {
   try {
     let outEdge = (await getOutEdge(nodeId)) as Edge;
-    for (let prop in props) {
-      outEdge[prop] = props[prop];
-    }
+    props._rev = outEdge._rev;
+    Object.assign(outEdge, props);
     await db.put(outEdge);
   } catch (error) {
     console.log(error);

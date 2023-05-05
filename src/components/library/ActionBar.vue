@@ -1,15 +1,5 @@
 <template>
   <q-toolbar class="q-px-none">
-    <q-file
-      v-model="files"
-      :multiple="multiple"
-      :accept="accept"
-      :append="false"
-      style="display: none"
-      @update:model-value="(files) => addByFiles(files)"
-      ref="filePicker"
-    />
-
     <q-btn
       flat
       dense
@@ -40,7 +30,7 @@
           <q-item
             clickable
             v-close-popup
-            @click="showFilePicker('file')"
+            @click="addByFiles('file')"
           >
             <q-item-section>{{ $t("create-entry-by-file") }}</q-item-section>
           </q-item>
@@ -48,7 +38,7 @@
           <q-item
             clickable
             v-close-popup
-            @click="showFilePicker('collection')"
+            @click="addByFiles('collection')"
           >
             <q-item-section>
               {{ $t("import-collection-bib-ris-etc") }}
@@ -113,88 +103,72 @@
   </q-toolbar>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 // types
-import { defineComponent } from "vue";
+import { nextTick, ref, watch } from "vue";
 import { QFile } from "quasar";
-// db
-import { useStateStore } from "src/stores/appState";
 
-export default defineComponent({
-  props: { rightMenuSize: Number, searchString: String },
-  emits: [
-    "update:searchString",
-    "toggleRightMenu",
-    "addEmptyProject",
-    "addByFiles",
-    "addByCollection",
-    "showIdentifierDialog",
-    "refreshTable",
-  ],
-
-  setup() {
-    const stateStore = useStateStore();
-    return { stateStore };
-  },
-
-  data() {
-    return {
-      showRightMenu: false,
-      multiple: true,
-      accept: "",
-      fileType: "",
-      files: [] as File[],
-    };
-  },
-
-  watch: {
-    rightMenuSize(size) {
-      this.showRightMenu = size > 0;
-    },
-  },
-
-  methods: {
-    async showFilePicker(fileType: string) {
-      switch (fileType) {
-        case "file":
-          this.multiple = true;
-          this.accept = ".pdf";
-          break;
-
-        case "collection":
-          this.multiple = false;
-          this.accept = ".bib, .ris, .json";
-          break;
-      }
-      this.fileType = fileType;
-      await this.$nextTick(); // wait until the acceptType is set
-      (this.$refs.filePicker as QFile).$el.click();
-    },
-
-    addEmpty() {
-      this.$emit("addEmptyProject");
-    },
-
-    addByFiles(file: File[] | File) {
-      switch (this.fileType) {
-        case "file":
-          // in this case, file is an array of File objects
-          this.$emit("addByFiles", file as File[]);
-          break;
-
-        case "collection":
-          this.$emit("addByCollection", file as File);
-          break;
-      }
-    },
-
-    addByID() {
-      this.$emit("showIdentifierDialog");
-    },
-  },
+const props = defineProps({
+  rightMenuSize: { type: Number, required: true },
+  searchString: String,
 });
-</script>
+const emit = defineEmits([
+  "update:searchString",
+  "toggleRightMenu",
+  "addEmptyProject",
+  "addByFiles",
+  "addByCollection",
+  "showIdentifierDialog",
+  "refreshTable",
+]);
 
+const filePicker = ref<QFile | null>(null);
+
+const showRightMenu = ref(false);
+const multiple = ref(true);
+const accept = ref("");
+const fileType = ref("");
+const files = ref<File[]>([]);
+
+watch(
+  () => props.rightMenuSize,
+  (size: number) => {
+    showRightMenu.value = size > 0;
+  }
+);
+
+async function addByFiles(type: string) {
+  let filePaths: string[] | undefined;
+  switch (type) {
+    case "file":
+      filePaths = window.fileBrowser.showFilePicker({
+        multiSelections: true,
+        filters: [{ name: "*.pdf", extensions: ["pdf"] }],
+      });
+      if (!filePaths) return;
+      emit("addByFiles", filePaths);
+      break;
+    case "collection":
+      filePaths = window.fileBrowser.showFilePicker({
+        multiSelections: false,
+        filters: [
+          { name: "*.bib, *.ris, *.json", extensions: ["bib", "ris", "json"] },
+        ],
+      });
+      if (!filePaths) return;
+      emit("addByCollection", filePaths[0]);
+      break;
+  }
+}
+
+function addEmpty() {
+  emit("addEmptyProject");
+}
+
+function addByID() {
+  emit("showIdentifierDialog");
+}
+</script>
 <style lang="scss">
 .actionbar-input {
   /* for sizing the q-input */

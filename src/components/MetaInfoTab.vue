@@ -2,7 +2,7 @@
   <!-- show this after rightMenu is shown, 
     otherwise autogrow extends to full-height -->
   <q-tabs
-    v-if="!!meta && meta.reference.length > 0"
+    v-if="!!meta && !!meta.reference && meta.reference.length > 0"
     v-model="tab"
     dense
     no-caps
@@ -43,7 +43,7 @@
           style="min-height: 5rem"
           class="col input"
           type="text"
-          v-model="meta.title"
+          v-model="title"
           @blur="modifyInfo(true)"
           data-cy="title"
         ></textarea>
@@ -59,7 +59,7 @@
         <input
           class="col-8 input"
           type="text"
-          v-model="meta.year"
+          v-model="year"
           @blur="modifyInfo(true)"
         />
       </div>
@@ -85,14 +85,16 @@
         <q-chip
           v-for="(author, index) in authors"
           :key="index"
-          :ripple="false"
-          class="col-12"
           dense
+          size="1rem"
+          class="col-12"
+          :ripple="false"
           :label="author"
           removable
           @remove="removeAuthor(index)"
           :data-cy="`q-chip-${index}`"
-        />
+        >
+        </q-chip>
       </div>
 
       <div
@@ -204,11 +206,31 @@
           :key="index"
           :ripple="false"
           dense
+          size="1rem"
           icon="bookmark"
           :label="tag"
           removable
           @remove="removeTag(tag)"
         />
+      </div>
+      <div>
+        <q-btn
+          class="full-width"
+          square
+          color="primary"
+          label="Update Meta"
+          no-caps
+          :disable="!meta.URL && !meta.ISBN && !meta.DOI"
+          @click="updateMeta"
+        >
+        </q-btn>
+        <q-tooltip
+          v-if="!(meta.URL || meta.ISBN || meta.DOI)"
+          anchor="bottom middle"
+          self="top middle"
+        >
+          Must have one of URL, ISBN or DOI
+        </q-tooltip>
       </div>
     </q-tab-panel>
 
@@ -232,191 +254,213 @@
   </q-tab-panels>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 // types
-import { defineComponent } from "vue";
+import { ref, watch, computed, inject } from "vue";
 import type { PropType } from "vue";
-import { Author, Project } from "src/backend/database";
+import { EventBus } from "quasar";
+import { Author, Edge, Meta, Project } from "src/backend/database";
 // backend stuff
-import { useStateStore } from "src/stores/appState";
 import { updateProject } from "src/backend/project/project";
 import { updateEdge } from "src/backend/project/graph";
 import { getMeta } from "src/backend/project/meta";
 
-export default defineComponent({
-  props: { project: Object as PropType<Project> },
-  emits: ["update:project"],
+const componentName = "MetaInfoTab";
 
-  setup() {
-    const stateStore = useStateStore();
-    return { stateStore };
+const props = defineProps({ project: Object as PropType<Project> });
+const bus = inject("bus") as EventBus;
+const tab = ref("meta");
+const name = ref(""); // author name
+const tag = ref(""); // project tag
+const references = ref<{ text: string; link: string }[]>([]);
+
+watch(tab, () => {
+  if (tab.value === "reference") getReferences();
+});
+
+const meta = computed(() => props.project);
+const title = computed({
+  get() {
+    return meta.value?.title || "";
   },
-
-  data() {
-    return {
-      tab: "meta",
-      name: "", // author name
-      tag: "", // project tag
-      references: [] as { text: string; link: string }[],
-    };
-  },
-
-  watch: {
-    tab() {
-      if (this.tab === "reference") this.getReferences();
-    },
-
-    "meta.title"(title: string) {
-      if (this.meta === undefined) return;
-      this.meta.label = title;
-    },
-  },
-
-  computed: {
-    meta() {
-      // meta is a const object
-      // we can still write to its project
-      return this.project;
-    },
-
-    authors() {
-      let authors = this.meta?.author;
-      if (!!!authors?.length) return "";
-
-      let names = [];
-      for (let author of authors) {
-        if (!!!author) continue;
-        if (!!author.literal) names.push(author.literal);
-        else names.push(`${author.given} ${author.family}`);
-      }
-      return names;
-    },
-  },
-
-  methods: {
-    /**
-     * Update project info
-     * @param updateEdgeData - if true, also modify the edge data
-     */
-    async modifyInfo(updateEdgeData: boolean) {
-      if (this.meta === undefined) return;
-      // update db and also update rev in this.project
-      let newMeta = (await updateProject(this.meta as Project)) as Project;
-      this.meta._rev = newMeta._rev;
-
-      this.$bus.emit("updateProject", {
-        source: "MetaInfoTab",
-        data: this.meta,
-      });
-
-      if (updateEdgeData) {
-        let sourceNode = {
-          id: this.meta._id,
-          label: this.meta.title,
-          type: "project",
-        };
-        await updateEdge(this.meta._id as string, { sourceNode: sourceNode });
-      }
-    },
-
-    async addAuthor() {
-      if (this.meta === undefined) {
-        this.name = "";
-        return;
-      }
-      if (this.name.trim() === "") return;
-
-      // update ui
-      let author = {} as Author;
-      if (this.name.includes(",")) {
-        [author.family, author.given] = this.name
-          .split(",")
-          .map((item) => item.trim());
-      } else {
-        let truncks = this.name.split(" ");
-        if (truncks.length === 1) {
-          author.literal = this.name;
-        } else {
-          author.family = truncks.pop();
-          author.given = truncks.join(" ");
-        }
-      }
-      this.meta.author.push(author);
-      this.name = "";
-
-      // update db
-      this.modifyInfo(false);
-    },
-
-    async removeAuthor(index: number) {
-      if (this.meta === undefined) return;
-
-      // update ui
-      this.meta.author.splice(index, 1);
-
-      // update db
-      this.modifyInfo(false);
-    },
-
-    async addTag() {
-      if (this.meta === undefined) return;
-
-      // update ui
-      this.meta.tags.push(this.tag);
-      this.tag = ""; // remove text in input
-
-      // update db
-      this.modifyInfo(false);
-    },
-
-    async removeTag(tag: string) {
-      if (this.meta === undefined) return;
-
-      // update ui
-      this.meta.tags = this.meta.tags.filter((t) => t != tag);
-
-      // update db
-      this.modifyInfo(false);
-    },
-
-    async getReferences() {
-      if (!!!this.meta?.reference || this.references.length === 0) return;
-
-      for (let i in this.meta.reference) {
-        this.references.push({ text: "", link: "" });
-      }
-
-      for (let [i, ref] of this.meta.reference.entries()) {
-        try {
-          getMeta(ref.DOI || ref.key, "bibliography", {
-            format: "html",
-          }).then((text) => {
-            this.references[i].link = text.match(
-              /(https[a-zA-Z0-9:\.\/\-\_]+)/g
-            )[0];
-            this.references[i].text = text.replace(
-              /(https[a-zA-Z0-9:\.\/\-\_]+)/g,
-              ""
-            );
-          });
-        } catch (error) {
-          let author = !!ref.author ? ref.author + " " : "";
-          let year = !!ref.year ? `(${ref.year}) ` : "";
-          let title =
-            ref["article-title"] || ref["series-title"] || ref.unstructured;
-          this.references[i].text = `<div>${author + year + title}</div>`;
-          if (ref.DOI || ref.key)
-            this.references[i].link = "https://doi.org/" + (ref.DOI || ref.key);
-        }
-      }
-    },
-
-    openURL(url: string | undefined) {
-      if (url === undefined || url === "") return;
-      window.browser.openURL(url);
-    },
+  set(newTitle: string) {
+    if (!meta.value) return;
+    meta.value.title = newTitle;
+    meta.value.label = newTitle;
   },
 });
+const year = computed({
+  get() {
+    if (!meta.value?.issued) return "";
+    return meta.value.issued["date-parts"][0][0];
+  },
+  set(newYear: string) {
+    if (!meta.value) return;
+    if (!meta.value.issued) {
+      meta.value.issued = {
+        "date-parts": [[1, 1]], // initialize it
+      };
+    }
+    meta.value.issued["date-parts"][0][0] = parseInt(newYear);
+  },
+});
+const authors = computed(() => {
+  let authors = meta.value?.author;
+  if (!!!authors?.length) return "";
+
+  let names = [];
+  for (let author of authors) {
+    if (!!!author) continue;
+    if (!!author.literal) names.push(author.literal);
+    else names.push(`${author.given} ${author.family}`);
+  }
+  return names;
+});
+
+/**********************************************
+ * Methods
+ **********************************************/
+/**
+ * Update project info
+ * @param updateEdgeData - if true, also modify the edge data
+ */
+async function modifyInfo(updateEdgeData: boolean) {
+  if (meta.value === undefined) return;
+  // update db and also update rev in this.project
+  let newMeta = (await updateProject(meta.value as Project)) as Project;
+  meta.value._rev = newMeta._rev;
+
+  bus.emit("updateProject", {
+    source: componentName,
+    data: meta.value,
+  });
+
+  if (updateEdgeData) {
+    let sourceNode = {
+      id: meta.value._id,
+      label: meta.value.title,
+      type: "project",
+    };
+    await updateEdge(
+      meta.value._id as string,
+      { sourceNode: sourceNode } as Edge
+    );
+  }
+}
+
+async function addAuthor() {
+  if (meta.value === undefined) {
+    name.value = "";
+    return;
+  }
+  if (name.value.trim() === "") return;
+
+  // update ui
+  let author = {} as Author;
+  if (name.value.includes(",")) {
+    [author.family, author.given] = name.value
+      .split(",")
+      .map((item) => item.trim());
+  } else {
+    let truncks = name.value.split(" ");
+    if (truncks.length === 1) {
+      author.literal = name.value;
+    } else {
+      author.family = truncks.pop();
+      author.given = truncks.join(" ");
+    }
+  }
+  if (!meta.value.author) meta.value.author = [] as Author[];
+  meta.value.author.push(author);
+  name.value = "";
+
+  // update db
+  modifyInfo(false);
+}
+
+async function removeAuthor(index: number) {
+  if (meta.value === undefined) return;
+  if (!meta.value.author) return;
+
+  // update ui
+  meta.value.author.splice(index, 1);
+
+  // update db
+  modifyInfo(false);
+}
+
+async function addTag() {
+  if (meta.value === undefined) return;
+
+  // update ui
+  meta.value.tags.push(tag.value);
+  tag.value = ""; // remove text in input
+
+  // update db
+  modifyInfo(false);
+}
+
+async function removeTag(tag: string) {
+  if (meta.value === undefined) return;
+
+  // update ui
+  meta.value.tags = meta.value.tags.filter((t) => t != tag);
+
+  // update db
+  modifyInfo(false);
+}
+
+async function getReferences() {
+  if (!!!meta.value?.reference || meta.value.reference.length === 0) return;
+
+  for (let i in meta.value.reference) {
+    references.value.push({ text: "", link: "" });
+  }
+
+  for (let [i, ref] of meta.value.reference.entries()) {
+    try {
+      getMeta(ref.DOI || ref.key, "bibliography", {
+        format: "html",
+      }).then((text) => {
+        references.value[i].link = text.match(
+          /(https[a-zA-Z0-9:\.\/\-\_]+)/g
+        )[0];
+        references.value[i].text = text.replace(
+          /(https[a-zA-Z0-9:\.\/\-\_]+)/g,
+          ""
+        );
+      });
+    } catch (error) {
+      let author = !!ref.author ? ref.author + " " : "";
+      let year = !!ref.year ? `(${ref.year}) ` : "";
+      let title =
+        ref["article-title"] || ref["series-title"] || ref.unstructured;
+      references.value[i].text = `<div>${author + year + title}</div>`;
+      if (ref.DOI || ref.key)
+        references.value[i].link = "https://doi.org/" + (ref.DOI || ref.key);
+    }
+  }
+}
+
+async function updateMeta() {
+  let metas: Meta[];
+  let identifier: string;
+  if (meta.value?.DOI) {
+    identifier = meta.value.DOI;
+  } else if (meta.value?.ISBN) {
+    identifier = meta.value.ISBN;
+  } else {
+    identifier = meta.value?.URL as string;
+  }
+  metas = await getMeta(identifier);
+  Object.assign(meta.value as Project, metas[0]);
+  modifyInfo(true);
+}
+
+function openURL(url: string | undefined) {
+  if (url === undefined || url === "") return;
+  window.browser.openURL(url);
+}
 </script>
 <style lang="scss" scoped>
 .input {

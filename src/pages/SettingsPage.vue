@@ -66,22 +66,11 @@
   </q-splitter>
 </template>
 
-<script lang="ts">
-import { defineComponent } from "vue";
+<script setup lang="ts">
+import { ref } from "vue";
 import GeneralTab from "src/components/settings/GeneralTab.vue";
 import AboutTab from "src/components/settings/AboutTab.vue";
 
-export default defineComponent({
-  components: {
-    GeneralTab,
-    AboutTab,
-  },
-
-  data() {
-    return {
-      leftMenuSize: 20,
-      tab: "general",
-    };
-  },
-});
+const leftMenuSize = ref(20);
+const tab = ref("general");
 </script>

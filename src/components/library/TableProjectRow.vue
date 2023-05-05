@@ -2,23 +2,23 @@
   <q-tr>
     <q-td auto-width>
       <q-icon
-        v-if="!!props.row.path || (props.row.children?.length as typeof NaN) > 0"
+        v-if="!!tableProps.row.path || (tableProps.row.children?.length as typeof NaN) > 0"
         size="sm"
-        :name="props.expand ? 'arrow_drop_down' : 'arrow_right'"
-        @click="expandRow(!props.expand)"
+        :name="tableProps.expand ? 'arrow_drop_down' : 'arrow_right'"
+        @click="expandRow(!tableProps.expand)"
       />
     </q-td>
     <q-td
-      v-for="col in props.cols"
+      v-for="col in tableProps.cols"
       :key="col.name"
-      :props="props"
+      :props="tableProps"
     >
       <div
         v-if="col.name === 'author'"
         style="font-size: 1rem; width: 20em"
         class="ellipsis"
       >
-        {{ authorString(col.value) }}
+        {{ authorString(col.value as Author[]) }}
       </div>
       <div
         v-else
@@ -30,58 +30,49 @@
     </q-td>
 
     <TableProjectMenu
-      :row="props.row"
-      :rowIndex="props.rowIndex"
+      :row="tableProps.row"
+      :rowIndex="tableProps.rowIndex"
       @expandRow="expandRow"
     />
   </q-tr>
 </template>
 
-<script lang="ts">
-import { defineComponent, PropType } from "vue";
+<script setup lang="ts">
+import { PropType } from "vue";
 import { Project, Author } from "src/backend/database";
 import TableProjectMenu from "./TableProjectMenu.vue";
-import { useStateStore } from "src/stores/appState";
 
-export default defineComponent({
-  props: {
-    props: {
-      type: Object as PropType<{
-        key: string;
-        row: Project;
-        cols: any;
-        rowIndex: number;
-        expand: boolean;
-      }>,
-      required: true,
-    },
+const props = defineProps({
+  tableProps: {
+    type: Object as PropType<{
+      key: string;
+      row: Project;
+      cols: { name: string; value: string | Author[] }[];
+      rowIndex: number;
+      expand: boolean;
+    }>,
+    required: true,
   },
+});
+const emit = defineEmits(["expandRow"]);
 
-  emits: ["expandRow"],
+function expandRow(isExpand: boolean) {
+  emit("expandRow", isExpand);
+}
 
-  components: { TableProjectMenu },
+function authorString(authors: Author[]) {
+  if (!!!authors?.length) return "";
 
-  setup() {
-    const stateStore = useStateStore();
-    return { stateStore };
-  },
+  let names = [];
+  for (let author of authors) {
+    if (!!!author) continue;
+    if (!!author.literal) names.push(author.literal);
+    else names.push(`${author.given} ${author.family}`);
+  }
+  return names.join(", ");
+}
 
-  methods: {
-    expandRow(isExpand: boolean) {
-      this.$emit("expandRow", isExpand);
-    },
-
-    authorString(authors: Author[]) {
-      if (!!!authors?.length) return "";
-
-      let names = [];
-      for (let author of authors) {
-        if (!!!author) continue;
-        if (!!author.literal) names.push(author.literal);
-        else names.push(`${author.given} ${author.family}`);
-      }
-      return names.join(", ");
-    },
-  },
+defineExpose({
+  authorString,
 });
 </script>

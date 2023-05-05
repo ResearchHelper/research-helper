@@ -57,7 +57,8 @@ import {
   Stack,
 } from "golden-layout";
 import GLComponent from "src/pages/GLComponent.vue";
-
+import { useStateStore } from "src/stores/appState";
+const stateStore = useStateStore();
 /*******************
  * Props and Emits
  *******************/
@@ -90,6 +91,8 @@ let GlBoundingClientRect: DOMRect;
 
 const instance = getCurrentInstance();
 const initialized = ref(false);
+
+// const visibility = ref(new Map()); // {refId: visible}
 
 /*******************
  * Watcher

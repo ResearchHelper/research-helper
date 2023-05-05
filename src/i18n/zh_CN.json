@@ -18,12 +18,12 @@
   "upload-image": "上传图片",
   "live-markdown-editor-latex-supported": "所见即所得Markdown编辑器 + Latex 支持！",
   "active-projects": "当前项目",
-  "add-note": "添加笔记",
+  "add-markdown-note": "添加 Markdown",
   "close-project": "关闭项目",
   "rename": "重命名",
   "delete": "删除",
   "refresh-graphview": "刷新链接图",
-  "welcome-to-research-helper": "欢迎来到研究小助手",
+  "welcome-to-research-helper": "欢迎使用研究小助手",
   "select-a-folder-to-fill-up-your-knowledge": "选择一个文件夹作为你的知识仓库吧",
   "browse": "浏览",
   "research-helper": "研究小助手",
@@ -110,5 +110,8 @@
   "rectangle": "矩形高亮",
   "copy": "复制",
   "strikeout": "删除线",
-  "underline": "下划线"
+  "underline": "下划线",
+  "test": "测试",
+  "new-project": "新项目",
+  "add-excalidraw": "添加 Excalidraw"
 }

@@ -42,39 +42,32 @@
     </q-card>
   </div>
 </template>
-<script lang="ts">
-import { defineComponent } from "vue";
-export default defineComponent({
-  data() {
-    return {
-      version: "",
-      updateMsg: "",
-      isUpdateAvailable: false,
-    };
-  },
+<script setup lang="ts">
+import { onMounted, ref } from "vue";
 
-  mounted() {
-    this.version = window.updater.versionInfo();
+const version = ref("");
+const updateMsg = ref("");
+const isUpdateAvailable = ref(false);
 
-    window.updater.updateAvailable((event, isAvailable) => {
-      this.isUpdateAvailable = isAvailable;
-    });
+onMounted(() => {
+  version.value = window.updater.versionInfo();
 
-    window.updater.updateMessage((event, info) => {
-      this.updateMsg = info;
-    });
-  },
+  window.updater.updateAvailable((event, isAvailable) => {
+    isUpdateAvailable.value = isAvailable;
+  });
 
-  methods: {
-    checkForUpdates() {
-      window.updater.checkForUpdates();
-    },
-
-    downloadUpdate() {
-      window.updater.downloadUpdate();
-    },
-  },
+  window.updater.updateMessage((event, info) => {
+    updateMsg.value = info;
+  });
 });
+
+function checkForUpdates() {
+  window.updater.checkForUpdates();
+}
+
+function downloadUpdate() {
+  window.updater.downloadUpdate();
+}
 </script>
 <style scoped>
 .card {

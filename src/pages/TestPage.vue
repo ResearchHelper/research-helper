@@ -1,23 +1,20 @@
 <template>
-  <q-btn @click="change">change</q-btn>
-  <q-btn @click="deleteVal">delete</q-btn>
-  <div
-    v-for="item in a"
-    :key="item[0]"
-  >
-    {{ `key = ${item[0]}, item = ${item[1]}` }}
-  </div>
+  <!-- noteId should be itemId -->
+  <ExcalidrawReact
+    v-if="visible"
+    :noteId="'testNote'"
+  />
 </template>
-<script setup>
-import { ref, reactive } from "vue";
 
-const a = reactive(new Map());
+<script setup lang="ts">
+// veaury and excalidraw
+import { applyPureReactInVue } from "veaury";
+import CustomExcalidraw from "src/components/note/CustomExcalidraw";
 
-function change() {
-  for (let i = 0; i < 10; i++) a.set(i, "text" + i);
-}
+const ExcalidrawReact = applyPureReactInVue(CustomExcalidraw);
 
-const deleteVal = () => {
-  a.delete(0);
-};
+const props = defineProps({
+  visible: Boolean,
+  itemId: { type: String, required: true },
+});
 </script>

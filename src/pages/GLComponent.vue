@@ -2,13 +2,14 @@
   <div
     ref="GLComponent"
     style="position: absolute; overflow: hidden"
+    class="glcomponent-class"
   >
     <slot></slot>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, defineExpose } from "vue";
+import { ref, defineExpose, nextTick } from "vue";
 const GLComponent = ref<null | HTMLElement>(null);
 const numberToPixels = (value: number): string => {
   return value.toString(10) + "px";

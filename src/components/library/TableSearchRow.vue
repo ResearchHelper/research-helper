@@ -10,10 +10,6 @@
     </q-td>
   </q-tr>
 </template>
-<script lang="ts">
-import { defineComponent } from "vue";
-
-export default defineComponent({
-  props: { text: String, width: Number },
-});
+<script setup lang="ts">
+const props = defineProps({ text: String, width: Number });
 </script>

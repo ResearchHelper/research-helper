@@ -3,7 +3,7 @@ import "@citation-js/plugin-isbn"; // must import this so we can use isbn as ide
 import { getProjectsByFolderId } from "./project";
 import { exportFile } from "quasar";
 
-import { Folder, Project } from "../database";
+import { Folder, Meta, Project } from "../database";
 
 /**
  * Get artible/book info given an identifier using citation.js
@@ -19,8 +19,11 @@ async function getMeta(
 ): Promise<any> {
   try {
     const data = await Cite.async(identifier);
-    if (format === "json") return data.data;
-    else if (!options) return data.format(format);
+    if (!format || format === "json") {
+      let metas = data.data;
+      for (let i in metas) delete metas[i]._graph;
+      return metas;
+    } else if (!options) return data.format(format);
     else return data.format(format, options);
   } catch (error) {
     console.log(error);
@@ -42,6 +45,7 @@ async function exportMeta(
 ) {
   try {
     let projects: Project[] = await getProjectsByFolderId(folder._id);
+    console.log("projects", projects);
     let meta = await getMeta(projects, format, options);
     if (format === "json") {
       exportFile(`${folder.label}.json`, JSON.stringify(meta), {

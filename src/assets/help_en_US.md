@@ -6,6 +6,7 @@
 
 - [Official Site](https://researchhelper.github.io)
 - [GitHub Page](https://github.com/ResearchHelper/research-helper)
+- [Documentation](https://researchhelper.github.io/docs.research.helper/)
 
 ## Markdown basics
 

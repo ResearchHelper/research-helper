@@ -1,41 +1,10 @@
 <template>
   <div class="q-pb-md">
-    <q-dialog
-      persistent
+    <ProgressDialog
       v-model="showProgressDialog"
-    >
-      <q-card style="width: 50vw">
-        <q-card-section>
-          <div class="text-h6">{{ $t("moving-files") }}</div>
-        </q-card-section>
-        <q-card-section class="q-pt-none">
-          <q-linear-progress
-            size="1rem"
-            :value="progress"
-          >
-            <div class="absolute-full flex flex-center">
-              <q-badge color="transparent">
-                {{ Math.round(progress * 100) }} %
-              </q-badge>
-            </div>
-          </q-linear-progress>
-          <div class="text-negative">{{ error }}</div>
-          <div v-show="progress > 0.999">
-            {{ $t("files-were-successfully-transfer-to-new-path") }}
-          </div>
-        </q-card-section>
-        <q-card-actions align="right">
-          <q-btn
-            flat
-            :disable="progress < 0.999 && !!!error"
-            :ripple="false"
-            label="OK"
-            v-close-popup
-          >
-          </q-btn>
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
+      :progress="progress"
+      :errors="errors"
+    />
 
     <q-card
       square
@@ -126,161 +95,176 @@
     </q-card>
   </div>
 </template>
-<script lang="ts">
+<script setup lang="ts">
 // types
-import { defineComponent } from "vue";
+import { computed, ref } from "vue";
 import { Project, Note } from "src/backend/database";
+import ProgressDialog from "./ProgressDialog.vue";
 // db
 import { useStateStore } from "src/stores/appState";
 import { updateAppState } from "src/backend/appState";
-import { moveFolder } from "src/backend/project/file";
+import { changePath } from "src/backend/project/file";
 import { getAllProjects } from "src/backend/project/project";
 import { getAllNotes } from "src/backend/project/note";
 import { db } from "src/backend/database";
+import { useI18n } from "vue-i18n";
+import { useQuasar } from "quasar";
 
-export default defineComponent({
-  setup() {
-    const stateStore = useStateStore();
-    return { stateStore };
+const stateStore = useStateStore();
+const { t, locale } = useI18n({ useScope: "global" });
+const $q = useQuasar();
+
+// progressDialog
+const showProgressDialog = ref(false);
+const errors = ref<Error[]>([]);
+const progress = ref(0.0);
+
+// options
+const languageOptions = ref<{ value: "en_US" | "zh_CN"; label: string }[]>([
+  { value: "en_US", label: t("english-en_us") },
+  { value: "zh_CN", label: t("zhong-wen-zhcn") },
+]);
+const themeOptions = ref<{ value: "dark" | "light"; label: string }[]>([
+  { value: "dark", label: t("dark-default") },
+  { value: "light", label: t("light") },
+]);
+
+const language = computed({
+  get() {
+    let result = languageOptions.value[0];
+    for (let option of languageOptions.value) {
+      if (option.value === stateStore.settings.language) {
+        result = option;
+      }
+    }
+    return result;
   },
-
-  data() {
-    return {
-      showProgressDialog: false,
-      error: null as Error | null,
-
-      progress: 1.0,
-
-      languageOptions: [
-        { value: "en_US", label: this.$t("english-en_us") },
-        { value: "zh_CN", label: this.$t("zhong-wen-zhcn") },
-      ],
-
-      themeOptions: [
-        { value: "dark", label: this.$t("dark-default") },
-        { value: "light", label: this.$t("light") },
-      ],
-    };
-  },
-
-  computed: {
-    language: {
-      get() {
-        let result = null;
-        for (let option of this.languageOptions) {
-          if (option.value === this.stateStore.settings.language) {
-            result = option;
-          }
-        }
-        return result;
-      },
-      set(option: { value: "en_US" | "zh_CN"; label: string }) {
-        this.stateStore.settings.language = option.value;
-        this.changeLanguage(option.value);
-      },
-    },
-
-    theme: {
-      get() {
-        let result = null;
-        for (let option of this.themeOptions) {
-          if (option.value === this.stateStore.settings.theme) {
-            result = option;
-          }
-        }
-        return result;
-      },
-      set(option: { value: "dark" | "light"; label: string }) {
-        this.stateStore.settings.theme = option.value;
-        this.changeTheme(option.value);
-      },
-    },
-
-    fontSize: {
-      get() {
-        return parseFloat(this.stateStore.settings.fontSize);
-      },
-      set(size: number) {
-        this.stateStore.settings.fontSize = `${size}px`;
-        this.changeFontSize(size);
-      },
-    },
-  },
-
-  methods: {
-    changeFontSize(size: number) {
-      document.documentElement.style.fontSize = `${size}px`;
-      this.saveAppState();
-    },
-
-    changeLanguage(locale: "en_US" | "zh_CN") {
-      this.$i18n.locale = locale;
-      this.saveAppState();
-    },
-
-    changeTheme(theme: "dark" | "light") {
-      switch (theme) {
-        case "dark":
-          this.$q.dark.set(true);
-          break;
-
-        case "light":
-          this.$q.dark.set(false);
-          break;
-      }
-      this.saveAppState();
-    },
-
-    async changePath(newStoragePath: string) {
-      // update db
-      let oldStoragePath = this.stateStore.settings.storagePath;
-      this.stateStore.settings.storagePath = newStoragePath;
-      await this.saveAppState();
-      await this.moveFiles(oldStoragePath, newStoragePath);
-    },
-
-    async showFolderPicker() {
-      let result = window.fileBrowser.showFolderPicker();
-      if (result !== undefined && !!result[0]) {
-        let storagePath = result[0]; // do not update texts in label yet
-        await this.changePath(storagePath);
-      }
-    },
-
-    async moveFiles(oldPath: string, newPath: string) {
-      // show progress bar
-      this.showProgressDialog = true;
-
-      // move files
-      moveFolder(oldPath, newPath);
-
-      // update file paths in db
-      let projects = await getAllProjects();
-      let notes = await getAllNotes();
-      let items: (Project | Note)[] = projects.concat(notes);
-
-      let n = items.length;
-      for (let [index, item] of items.entries()) {
-        if (!!!item.path) continue;
-
-        item.path = item.path.replace(oldPath, newPath);
-        this.progress = index / n;
-      }
-
-      try {
-        await db.bulkDocs(items);
-        this.progress = 1.0;
-      } catch (error) {
-        this.error = error as Error;
-      }
-    },
-
-    async saveAppState() {
-      let state = this.stateStore.saveState();
-      await updateAppState(state);
-    },
+  set(option: { value: "en_US" | "zh_CN"; label: string }) {
+    stateStore.settings.language = option.value;
+    changeLanguage(option.value);
   },
 });
+
+const theme = computed({
+  get() {
+    let result = themeOptions.value[0];
+    for (let option of themeOptions.value) {
+      if (option.value === stateStore.settings.theme) {
+        result = option;
+      }
+    }
+    return result;
+  },
+  set(option: { value: "dark" | "light"; label: string }) {
+    stateStore.settings.theme = option.value;
+    changeTheme(option.value);
+  },
+});
+
+const fontSize = computed({
+  get() {
+    return parseFloat(stateStore.settings.fontSize);
+  },
+  set(size: number) {
+    stateStore.settings.fontSize = `${size}px`;
+    changeFontSize(size);
+  },
+});
+
+/*********************
+ * Methods
+ *********************/
+
+function changeFontSize(size: number) {
+  document.documentElement.style.fontSize = `${size}px`;
+  saveAppState();
+}
+
+function changeLanguage(_locale: "en_US" | "zh_CN") {
+  locale.value = _locale;
+  saveAppState();
+}
+
+function changeTheme(theme: "dark" | "light") {
+  switch (theme) {
+    case "dark":
+      $q.dark.set(true);
+      break;
+    case "light":
+      $q.dark.set(false);
+      break;
+  }
+  saveAppState();
+}
+
+async function showFolderPicker() {
+  let result = window.fileBrowser.showFolderPicker();
+  if (result !== undefined && !!result[0]) {
+    let storagePath = result[0]; // do not update texts in label yet
+    await changeStoragePath(storagePath);
+  }
+}
+
+async function changeStoragePath(newStoragePath: string) {
+  // update db
+  let oldStoragePath = stateStore.settings.storagePath;
+  stateStore.settings.storagePath = newStoragePath;
+  await saveAppState();
+  await moveFiles(oldStoragePath, newStoragePath);
+}
+
+async function moveFiles(oldPath: string, newPath: string) {
+  // show progress bar
+  showProgressDialog.value = true;
+  errors.value = [];
+
+  let projects = (await getAllProjects()) as Project[];
+  let notes = (await getAllNotes()) as Note[];
+  let total = projects.length + notes.length + 1;
+  let current = 0;
+
+  // move excalidrawlibs
+  let oldExcalidrawLib = window.path.join(oldPath, "library.excalidrawlib");
+  let newExcalidrawLib = window.path.join(newPath, "library.excalidrawlib");
+  let error = changePath(oldExcalidrawLib, newExcalidrawLib);
+  if (error) errors.value.push(error);
+  current++;
+  progress.value = current / total;
+
+  // move project folders
+
+  for (let project of projects) {
+    if (!!!project.path) continue;
+    let oldProjectFolder = window.path.join(oldPath, project._id);
+    let newProjectFolder = window.path.join(newPath, project._id);
+    let error = changePath(oldProjectFolder, newProjectFolder);
+    if (error) errors.value.push(error);
+    project.path = project.path.replace(oldPath, newPath);
+    current++;
+    progress.value = current / total;
+  }
+
+  // change note paths
+  for (let note of notes) {
+    note.path = note.path.replace(oldPath, newPath);
+    current++;
+    progress.value = current / total;
+  }
+
+  try {
+    // await db.bulkDocs(items);
+    await db.bulkDocs(projects);
+    await db.bulkDocs(notes);
+    progress.value = 1.0;
+  } catch (_error) {
+    error.value = _error as Error;
+  }
+}
+
+async function saveAppState() {
+  let state = stateStore.saveState();
+  await updateAppState(state);
+}
 </script>
 
 <style scoped>

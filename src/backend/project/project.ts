@@ -11,23 +11,16 @@ import { createProjectFolder, deleteProjectFolder } from "./file";
 async function addProject(folderId: string): Promise<Project | void> {
   try {
     // create empty project entry
-    let project = {} as Project;
-    project._id = uid();
-    project.dataType = "project";
-    project.label = "New Project";
-    project.children = [];
-    project.type = "";
-    project.title = "New Project";
-    project.author = [];
-    project.abstract = "";
-    project.year = "";
-    project.DOI = "";
-    project.URL = "";
-    project.ISBN = "";
-    project.publisher = "";
-    project.reference = [];
-    project.tags = [];
-    project.folderIds = ["library"]; // the folders containing the project
+    let project = {
+      _id: uid(),
+      _rev: "",
+      dataType: "project",
+      label: "New Project",
+      title: "New Project",
+      path: "",
+      tags: [] as string[],
+      folderIds: ["library"],
+    } as Project;
     if (folderId != "library") project.folderIds.push(folderId);
 
     // create actual folder for containing its files
@@ -94,6 +87,7 @@ async function updateProject(project: Project): Promise<Project | undefined> {
   try {
     let oldProject = await db.get(project._id);
     project._rev = oldProject._rev;
+    project.label = project.title; // also update label
     let result = await db.put(project);
     project._rev = result.rev;
     return project;
@@ -108,21 +102,15 @@ async function updateProject(project: Project): Promise<Project | undefined> {
  * @param {Object} meta
  * @returns {Project} modifiedProject
  */
-async function updateProjectByMeta(project: Project, meta: Meta) {
+async function updateProjectByMeta(
+  project: Project,
+  meta: Meta & { _graph?: Array<any> }
+) {
   // also update ui label
   project.label = project.title;
   // update meta
-  project.type = meta.type || "";
-  project.title = meta.title || "";
-  project.author = meta.author || [];
-  project.abstract = meta.abstract || "";
-  project.year = meta.year || meta?.issued?.["date-parts"][0][0] || "";
-  project.DOI = meta.DOI || "";
-  project.ISBN = meta.ISBN || "";
-  project.URL = meta.URL || "";
-  project.publisher = meta.publisher || "";
-  project.reference = meta.reference || [];
-
+  delete meta._graph; // this can't go into database
+  Object.assign(project, meta);
   return await updateProject(project);
 }
 

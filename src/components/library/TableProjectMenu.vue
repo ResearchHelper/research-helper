@@ -20,9 +20,17 @@
         v-if="row.dataType === 'project'"
         clickable
         v-close-popup
-        @click="onAddNote()"
+        @click="onAddNote(NoteType.MARKDOWN)"
       >
-        <q-item-section> {{ $t("add-note") }} </q-item-section>
+        <q-item-section> {{ $t("add-markdown-note") }} </q-item-section>
+      </q-item>
+      <q-item
+        v-if="row.dataType === 'project'"
+        clickable
+        v-close-popup
+        @click="onAddNote(NoteType.EXCALIDRAW)"
+      >
+        <q-item-section> {{ $t("add-excalidraw") }} </q-item-section>
       </q-item>
       <q-item
         clickable
@@ -104,10 +112,10 @@
     </q-list>
   </q-menu>
 </template>
-<script lang="ts">
+<script setup lang="ts">
 // types
-import { defineComponent, inject, PropType } from "vue";
-import { Project } from "src/backend/database";
+import { defineComponent, inject, PropType, ref } from "vue";
+import { NoteType, Project } from "src/backend/database";
 import { QMenu, QTableProps } from "quasar";
 import {
   KEY_metaDialog,
@@ -119,84 +127,68 @@ import {
 import { copyToClipboard } from "quasar";
 import { useStateStore } from "src/stores/appState";
 
-export default defineComponent({
-  props: {
-    row: { type: Object as PropType<Project>, required: true },
-    rowIndex: { type: Number, required: true },
-    props: { type: Object as PropType<QTableProps> },
-  },
-  emits: ["expandRow"],
-
-  data() {
-    return {
-      replaceStoredCopy: false,
-    };
-  },
-
-  setup() {
-    const stateStore = useStateStore();
-    // dialogs
-    const showSearchMetaDialog = inject(KEY_metaDialog) as () => void;
-    const showDeleteDialog = inject(KEY_deleteDialog) as (
-      project: Project,
-      deleteFromDB: boolean
-    ) => void;
-    // note
-    const addNote = inject(KEY_addNote) as (
-      projectId: string,
-      index?: number
-    ) => void;
-    const attachFile = inject(KEY_attachFile) as (
-      replace: boolean,
-      projectId: string,
-      index?: number
-    ) => void;
-    return {
-      stateStore,
-      showSearchMetaDialog,
-      showDeleteDialog,
-      addNote,
-      attachFile,
-    };
-  },
-
-  methods: {
-    onAddNote() {
-      this.addNote(this.row._id, this.rowIndex);
-      this.expandRow(true);
-    },
-
-    expandRow(isExpand: boolean) {
-      this.$emit("expandRow", isExpand);
-    },
-
-    openProject() {
-      this.stateStore.openItem(this.row._id);
-    },
-
-    copyProjectId() {
-      copyToClipboard(this.row._id);
-    },
-
-    deleteProject(deleteFromDB: boolean) {
-      this.showDeleteDialog(this.row, deleteFromDB);
-    },
-
-    /**
-     * Update a project by meta
-     */
-    searchMeta() {
-      this.showSearchMetaDialog();
-    },
-
-    /**
-     * Attach PDF to a project
-     * @param replaceStoredCopy - replace the copy in storage?
-     */
-    onAttachFile(replaceStoredCopy: boolean) {
-      this.attachFile(replaceStoredCopy, this.row._id, this.rowIndex);
-      this.expandRow(true);
-    },
-  },
+const props = defineProps({
+  row: { type: Object as PropType<Project>, required: true },
+  rowIndex: { type: Number, required: true },
+  props: { type: Object as PropType<QTableProps> },
 });
+const emit = defineEmits(["expandRow"]);
+
+const stateStore = useStateStore();
+const replaceStoredCopy = ref(false);
+
+// dialogs
+const showSearchMetaDialog = inject(KEY_metaDialog) as () => void;
+const showDeleteDialog = inject(KEY_deleteDialog) as (
+  project: Project,
+  deleteFromDB: boolean
+) => void;
+// note
+const addNote = inject(KEY_addNote) as (
+  projectId: string,
+  type: NoteType,
+  index?: number
+) => void;
+const attachFile = inject(KEY_attachFile) as (
+  replace: boolean,
+  projectId: string,
+  index?: number
+) => void;
+
+function onAddNote(type: NoteType) {
+  addNote(props.row._id, type, props.rowIndex);
+  expandRow(true);
+}
+
+function expandRow(isExpand: boolean) {
+  emit("expandRow", isExpand);
+}
+
+function openProject() {
+  stateStore.openItem(props.row._id);
+}
+
+function copyProjectId() {
+  copyToClipboard(props.row._id);
+}
+
+function deleteProject(deleteFromDB: boolean) {
+  showDeleteDialog(props.row, deleteFromDB);
+}
+
+/**
+ * Update a project by meta
+ */
+function searchMeta() {
+  showSearchMetaDialog();
+}
+
+/**
+ * Attach PDF to a project
+ * @param replaceStoredCopy - replace the copy in storage?
+ */
+function onAttachFile(replaceStoredCopy: boolean) {
+  attachFile(replaceStoredCopy, props.row._id, props.rowIndex);
+  expandRow(true);
+}
 </script>

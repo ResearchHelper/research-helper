@@ -6,6 +6,7 @@
 
 - [官方网站](https://researchhelper.github.io)
 - [GitHub 页面](https://github.com/ResearchHelper/research-helper)
+- [用户及开发者手册](https://researchhelper.github.io/docs.research.helper/)
 
 ## Markdown 基础
 
