@@ -1,15 +1,5 @@
 <template>
   <q-toolbar class="q-px-none">
-    <q-file
-      v-model="files"
-      :multiple="multiple"
-      :accept="accept"
-      :append="false"
-      style="display: none"
-      @update:model-value="(files) => addByFiles(files)"
-      ref="filePicker"
-    />
-
     <q-btn
       flat
       dense
@@ -40,7 +30,7 @@
           <q-item
             clickable
             v-close-popup
-            @click="showFilePicker('file')"
+            @click="addByFiles('file')"
           >
             <q-item-section>{{ $t("create-entry-by-file") }}</q-item-section>
           </q-item>
@@ -48,7 +38,7 @@
           <q-item
             clickable
             v-close-popup
-            @click="showFilePicker('collection')"
+            @click="addByFiles('collection')"
           >
             <q-item-section>
               {{ $t("import-collection-bib-ris-etc") }}
@@ -147,36 +137,32 @@ watch(
   }
 );
 
-async function showFilePicker(type: string) {
+async function addByFiles(type: string) {
+  let filePaths: string[] | undefined;
   switch (type) {
     case "file":
-      multiple.value = true;
-      accept.value = ".pdf";
+      filePaths = window.fileBrowser.showFilePicker({
+        multiSelections: true,
+        filters: [{ name: "*.pdf", extensions: ["pdf"] }],
+      });
+      if (!filePaths) return;
+      emit("addByFiles", filePaths);
       break;
     case "collection":
-      multiple.value = false;
-      accept.value = ".bib, .ris, .json";
+      filePaths = window.fileBrowser.showFilePicker({
+        multiSelections: false,
+        filters: [
+          { name: "*.bib, *.ris, *.json", extensions: ["bib", "ris", "json"] },
+        ],
+      });
+      if (!filePaths) return;
+      emit("addByCollection", filePaths[0]);
       break;
   }
-  fileType.value = type;
-  await nextTick(); // wait until the acceptType is set
-  (filePicker.value as QFile).$el.click();
 }
 
 function addEmpty() {
   emit("addEmptyProject");
-}
-
-function addByFiles(file: File[] | File) {
-  switch (fileType.value) {
-    case "file":
-      // in this case, file is an array of File objects
-      emit("addByFiles", file as File[]);
-      break;
-    case "collection":
-      emit("addByCollection", file as File);
-      break;
-  }
 }
 
 function addByID() {

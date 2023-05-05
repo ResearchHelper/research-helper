@@ -85,14 +85,16 @@
         <q-chip
           v-for="(author, index) in authors"
           :key="index"
-          :ripple="false"
-          class="col-12"
           dense
+          size="1rem"
+          class="col-12"
+          :ripple="false"
           :label="author"
           removable
           @remove="removeAuthor(index)"
           :data-cy="`q-chip-${index}`"
-        />
+        >
+        </q-chip>
       </div>
 
       <div
@@ -204,6 +206,7 @@
           :key="index"
           :ripple="false"
           dense
+          size="1rem"
           icon="bookmark"
           :label="tag"
           removable

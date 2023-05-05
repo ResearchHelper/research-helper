@@ -152,12 +152,11 @@ const bus = inject("bus") as EventBus;
 const layout = ref<InstanceType<typeof GLayout> | null>(null);
 const leftMenu = ref<InstanceType<typeof LeftMenu> | null>(null);
 
-const showTestBtn = process.env.DEV; // show testPage btn if in dev
+const showTestBtn = false // process.env.DEV; // show testPage btn if in dev
 const showWelcomeCarousel = ref(false);
 const leftMenuSize = ref(0);
 const isUpdateAvailable = ref(false);
 const ready = ref(false);
-const btnClass = {};
 
 const isLeftMenuVisible = computed({
   get() {

@@ -294,8 +294,6 @@ function onDragLeave(e: DragEvent, node: Folder) {
  * @param node - the folder / project user is dragging
  */
 async function onDrop(e: DragEvent, node: Folder) {
-  if (!draggingNode.value || draggingNode.value == node) return;
-
   // record this first otherwise dragend events makes it null
   let _dragoverNode = dragoverNode.value as Folder;
   let _draggingNode = draggingNode.value as Folder;
@@ -313,7 +311,8 @@ async function onDrop(e: DragEvent, node: Folder) {
   } else {
     // drag folder into another folder
     // update ui (do this first since parentfolder will change)
-    if (_draggingNode === null) return;
+    // if no dragging folder or droping a folder "into" itself, exit
+    if (_draggingNode === null || draggingNode.value == node) return;
     if (!tree.value) return;
     let dragParentFolder = (await getParentFolder(_draggingNode._id)) as Folder;
     let dragParentNode = tree.value.getNodeByKey(
@@ -337,6 +336,17 @@ function onDragEnd(e: DragEvent) {
   draggingNode.value = null;
   dragoverNode.value = null;
 }
+
+function getLibraryNode() {
+  if (!tree.value) return;
+  return tree.value.getNodeByKey("library");
+}
+
+defineExpose({
+  getLibraryNode,
+  addFolder,
+  onDragEnd,
+});
 </script>
 <style lang="scss" scoped>
 .dragover {

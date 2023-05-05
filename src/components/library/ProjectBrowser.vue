@@ -33,7 +33,7 @@
         style="background: var(--color-library-treeview-bkgd)"
         :draggingProjectId="draggingProjectId"
         @exportFolder="(folder) => showExportFolderDialog(folder)"
-        ref="tree"
+        ref="treeview"
       />
     </template>
     <template v-slot:after>
@@ -53,8 +53,10 @@
             v-model:searchString="searchString"
             :rightMenuSize="rightMenuSize"
             @addEmptyProject="addEmptyProject"
-            @addByFiles="addProjectsByFiles"
-            @addByCollection="(collection) => showImportDialog(collection)"
+            @addByFiles="(filePaths) => addProjectsByFiles(filePaths)"
+            @addByCollection="
+              (collectionPath) => showImportDialog(collectionPath)
+            "
             @showIdentifierDialog="showIdentifierDialog(true)"
             @refreshTable="getProjects"
             @toggleRightMenu="(visible) => toggleRightMenu(visible)"
@@ -219,7 +221,7 @@ const errorDialog = ref(false);
 const error = ref<Error | undefined>(undefined);
 
 const importDialog = ref(false);
-const collection = ref<File | null>(null);
+const collectionPath = ref<string>("");
 
 watch(
   () => stateStore.selectedFolderId,
@@ -305,9 +307,9 @@ function showIdentifierDialog(_createProject: boolean) {
   createProject.value = _createProject;
 }
 
-function showImportDialog(_collection: File) {
+function showImportDialog(_collectionPath: string) {
   importDialog.value = true;
-  collection.value = _collection;
+  collectionPath.value = _collectionPath;
 }
 
 /**
@@ -324,21 +326,21 @@ async function addEmptyProject() {
 
 /**
  * Add projects by importing files
- * @param files - pdfs imported
+ * @param filePaths - pdfs paths imported
  */
-async function addProjectsByFiles(files: File[]) {
-  for (let file of files) {
+async function addProjectsByFiles(filePaths: string[]) {
+  for (let filePath of filePaths) {
     try {
       // update db
       let project = (await addProjectDB(
         stateStore.selectedFolderId
       )) as Project;
-      project.path = (await copyFile(file.path, project._id)) as string;
+      project.path = (await copyFile(filePath, project._id)) as string;
       project.title = window.path.basename(project.path, ".pdf");
       project = (await updateProjectDB(project)) as Project;
 
       // get meta
-      let buffer = window.fs.readFileSync(file.path);
+      let buffer = window.fs.readFileSync(filePath);
       let pdf = await pdfjsLib.getDocument({ data: buffer }).promise;
       for (
         let pageNumber = 1;
@@ -394,22 +396,24 @@ async function addProjectsByFiles(files: File[]) {
  * @param isCreateFolder
  */
 async function addProjectsByCollection(isCreateFolder: boolean) {
-  if (collection.value === null) return;
+  if (collectionPath.value === "") return;
   // create folder if user wants to
   if (isCreateFolder) {
+    console.log(treeview.value);
     if (!treeview.value) return;
-    let rootNode = treeview.value.$refs.tree.getNodeByKey("library");
-    let folderName = window.path.basename(
-      (collection.value as File).name,
-      window.path.extname(collection.value.name)
-    );
+    console.log("path", collectionPath.value);
+    console.log("createFolder", isCreateFolder);
+    let rootNode = treeview.value.getLibraryNode();
+    if (!rootNode) return;
+    let folderName = window.path.parse(collectionPath.value).name;
     let focus = true;
+    console.log("create folder", folderName);
     await treeview.value.addFolder(rootNode, folderName, focus);
   }
 
   await nextTick(); //wait until ui actions settled
 
-  let metas = await importMeta(collection.value.path);
+  let metas = await importMeta(collectionPath.value);
   for (let meta of metas) {
     // add a new project to db and update it with meta
     let project = (await addProjectDB(stateStore.selectedFolderId)) as Project;
@@ -421,7 +425,7 @@ async function addProjectsByCollection(isCreateFolder: boolean) {
   }
 
   importDialog.value = false;
-  collection.value = null;
+  collectionPath.value = "";
 }
 
 async function processIdentifier(identifier: string) {
@@ -508,7 +512,10 @@ async function attachFile(
   projectId: string,
   index?: number
 ) {
-  let filePaths = window.fileBrowser.showFilePicker();
+  let filePaths = window.fileBrowser.showFilePicker({
+    multiSelections: false,
+    filters: [{ name: "*.pdf", extensions: ["pdf"] }],
+  });
   if (filePaths?.length === 1) {
     // find index
     if (index === undefined)
