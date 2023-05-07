@@ -114,7 +114,7 @@
 </template>
 <script setup lang="ts">
 // types
-import { defineComponent, inject, PropType, ref } from "vue";
+import { inject, PropType, ref } from "vue";
 import { NoteType, Project } from "src/backend/database";
 import { QMenu, QTableProps } from "quasar";
 import {

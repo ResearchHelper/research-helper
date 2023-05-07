@@ -18,7 +18,7 @@ function testcase(
   });
 
   // page control
-  const pageControl = cy.get('[data-cy="page-control"]');
+  const pageControl = cy.dataCy("page-control");
   if (pageLabels.length > 0)
     pageControl
       .find("span")
@@ -34,16 +34,16 @@ function testcase(
   }
 
   // view dropdown
-  cy.get('[data-cy="btn-dropdown-view"]').click();
+  cy.dataCy("btn-dropdown-view").click();
 
   // scale
-  cy.get('[data-cy="scale"]').should(
+  cy.dataCy("scale").should(
     "have.text",
     Math.trunc(pdfState.currentScale * 100) + "%"
   );
 
   // spread
-  cy.get('[data-cy="btn-toggle-spread"]')
+  cy.dataCy("btn-toggle-spread")
     .children(".text-primary")
     .should("have.text", spreadMode[pdfState.spreadMode]);
 }

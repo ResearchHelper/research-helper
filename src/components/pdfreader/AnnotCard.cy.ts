@@ -12,7 +12,7 @@ describe("<AnnotCard />", () => {
       },
     });
 
-    cy.get('[data-cy="annot-content"]').should("have.text", "∫f\\int f∫f");
+    cy.dataCy("annot-content").should("have.text", "∫f\\int f∫f");
   });
 
   it("open menu", function () {
@@ -22,8 +22,7 @@ describe("<AnnotCard />", () => {
       },
     });
 
-    cy.get('[data-cy="btn-menu"]').click();
-
-    cy.get('[data-cy="annot-menu"]');
+    cy.dataCy("btn-menu").click();
+    cy.dataCy("annot-menu");
   });
 });

@@ -15,7 +15,7 @@ describe("<MetaInfoTab />", () => {
     });
   });
   it("renders", () => {
-    cy.get('[data-cy="title"]').should("have.value", "test title");
+    cy.dataCy("title").should("have.value", "test title");
 
     cy.get('[data-cy="q-chip-0"] > .q-chip__content').should(
       "have.text",

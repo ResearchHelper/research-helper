@@ -134,7 +134,15 @@
   </q-tree>
 </template>
 <script setup lang="ts">
-import { inject, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import {
+  computed,
+  inject,
+  nextTick,
+  onBeforeUnmount,
+  onMounted,
+  ref,
+  watch,
+} from "vue";
 import { EventBus, QTree, QTreeNode } from "quasar";
 import { BusEvent, Edge, Note, NoteType, Project } from "src/backend/database";
 // db

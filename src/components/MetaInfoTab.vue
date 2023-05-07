@@ -218,7 +218,7 @@
           class="full-width"
           square
           color="primary"
-          label="Update Meta"
+          :label="$t('update-meta')"
           no-caps
           :disable="!meta.URL && !meta.ISBN && !meta.DOI"
           @click="updateMeta"

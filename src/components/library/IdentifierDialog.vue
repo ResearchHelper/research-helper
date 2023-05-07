@@ -20,6 +20,7 @@
           placeholder="DOI, ISBN, Wikidata, Ris, ..."
           v-model.trim="identifier"
           @keydown.enter="confirm"
+          data-cy="identifier-input"
         />
       </q-card-section>
       <q-card-actions align="right">
@@ -29,13 +30,16 @@
           :ripple="false"
           :label="$t('cancel')"
           @click="cancel"
+          data-cy="btn-cancel"
         />
         <q-btn
           flat
           v-close-popup
           :ripple="false"
           :label="$t('confirm')"
+          :disable="!identifier"
           @click="confirm"
+          data-cy="btn-confirm"
         />
       </q-card-actions>
     </q-card>

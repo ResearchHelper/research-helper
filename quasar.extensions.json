@@ -1,21 +1,11 @@
 {
   "@quasar/testing-unit-vitest": {
-    "options": [
-      "scripts",
-      "typescript"
-    ]
+    "options": ["scripts", "typescript"]
   },
   "@quasar/testing-e2e-cypress": {
-    "options": [
-      "scripts",
-      "typescript",
-      "code-coverage"
-    ]
+    "options": ["scripts", "typescript", "code-coverage"]
   },
   "@quasar/testing": {
-    "harnesses": [
-      "unit-vitest@alpha",
-      "e2e-cypress"
-    ]
+    "harnesses": ["unit-vitest@alpha", "e2e-cypress"]
   }
 }

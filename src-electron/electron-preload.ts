@@ -46,10 +46,13 @@ const fileBrowser = {
    * Show file browser
    * multiSelections - can user select multiple files
    * filters - e.g. [{ name: "*.pdf", extensions: ["pdf"] }]
-   * @param config 
+   * @param config
    * @returns filePaths
    */
-  showFilePicker(config: {multiSelections: boolean, filters: FileFilter[] }): string[] | undefined {
+  showFilePicker(config: {
+    multiSelections: boolean;
+    filters: FileFilter[];
+  }): string[] | undefined {
     const mainWindow = BrowserWindow.getFocusedWindow();
     if (mainWindow === null) return;
     const result = dialog.showOpenDialogSync(mainWindow, {

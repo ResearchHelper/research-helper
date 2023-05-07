@@ -141,6 +141,11 @@ import { useQuasar } from "quasar";
 import { useI18n } from "vue-i18n";
 import { EventBus } from "quasar";
 
+interface PageItem {
+  _id: string;
+  label: string;
+}
+
 const stateStore = useStateStore();
 const $q = useQuasar();
 const { locale, t } = useI18n({ useScope: "global" });
@@ -152,7 +157,7 @@ const bus = inject("bus") as EventBus;
 const layout = ref<InstanceType<typeof GLayout> | null>(null);
 const leftMenu = ref<InstanceType<typeof LeftMenu> | null>(null);
 
-const showTestBtn = false // process.env.DEV; // show testPage btn if in dev
+const showTestBtn = false; // process.env.DEV; // show testPage btn if in dev
 const showWelcomeCarousel = ref(false);
 const leftMenuSize = ref(0);
 const isUpdateAvailable = ref(false);
@@ -210,6 +215,15 @@ watch(
   () => [...stateStore.openedProjectIds],
   () => {
     saveAppState();
+  }
+);
+
+// change special page title when locale updated
+watch(
+  () => stateStore.settings.language,
+  () => {
+    for (let id of ["library", "settings", "help"])
+      editComponentState({ _id: id, label: t(id) });
   }
 );
 
@@ -310,7 +324,7 @@ async function removeComponent(id: string) {
  * After renaming a row in projectTree, we need to rename the window title.
  * @param item
  */
-async function editComponentState(item: Project | Note | undefined) {
+async function editComponentState(item: PageItem | undefined) {
   if (!layout.value || !item) return;
   layout.value.renameGLComponent(item._id, item.label);
   let config = layout.value.getLayoutConfig();

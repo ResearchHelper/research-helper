@@ -19,7 +19,6 @@
   "live-markdown-editor-latex-supported": "Live Markdown editor + Latex supported!",
   "refresh-graphview": "Refresh graphview",
   "related-items": "Related Items",
-  "close-project-0": "Close project",
   "delete": "Delete",
   "rename": "Rename",
   "close-project": "Close Project",
@@ -114,5 +113,6 @@
   "underline": "Underline",
   "test": "Test",
   "new-project": "New Project",
-  "add-excalidraw": "New Excalidraw"
+  "add-excalidraw": "New Excalidraw",
+  "update-meta": "Update Meta"
 }

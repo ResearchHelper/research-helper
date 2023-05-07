@@ -71,7 +71,7 @@ async function addFolder(parentId: string) {
     // push to children of parent Node
     let parentNode: Folder = await db.get(parentId);
     parentNode.children.push(node._id);
-    await updateFolder(parentId, { children: parentNode.children });
+    await updateFolder(parentId, { children: parentNode.children } as Folder);
 
     return node;
   } catch (err) {
@@ -170,12 +170,14 @@ async function moveFolderInto(dragFolderId: string, dropFolderId: string) {
     );
     await updateFolder(dragParentFolder._id, {
       children: dragParentFolder.children,
-    });
+    } as Folder);
 
     // add to dropFolder after the dragParentFolder is modified
     let dropFolder: Folder = await db.get(dropFolderId);
     dropFolder.children.push(dragFolderId);
-    await updateFolder(dropFolderId, { children: dropFolder.children });
+    await updateFolder(dropFolderId, {
+      children: dropFolder.children,
+    } as Folder);
   } catch (error) {
     console.log(error);
   }

@@ -113,5 +113,6 @@
   "underline": "下划线",
   "test": "测试",
   "new-project": "新项目",
-  "add-excalidraw": "添加 Excalidraw"
+  "add-excalidraw": "添加 Excalidraw",
+  "update-meta": "更新信息"
 }
