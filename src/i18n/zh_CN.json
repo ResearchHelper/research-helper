@@ -38,7 +38,7 @@
   "language": "语言",
   "storage": "存储",
   "storage-path": "存储路径：",
-  "dark-default": "深色（默认）",
+  "dark": "深色",
   "light": "亮色",
   "copy-annot-id": "复制注释 ID",
   "delete-annot": "删除注释",
@@ -89,8 +89,6 @@
   "add-folder": "新增文件夹",
   "export-references": "导出此文件夹的引用",
   "related-items": "相关项目/笔记",
-  "english-en_us": "English (en_US)",
-  "zhong-wen-zhcn": "中文 (zh_CN)",
   "no-spreads": "单页视图",
   "odd-spreads": "双页视图",
   "even-spreads": "书籍视图",
@@ -114,5 +112,6 @@
   "test": "测试",
   "new-project": "新项目",
   "add-excalidraw": "添加 Excalidraw",
-  "update-meta": "更新信息"
+  "update-meta": "更新信息",
+  "no-related-projects-or-notes": "没有相关的项目或笔记"
 }

@@ -85,7 +85,7 @@
               padding="none"
               class="q-mr-xs"
               icon="refresh"
-              @click.stop="($refs.graphview as any).reload()"
+              @click.stop="graphview?.reload()"
             >
               <q-tooltip>{{ $t("refresh-graphview") }}</q-tooltip>
             </q-btn>
@@ -130,6 +130,7 @@ const treeSize = ref(36);
 const isTreeOpened = ref(true);
 
 // graphview
+const graphview = ref<InstanceType<typeof GraphView> | null>(null);
 const loadingGraph = ref(true);
 const isGraphViewOpened = ref(false);
 

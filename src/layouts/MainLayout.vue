@@ -23,7 +23,9 @@
             :options="[{ icon: 'account_tree', value: true }]"
             @update:model-value="stateStore.saveState()"
           >
-            <q-tooltip>{{ $t("openedProjects") }}</q-tooltip>
+            <q-tooltip>
+              {{ $t("openedProjects") }}
+            </q-tooltip>
           </q-btn-toggle>
         </div>
 
@@ -376,6 +378,17 @@ async function saveAppState() {
   await updateAppState(state);
 }
 
+/**
+ *
+ */
+function onUpdateProject(project: Project) {
+  editComponentState(project);
+  if (!project.children) return;
+  for (let note of project.children) {
+    editComponentState(note);
+  }
+}
+
 /*************************************************
  * onMounted
  *************************************************/
@@ -411,17 +424,11 @@ onMounted(async () => {
   ready.value = true;
 
   // event bus
-  bus.on("updateProject", (e: BusEvent) => {
-    if ((e.data as Note | Project).dataType === "project")
-      editComponentState(e.data);
-  });
+  bus.on("updateProject", (e: BusEvent) => onUpdateProject(e.data));
 });
 
 onBeforeUnmount(() => {
-  bus.off("updateProject", (e: BusEvent) => {
-    if ((e.data as Note | Project).dataType === "project")
-      editComponentState(e.data);
-  });
+  bus.off("updateProject", (e: BusEvent) => onUpdateProject(e.data));
 });
 </script>
 <style lang="scss">

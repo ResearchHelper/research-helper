@@ -6,7 +6,7 @@
 </template>
 <script setup lang="ts">
 // types
-import { nextTick, onMounted, ref, watch } from "vue";
+import { inject, nextTick, onMounted, ref, watch } from "vue";
 import { Edge, Note, Project } from "src/backend/database";
 // vditor
 import Vditor from "vditor";
@@ -26,11 +26,12 @@ import {
 import { updateEdge } from "src/backend/project/graph";
 import { getAllProjects } from "src/backend/project/project";
 // util
-import { debounce } from "quasar";
+import { EventBus, debounce } from "quasar";
 import { useI18n } from "vue-i18n";
 
 const stateStore = useStateStore();
 const { t } = useI18n({ useScope: "global" });
+const bus = inject("bus") as EventBus;
 
 const props = defineProps({
   noteId: { type: String, required: true },
@@ -264,6 +265,7 @@ async function saveLinks() {
     targetNodes: targetNodes,
   } as Edge;
   await updateEdge(props.noteId, data);
+  bus.emit("updateGraph", { source: "NoteEditor", data: data });
 }
 
 /*****************************************

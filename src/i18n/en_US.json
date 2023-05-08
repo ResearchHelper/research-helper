@@ -32,9 +32,7 @@
   "current-version-version": "Current version: {0}",
   "research-helper": "Research Helper",
   "light": "Light",
-  "dark-default": "Dark (Default)",
-  "zhong-wen-zhcn": "中文 (zh_CN)",
-  "english-en_us": "English (en_US)",
+  "dark": "Dark",
   "storage-path": "Storage path:",
   "storage": "Storage",
   "language": "Language",
@@ -114,5 +112,6 @@
   "test": "Test",
   "new-project": "New Project",
   "add-excalidraw": "New Excalidraw",
-  "update-meta": "Update Meta"
+  "update-meta": "Update Meta",
+  "no-related-projects-or-notes": "No related projects or notes"
 }

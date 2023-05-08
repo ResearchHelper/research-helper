@@ -97,7 +97,7 @@
 </template>
 <script setup lang="ts">
 // types
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 import { Project, Note } from "src/backend/database";
 import ProgressDialog from "./ProgressDialog.vue";
 // db
@@ -121,13 +121,22 @@ const progress = ref(0.0);
 
 // options
 const languageOptions = ref<{ value: "en_US" | "zh_CN"; label: string }[]>([
-  { value: "en_US", label: t("english-en_us") },
-  { value: "zh_CN", label: t("zhong-wen-zhcn") },
+  { value: "en_US", label: "English (en_US)" },
+  { value: "zh_CN", label: "中文 (zh_CN)" },
 ]);
 const themeOptions = ref<{ value: "dark" | "light"; label: string }[]>([
-  { value: "dark", label: t("dark-default") },
+  { value: "dark", label: t("dark") },
   { value: "light", label: t("light") },
 ]);
+
+watch(
+  () => locale.value,
+  () => {
+    for (let option of themeOptions.value) {
+      option.label = t(option.value);
+    }
+  }
+);
 
 const language = computed({
   get() {
@@ -256,8 +265,8 @@ async function moveFiles(oldPath: string, newPath: string) {
     await db.bulkDocs(projects);
     await db.bulkDocs(notes);
     progress.value = 1.0;
-  } catch (_error) {
-    error.value = _error as Error;
+  } catch (error) {
+    errors.value.push(error as Error);
   }
 }
 

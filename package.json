@@ -12,6 +12,7 @@
     "test": "echo \"See package.json => scripts for available tests.\" && exit 0",
     "dev": "yarn run pouchdb-server --port 3000 -d remote_database &  quasar dev -m electron",
     "debug": "quasar build -m electron -T AppImage --debug",
+    "build": "quasar build -m electron",
     "test:ci": "yarn run test:unit:ci --no-threads && yarn run test:component:ci",
     "test:unit": "vitest",
     "test:unit:ci": "vitest run",
