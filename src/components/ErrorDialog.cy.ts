@@ -5,21 +5,21 @@ describe("<ErrorDialog />", () => {
     let errMsg = "test error";
     let error = new Error(errMsg);
     cy.mount(ErrorDialog, { props: { show: true, error: error } });
-    cy.get('[data-cy="error-msg"]').should("have.text", errMsg);
+    cy.dataCy("error-msg").should("have.text", errMsg);
   });
 
   it("close", () => {
-    const onUpdateShowSpy = cy.spy().as("onUpdateShowSpy");
     let errMsg = "test error";
     let error = new Error(errMsg);
-    cy.mount(ErrorDialog, {
+    const vue = cy.mount(ErrorDialog, {
       props: {
         show: true,
         error: error,
-        "onUpdate:show": onUpdateShowSpy,
       },
     });
-    cy.get('[data-cy="btn-ok"]').click();
-    cy.get("@onUpdateShowSpy").should("have.been.calledOnceWith", false);
+    cy.dataCy("btn-ok").click();
+    vue.then(({ wrapper }) => {
+      expect(wrapper.emitted("update:show")).to.have.length(1);
+    });
   });
 });

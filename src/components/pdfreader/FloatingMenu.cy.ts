@@ -3,14 +3,15 @@ import FloatingMenu from "./FloatingMenu.vue";
 describe("<FloatingMenu />", () => {
   it("renders", () => {
     cy.mount(FloatingMenu);
-    cy.get('[data-cy="btn-#ffff00"]');
-    cy.get('[data-cy="btn-copy"]');
+    cy.dataCy("btn-ffff00");
+    cy.dataCy("btn-copy");
   });
 
   it("select color", () => {
-    const onHighlightTextSpy = cy.spy().as("onHighlightTextSpy");
-    cy.mount(FloatingMenu, { props: { onHighlightText: onHighlightTextSpy } });
-    cy.get('[data-cy="btn-#ffff00"]').click();
-    cy.get("@onHighlightTextSpy").should("have.been.calledWith", "#ffff00");
+    const vue = cy.mount(FloatingMenu);
+    cy.dataCy("btn-ffff00").click();
+    vue.then(({ wrapper }) => {
+      expect(wrapper.emitted("highlightText")).to.have.length(1);
+    });
   });
 });

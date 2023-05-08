@@ -5,5 +5,5 @@
     "allowSyntheticDefaultImports": true,
     "lib": ["DOM.Iterable"]
   },
-  "include": ["src", "./cypress.d.ts"]
+  "include": ["src", "./cypress.d.ts", "test/cypress/**/*.ts"]
 }

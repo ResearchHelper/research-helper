@@ -6,6 +6,7 @@
         :style="`width: ${width}px;`"
         class="q-px-lg ellipsis text-grey"
         v-html="text"
+        data-cy="text"
       ></div>
     </q-td>
   </q-tr>

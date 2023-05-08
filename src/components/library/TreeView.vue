@@ -76,6 +76,7 @@
             size="1.5rem"
             :name="prop.node.icon"
           />
+          <!-- input must have keypress.space.stop since space is default to expand row rather than space in text -->
           <input
             v-if="renamingFolderId === prop.node._id"
             style="width: calc(100% - 1.5rem)"
@@ -83,6 +84,7 @@
             v-model="prop.node.label"
             @blur="renameFolder"
             @keydown.enter="renameFolder"
+            @keypress.space.stop
           />
           <div
             v-else
@@ -99,7 +101,7 @@
 
 <script setup lang="ts">
 // types
-import { onMounted, ref } from "vue";
+import { onMounted, ref, watch } from "vue";
 import { Folder, Project } from "src/backend/database";
 import { QTree, QTreeNode } from "quasar";
 //db
@@ -112,11 +114,13 @@ import {
   moveFolderInto,
   getParentFolder,
 } from "src/backend/project/folder";
-import { sortTree } from "src/backend/project/utils";
 import { getProject, updateProject } from "src/backend/project/project";
 import { updateAppState } from "src/backend/appState";
+import { sortTree } from "src/backend/project/utils";
+import { useI18n } from "vue-i18n";
 
 const stateStore = useStateStore();
+const { t } = useI18n({ useScope: "global" });
 
 const props = defineProps({ draggingProjectId: String });
 const emit = defineEmits(["exportFolder"]);
@@ -132,8 +136,20 @@ const draggingNode = ref<Folder | null>(null);
 const dragoverNode = ref<Folder | null>(null);
 const enterTime = ref(0);
 
+// change folder lable if locale changed
+watch(
+  () => stateStore.settings.language,
+  () => {
+    for (let id of specialFolderIds.value) {
+      let node = tree.value?.getNodeByKey(id) as QTreeNode;
+      node.label = t(id);
+    }
+  }
+);
+
 onMounted(async () => {
   folders.value = (await getFolderTree()) as QTreeNode[];
+  folders.value[0].label = t("library");
 });
 
 async function saveState() {

@@ -46,10 +46,13 @@ const fileBrowser = {
    * Show file browser
    * multiSelections - can user select multiple files
    * filters - e.g. [{ name: "*.pdf", extensions: ["pdf"] }]
-   * @param config 
+   * @param config
    * @returns filePaths
    */
-  showFilePicker(config: {multiSelections: boolean, filters: FileFilter[] }): string[] | undefined {
+  showFilePicker(config: {
+    multiSelections: boolean;
+    filters: FileFilter[];
+  }): string[] | undefined {
     const mainWindow = BrowserWindow.getFocusedWindow();
     if (mainWindow === null) return;
     const result = dialog.showOpenDialogSync(mainWindow, {
@@ -103,6 +106,25 @@ contextBridge.exposeInMainWorld("browser", browser);
 // auto updater
 contextBridge.exposeInMainWorld("updater", updater);
 
+// ctrl/⌘ + and ctrl/⌘ - to zoom in and out
+document.addEventListener("keydown", (e: KeyboardEvent) => {
+  if (!e.ctrlKey && !e.metaKey) return; // ctrl for win and linux, metaKey for mac
+  if (e.key === "+" || e.key === "=") {
+    let win = BrowserWindow.getFocusedWindow();
+    let currentZoomFactor = win?.webContents.getZoomFactor();
+    if (currentZoomFactor)
+      win?.webContents.setZoomFactor(currentZoomFactor + 0.1);
+  } else if (e.key === "-") {
+    // prevent the default ctrl - zoom out and do it our self
+    // since the default ctrl - does not work if we press - on numpad
+    e.preventDefault();
+    let win = BrowserWindow.getFocusedWindow();
+    let currentZoomFactor = win?.webContents.getZoomFactor();
+    if (currentZoomFactor)
+      win?.webContents.setZoomFactor(currentZoomFactor - 0.1);
+  }
+});
+
 // declare this global
 declare global {
   // also export it
@@ -113,5 +135,7 @@ declare global {
     fileBrowser: typeof fileBrowser;
     browser: typeof browser;
     updater: typeof updater;
+    // for test
+    Cypress: typeof Cypress;
   }
 }

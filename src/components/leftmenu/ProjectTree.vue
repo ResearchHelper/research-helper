@@ -103,12 +103,14 @@
           name="bi-file-earmark-text"
         />
         <!-- note icon has 1rem width -->
+        <!-- input must have keypress.space.stop since space is default to expand row rather than space in text -->
         <input
           v-if="prop.node == renamingNote"
           style="width: calc(100% - 1.2rem)"
           v-model="prop.node.label"
           @keydown.enter="renameNote"
           @blur="renameNote"
+          @keypress.space.stop
           ref="renameInput"
         />
         <!-- add item-id and type for access of drag source -->
@@ -134,7 +136,15 @@
   </q-tree>
 </template>
 <script setup lang="ts">
-import { inject, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import {
+  computed,
+  inject,
+  nextTick,
+  onBeforeUnmount,
+  onMounted,
+  ref,
+  watch,
+} from "vue";
 import { EventBus, QTree, QTreeNode } from "quasar";
 import { BusEvent, Edge, Note, NoteType, Project } from "src/backend/database";
 // db

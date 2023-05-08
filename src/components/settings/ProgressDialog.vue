@@ -23,10 +23,11 @@
           v-for="(error, index) in errors"
           :key="index"
           class="text-negative"
+          :data-cy="`error-prompt-${index}`"
         >
           {{ error }}
         </div>
-        <div v-show="progress > 0.999">
+        <div v-show="progress >= 0.999">
           {{ $t("files-were-successfully-transfer-to-new-path") }}
         </div>
       </q-card-section>
@@ -37,6 +38,7 @@
           :ripple="false"
           label="OK"
           v-close-popup
+          data-cy="btn-ok"
         >
         </q-btn>
       </q-card-actions>

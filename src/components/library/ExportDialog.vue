@@ -17,6 +17,7 @@
             options-dense
             :options="formats"
             v-model="format"
+            data-cy="format-select"
           />
 
           <q-select
@@ -26,6 +27,7 @@
             options-dense
             :options="templates"
             v-model="template"
+            data-cy="template-select"
           />
         </div>
       </q-card-section>
@@ -34,11 +36,13 @@
           flat
           label="cancel"
           @click="cancel"
+          data-cy="btn-cancel"
         />
         <q-btn
           flat
           label="confirm"
           @click="confirm"
+          data-cy="btn-confirm"
         />
       </q-card-actions>
     </q-card>
@@ -47,13 +51,13 @@
 <script setup lang="ts">
 import { ref } from "vue";
 
-const props = defineProps({ show: Boolean });
+const props = defineProps({ show: { type: Boolean, required: true } });
 const emit = defineEmits(["update:show", "confirm"]);
 
 const formats = ref([
   { label: "Bibliography", value: "bibliography" },
   { label: "BibTeX", value: "bibtex" },
-  { label: "BibLaTex", value: "biblatex" },
+  { label: "BibLaTeX", value: "biblatex" },
   { label: "CLS-JSON", value: "json" },
   { label: "RIS", value: "ris" },
 ]);

@@ -85,6 +85,9 @@ html {
 
 .q-tooltip {
   font-size: 0.8rem;
+  // fixed weired line breaks for chinese tooltip
+  word-break: keep-all;
+  overflow: hidden;
 }
 
 .q-splitter-separator {

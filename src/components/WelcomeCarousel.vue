@@ -75,8 +75,8 @@ const stateStore = useStateStore();
 
 const path = ref("");
 const languageOptions = ref([
-  { value: "en_US", label: t("english-en_us") },
-  { value: "zh_CN", label: t("zhong-wen-zhcn") },
+  { value: "en_US", label: "English (en_US)" },
+  { value: "zh_CN", label: "中文 (zh_CN)" },
 ]);
 
 const language = computed({

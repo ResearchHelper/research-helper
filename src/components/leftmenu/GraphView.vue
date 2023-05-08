@@ -1,48 +1,46 @@
 <template>
-  <q-spinner-ios
-    v-show="!ready && !specialPages.includes(itemId)"
-    color="primary"
-    size="md"
-  />
-  <div class="q-mx-xl q-my-sm row justify-between">
-    <div class="row items-center">
-      <div class="square"></div>
-      <div
-        class="q-ml-xs"
-        style="font-size: 1rem"
-      >
-        {{ $t("project") }}
+  <div v-if="nodes.length == 0">{{ $t("no-related-projects-or-notes") }}</div>
+  <div v-else>
+    <div class="q-mx-xl q-my-sm row justify-between">
+      <div class="row items-center">
+        <div class="square"></div>
+        <div
+          class="q-ml-xs"
+          style="font-size: 1rem"
+        >
+          {{ $t("project") }}
+        </div>
+      </div>
+      <div class="row items-center">
+        <div class="circle"></div>
+        <div
+          class="q-ml-xs"
+          style="font-size: 1rem"
+        >
+          {{ $t("note") }}
+        </div>
+      </div>
+      <div class="row items-center">
+        <div class="triangle"></div>
+        <div
+          class="q-ml-xs"
+          style="font-size: 1rem"
+        >
+          {{ $t("missing") }}
+        </div>
       </div>
     </div>
-    <div class="row items-center">
-      <div class="circle"></div>
-      <div
-        class="q-ml-xs"
-        style="font-size: 1rem"
-      >
-        {{ $t("note") }}
-      </div>
-    </div>
-    <div class="row items-center">
-      <div class="triangle"></div>
-      <div
-        class="q-ml-xs"
-        style="font-size: 1rem"
-      >
-        {{ $t("missing") }}
-      </div>
-    </div>
+    <div
+      :style="`height: ${height}px`"
+      id="cy"
+      ref="graph"
+    ></div>
   </div>
-  <div
-    :style="`height: ${height}px`"
-    id="cy"
-    ref="graph"
-  ></div>
 </template>
 
 <script setup lang="ts">
 // types
-import { onMounted, ref, watch } from "vue";
+import { inject, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { Edge, Node } from "src/backend/database";
 // db
 import { getOutEdge, getInEdges } from "src/backend/project/graph";
@@ -50,6 +48,7 @@ import { useStateStore } from "src/stores/appState";
 // cytoscape
 import cytoscape from "cytoscape";
 import cola from "cytoscape-cola";
+import { EventBus } from "quasar";
 cytoscape.use(cola);
 
 interface NodeUI {
@@ -66,6 +65,7 @@ const props = defineProps({
 });
 
 const stateStore = useStateStore();
+const bus = inject("bus") as EventBus;
 
 const ready = ref(false);
 const specialPages = ref(["library", "settings"]);
@@ -81,16 +81,21 @@ watch(
   }
 );
 
-onMounted(async () => {
-  await reload();
+onMounted(() => {
+  reload();
+  bus.on("updateGraph", reload);
+});
+
+onBeforeUnmount(() => {
+  bus.off("updateGraph", reload);
 });
 
 async function reload() {
   if (!!!props.itemId || specialPages.value.includes(props.itemId)) return;
-  ready.value = false;
+  // ready.value = false;
   await getGraph();
   await drawGraph();
-  ready.value = true;
+  // ready.value = true;
 }
 
 async function getGraph() {
@@ -210,6 +215,10 @@ async function drawGraph() {
     }, 100);
   });
 }
+
+defineExpose({
+  reload,
+});
 </script>
 <style scoped>
 .square {

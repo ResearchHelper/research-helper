@@ -28,15 +28,3 @@
 // Imports Quasar Cypress AE predefined commands
 import { registerCommands } from "@quasar/quasar-app-extension-testing-e2e-cypress";
 registerCommands();
-
-// declare global {
-//   namespace Cypress {
-//     interface Chainable {
-//       getByTestId: (id: string) => Chainable<JQuery<HTMLElement>>;
-//     }
-//   }
-// }
-
-// Cypress.Commands.add("getByTestId", (id) => {
-//   return cy.get(`[data-testid=${id}]`);
-// });

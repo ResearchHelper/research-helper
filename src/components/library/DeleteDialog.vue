@@ -38,6 +38,7 @@
           v-close-popup
           :ripple="false"
           @click="cancel"
+          data-cy="btn-cancel"
         >
           {{ $t("cancel") }}
         </q-btn>
@@ -47,6 +48,7 @@
           :ripple="false"
           @click="confirm"
           color="negative"
+          data-cy="btn-confirm"
         >
           {{ $t("confirm") }}
         </q-btn>
@@ -56,15 +58,14 @@
 </template>
 <script setup lang="ts">
 const props = defineProps({
-  show: Boolean,
-  projectTitle: String,
-  deleteFromDB: Boolean,
+  show: { type: Boolean, required: true },
+  projectTitle: { type: String, required: false },
+  deleteFromDB: { type: Boolean, required: true },
 });
 const emit = defineEmits(["update:show", "confirm"]);
 
 function confirm() {
-  let deleteFromDB = true;
-  emit("confirm", deleteFromDB);
+  emit("confirm");
   emit("update:show", false);
 }
 

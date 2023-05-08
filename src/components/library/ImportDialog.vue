@@ -21,6 +21,7 @@
           :ripple="false"
           :label="$t('cancel')"
           @click="cancel"
+          data-cy="btn-cancel"
         />
         <q-btn
           flat
@@ -28,6 +29,7 @@
           :ripple="false"
           :label="$t('confirm')"
           @click="confirm"
+          data-cy="btn-confirm"
         />
       </q-card-actions>
     </q-card>
@@ -44,6 +46,7 @@ const isCreateFolder = ref(true);
 
 function confirm() {
   emit("confirm", isCreateFolder.value);
+  emit("update:show", false);
 }
 
 function cancel() {
