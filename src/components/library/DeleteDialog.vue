@@ -59,7 +59,7 @@
 <script setup lang="ts">
 const props = defineProps({
   show: { type: Boolean, required: true },
-  projectTitle: { type: String, required: true },
+  projectTitle: { type: String, required: false },
   deleteFromDB: { type: Boolean, required: true },
 });
 const emit = defineEmits(["update:show", "confirm"]);

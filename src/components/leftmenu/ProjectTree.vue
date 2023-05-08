@@ -103,12 +103,14 @@
           name="bi-file-earmark-text"
         />
         <!-- note icon has 1rem width -->
+        <!-- input must have keypress.space.stop since space is default to expand row rather than space in text -->
         <input
           v-if="prop.node == renamingNote"
           style="width: calc(100% - 1.2rem)"
           v-model="prop.node.label"
           @keydown.enter="renameNote"
           @blur="renameNote"
+          @keypress.space.stop
           ref="renameInput"
         />
         <!-- add item-id and type for access of drag source -->

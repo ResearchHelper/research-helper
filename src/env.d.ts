@@ -1,4 +1,5 @@
 /* eslint-disable */
+// must import this so we have typehint for window object
 import { Window } from "src-electron/electron-preload";
 
 declare namespace NodeJS {

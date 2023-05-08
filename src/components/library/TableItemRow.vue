@@ -10,7 +10,10 @@
       v-if="item.dataType === 'note'"
       colspan="100%"
     >
-      <div class="row items-center">
+      <div
+        class="row items-center"
+        data-cy="content"
+      >
         <q-icon
           v-if="item.type === NoteType.EXCALIDRAW"
           style="font-size: 1rem"
@@ -61,6 +64,7 @@
       square
       auto-close
       transition-duration="0"
+      data-cy="menu"
     >
       <q-list
         v-if="item.dataType === 'note'"
@@ -78,6 +82,7 @@
         <q-item
           clickable
           @click="openItem"
+          data-cy="btn-open-item"
         >
           <q-item-section>{{ $t("open-note") }}</q-item-section>
         </q-item>

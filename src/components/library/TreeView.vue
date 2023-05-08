@@ -76,6 +76,7 @@
             size="1.5rem"
             :name="prop.node.icon"
           />
+          <!-- input must have keypress.space.stop since space is default to expand row rather than space in text -->
           <input
             v-if="renamingFolderId === prop.node._id"
             style="width: calc(100% - 1.5rem)"
@@ -83,6 +84,7 @@
             v-model="prop.node.label"
             @blur="renameFolder"
             @keydown.enter="renameFolder"
+            @keypress.space.stop
           />
           <div
             v-else

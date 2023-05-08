@@ -31,6 +31,7 @@ import { contextBridge, shell, ipcRenderer, FileFilter } from "electron";
 import { app, dialog, BrowserWindow } from "@electron/remote";
 import fs from "fs";
 import path from "path";
+import { useStateStore } from "src/stores/appState";
 
 const fileBrowser = {
   showFolderPicker() {
@@ -116,5 +117,7 @@ declare global {
     fileBrowser: typeof fileBrowser;
     browser: typeof browser;
     updater: typeof updater;
+    // for test
+    Cypress: typeof Cypress;
   }
 }

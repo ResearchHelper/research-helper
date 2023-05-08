@@ -34,7 +34,7 @@
             flat
             square
             label="Test"
-            @click="stateStore.openItem('testNote')"
+            @click="setComponent('test')"
           >
             <q-tooltip>Test Page</q-tooltip>
           </q-btn>
@@ -157,7 +157,7 @@ const bus = inject("bus") as EventBus;
 const layout = ref<InstanceType<typeof GLayout> | null>(null);
 const leftMenu = ref<InstanceType<typeof LeftMenu> | null>(null);
 
-const showTestBtn = false; // process.env.DEV; // show testPage btn if in dev
+const showTestBtn = process.env.DEV; // false;  show testPage btn if in dev
 const showWelcomeCarousel = ref(false);
 const leftMenuSize = ref(0);
 const isUpdateAvailable = ref(false);
@@ -280,7 +280,7 @@ async function setComponent(id: string) {
       title = t("settings");
       break;
     case "test": // for development testing
-      componentType = "ExcalidrawPage";
+      componentType = "TestPage";
       title = t("test");
       break;
     default:
