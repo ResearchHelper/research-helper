@@ -119,3 +119,23 @@ autoUpdater.on("error", (error, info) => {
   if (mainWindow === undefined) return;
   mainWindow.webContents.send("updateMessage", info);
 });
+
+// ctrl/⌘ + and ctrl/⌘ - to zoom in and out
+document.addEventListener("keydown", (e: KeyboardEvent) => {
+  if (!e.ctrlKey && !e.metaKey) return; // ctrl for win and linux, metaKey for mac
+  if (e.key === "+" || e.key === "=") {
+    console.log("here");
+    let win = BrowserWindow.getFocusedWindow();
+    let currentZoomFactor = win?.webContents.getZoomFactor();
+    if (currentZoomFactor)
+      win?.webContents.setZoomFactor(currentZoomFactor + 0.1);
+  } else if (e.key === "-") {
+    // prevent the default ctrl - zoom out and do it our self
+    // since the default ctrl - does not work if we press - on numpad
+    e.preventDefault();
+    let win = BrowserWindow.getFocusedWindow();
+    let currentZoomFactor = win?.webContents.getZoomFactor();
+    if (currentZoomFactor)
+      win?.webContents.setZoomFactor(currentZoomFactor - 0.1);
+  }
+});

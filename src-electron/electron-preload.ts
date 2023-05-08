@@ -31,7 +31,6 @@ import { contextBridge, shell, ipcRenderer, FileFilter } from "electron";
 import { app, dialog, BrowserWindow } from "@electron/remote";
 import fs from "fs";
 import path from "path";
-import { useStateStore } from "src/stores/appState";
 
 const fileBrowser = {
   showFolderPicker() {
@@ -106,6 +105,23 @@ contextBridge.exposeInMainWorld("browser", browser);
 
 // auto updater
 contextBridge.exposeInMainWorld("updater", updater);
+
+document.addEventListener("keydown", (e: KeyboardEvent) => {
+  if (!e.ctrlKey && !e.metaKey) return; // ctrl for win and linux, metaKey for mac
+  if (e.key === "+" || e.key === "=") {
+    console.log("here");
+    let win = BrowserWindow.getFocusedWindow();
+    let currentZoomFactor = win?.webContents.getZoomFactor();
+    if (currentZoomFactor)
+      win?.webContents.setZoomFactor(currentZoomFactor + 0.1);
+  } else if (e.key === "-") {
+    e.preventDefault(); // prevent the default ctrl+
+    let win = BrowserWindow.getFocusedWindow();
+    let currentZoomFactor = win?.webContents.getZoomFactor();
+    if (currentZoomFactor)
+      win?.webContents.setZoomFactor(currentZoomFactor - 0.1);
+  }
+});
 
 // declare this global
 declare global {
