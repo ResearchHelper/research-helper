@@ -11,13 +11,9 @@ style="width: 100px; vertical-align:middle">
 
 # Research Helper
 
-Research helper is a paper/book management tool. It is a reference management tool with various useful functionalities such as: built-in PDF reader and live markdown.
+Research helper is a paper/book management tool. It is a reference management tool with various useful functionalities such as: built-in PDF reader, live markdown note and excalidraw note.
 
 ![screenshot.png](./galleries/screenshot.png)
-
-# Demo
-
-![demo.gif](./galleries/demo.gif)
 
 # Contribute to Research-Helper
 
@@ -52,6 +48,7 @@ This project is made possible by the following open source projects.
 - pdf.js
 - vditor
 - Pouchdb
+- Excalidraw
 
 # License
 
