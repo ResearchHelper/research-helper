@@ -1,5 +1,8 @@
 <template>
-  <div class="row items-center q-px-sm q-py-xs">
+  <div
+    style="z-index: 100"
+    class="row items-center q-px-sm q-py-xs"
+  >
     <ColorPicker @selected="(color: string) => $emit('highlightText', color)" />
     <q-btn
       class="q-ml-sm"

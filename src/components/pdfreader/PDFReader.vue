@@ -414,6 +414,7 @@ function setPosition(rects: DOMRect[] | DOMRectList) {
   left: ${mid - bgRect.left - 75}px;
   top: ${top - bgRect.top + 10}px;
   min-width: 150px;
+  z-index: 100;
   `;
 }
 
@@ -556,6 +557,10 @@ onMounted(async () => {
                 x2: ev.clientX,
                 y2: ev.clientY,
               });
+              // change back to cursor if comment is placed
+              // otherwise it's easy to create another one while user just want to click meaninglessly
+              if (pdfState.tool === AnnotationType.COMMENT)
+                changeTool(AnnotationType.CURSOR);
             }
           }
           e.source.div.onmousemove = null;
@@ -635,7 +640,6 @@ onMounted(async () => {
   loadPDF(props.projectId);
 });
 </script>
-
 <style lang="scss">
 @import "pdfjs-dist/web/pdf_viewer.css";
 .viewerContainer {
@@ -662,12 +666,25 @@ onMounted(async () => {
 }
 
 .annotationEditorLayer {
-  // for pdfjs-dist ~ 3.1
+  // for pdfjs-dist ~ 3.6
   z-index: unset;
+  display: block;
 }
 
 .activeAnnotation {
   outline-offset: 3px;
   outline: dashed 2px $primary;
+}
+
+.annotationLayer .popup {
+  // fix white text color in standard annotations
+  // standard annotation means annotation made by adobe pdf etc
+  color: black;
+}
+.annotationLayer .popup h1 {
+  // fix weird title in standard annotation
+  font-weight: bold;
+  line-height: unset;
+  letter-spacing: unset;
 }
 </style>

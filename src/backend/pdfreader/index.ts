@@ -32,13 +32,21 @@ class PDFApplication {
       linkService: pdfLinkService,
     });
 
+    // l10n resource
+    const link = document.createElement("link");
+    link.rel = "resources";
+    link.type = "application/l10n";
+    link.href = "l10n/en-US/viewer.properties";
+    document.head.append(link);
+    const l10n = new pdfjsViewer.GenericL10n("en-US");
+
     const pdfViewer = new pdfjsViewer.PDFViewer({
       container,
       eventBus: eventBus,
       linkService: pdfLinkService,
       findController: pdfFindController,
       annotationEditorMode: pdfjsLib.AnnotationEditorType.NONE,
-      l10n: pdfjsViewer.NullL10n,
+      l10n: l10n,
     });
     // must have this otherwise find controller does not work
     pdfLinkService.setViewer(pdfViewer);

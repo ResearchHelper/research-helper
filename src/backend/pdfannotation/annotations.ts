@@ -1,5 +1,5 @@
 import { Annotation } from "../database";
-import commentIcon from "src/assets/annotation-note.svg";
+// import commentIcon from "src/assets/annotation-note.svg";
 
 export function comment(
   container: HTMLElement,
@@ -29,10 +29,12 @@ export function comment(
   section.style.pointerEvents = "auto";
   section.style.cursor = "pointer";
   section.style.backgroundColor = annot.color;
+  section.style.zIndex = "100";
   section.classList.add("textAnnotation");
 
   let img = document.createElement("img");
-  img.src = commentIcon;
+  // img.src = commentIcon;
+  img.src = "annotation-note.svg";
   img.style.position = "absolute";
   img.style.left = "0px";
   img.style.top = "0px";
@@ -71,9 +73,10 @@ export function highlight(
     section.style.height = `${rect.height}%`;
     section.style.pointerEvents = "auto";
     section.style.cursor = "pointer";
-    section.className = "highlightAnnotation";
     section.style.backgroundColor = annot.color;
     section.style.mixBlendMode = "multiply";
+    section.style.zIndex = "100";
+    section.className = "highlightAnnotation";
 
     // put dom on the annotation layer
     if (!existed) annotationEditorLayer.appendChild(section);
@@ -110,6 +113,7 @@ export function rectangle(
   section.style.cursor = "pointer";
   section.style.backgroundColor = annot.color;
   section.style.mixBlendMode = "multiply";
+  section.style.zIndex = "100";
   section.className = "rectangleAnnotation";
 
   // put dom on the annotation layer
@@ -148,6 +152,8 @@ export function underline(
     section.style.borderBottomStyle = "solid";
     section.style.borderBottomColor = annot.color;
     section.style.borderBottomWidth = "2px";
+    section.style.zIndex = "100";
+
     section.className = "underlineAnnotation";
 
     // put dom on the annotation layer
@@ -188,6 +194,7 @@ export function strikeout(
     section.style.borderBottomStyle = "solid";
     section.style.borderBottomColor = annot.color;
     section.style.borderBottomWidth = "2px";
+    section.style.zIndex = "100";
     section.className = "strikeoutAnnotation";
 
     // put dom on the annotation layer
