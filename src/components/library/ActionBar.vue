@@ -68,12 +68,7 @@
       square
       class="actionbar-input"
       :placeholder="$t('local-search')"
-      :model-value="searchString"
-      @update:model-value="
-        (text) => {
-          $emit('update:searchString', text);
-        }
-      "
+      v-model="searchText"
     >
       <template v-slot:append>
         <q-icon
@@ -105,12 +100,12 @@
 
 <script setup lang="ts">
 // types
-import { nextTick, ref, watch } from "vue";
-import { QFile } from "quasar";
+import { computed, nextTick, ref, watch } from "vue";
+import { QFile, debounce } from "quasar";
 
 const props = defineProps({
   rightMenuSize: { type: Number, required: true },
-  searchString: String,
+  searchString: { type: String, required: true },
 });
 const emit = defineEmits([
   "update:searchString",
@@ -122,13 +117,7 @@ const emit = defineEmits([
   "refreshTable",
 ]);
 
-const filePicker = ref<QFile | null>(null);
-
 const showRightMenu = ref(false);
-const multiple = ref(true);
-const accept = ref("");
-const fileType = ref("");
-const files = ref<File[]>([]);
 
 watch(
   () => props.rightMenuSize,
@@ -136,6 +125,16 @@ watch(
     showRightMenu.value = size > 0;
   }
 );
+
+const searchText = computed({
+  get() {
+    return props.searchString;
+  },
+  set: debounce((text: string) => {
+    // searchStart(text);
+    emit("update:searchString", text);
+  }, 500),
+});
 
 async function addByFiles(type: string) {
   let filePaths: string[] | undefined;

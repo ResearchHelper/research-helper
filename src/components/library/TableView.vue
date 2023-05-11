@@ -13,6 +13,7 @@
     :wrap-cells="true"
     :filter="searchString"
     :filter-method="(searchProject as any)"
+    :loading="loading"
     ref="table"
   >
     <template v-slot:header="props">
@@ -116,6 +117,7 @@ const projectRow = ref<typeof TableProjectRow | null>(null);
 const isClickingPDF = ref(false);
 const showExpansion = ref(false);
 const expansionText = ref<string[]>([]);
+const loading = ref(false); // is table filtering data
 
 const headers = computed(() => {
   return [
@@ -196,6 +198,7 @@ function searchProject(
   cols: QTableColumn[],
   getCellValue: (col: QTableColumn, row: Project) => any
 ) {
+  loading.value = true;
   expansionText.value = [];
   let text = "";
   let re = RegExp(terms, "i"); // case insensitive
@@ -235,20 +238,23 @@ function searchProject(
     }
 
     // search notes
-    for (let note of row.children as Note[]) {
-      if (note.label.search(re) != -1) {
-        text = note.label.replace(
-          re,
-          `<span class="bg-primary">${terms}</span>`
-        );
-        expansionText.value.push(`Note: ${text}`);
-        return true;
+    if (row.children) {
+      for (let note of row.children as Note[]) {
+        if (note.label.search(re) != -1) {
+          text = note.label.replace(
+            re,
+            `<span class="bg-primary">${terms}</span>`
+          );
+          expansionText.value.push(`Note: ${text}`);
+          return true;
+        }
       }
     }
 
     return false;
   });
   showExpansion.value = true;
+  loading.value = false;
   return filtered;
 }
 </script>
