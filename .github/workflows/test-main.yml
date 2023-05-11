@@ -1,9 +1,6 @@
-name: Test
+name: Test on main branch
 
-on:
-  push:
-    branches-ignore:
-      - main
+on: pull_request
 
 jobs:
   test:
