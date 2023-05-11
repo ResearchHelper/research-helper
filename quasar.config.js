@@ -210,7 +210,6 @@ module.exports = configure(function (/* ctx */) {
         },
         win: {
           target: "nsis",
-          deleteAppDataOnUninstall: true,
         },
         nsis: {
           deleteAppDataOnUninstall: true,
