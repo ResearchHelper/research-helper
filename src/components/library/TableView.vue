@@ -46,7 +46,6 @@
         @click="clickProject(props.row, props.rowIndex)"
         @dblclick="dblclickProject(props.row)"
         @contextmenu="toggleContextMenu(props.row, props.rowIndex)"
-        ref="projectRow"
       ></TableProjectRow>
 
       <!-- Expanded Rows -->
@@ -88,7 +87,7 @@
 <script setup lang="ts">
 // types
 import { computed, PropType, ref } from "vue";
-import { Project, Note } from "src/backend/database";
+import { Project, Note, Author } from "src/backend/database";
 import { QTable, QTableColumn } from "quasar";
 // components
 import TableItemRow from "./TableItemRow.vue";
@@ -113,7 +112,6 @@ const emit = defineEmits([
   "update:selectedProject",
 ]);
 
-const projectRow = ref<typeof TableProjectRow | null>(null);
 const isClickingPDF = ref(false);
 const showExpansion = ref(false);
 const expansionText = ref<string[]>([]);
@@ -137,6 +135,22 @@ const headers = computed(() => {
     },
   ] as QTableColumn[];
 });
+
+/**
+ * Convert array of author objects to string
+ * @param authors
+ */
+function authorString(authors: Author[] | undefined) {
+  if (!!!authors?.length) return "";
+
+  let names = [];
+  for (let author of authors) {
+    if (!!!author) continue;
+    if (!!author.literal) names.push(author.literal);
+    else names.push(`${author.given} ${author.family}`);
+  }
+  return names.join(", ");
+}
 
 /**
  * Select a row in the table
@@ -228,13 +242,11 @@ function searchProject(
     }
 
     // search authors
-    if (projectRow.value) {
-      let authors = projectRow.value.authorString(row.author);
-      if (authors.search(re) != -1) {
-        text = authors.replace(re, `<span class="bg-primary">${terms}</span>`);
-        expansionText.value.push(`Authors: ${text}`);
-        return true;
-      }
+    let authors = authorString(row.author);
+    if (authors.search(re) != -1) {
+      text = authors.replace(re, `<span class="bg-primary">${terms}</span>`);
+      expansionText.value.push(`Authors: ${text}`);
+      return true;
     }
 
     // search notes

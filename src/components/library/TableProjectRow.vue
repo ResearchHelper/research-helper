@@ -71,8 +71,4 @@ function authorString(authors: Author[]) {
   }
   return names.join(", ");
 }
-
-defineExpose({
-  authorString,
-});
 </script>
