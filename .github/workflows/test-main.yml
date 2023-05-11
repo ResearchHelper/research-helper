@@ -1,9 +1,6 @@
-name: Test
+name: Test on main branch
 
-on:
-  push:
-    branches-ignore:
-      - main
+on: pull_request
 
 jobs:
   test:
@@ -18,7 +15,7 @@ jobs:
         with:
           node-version: 16
           cache: "yarn"
-      - run: yarn install
+      - run: yarn install --frozen-lockfile
 
       - name: Run tests
         run: yarn test:ci
