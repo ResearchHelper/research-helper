@@ -1,53 +1,39 @@
 <template>
-  <q-tree
-    :nodes="simple"
-    node-key="label"
-  >
-    <template v-slot:default-header="prop">
-      <div
-        @click.stop
-        @keypress="test"
-      >
-        <q-input v-model="prop.node.label" />
-      </div>
-    </template>
-  </q-tree>
+  <q-btn
+    v-if="btn"
+    :icon="btn.icon"
+    @click="btn.onClick"
+  ></q-btn>
+  <div id="view-example-plugin"></div>
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+interface Button {
+  icon: string;
+  onClick: () => void;
+}
+interface View {
+  mount: (parent: HTMLElement) => void;
+}
 
-const props = defineProps({
-  visible: Boolean,
-  itemId: { type: String, required: true },
-});
+import { ref, onMounted } from "vue";
 
-const simple = ref([
-  {
-    label: "root",
-    children: [
-      {
-        label: "a",
-      },
-      {
-        label: "b",
-      },
-      {
-        label: "c",
-      },
-    ],
-  },
-]);
+const componentName = "TestPage";
+const btn = ref<Button | undefined>(undefined);
+// const view = ref<View | undefined>(undefined);
 
-const label = ref("");
-
-const test = (e: KeyboardEvent) => {
-  console.log(e);
-  if (e.code == "Space") {
-    console.log("here");
-    // e.preventDefault();
-    // e.stopImmediatePropagation();
-    e.stopPropagation();
+const id = "example-plugin";
+window.pluginAPI.initPlugin(id);
+let btns = window.pluginAPI.getBtns(id) as Button[];
+if (btns.length != 0) {
+  btn.value = btns[0];
+}
+onMounted(() => {
+  let div = document.getElementById(`view-${id}`) as HTMLElement;
+  let views = window.pluginAPI.getViews(id) as Array<View> | undefined;
+  if (views && views.length > 0) {
+    console.log(views);
+    views[0].mount(div);
   }
-};
+});
 </script>

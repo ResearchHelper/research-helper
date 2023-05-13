@@ -31,6 +31,7 @@ import { contextBridge, shell, ipcRenderer, FileFilter } from "electron";
 import { app, dialog, BrowserWindow } from "@electron/remote";
 import fs from "fs";
 import path from "path";
+import pluginAPI from "./plugin";
 
 const fileBrowser = {
   showFolderPicker() {
@@ -93,6 +94,8 @@ const updater = {
   },
 };
 
+contextBridge.exposeInMainWorld("pluginAPI", pluginAPI);
+
 // inject these libraries in preload, otherwise they are externalized
 contextBridge.exposeInMainWorld("fs", fs);
 contextBridge.exposeInMainWorld("path", path);
@@ -135,6 +138,7 @@ declare global {
     fileBrowser: typeof fileBrowser;
     browser: typeof browser;
     updater: typeof updater;
+    pluginAPI: typeof pluginAPI;
     // for test
     Cypress: typeof Cypress;
   }
