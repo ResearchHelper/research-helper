@@ -151,6 +151,7 @@
           </div>
           <q-btn
             dense
+            flat
             :ripple="false"
             icon="zoom_in"
             @click="$emit('changeScale', { delta: 0.1 })"
@@ -190,7 +191,7 @@
       :ripple="false"
       icon="fullscreen"
       size="0.9rem"
-      padding="xs"
+      padding="none"
       @click="requestFullscreen"
     >
       <q-tooltip>{{ $t("enter-full-screen") }}</q-tooltip>
