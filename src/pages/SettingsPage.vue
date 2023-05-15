@@ -2,7 +2,7 @@
   <q-splitter
     v-model="leftMenuSize"
     class="fit"
-    :separator-style="{ cursor: 'default' }"
+    :separator-style="{ cursor: 'col-resize' }"
   >
     <template v-slot:before>
       <div
@@ -28,6 +28,18 @@
             />
             <div style="font-size: 1rem; padding-left: 0.5rem">
               {{ $t("general") }}
+            </div>
+          </q-tab>
+          <q-tab
+            name="plugin"
+            :ripple="false"
+          >
+            <q-icon
+              name="bi-plugin"
+              size="1.2rem"
+            ></q-icon>
+            <div style="font-size: 1rem; padding-left: 0.5rem">
+              {{ $t("plugins") }}
             </div>
           </q-tab>
           <q-tab
@@ -57,6 +69,9 @@
           <q-tab-panel name="general">
             <GeneralTab />
           </q-tab-panel>
+          <q-tab-panel name="plugin">
+            <PluginTab />
+          </q-tab-panel>
           <q-tab-panel name="about">
             <AboutTab />
           </q-tab-panel>
@@ -70,6 +85,7 @@
 import { ref } from "vue";
 import GeneralTab from "src/components/settings/GeneralTab.vue";
 import AboutTab from "src/components/settings/AboutTab.vue";
+import PluginTab from "src/components/settings/plugin/PluginTab.vue";
 
 const leftMenuSize = ref(20);
 const tab = ref("general");

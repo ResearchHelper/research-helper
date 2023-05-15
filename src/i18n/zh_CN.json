@@ -113,5 +113,6 @@
   "new-project": "新项目",
   "add-excalidraw": "添加 Excalidraw",
   "update-meta": "更新信息",
-  "no-related-projects-or-notes": "没有相关的项目或笔记"
+  "no-related-projects-or-notes": "没有相关的项目或笔记",
+  "plugins": "插件"
 }

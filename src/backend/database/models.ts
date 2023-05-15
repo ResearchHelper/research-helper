@@ -236,3 +236,16 @@ export interface BusEvent {
   target?: string; // to which component
   data?: any;
 }
+
+/******************
+ * Plugin System
+ ******************/
+export interface PluginMeta {
+  id: string;
+  name: string;
+  author: string;
+  version: string;
+  description: string;
+  github: string;
+  enabled: boolean;
+}

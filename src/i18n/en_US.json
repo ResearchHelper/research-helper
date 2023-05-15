@@ -113,5 +113,6 @@
   "new-project": "New Project",
   "add-excalidraw": "New Excalidraw",
   "update-meta": "Update Meta",
-  "no-related-projects-or-notes": "No related projects or notes"
+  "no-related-projects-or-notes": "No related projects or notes",
+  "plugins": "Plugins"
 }
