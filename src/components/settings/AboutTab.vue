@@ -16,7 +16,7 @@
         </div>
       </q-card-section>
       <q-card-section class="q-pt-none">
-        {{ $t("current-version-version", [version]) }}
+        {{ $t("version", [version]) }}
         <q-btn
           v-if="!isUpdateAvailable"
           unelevated
@@ -36,6 +36,7 @@
           :label="$t('install-updates')"
           color="primary"
           @click="downloadUpdate"
+          :disable="disabled"
         />
         <div>{{ updateMsg }}</div>
       </q-card-section>
@@ -48,6 +49,7 @@ import { onMounted, ref } from "vue";
 const version = ref("");
 const updateMsg = ref("");
 const isUpdateAvailable = ref(false);
+const disabled = ref(false);
 
 onMounted(() => {
   version.value = window.updater.versionInfo();
@@ -67,6 +69,7 @@ function checkForUpdates() {
 
 function downloadUpdate() {
   window.updater.downloadUpdate();
+  disabled.value = true;
 }
 </script>
 <style scoped>

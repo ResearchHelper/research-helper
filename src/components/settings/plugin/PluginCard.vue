@@ -14,61 +14,109 @@
         />
         {{ star }}
       </div>
-      <div>By {{ meta.author }}</div>
-      <div>Version: {{ meta.version }}</div>
+      <div>{{ meta.author }}</div>
+      <div>{{ $t("version", [meta.version]) }}</div>
       <div class="q-mb-xs">{{ meta.description }}</div>
     </q-card-section>
-    <q-card-actions v-if="installed">
+    <q-card-actions v-if="status !== undefined">
       <q-btn
         flat
         dense
         square
         no-caps
-        size="sm"
+        size="0.7rem"
+        padding="xs"
         :ripple="false"
         icon="bi-gear"
       >
-        <q-tooltip>Options</q-tooltip>
+        <q-tooltip>{{ $t("settings") }}</q-tooltip>
+      </q-btn>
+      <q-btn
+        flat
+        dense
+        square
+        no-caps
+        size="0.7rem"
+        padding="xs"
+        :ripple="false"
+        icon="bi-arrow-up"
+        @click="$emit('install')"
+      >
+        <q-tooltip>{{ $t("update") }}</q-tooltip>
+      </q-btn>
+      <q-btn
+        flat
+        dense
+        square
+        no-caps
+        size="0.7rem"
+        padding="xs"
+        :ripple="false"
+        icon="bi-trash"
+        @click="$emit('uninstall')"
+      >
+        <q-tooltip>{{ $t("delete") }}</q-tooltip>
       </q-btn>
       <q-toggle
         v-model="enabled"
         color="primary"
-      />
+        size="2.2rem"
+      >
+        <q-tooltip>{{ enabled ? $t("enable") : $t("disable") }}</q-tooltip>
+      </q-toggle>
     </q-card-actions>
     <q-card-actions v-else>
       <q-btn
         dense
+        unelevated
         square
         no-caps
-        :ripple="false"
+        size="0.8rem"
         color="primary"
+        :ripple="false"
+        :disable="disableInstall"
+        @click="
+          $emit('install');
+          disableInstall = true;
+        "
       >
-        Install
+        {{ !disableInstall ? $t("install") : $t("installing") }}
       </q-btn>
     </q-card-actions>
   </q-card>
 </template>
 <script setup lang="ts">
-import { onMounted, ref, PropType, computed } from "vue";
-import { PluginMeta } from "src/backend/database";
+import { onMounted, ref, PropType, computed, watch } from "vue";
+import { PluginMeta, PluginStatus } from "src/backend/database";
 const props = defineProps({
   meta: { type: Object as PropType<PluginMeta>, required: true },
-  installed: { type: Boolean, required: true },
+  status: { type: Object as PropType<PluginStatus>, required: false },
 });
-const emit = defineEmits(["togglePlugin"]);
+const emit = defineEmits(["toggle", "install", "uninstall"]);
 const star = ref<number | null>(null);
+const disableInstall = ref(!!props.status);
 const enabled = computed({
   get() {
-    return !!props.meta.enabled;
+    return !!props.status?.enabled;
   },
   set(value: boolean) {
-    emit("togglePlugin", value);
+    console.log("toggle", value);
+    emit("toggle", value);
   },
 });
+
+watch(
+  () => props.status,
+  (status: PluginStatus | undefined) => {
+    disableInstall.value = !!status ? true : false;
+  }
+);
+
 onMounted(async () => {
+  // get star
   try {
     let response = await fetch(
-      "https://api.github.com/repos/ResearchHelper/research-helper"
+      `https://api.github.com/repos/${props.meta.repo}`
     );
     let data = await response.json();
     star.value = data.stargazers_count;

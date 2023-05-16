@@ -10,7 +10,7 @@
       padding="none"
       @click="togglePluginStore(true)"
     >
-      <q-tooltip>Add plugins</q-tooltip>
+      <q-tooltip>{{ $t("add-plugins") }}</q-tooltip>
     </q-btn>
     <q-space v-if="showAddBtn" />
     <q-input
@@ -21,7 +21,6 @@
       :placeholder="$t('search')"
       type="text"
       v-model="searchText"
-      @update:model-value="debounceSearch"
     >
       <template v-slot:append>
         <q-icon
@@ -41,23 +40,30 @@
       size="0.8rem"
       padding="none"
     >
-      <q-tooltip>Add plugins</q-tooltip>
+      <q-tooltip>{{ $t("close") }}</q-tooltip>
     </q-btn>
   </q-toolbar>
 </template>
 <script setup lang="ts">
 import { debounce } from "quasar";
-import { inject, ref } from "vue";
+import { computed, inject } from "vue";
 
 const props = defineProps({
+  search: { type: String, required: true },
   showAddBtn: { type: Boolean, required: true },
   showCloseBtn: { type: Boolean, required: true },
 });
-const emit = defineEmits(["search"]);
-const searchText = ref("");
-const debounceSearch = debounce((text: string | number | null) => {
-  emit("search", typeof text === "number" ? text.toString() : text);
-}, 500);
+const emit = defineEmits(["update:search"]);
+
+const searchText = computed({
+  get() {
+    return props.search;
+  },
+  set: debounce((text: string | number | null) => {
+    emit("update:search", typeof text === "number" ? text.toString() : text);
+  }),
+});
+
 const togglePluginStore = inject("togglePluginStore") as (
   show: boolean
 ) => void;

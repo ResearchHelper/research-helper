@@ -1,6 +1,5 @@
 <template>
-  <WelcomeCarousel v-model="showWelcomeCarousel" />
-  <!-- 56px -->
+  <WelcomeLayout />
   <q-splitter
     :model-value="45"
     unit="px"
@@ -113,8 +112,8 @@
 // types
 import { Project, Note, BusEvent } from "src/backend/database";
 // components
+import WelcomeLayout from "./WelcomeLayout.vue";
 import LeftMenu from "src/components/leftmenu/LeftMenu.vue";
-import WelcomeCarousel from "src/components/WelcomeCarousel.vue";
 // GoldenLayout
 import GLayout from "./GLayout.vue";
 import "src/css/goldenlayout/base.scss";
@@ -160,7 +159,6 @@ const layout = ref<InstanceType<typeof GLayout> | null>(null);
 const leftMenu = ref<InstanceType<typeof LeftMenu> | null>(null);
 
 const showTestBtn = process.env.DEV; // false;  show testPage btn if in dev
-const showWelcomeCarousel = ref(false);
 const leftMenuSize = ref(0);
 const isUpdateAvailable = ref(false);
 const ready = ref(false);
@@ -232,30 +230,6 @@ watch(
 /*******************************************************
  * Methods
  *******************************************************/
-
-/***************************
- * Load and apply settings
- ***************************/
-function changeTheme(theme: string) {
-  switch (theme) {
-    case "dark":
-      $q.dark.set(true);
-      break;
-
-    case "light":
-      $q.dark.set(false);
-      break;
-  }
-}
-
-function changeLanguage(language: string) {
-  locale.value = language;
-}
-
-function changeFontSize(fontSize: string) {
-  document.documentElement.style.fontSize = fontSize;
-}
-
 /*************************************************
  * GoldenLayout (set, rename, remove component)
  *************************************************/
@@ -396,20 +370,10 @@ onMounted(async () => {
   let state = await getAppState();
   stateStore.loadState(state);
 
-  // if there is no path, show welcome carousel
-  if (!stateStore.settings.storagePath) {
-    showWelcomeCarousel.value = true;
-  }
-
   // apply layout related settings
   if (stateStore.showLeftMenu) leftMenuSize.value = state.leftMenuSize;
   let _layout = await getLayout();
   if (layout.value) await layout.value.loadGLLayout(_layout.config);
-
-  // apply UI related settings
-  changeTheme(stateStore.settings.theme);
-  changeLanguage(stateStore.settings.language);
-  changeFontSize(stateStore.settings.fontSize);
 
   // check if update is available
   // if available, show a blue dot on settings icon
@@ -431,8 +395,3 @@ onBeforeUnmount(() => {
   bus.off("updateProject", (e: BusEvent) => onUpdateProject(e.data));
 });
 </script>
-<style lang="scss">
-.btn {
-  width: 45px !important;
-}
-</style>

@@ -240,12 +240,33 @@ export interface BusEvent {
 /******************
  * Plugin System
  ******************/
+interface Button {
+  icon: string;
+  onClick: () => void;
+}
+interface View {
+  mount: (parent: HTMLElement) => void;
+}
+
+export interface Plugin {
+  buttons: [];
+  views: [];
+  enable: () => void;
+  disable: () => void;
+}
+
 export interface PluginMeta {
   id: string;
   name: string;
   author: string;
   version: string;
   description: string;
-  github: string;
-  enabled: boolean;
+  repo: string;
 }
+
+export interface PluginStatus {
+  enabled: boolean;
+  updatable: boolean;
+}
+
+export interface PluginStatusMap extends Map<string, PluginStatus> {}

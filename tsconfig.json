@@ -3,7 +3,7 @@
   "compilerOptions": {
     "baseUrl": ".",
     "allowSyntheticDefaultImports": true,
-    "lib": ["DOM.Iterable"]
+    "lib": ["ES2019.Object", "DOM.Iterable"]
   },
   "include": ["src", "./cypress.d.ts", "test/cypress/**/*.ts"]
 }
