@@ -74,18 +74,11 @@ export default function CustomExcalidraw(props: {
 
   function loadExcalidrawLibrary(): LibraryItems {
     let storagePath = stateStore.settings.storagePath;
-    let filePath = path.join(storagePath, "library.excalidrawlib");
+    let hiddenFolder = path.join(storagePath, ".research-helper");
+    let filePath = path.join(hiddenFolder, "library.excalidrawlib");
     if (!fs.existsSync(filePath)) return [] as LibraryItems;
     return JSON.parse(fs.readFileSync(filePath, "utf8"))
       .libraryItems as LibraryItems;
-
-    // let libs = fs.readdirSync(folderPath);
-    // for (let lib of libs) {
-    //   let filePath = path.join(folderPath, lib);
-    //   let json = JSON.parse(fs.readFileSync(filePath, "utf8"));
-    //   items = items.concat(json.libraryItems);
-    // }
-    // return items;
   }
 
   function saveExcalidrawLibrary(items: LibraryItems) {
@@ -98,7 +91,9 @@ export default function CustomExcalidraw(props: {
     }
     let storagePath = stateStore.settings.storagePath;
     try {
-      let filePath = path.join(storagePath, "library.excalidrawlib");
+      let hiddenFolder = path.join(storagePath, ".research-helper");
+      if (!fs.existsSync(hiddenFolder)) fs.mkdirSync(hiddenFolder);
+      let filePath = path.join(hiddenFolder, "library.excalidrawlib");
       let jsonString = serializeLibraryAsJSON(items);
       fs.writeFileSync(filePath, jsonString);
     } catch (error) {

@@ -282,7 +282,7 @@
 
     <!-- right menu -->
     <q-btn-toggle
-      v-model="showRightMenu"
+      v-model="stateStore.showPDFRightMenu"
       clearable
       unelevated
       :ripple="false"
@@ -290,7 +290,6 @@
       padding="xs"
       toggle-color="primary"
       :options="[{ value: true, icon: 'list' }]"
-      @update:model-value="(showRightMenu: boolean) => $emit('toggleRightMenu', showRightMenu)"
     >
       <template v-slot:default>
         <q-tooltip>{{ $t("toggle-right-menu") }}</q-tooltip>
@@ -306,7 +305,9 @@ import { AnnotationType, PDFState } from "src/backend/database";
 import ColorPicker from "./ColorPicker.vue";
 import { useI18n } from "vue-i18n";
 import { useQuasar } from "quasar";
+import { useStateStore } from "src/stores/appState";
 
+const stateStore = useStateStore();
 const $q = useQuasar();
 const { t } = useI18n({ useScope: "global" });
 
@@ -320,7 +321,6 @@ const props = defineProps({
     type: Object as PropType<{ current: number; total: number }>,
     required: false,
   },
-  rightMenuSize: { type: Number, required: true },
 });
 
 const emit = defineEmits([
@@ -331,7 +331,6 @@ const emit = defineEmits([
   "changeColor",
   "searchText",
   "changeMatch",
-  "toggleRightMenu",
 ]);
 
 const search = reactive({
@@ -340,15 +339,8 @@ const search = reactive({
   caseSensitive: false,
   entireWord: false,
 });
-const showRightMenu = ref(false);
 const fullscreen = ref(false);
 
-watch(
-  () => props.rightMenuSize,
-  (size: number) => {
-    showRightMenu.value = size > 0;
-  }
-);
 watch(search, (newSearch) => {
   emit("searchText", newSearch);
 });

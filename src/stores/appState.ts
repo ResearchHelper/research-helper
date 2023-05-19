@@ -6,8 +6,14 @@ export const useStateStore = defineStore("stateStore", {
     ready: false,
 
     // layout
+    ribbonToggledBtnId: "",
     leftMenuSize: 20,
     showLeftMenu: false,
+    showPDFMenuView: false,
+    pdfRightMenuSize: 30,
+    showPDFRightMenu: false,
+    libraryRightMenuSize: 30,
+    showLibraryRightMenu: false,
 
     // tree view
     selectedFolderId: "library",
@@ -53,6 +59,14 @@ export const useStateStore = defineStore("stateStore", {
       } as AppState;
     },
 
+    /**
+     * Layout Control
+     */
+
+    /**
+     * Open a page
+     * @param itemId
+     */
     openItem(itemId: string) {
       this.openItemId = itemId;
       // set this to empty, so that user can reopen the same item as 1 second
@@ -61,8 +75,51 @@ export const useStateStore = defineStore("stateStore", {
       }, 1000);
     },
 
+    /**
+     * Close a page
+     * @param itemId
+     */
     closeItem(itemId: string) {
       this.closeItemId = itemId;
+    },
+
+    /**
+     * Toggle left menu
+     * If visible is given, set the state as it is
+     * @param visible
+     */
+    toggleLeftMenu(visible?: boolean) {
+      if (visible === undefined) {
+        this.showLeftMenu = !this.showLeftMenu;
+      } else {
+        this.showLeftMenu = visible;
+      }
+    },
+
+    /**
+     * Toggle PDF right menu
+     * If visible is given, set the state as it is
+     * @param visible
+     */
+    togglePDFRightMenu(visible?: boolean) {
+      if (visible === undefined) {
+        this.showPDFRightMenu = !this.showPDFRightMenu;
+      } else {
+        this.showPDFRightMenu = visible;
+      }
+    },
+
+    /**
+     * Toggle pdf floating menu
+     * If visible is given, set the state as it is
+     * @param visible
+     */
+    togglePDFMenuView(visible?: boolean) {
+      if (visible === undefined) {
+        this.showPDFMenuView = !this.showPDFMenuView;
+      } else {
+        this.showPDFMenuView = visible;
+      }
     },
   },
 });

@@ -24,7 +24,7 @@
 
   <q-splitter
     style="position: absolute; width: 100%; height: 100%"
-    :limits="[0, 30]"
+    :limits="[10, 30]"
     separator-class="q-splitter-separator"
     v-model="treeViewSize"
   >
@@ -41,8 +41,13 @@
         style="overflow: hidden"
         reverse
         :limits="[0, 60]"
-        separator-class="q-splitter-separator"
+        :separator-class="{
+          'q-splitter-separator': stateStore.showLibraryRightMenu,
+        }"
+        :disable="!stateStore.showLibraryRightMenu"
         v-model="rightMenuSize"
+        emit-immediately
+        @update:model-value="(size: number) => resizeRightMenu(size)"
       >
         <template v-slot:before>
           <ActionBar
@@ -51,7 +56,6 @@
               background: var(--color-library-toolbar-bkgd);
             "
             v-model:searchString="searchString"
-            :rightMenuSize="rightMenuSize"
             @addEmptyProject="addEmptyProject"
             @addByFiles="(filePaths) => addProjectsByFiles(filePaths)"
             @addByCollection="
@@ -59,7 +63,6 @@
             "
             @showIdentifierDialog="showIdentifierDialog(true)"
             @refreshTable="getProjects"
-            @toggleRightMenu="(visible) => toggleRightMenu(visible)"
             ref="actionBar"
           />
           <!-- actionbar height 36px, table view is 100%-36px -->
@@ -203,7 +206,6 @@ const selectedProject = ref<Project | undefined>(undefined);
 
 const treeViewSize = ref(20);
 const rightMenuSize = ref(0);
-const prvRightMenuSize = ref(25);
 
 const draggingProjectId = ref("");
 
@@ -681,18 +683,25 @@ async function exportFolder(
 /**************************************************
  * MetaInfoTab
  **************************************************/
-
-/**
- * Toggle RightMenu and record its size
- * @param visible
- */
-function toggleRightMenu(visible: boolean) {
-  if (visible) {
-    rightMenuSize.value = prvRightMenuSize.value;
-  } else {
-    // record the rightmenu size for next use
-    prvRightMenuSize.value = rightMenuSize.value;
-    rightMenuSize.value = 0;
+watch(
+  () => stateStore.showLibraryRightMenu,
+  (visible: boolean) => {
+    if (visible) {
+      // if visible, the left menu has at least 10 unit width
+      rightMenuSize.value = Math.max(stateStore.libraryRightMenuSize, 15);
+    } else {
+      // if not visible, record the size and close the menu
+      stateStore.libraryRightMenuSize = rightMenuSize.value;
+      rightMenuSize.value = 0;
+    }
   }
+);
+
+function resizeRightMenu(size: number) {
+  if (size < 8) {
+    rightMenuSize.value = 0;
+    stateStore.showLibraryRightMenu = false;
+  }
+  stateStore.libraryRightMenuSize = size > 10 ? size : 30;
 }
 </script>

@@ -210,6 +210,8 @@ watch(
       stateStore.openedProjectIds.add(id);
       pushProjectNode(id);
     } else if (item?.dataType == "note") {
+      // some notes are independent of project, like memo
+      if (!item.projectId) return;
       stateStore.openedProjectIds.add(item.projectId);
       pushProjectNode(item.projectId);
     }

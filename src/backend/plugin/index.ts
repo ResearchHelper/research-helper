@@ -1,7 +1,31 @@
-import { ref } from "vue";
-import { PluginMeta, PluginStatusMap, Plugin } from "../database";
+import { reactive, ref } from "vue";
+import {
+  PluginMeta,
+  PluginStatusMap,
+  Plugin,
+  db,
+  Button,
+  View,
+  PageView,
+  ComponentName,
+  ToggleButton,
+} from "../database";
 import { Buffer } from "buffer";
 import { getAppState } from "../appState";
+import { useStateStore } from "src/stores/appState";
+const stateStore = useStateStore();
+
+const controller = {
+  db: db,
+  layout: {
+    openPage: stateStore.openItem,
+    closePage: stateStore.closeItem,
+    toggleLeftMenu: stateStore.toggleLeftMenu,
+    togglePDFMenuView: stateStore.togglePDFMenuView,
+  },
+  fs: window.fs,
+  path: window.path,
+};
 
 class PluginManager {
   storagePath: string = "";
@@ -117,7 +141,7 @@ class PluginManager {
       window.fs.readFileSync(manifestPath, { encoding: "utf-8" })
     );
     const pluginClass = module.default;
-    const plugin = new pluginClass();
+    const plugin = new pluginClass(controller);
 
     this.pluginMetas.value.push(manifest);
     this.plugins.value.set(pluginId, plugin);
@@ -147,9 +171,12 @@ class PluginManager {
     if (!status) status = { enabled: enabled, updatable: false };
     else status.enabled = enabled;
     this.statusMap.value.set(pluginId, { enabled: enabled, updatable: false });
+    this.saveStatus();
 
-    if (enabled) plugin.enable();
-    else plugin.disable();
+    if (enabled) {
+      plugin.init();
+      plugin.enable();
+    } else plugin.disable();
   }
 
   /**
@@ -175,6 +202,65 @@ class PluginManager {
     );
     let json = Object.fromEntries(this.statusMap.value);
     window.fs.writeFileSync(filePath, JSON.stringify(json));
+  }
+
+  /***********************************************************
+   * Getters for buttons and views
+   **********************************************************/
+
+  getBtns(componentName: ComponentName) {
+    let btns: Button[] = [];
+    let toggleBtns: ToggleButton[] = [];
+    for (let [id, plugin] of pluginManager.plugins.value.entries()) {
+      if (!pluginManager.statusMap.value.get(id)?.enabled) continue;
+      let _btns: Button[] = [];
+      switch (componentName) {
+        case ComponentName.RIBBON:
+          _btns = plugin.ribbonBtns;
+          toggleBtns = plugin.ribbonToggleBtns;
+          break;
+        case ComponentName.PDF_MENU:
+          _btns = plugin.pdfMenuBtns;
+          break;
+        default:
+          _btns = [];
+          break;
+      }
+      for (let btn of _btns) {
+        // need to bind plugin object to click function
+        // otherwise `this` keyword is undefined
+        btn.click = btn.click.bind(plugin);
+        btns.push(btn);
+      }
+    }
+    return { btns, toggleBtns };
+  }
+
+  getViews(componentName: ComponentName): View[] {
+    let views: View[] = [];
+    for (let [id, plugin] of pluginManager.plugins.value.entries()) {
+      if (!pluginManager.statusMap.value.get(id)?.enabled) continue;
+      let _views: View[] = [];
+      switch (componentName) {
+        case ComponentName.LEFT_MENU:
+          _views = plugin.leftMenuViews;
+          break;
+        case ComponentName.PDF_MENU:
+          _views = plugin.pdfMenuViews;
+          break;
+        default:
+          _views = [];
+          break;
+      }
+      for (let view of _views) {
+        view.onMounted = view.onMounted?.bind(plugin);
+        view.onBeforeMount = view.onBeforeMount?.bind(plugin);
+        view.onUnmounted = view.onUnmounted?.bind(plugin);
+        view.onBeforeUnmount = view.onBeforeUnmount?.bind(plugin);
+        views.push(view);
+      }
+    }
+    return views;
   }
 }
 

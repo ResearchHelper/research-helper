@@ -240,19 +240,50 @@ export interface BusEvent {
 /******************
  * Plugin System
  ******************/
-interface Button {
-  icon: string;
-  onClick: () => void;
+export enum ComponentName {
+  RIBBON = "ribbon",
+  LEFT_MENU = "leftMenu",
+  PDF_MENU = "pdfMenu",
 }
-interface View {
-  mount: (parent: HTMLElement) => void;
+
+export interface Button {
+  id: string;
+  icon: string;
+  tooltip: string;
+  click: () => void;
+}
+
+export interface ToggleButton {
+  id: string;
+  icon: string;
+  tooltip: string;
+}
+
+export interface View {
+  buttonId?: string;
+  onBeforeMount?: () => void;
+  onMounted?: (root: HTMLElement) => void;
+  onBeforeUnmount?: () => void;
+  onUnmounted?: () => void;
+}
+
+export interface PageView extends View {
+  pageId: string;
+  pageLabel: string;
 }
 
 export interface Plugin {
-  buttons: [];
-  views: [];
+  ribbonBtns: Button[];
+  ribbonToggleBtns: ToggleButton[];
+  pdfMenuBtns: Button[];
+  pdfMenuToggleBtns: ToggleButton[];
+  leftMenuViews: View[];
+  pdfMenuViews: View[];
+  pageView: PageView;
+  settingsPageView: PageView;
   enable: () => void;
   disable: () => void;
+  init: () => void;
 }
 
 export interface PluginMeta {

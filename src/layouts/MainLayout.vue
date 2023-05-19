@@ -1,89 +1,24 @@
 <template>
   <WelcomeLayout />
   <q-splitter
-    :model-value="45"
+    :model-value="40"
     unit="px"
     :separator-style="{ cursor: 'default' }"
   >
     <template v-slot:before>
-      <div
-        style="height: 100vh; background: var(--color-leftmenu-bkgd)"
-        class="column justify-between"
-      >
-        <div>
-          <q-btn-toggle
-            v-model="isLeftMenuVisible"
-            style="width: 45px"
-            spread
-            unelevated
-            square
-            :ripple="false"
-            clearable
-            :options="[{ icon: 'account_tree', value: true }]"
-            @update:model-value="stateStore.saveState()"
-          >
-            <q-tooltip>
-              {{ $t("openedProjects") }}
-            </q-tooltip>
-          </q-btn-toggle>
-        </div>
-
-        <div>
-          <q-btn
-            v-if="showTestBtn"
-            style="width: 45px"
-            flat
-            square
-            label="Test"
-            @click="setComponent('test')"
-          >
-            <q-tooltip>Test Page</q-tooltip>
-          </q-btn>
-          <q-btn
-            style="width: 45px"
-            flat
-            square
-            icon="home"
-            :ripple="false"
-            @click="setComponent('library')"
-          >
-            <q-tooltip>{{ $t("library") }}</q-tooltip>
-          </q-btn>
-          <q-btn
-            style="width: 45px"
-            flat
-            square
-            :ripple="false"
-            icon="help"
-            @click="setComponent('help')"
-          >
-            <q-tooltip>{{ $t("help") }}</q-tooltip>
-          </q-btn>
-          <q-btn
-            style="width: 45px"
-            flat
-            square
-            :ripple="false"
-            icon="settings"
-            @click="setComponent('settings')"
-          >
-            <q-badge
-              v-if="isUpdateAvailable"
-              floating
-              rounded
-              color="blue"
-              style="top: 10%; right: 10%"
-            ></q-badge>
-            <q-tooltip>{{ $t("settings") }}</q-tooltip>
-          </q-btn>
-        </div>
-      </div>
+      <LeftRibbon
+        v-model:isLeftMenuVisible="stateStore.showLeftMenu"
+        @openPage="(id: string) => setComponent(id)"
+      />
     </template>
     <template v-slot:after>
       <q-splitter
         :limits="[0, 60]"
         emit-immediately
-        separator-class="q-splitter-separator"
+        :separator-class="{
+          'q-splitter-separator': stateStore.showLeftMenu,
+        }"
+        :disable="!stateStore.showLeftMenu"
         v-model="leftMenuSize"
         @update:model-value="(size) => resizeLeftMenu(size)"
       >
@@ -113,6 +48,7 @@
 import { Project, Note, BusEvent } from "src/backend/database";
 // components
 import WelcomeLayout from "./WelcomeLayout.vue";
+import LeftRibbon from "./LeftRibbon.vue";
 import LeftMenu from "src/components/leftmenu/LeftMenu.vue";
 // GoldenLayout
 import GLayout from "./GLayout.vue";
@@ -138,9 +74,9 @@ import {
   ref,
   watch,
 } from "vue";
-import { useQuasar } from "quasar";
 import { useI18n } from "vue-i18n";
 import { EventBus } from "quasar";
+import pluginManager from "src/backend/plugin";
 
 interface PageItem {
   _id: string;
@@ -148,8 +84,7 @@ interface PageItem {
 }
 
 const stateStore = useStateStore();
-const $q = useQuasar();
-const { locale, t } = useI18n({ useScope: "global" });
+const { t } = useI18n({ useScope: "global" });
 const bus = inject("bus") as EventBus;
 
 /*************************************************
@@ -158,17 +93,12 @@ const bus = inject("bus") as EventBus;
 const layout = ref<InstanceType<typeof GLayout> | null>(null);
 const leftMenu = ref<InstanceType<typeof LeftMenu> | null>(null);
 
-const showTestBtn = process.env.DEV; // false;  show testPage btn if in dev
 const leftMenuSize = ref(0);
-const isUpdateAvailable = ref(false);
 const ready = ref(false);
 
-const isLeftMenuVisible = computed({
-  get() {
-    return leftMenuSize.value > 0;
-  },
-  set(visible: boolean) {
-    stateStore.showLeftMenu = visible;
+watch(
+  () => stateStore.showLeftMenu,
+  (visible: boolean) => {
     if (visible) {
       // if visible, the left menu has at least 10 unit width
       leftMenuSize.value = Math.max(stateStore.leftMenuSize, 15);
@@ -182,8 +112,8 @@ const isLeftMenuVisible = computed({
       saveLayout();
       saveAppState();
     });
-  },
-});
+  }
+);
 
 /*******************
  * Watchers
@@ -207,6 +137,8 @@ watch(
   async (id: string) => {
     if (!!!id) return;
     await removeComponent(id);
+    // clear this so we can reclose a reopened item
+    stateStore.closeItemId = "";
   }
 );
 
@@ -260,17 +192,29 @@ async function setComponent(id: string) {
       title = t("test");
       break;
     default:
-      let item = (await getProject(id)) as Project | Note;
-      if (item.dataType == "project") {
-        componentType = "ReaderPage";
-        title = item.title;
-      } else if (item.dataType == "note") {
-        if (item.type === "excalidraw") {
-          componentType = "ExcalidrawPage";
-          title = item.label;
-        } else {
-          componentType = "NotePage";
-          title = item.label;
+      try {
+        let item = (await getProject(id)) as Project | Note;
+        if (item.dataType == "project") {
+          componentType = "ReaderPage";
+          title = item.title;
+        } else if (item.dataType == "note") {
+          if (item.type === "excalidraw") {
+            componentType = "ExcalidrawPage";
+            title = item.label;
+          } else {
+            componentType = "NotePage";
+            title = item.label;
+          }
+        }
+      } catch (error) {
+        // maybe the id is a plugin page id
+        for (let [pluginId, plugin] of pluginManager.plugins.value.entries()) {
+          let view = plugin.pageView;
+          if (view.pageId == id) {
+            componentType = "PluginPage";
+            title = view.pageLabel || "";
+            break;
+          }
         }
       }
       break;
@@ -313,7 +257,14 @@ async function editComponentState(item: PageItem | undefined) {
 
 async function resizeLeftMenu(size: number) {
   if (layout.value) layout.value.resize();
-  stateStore.leftMenuSize = size > 10 ? size : 10;
+  if (size < 8) {
+    leftMenuSize.value = 0;
+    stateStore.ribbonToggledBtnId = "";
+    // this will trigger stateStore.showLeftMenu = false;
+  }
+  stateStore.leftMenuSize = size > 10 ? size : 20;
+  saveLayout();
+  saveAppState();
 }
 
 /**
@@ -374,14 +325,6 @@ onMounted(async () => {
   if (stateStore.showLeftMenu) leftMenuSize.value = state.leftMenuSize;
   let _layout = await getLayout();
   if (layout.value) await layout.value.loadGLLayout(_layout.config);
-
-  // check if update is available
-  // if available, show a blue dot on settings icon
-  setTimeout(() => {
-    window.updater.updateAvailable((event, isAvailable: boolean) => {
-      isUpdateAvailable.value = isAvailable;
-    });
-  }, 1000);
 
   // the openItemIds are ready
   // we can load the projectTree
