@@ -89,7 +89,7 @@ import { useI18n } from "vue-i18n";
 import { useStateStore } from "src/stores/appState";
 
 const stateStore = useStateStore();
-const { t } = useI18n({ useScope: "global" });
+const { t, locale } = useI18n({ useScope: "global" });
 
 const props = defineProps({
   isLeftMenuVisible: { type: Boolean, required: true },
@@ -100,19 +100,20 @@ const isUpdateAvailable = ref(false);
 const pluginBtns = ref<Button[]>([]);
 const pluginToggleBtns = ref<ToggleButton[]>([]);
 const clickedBtnId = ref("");
-const toggleStates = new Map<string, boolean>();
 const toggleBtns = ref<
   { _icon: string; value: string; tooltip: string; slot: string }[]
 >([]);
 
-// const showLeftMenu = computed({
-//   get() {
-//     return props.isLeftMenuVisible;
-//   },
-//   set(visible: boolean) {
-//     emit("update:isLeftMenuVisible", visible);
-//   },
-// });
+// change tooltip locale
+watch(
+  () => locale.value,
+  (_) => {
+    let toggleBtn = toggleBtns.value.find(
+      (tb) => tb.value == "projectNavigator"
+    );
+    if (toggleBtn) toggleBtn.tooltip = t("openedProjects");
+  }
+);
 
 watch(
   () => stateStore.ribbonToggledBtnId,

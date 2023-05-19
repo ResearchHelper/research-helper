@@ -213,8 +213,14 @@ export interface AppState {
   _id: "appState";
   _rev: string;
   dataType: "appState";
+  ribbonToggledBtnId: string; // which toggleBtn is toggled
   leftMenuSize: number;
   showLeftMenu: boolean; // is leftmenu expanded
+  showPDFMenuView: boolean;
+  pdfRightMenuSize: number;
+  showPDFRightMenu: boolean;
+  libraryRightMenuSize: number;
+  showLibraryRightMenu: boolean;
   selectedFolderId: string;
   workingItemId: string;
   openedProjectIds: string[];

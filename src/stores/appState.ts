@@ -38,6 +38,15 @@ export const useStateStore = defineStore("stateStore", {
     async loadState(state: AppState) {
       this.leftMenuSize = state.leftMenuSize || this.leftMenuSize;
       this.showLeftMenu = state.showLeftMenu || this.showLeftMenu;
+      this.showPDFMenuView = state.showPDFMenuView || this.showPDFMenuView;
+      this.pdfRightMenuSize = state.pdfRightMenuSize || this.pdfRightMenuSize;
+      this.showPDFRightMenu = state.showPDFRightMenu || this.showPDFRightMenu;
+      this.libraryRightMenuSize =
+        state.libraryRightMenuSize || this.libraryRightMenuSize;
+      this.showLibraryRightMenu =
+        state.showLibraryRightMenu || this.showLibraryRightMenu;
+      this.ribbonToggledBtnId =
+        state.ribbonToggledBtnId || this.ribbonToggledBtnId;
       this.selectedFolderId = state.selectedFolderId || this.selectedFolderId;
       this.workingItemId = state.workingItemId || this.workingItemId;
       this.openedProjectIds = new Set(state.openedProjectIds); // convert to Set after loading
@@ -50,8 +59,14 @@ export const useStateStore = defineStore("stateStore", {
       return {
         _id: "appState",
         dataType: "appState",
+        ribbonToggledBtnId: this.ribbonToggledBtnId,
         leftMenuSize: this.leftMenuSize,
         showLeftMenu: this.showLeftMenu,
+        showPDFMenuView: this.showPDFMenuView,
+        pdfRightMenuSize: this.pdfRightMenuSize,
+        showPDFRightMenu: this.showPDFRightMenu,
+        libraryRightMenuSize: this.libraryRightMenuSize,
+        showLibraryRightMenu: this.showLibraryRightMenu,
         selectedFolderId: this.selectedFolderId,
         workingItemId: this.workingItemId,
         openedProjectIds: [...this.openedProjectIds] as string[], // convert to Array for saving
