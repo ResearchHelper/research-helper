@@ -32,6 +32,5 @@ describe("<TableItemRow />", () => {
     cy.get("@stateStore").then((store) => {
       console.log(store);
     });
-    // expect(window.stateStore.openItemId).to.eq(item._id);
   });
 });

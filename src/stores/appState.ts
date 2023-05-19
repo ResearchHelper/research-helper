@@ -32,6 +32,9 @@ export const useStateStore = defineStore("stateStore", {
       storagePath: "",
       fontSize: "16px",
     },
+
+    // page
+    page: null,
   }),
 
   actions: {
@@ -77,6 +80,16 @@ export const useStateStore = defineStore("stateStore", {
     /**
      * Layout Control
      */
+
+    openPage(
+      page: { pageId: string; pageType: string; pageLabel: string } | null
+    ) {
+      if (!page) return;
+    },
+
+    closePage(pageId: string) {
+      if (!pageId) return;
+    },
 
     /**
      * Open a page

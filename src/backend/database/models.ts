@@ -290,6 +290,8 @@ export interface Plugin {
   enable: () => void;
   disable: () => void;
   init: () => void;
+  loadSettings: () => void;
+  saveSettings: () => void;
 }
 
 export interface PluginMeta {

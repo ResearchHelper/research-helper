@@ -104,6 +104,25 @@ class PluginManager {
   /**************************************************
    * Load, toggle plugins
    **************************************************/
+  /**
+   * Load all plugins
+   */
+  async loadAll() {
+    await this.loadStatus();
+    for (let [id, status] of this.statusMap.value.entries()) {
+      if (!this.plugins.value.has(id)) await this.load(id, status.enabled);
+    }
+  }
+
+  async reloadAll() {
+    // clear all data
+    this.statusMap.value.clear();
+    this.pluginMetas.value = [];
+    this.communityMetas.value = [];
+    this.plugins.value.clear();
+
+    await this.loadAll();
+  }
 
   /**
    * Load all plugins from disk
@@ -130,26 +149,6 @@ class PluginManager {
   }
 
   /**
-   * Load all plugins
-   */
-  async loadAll() {
-    await this.loadStatus();
-    for (let [id, status] of this.statusMap.value.entries()) {
-      if (!this.plugins.value.has(id)) await this.load(id, status.enabled);
-    }
-  }
-
-  async reloadAll() {
-    // clear all data
-    this.statusMap.value.clear();
-    this.pluginMetas.value = [];
-    this.communityMetas.value = [];
-    this.plugins.value.clear();
-
-    await this.loadAll();
-  }
-
-  /**
    * Enable / Disable a plugin
    * @param enabled
    */
@@ -166,6 +165,7 @@ class PluginManager {
     if (enabled) {
       plugin.init();
       plugin.enable();
+      plugin.loadSettings();
     } else plugin.disable();
   }
 

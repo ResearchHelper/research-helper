@@ -28,6 +28,7 @@
         padding="xs"
         :ripple="false"
         icon="bi-gear"
+        @click="stateStore.openItem(`${meta.id}-settings`)"
       >
         <q-tooltip>{{ $t("settings") }}</q-tooltip>
       </q-btn>
@@ -88,6 +89,9 @@
 <script setup lang="ts">
 import { onMounted, ref, PropType, computed, watch } from "vue";
 import { PluginMeta, PluginStatus } from "src/backend/database";
+import { useStateStore } from "src/stores/appState";
+const stateStore = useStateStore();
+
 const props = defineProps({
   meta: { type: Object as PropType<PluginMeta>, required: true },
   status: { type: Object as PropType<PluginStatus>, required: false },
