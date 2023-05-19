@@ -122,21 +122,23 @@ watch(
   }
 );
 
+// whenever the status of plugins are changed, reload the plugins
+watch(
+  pluginManager.statusMap,
+  (_) => {
+    mountBtns();
+  },
+  { deep: true }
+);
+
 function onPluginBtnClick(btn: Button) {
   clickedBtnId.value = btn.id;
   btn.click();
 }
 
-watch(pluginManager.statusMap.value, (_) => {
+function mountBtns() {
   let buttons = pluginManager.getBtns(ComponentName.RIBBON);
   pluginBtns.value = buttons.btns;
-  pluginToggleBtns.value = buttons.toggleBtns;
-});
-
-onMounted(() => {
-  let buttons = pluginManager.getBtns(ComponentName.RIBBON);
-  pluginBtns.value = buttons.btns;
-  // pluginToggleBtns.value = buttons.toggleBtns;
   toggleBtns.value = [];
   toggleBtns.value.push({
     _icon: "account_tree",
@@ -152,6 +154,10 @@ onMounted(() => {
       slot: toggleBtn.id,
     });
   }
+}
+
+onMounted(() => {
+  mountBtns();
 
   // check if update is available
   // if available, show a blue dot on settings icon

@@ -109,6 +109,7 @@ import { getAllNotes } from "src/backend/project/note";
 import { db } from "src/backend/database";
 import { useI18n } from "vue-i18n";
 import { useQuasar } from "quasar";
+import pluginManager from "src/backend/plugin";
 
 const stateStore = useStateStore();
 const { t, locale } = useI18n({ useScope: "global" });
@@ -220,6 +221,8 @@ async function changeStoragePath(newStoragePath: string) {
   stateStore.settings.storagePath = newStoragePath;
   await saveAppState();
   await moveFiles(oldStoragePath, newStoragePath);
+  pluginManager.changePath(newStoragePath);
+  await pluginManager.reloadAll(); // reload plugins
 }
 
 async function moveFiles(oldPath: string, newPath: string) {

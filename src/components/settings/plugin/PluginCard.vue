@@ -100,7 +100,6 @@ const enabled = computed({
     return !!props.status?.enabled;
   },
   set(value: boolean) {
-    console.log("toggle", value);
     emit("toggle", value);
   },
 });

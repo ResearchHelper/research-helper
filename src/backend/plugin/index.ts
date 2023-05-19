@@ -3,7 +3,6 @@ import {
   PluginMeta,
   PluginStatusMap,
   Plugin,
-  db,
   Button,
   View,
   PageView,
@@ -16,7 +15,6 @@ import { useStateStore } from "src/stores/appState";
 const stateStore = useStateStore();
 
 const controller = {
-  db: db,
   layout: {
     openPage: stateStore.openItem,
     closePage: stateStore.closeItem,
@@ -34,24 +32,25 @@ class PluginManager {
   communityMetas = ref<PluginMeta[]>([]);
   plugins = ref<Map<string, Plugin>>(new Map());
 
-  private async hiddenFolder(): Promise<string> {
-    let state = await getAppState();
-    let hiddenPath = window.path.join(
-      state.settings.storagePath,
-      ".research-helper"
-    );
-    if (!window.fs.existsSync(hiddenPath)) window.fs.mkdirSync(hiddenPath);
-    return hiddenPath;
-  }
+  constructor() {}
 
+  /******************************************************
+   * Get community metas, download, delete
+   ******************************************************/
   /**
-   * Get the path to `plugins` folder
-   * @returns path to `plugins` folder
+   * Filter plugin metas
+   * @param text
+   * @param local - are we filtering local plugins or community plugins
    */
-  private async pluginFolder(): Promise<string> {
-    let folderPath = window.path.join(await this.hiddenFolder(), "plugins");
-    if (!window.fs.existsSync(folderPath)) window.fs.mkdirSync(folderPath);
-    return folderPath;
+  filter(text: string | null, local: boolean): PluginMeta[] {
+    let metas = local ? this.pluginMetas : this.communityMetas;
+    if (!text) return metas.value;
+    let re = RegExp(text, "i"); // case insensitive
+    return metas.value.filter((meta) => {
+      for (let [key, value] of Object.entries(meta)) {
+        if ((value as string).search(re) != -1) return true;
+      }
+    });
   }
 
   async getCommunityMetas() {
@@ -69,29 +68,13 @@ class PluginManager {
   }
 
   /**
-   * Filter plugin metas
-   * @param text
-   * @param local - are we filtering local plugins or community plugins
-   */
-  filter(text: string | null, local: boolean): PluginMeta[] {
-    let metas = local ? this.pluginMetas : this.communityMetas;
-    if (!text) return metas.value;
-    let re = RegExp(text, "i"); // case insensitive
-    return metas.value.filter((meta) => {
-      for (let [key, value] of Object.entries(meta)) {
-        if ((value as string).search(re) != -1) return true;
-      }
-    });
-  }
-
-  /**
    * Download 3 files: main.js, styles.css, and manifest.json
    * To update plugin, simply download it again
    */
   async download(meta: PluginMeta) {
     for (let file of ["main.js", "styles.css", "manifest.json"]) {
       let url = `https://github.com/${meta.repo}/releases/latest/download/${file}`;
-      let directory = window.path.join(await this.pluginFolder(), meta.id);
+      let directory = window.path.join(await this.pluginsFolder(), meta.id);
       let filePath = window.path.join(directory, file);
 
       if (!window.fs.existsSync(directory)) window.fs.mkdirSync(directory);
@@ -113,26 +96,24 @@ class PluginManager {
     this.pluginMetas.value = this.pluginMetas.value.filter(
       (m) => m.id != meta.id
     );
-    let pluginPath = window.path.join(await this.pluginFolder(), meta.id);
+    let pluginPath = window.path.join(await this.pluginsFolder(), meta.id);
     window.fs.rmSync(pluginPath, { recursive: true, force: true });
     await this.saveStatus();
   }
+
+  /**************************************************
+   * Load, toggle plugins
+   **************************************************/
 
   /**
    * Load all plugins from disk
    * TODO: need to deal with styles.css as well
    */
   async load(pluginId: string, enabled: boolean) {
-    let mainJsPath = window.path.join(
-      await this.pluginFolder(),
-      pluginId,
-      "main.js"
-    );
-    let manifestPath = window.path.join(
-      await this.pluginFolder(),
-      pluginId,
-      "manifest.json"
-    );
+    let pluginsFolder = await this.pluginsFolder();
+    let pluginPath = window.path.join(pluginsFolder, pluginId);
+    let mainJsPath = window.path.join(pluginPath, "main.js");
+    let manifestPath = window.path.join(pluginPath, "manifest.json");
     const module = await import(
       /* @vite-ignore */
       "file://" + mainJsPath
@@ -141,7 +122,7 @@ class PluginManager {
       window.fs.readFileSync(manifestPath, { encoding: "utf-8" })
     );
     const pluginClass = module.default;
-    const plugin = new pluginClass(controller);
+    const plugin = new pluginClass({ pluginId, pluginPath }, controller);
 
     this.pluginMetas.value.push(manifest);
     this.plugins.value.set(pluginId, plugin);
@@ -158,6 +139,16 @@ class PluginManager {
     }
   }
 
+  async reloadAll() {
+    // clear all data
+    this.statusMap.value.clear();
+    this.pluginMetas.value = [];
+    this.communityMetas.value = [];
+    this.plugins.value.clear();
+
+    await this.loadAll();
+  }
+
   /**
    * Enable / Disable a plugin
    * @param enabled
@@ -172,7 +163,6 @@ class PluginManager {
     else status.enabled = enabled;
     this.statusMap.value.set(pluginId, { enabled: enabled, updatable: false });
     this.saveStatus();
-
     if (enabled) {
       plugin.init();
       plugin.enable();
@@ -261,6 +251,36 @@ class PluginManager {
       }
     }
     return views;
+  }
+  /*******************************************************
+   * Path getters and setter
+   *******************************************************/
+  changePath(storagePath: string) {
+    // must set storagePath manually this way rather than db.get
+    // since the database is not updated yet ...
+    this.storagePath = storagePath;
+  }
+
+  private async hiddenFolder(): Promise<string> {
+    let storagePath = this.storagePath;
+    if (!storagePath) {
+      // don't use stateStore, it's not initialized yet
+      let state = await getAppState();
+      storagePath = state.settings.storagePath;
+    }
+    let hiddenPath = window.path.join(storagePath, ".research-helper");
+    if (!window.fs.existsSync(hiddenPath)) window.fs.mkdirSync(hiddenPath);
+    return hiddenPath;
+  }
+
+  /**
+   * Get the path to `plugins` folder
+   * @returns path to `plugins` folder
+   */
+  private async pluginsFolder(): Promise<string> {
+    let folderPath = window.path.join(await this.hiddenFolder(), "plugins");
+    if (!window.fs.existsSync(folderPath)) window.fs.mkdirSync(folderPath);
+    return folderPath;
   }
 }
 
