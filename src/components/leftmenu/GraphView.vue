@@ -41,7 +41,7 @@
 <script setup lang="ts">
 // types
 import { inject, onBeforeUnmount, onMounted, ref, watch } from "vue";
-import { Edge, Node } from "src/backend/database";
+import { Edge, Node, Note, NoteType, Project, db } from "src/backend/database";
 // db
 import { getOutEdge, getInEdges } from "src/backend/project/graph";
 import { useStateStore } from "src/stores/appState";
@@ -49,6 +49,7 @@ import { useStateStore } from "src/stores/appState";
 import cytoscape from "cytoscape";
 import cola from "cytoscape-cola";
 import { EventBus } from "quasar";
+import { getProject } from "src/backend/project/project";
 cytoscape.use(cola);
 
 interface NodeUI {
@@ -210,9 +211,19 @@ async function drawGraph() {
     // MUST use function(){} in order to use this.data
     // this.data is the data of the node
     // we cannot use this to access this.stateStore now
-    setTimeout(() => {
-      stateStore.openItemId = this.data("id");
-    }, 100);
+    let pageId = this.data("id") as string;
+    let pageLabel = this.data("label") as string;
+    let pageType = "";
+    db.get(pageId).then((item) => {
+      if ((item as Project | Note).dataType === "project") {
+        pageType = "ReaderPage";
+      } else if ((item as Project | Note).dataType === "note") {
+        if ((item as Note).type === NoteType.EXCALIDRAW)
+          pageType = "ExcalidrawPage";
+        else pageType = "NotePage";
+      }
+      stateStore.openPage({ pageId, pageType, pageLabel });
+    });
   });
 }
 

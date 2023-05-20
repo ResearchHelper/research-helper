@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import { AppState, Project, Settings } from "src/backend/database";
+import { AppState, Page, Project, Settings } from "src/backend/database";
 
 export const useStateStore = defineStore("stateStore", {
   state: () => ({
@@ -20,10 +20,7 @@ export const useStateStore = defineStore("stateStore", {
 
     // projects
     selectedItemId: "", // select from tableview
-    workingItemId: "library", // workingItem
     openedProjectIds: new Set<string>(), // for projectTree
-    openItemId: "", // communicate between layout and deep component
-    closeItemId: "", // communicate between layout and deep component
 
     // settings
     settings: {
@@ -34,7 +31,9 @@ export const useStateStore = defineStore("stateStore", {
     },
 
     // page
-    page: null,
+    openedPage: { pageId: "", pageType: "", pageLabel: "" },
+    closedPageId: "",
+    currentPageId: "library",
   }),
 
   actions: {
@@ -51,7 +50,7 @@ export const useStateStore = defineStore("stateStore", {
       this.ribbonToggledBtnId =
         state.ribbonToggledBtnId || this.ribbonToggledBtnId;
       this.selectedFolderId = state.selectedFolderId || this.selectedFolderId;
-      this.workingItemId = state.workingItemId || this.workingItemId;
+      this.currentPageId = state.currentPageId || this.currentPageId;
       this.openedProjectIds = new Set(state.openedProjectIds); // convert to Set after loading
       this.settings = state.settings || this.settings;
 
@@ -71,7 +70,7 @@ export const useStateStore = defineStore("stateStore", {
         libraryRightMenuSize: this.libraryRightMenuSize,
         showLibraryRightMenu: this.showLibraryRightMenu,
         selectedFolderId: this.selectedFolderId,
-        workingItemId: this.workingItemId,
+        currentPageId: this.currentPageId,
         openedProjectIds: [...this.openedProjectIds] as string[], // convert to Array for saving
         settings: this.settings as Settings,
       } as AppState;
@@ -81,34 +80,14 @@ export const useStateStore = defineStore("stateStore", {
      * Layout Control
      */
 
-    openPage(
-      page: { pageId: string; pageType: string; pageLabel: string } | null
-    ) {
-      if (!page) return;
+    openPage(page: Page | null) {
+      if (!page?.pageId) return;
+      this.openedPage = page;
     },
 
     closePage(pageId: string) {
       if (!pageId) return;
-    },
-
-    /**
-     * Open a page
-     * @param itemId
-     */
-    openItem(itemId: string) {
-      this.openItemId = itemId;
-      // set this to empty, so that user can reopen the same item as 1 second
-      setTimeout(() => {
-        this.openItemId = "";
-      }, 1000);
-    },
-
-    /**
-     * Close a page
-     * @param itemId
-     */
-    closeItem(itemId: string) {
-      this.closeItemId = itemId;
+      this.closedPageId = pageId;
     },
 
     /**

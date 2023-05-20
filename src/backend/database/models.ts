@@ -222,7 +222,7 @@ export interface AppState {
   libraryRightMenuSize: number;
   showLibraryRightMenu: boolean;
   selectedFolderId: string;
-  workingItemId: string;
+  currentPageId: string;
   openedProjectIds: string[];
   settings: Settings;
 }
@@ -232,6 +232,12 @@ export interface Layout {
   _rev: string;
   dataType: "layout";
   config: LayoutConfig | ResolvedLayoutConfig;
+}
+
+export interface Page {
+  pageId: string;
+  pageType: string;
+  pageLabel: string;
 }
 
 /*******************
@@ -266,16 +272,43 @@ export interface ToggleButton {
 }
 
 export interface View {
-  buttonId?: string;
+  buttonId?: string; // corresponding buttonId
+  pageLabel?: string; // tab label for a page view
   onBeforeMount?: () => void;
   onMounted?: (root: HTMLElement) => void;
   onBeforeUnmount?: () => void;
   onUnmounted?: () => void;
 }
 
-export interface PageView extends View {
-  pageId: string;
-  pageLabel: string;
+interface Setting {
+  label: string;
+  description: string;
+}
+
+export interface SettingToggle extends Setting {
+  type: "toggle";
+  value: boolean;
+}
+
+export interface SettingSelect extends Setting {
+  type: "select";
+  options: Array<{ label: string; icon?: string; value: any }>;
+  value: { label: string; icon?: string; value: any };
+}
+
+export interface SettingInput extends Setting {
+  type: "input";
+  inputType: "text" | "number";
+  value: string | number;
+}
+
+export interface SettingSlider extends Setting {
+  type: "slider";
+  min: number;
+  max: number;
+  step?: number; // step between valid values > 0.0
+  snap?: boolean; // snap on valid values
+  value: number;
 }
 
 export interface Plugin {
@@ -285,8 +318,8 @@ export interface Plugin {
   pdfMenuToggleBtns: ToggleButton[];
   leftMenuViews: View[];
   pdfMenuViews: View[];
-  pageView: PageView;
-  settingsPageView: PageView;
+  pageViews: View[];
+  settings: Array<SettingToggle | SettingSelect | SettingSlider | SettingInput>;
   enable: () => void;
   disable: () => void;
   init: () => void;

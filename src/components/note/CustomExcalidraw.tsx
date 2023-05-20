@@ -110,7 +110,6 @@ export default function CustomExcalidraw(props: {
 
   const initialData = loadExcalidraw();
   if (initialData) initialData.libraryItems = loadExcalidrawLibrary();
-  console.log("initialData", initialData);
 
   return notePath && props.visible ? (
     <Excalidraw

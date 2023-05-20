@@ -57,16 +57,15 @@ import {
   Stack,
 } from "golden-layout";
 import GLComponent from "src/pages/GLComponent.vue";
-import { useStateStore } from "src/stores/appState";
-const stateStore = useStateStore();
+
 /*******************
  * Props and Emits
  *******************/
 const props = defineProps({
-  workingItemId: String,
+  currentPageId: String,
 });
 const emit = defineEmits([
-  "update:workingItemId",
+  "update:currentPageId",
   "layoutchanged",
   "itemdestroyed",
 ]);
@@ -92,20 +91,20 @@ let GlBoundingClientRect: DOMRect;
 const instance = getCurrentInstance();
 const initialized = ref(false);
 
-// const visibility = ref(new Map()); // {refId: visible}
-
 /*******************
  * Watcher
  *******************/
 watch(initialized, (initialized) => {
-  // after initialized, focus the workingItem
-  if (initialized) focusById(props.workingItemId as string);
+  // after initialized, focus the currentPage
+  if (initialized) focusById(props.currentPageId as string);
 });
 
-// must use a getter to get props.workingItemId
+// must use a getter to get props.currentPageId
 watch(
-  () => props.workingItemId,
-  (id) => focusById(id as string)
+  () => props.currentPageId,
+  (id) => {
+    focusById(id as string);
+  }
 );
 
 /*******************
@@ -157,6 +156,7 @@ const loadGLLayout = async (
 ) => {
   GLayout.clear();
   AllComponents.value = {};
+  MapComponents.value = {};
   // When reloading a saved Layout, first convert the saved "Resolved Config" to a "Config" by calling LayoutConfig.fromResolved().
   const config = (
     (layoutConfig as ResolvedLayoutConfig).resolved
@@ -404,7 +404,7 @@ onMounted(() => {
     let target = e.target as ComponentItem | RowOrColumn | Stack;
     if (!target.isComponent) return;
     let state = (target as ComponentItem).container.state as Json;
-    emit("update:workingItemId", state.id as string);
+    emit("update:currentPageId", state.id as string);
     emit("layoutchanged");
   });
 
@@ -417,7 +417,7 @@ onMounted(() => {
 
   GLayout.on("activeContentItemChanged", (e) => {
     let state = e.container.state as Json;
-    emit("update:workingItemId", state.id);
+    emit("update:currentPageId", state.id);
     nextTick(() => {
       // wait until layout is updated
       // this is needed for closing component

@@ -8,7 +8,7 @@
     <template v-slot:before>
       <LeftRibbon
         v-model:isLeftMenuVisible="stateStore.showLeftMenu"
-        @openPage="(id: string) => setComponent(id)"
+        @openPage="(page: Page) => setComponent(page)"
       />
     </template>
     <template v-slot:after>
@@ -33,7 +33,7 @@
         <template v-slot:after>
           <GLayout
             style="width: 100%; height: 100vh"
-            v-model:workingItemId="stateStore.workingItemId"
+            v-model:currentPageId="stateStore.currentPageId"
             @layoutchanged="onLayoutChanged"
             ref="layout"
           ></GLayout>
@@ -45,7 +45,7 @@
 
 <script setup lang="ts">
 // types
-import { Project, Note, BusEvent } from "src/backend/database";
+import { Project, Note, BusEvent, Page, NoteType } from "src/backend/database";
 // components
 import WelcomeLayout from "./WelcomeLayout.vue";
 import LeftRibbon from "./LeftRibbon.vue";
@@ -57,7 +57,7 @@ import "src/css/goldenlayout/theme.scss";
 // db
 import { useStateStore } from "src/stores/appState";
 import { getProject } from "src/backend/project/project";
-import { getNotes } from "src/backend/project/note";
+import { getNote, getNotes } from "src/backend/project/note";
 import {
   getLayout,
   updateLayout,
@@ -75,7 +75,7 @@ import {
   watch,
 } from "vue";
 import { useI18n } from "vue-i18n";
-import { EventBus } from "quasar";
+import { EventBus, debounce } from "quasar";
 import pluginManager from "src/backend/plugin";
 
 interface PageItem {
@@ -119,26 +119,25 @@ watch(
  * Watchers
  *******************/
 watch(
-  () => stateStore.openItemId,
-  async (id: string) => {
-    if (!!!id) return;
-    let item = await getProject(id);
-    if (item?.dataType === "project" && !item?.path) {
-      // although no window will be open, but still set ti as workingItem
-      stateStore.workingItemId = id;
-      return;
-    }
-    await setComponent(id);
+  () => stateStore.openedPage,
+  (page: Page) => {
+    setComponent(page);
   }
 );
 
 watch(
-  () => stateStore.closeItemId,
+  () => stateStore.closedPageId,
   async (id: string) => {
     if (!!!id) return;
-    await removeComponent(id);
+    let note = (await getNote(id)) as Note;
+    if (note.dataType == "note" && note.type == NoteType.EXCALIDRAW) {
+      // have to wait until the excalidraw component disappear
+      setTimeout(() => {
+        removeComponent(id);
+      }, 100);
+    } else removeComponent(id);
     // clear this so we can reclose a reopened item
-    stateStore.closeItemId = "";
+    stateStore.closedPageId = "";
   }
 );
 
@@ -171,55 +170,13 @@ watch(
  * create it if it doesn't exist
  * @param id - itemId
  */
-async function setComponent(id: string) {
-  let componentType = "";
-  let title = "";
-  switch (id) {
-    case "library":
-      componentType = "LibraryPage";
-      title = t("library");
-      break;
-    case "help":
-      componentType = "HelpPage";
-      title = t("help");
-      break;
-    case "settings":
-      componentType = "SettingsPage";
-      title = t("settings");
-      break;
-    case "test": // for development testing
-      componentType = "TestPage";
-      title = t("test");
-      break;
-    default:
-      try {
-        let item = (await getProject(id)) as Project | Note;
-        if (item.dataType == "project") {
-          componentType = "ReaderPage";
-          title = item.title;
-        } else if (item.dataType == "note") {
-          if (item.type === "excalidraw") {
-            componentType = "ExcalidrawPage";
-            title = item.label;
-          } else {
-            componentType = "NotePage";
-            title = item.label;
-          }
-        }
-      } catch (error) {
-        // maybe the id is a plugin page id
-        for (let [pluginId, plugin] of pluginManager.plugins.value.entries()) {
-          let view = plugin.pageView;
-          if (view.pageId == id) {
-            componentType = "PluginPage";
-            title = view.pageLabel || "";
-            break;
-          }
-        }
-      }
-      break;
-  }
-  if (layout.value) await layout.value.addGLComponent(componentType, title, id);
+async function setComponent(page: Page) {
+  if (layout.value)
+    await layout.value.addGLComponent(
+      page.pageType,
+      page.pageLabel,
+      page.pageId
+    );
   await saveLayout();
   await saveAppState();
 }
@@ -228,16 +185,8 @@ async function setComponent(id: string) {
  * Closing the project need to close the related windows
  * @param id - itemId
  */
-async function removeComponent(id: string) {
-  if (!layout.value) return;
-  layout.value.removeGLComponent(id);
-  let item = await getProject(id);
-  if (item?.dataType === "project") {
-    let notes = await getNotes(id);
-    for (let note of notes) {
-      layout.value.removeGLComponent(note._id);
-    }
-  }
+function removeComponent(id: string) {
+  if (layout.value) layout.value.removeGLComponent(id);
 }
 
 /**
@@ -275,10 +224,14 @@ async function onLayoutChanged() {
 
   // if the last window is closed, open library page
   // this is to prevent the undefined root problem
-  if (!layout.value) return;
+  if (!layout.value || !ready.value) return;
   let config = layout.value.getLayoutConfig();
   if (config.root === undefined) {
-    setComponent("library");
+    setComponent({
+      pageId: "library",
+      pageType: "LibraryPage",
+      pageLabel: t("library"),
+    });
     await nextTick();
   }
 

@@ -183,7 +183,16 @@ function clickItem() {
 }
 
 function openItem() {
-  stateStore.openItem(props.item._id);
+  let pageId = props.item._id;
+  let pageLabel = props.item.label;
+  let pageType = "";
+  if (props.item.dataType === "project") {
+    if (props.item.path) pageType = "ReaderPage";
+  } else if ((props.item as Project | Note).dataType === "note") {
+    if (props.item.type === NoteType.EXCALIDRAW) pageType = "ExcalidrawPage";
+    else pageType = "NotePage";
+  }
+  stateStore.openPage({ pageId, pageType, pageLabel });
 }
 
 function setRenaming() {

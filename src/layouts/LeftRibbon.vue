@@ -47,7 +47,13 @@
         square
         icon="home"
         :ripple="false"
-        @click="$emit('openPage', 'library')"
+        @click="
+          $emit('openPage', {
+            pageId: 'library',
+            pageLabel: t('library'),
+            pageType: 'LibraryPage',
+          })
+        "
       >
         <q-tooltip>{{ $t("library") }}</q-tooltip>
       </q-btn>
@@ -57,7 +63,13 @@
         square
         :ripple="false"
         icon="help"
-        @click="$emit('openPage', 'help')"
+        @click="
+          $emit('openPage', {
+            pageId: 'help',
+            pageLabel: t('help'),
+            pageType: 'HelpPage',
+          })
+        "
       >
         <q-tooltip>{{ $t("help") }}</q-tooltip>
       </q-btn>
@@ -67,7 +79,13 @@
         square
         :ripple="false"
         icon="settings"
-        @click="$emit('openPage', 'settings')"
+        @click="
+          $emit('openPage', {
+            pageId: 'settings',
+            pageLabel: t('settings'),
+            pageType: 'SettingsPage',
+          })
+        "
       >
         <q-badge
           v-if="isUpdateAvailable"
@@ -98,7 +116,6 @@ const emit = defineEmits(["update:isLeftMenuVisible", "openPage"]);
 
 const isUpdateAvailable = ref(false);
 const pluginBtns = ref<Button[]>([]);
-const pluginToggleBtns = ref<ToggleButton[]>([]);
 const clickedBtnId = ref("");
 const toggleBtns = ref<
   { _icon: string; value: string; tooltip: string; slot: string }[]

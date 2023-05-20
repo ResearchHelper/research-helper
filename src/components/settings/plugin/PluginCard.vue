@@ -28,7 +28,7 @@
         padding="xs"
         :ripple="false"
         icon="bi-gear"
-        @click="stateStore.openItem(`${meta.id}-settings`)"
+        @click="openSettingPage(meta)"
       >
         <q-tooltip>{{ $t("settings") }}</q-tooltip>
       </q-btn>
@@ -87,7 +87,7 @@
   </q-card>
 </template>
 <script setup lang="ts">
-import { onMounted, ref, PropType, computed, watch } from "vue";
+import { onMounted, ref, PropType, computed, watch, nextTick } from "vue";
 import { PluginMeta, PluginStatus } from "src/backend/database";
 import { useStateStore } from "src/stores/appState";
 const stateStore = useStateStore();
@@ -114,6 +114,16 @@ watch(
     disableInstall.value = !!status ? true : false;
   }
 );
+
+function openSettingPage(meta: PluginMeta) {
+  let pageId = meta.id;
+  let pageLabel = `${meta.name} Settings`;
+  let pageType = "PluginSettingsPage";
+  setTimeout(() => {
+    // need to wait abit, otherwise can't focus on the new page
+    stateStore.openPage({ pageId, pageType, pageLabel });
+  }, 100);
+}
 
 onMounted(async () => {
   // get star

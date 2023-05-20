@@ -7,7 +7,7 @@
 <script setup lang="ts">
 // types
 import { inject, nextTick, onMounted, ref, watch } from "vue";
-import { Edge, Note, Project } from "src/backend/database";
+import { Edge, Note, NoteType, Project } from "src/backend/database";
 // vditor
 import Vditor from "vditor";
 import "src/css/vditor/index.css";
@@ -296,7 +296,20 @@ async function clickLink(e: MouseEvent, linkNode: HTMLElement) {
     window.browser.openURL(link);
   } catch (error) {
     // we just want the document, both getProject or getNote are good
-    stateStore.openItem(link);
+    try {
+      let item = (await getNote(link)) as Note | Project;
+      let pageId = item._id;
+      let pageLabel = item.label;
+      let pageType = "";
+      if (item.dataType === "project") pageType = "ReaderPage";
+      else if ((item as Project | Note).dataType === "note") {
+        if (item.type === NoteType.EXCALIDRAW) pageType = "ExcalidrawPage";
+        else pageType = "NotePage";
+      }
+      stateStore.openPage({ pageId, pageType, pageLabel });
+    } catch (error) {
+      console.log(error);
+    }
   }
 }
 

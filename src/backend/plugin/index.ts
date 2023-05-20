@@ -1,11 +1,10 @@
-import { reactive, ref } from "vue";
+import { ref } from "vue";
 import {
   PluginMeta,
   PluginStatusMap,
   Plugin,
   Button,
   View,
-  PageView,
   ComponentName,
   ToggleButton,
 } from "../database";
@@ -16,8 +15,8 @@ const stateStore = useStateStore();
 
 const controller = {
   layout: {
-    openPage: stateStore.openItem,
-    closePage: stateStore.closeItem,
+    openPage: stateStore.openPage,
+    closePage: stateStore.closePage,
     toggleLeftMenu: stateStore.toggleLeftMenu,
     togglePDFMenuView: stateStore.togglePDFMenuView,
   },
@@ -252,6 +251,12 @@ class PluginManager {
     }
     return views;
   }
+
+  getSettings(pluginId: string) {
+    let plugin = this.plugins.value.get(pluginId);
+    return plugin?.settings || [];
+  }
+
   /*******************************************************
    * Path getters and setter
    *******************************************************/

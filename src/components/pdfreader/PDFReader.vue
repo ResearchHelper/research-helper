@@ -27,7 +27,6 @@
         @searchText="searchText"
         @changeMatch="changeMatch"
       />
-
       <div
         ref="viewerContainer"
         class="viewerContainer"
@@ -36,6 +35,12 @@
           ref="viewer"
           class="pdfViewer"
         ></div>
+        <h5
+          v-if="!project?.path"
+          class="text-center"
+        >
+          {{ $t("no-pdf") }}
+        </h5>
         <AnnotCard
           v-if="showAnnotCard && selectedAnnotId"
           :style="style"

@@ -122,5 +122,6 @@
   "enable": "Enable",
   "disable": "Disable",
   "install": "Install",
-  "installing": "Installing..."
+  "installing": "Installing...",
+  "no-pdf": "This project has no PDF file"
 }
