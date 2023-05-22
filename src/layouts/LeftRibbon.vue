@@ -5,7 +5,7 @@
   >
     <div>
       <q-btn-toggle
-        v-model="stateStore.ribbonToggledBtnId"
+        v-model="stateStore.ribbonToggledBtnUid"
         style="width: 40px; display: block"
         spread
         unelevated
@@ -116,7 +116,7 @@ const emit = defineEmits(["update:isLeftMenuVisible", "openPage"]);
 
 const isUpdateAvailable = ref(false);
 const pluginBtns = ref<Button[]>([]);
-const clickedBtnId = ref("");
+const clickedBtnUid = ref("");
 const toggleBtns = ref<
   { _icon: string; value: string; tooltip: string; slot: string }[]
 >([]);
@@ -133,7 +133,7 @@ watch(
 );
 
 watch(
-  () => stateStore.ribbonToggledBtnId,
+  () => stateStore.ribbonToggledBtnUid,
   (id: string | undefined) => {
     stateStore.showLeftMenu = !!id;
   }
@@ -149,7 +149,7 @@ watch(
 );
 
 function onPluginBtnClick(btn: Button) {
-  clickedBtnId.value = btn.id;
+  clickedBtnUid.value = btn.uid;
   btn.click();
 }
 
@@ -166,11 +166,12 @@ function mountBtns() {
   for (let toggleBtn of buttons.toggleBtns) {
     toggleBtns.value.push({
       _icon: toggleBtn.icon,
-      value: toggleBtn.id,
+      value: toggleBtn.uid,
       tooltip: toggleBtn.tooltip,
-      slot: toggleBtn.id,
+      slot: toggleBtn.uid,
     });
   }
+  console.log(toggleBtns.value);
 }
 
 onMounted(() => {

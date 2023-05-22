@@ -6,7 +6,7 @@ export const useStateStore = defineStore("stateStore", {
     ready: false,
 
     // layout
-    ribbonToggledBtnId: "",
+    ribbonToggledBtnUid: "",
     leftMenuSize: 20,
     showLeftMenu: false,
     showPDFMenuView: false,
@@ -47,8 +47,8 @@ export const useStateStore = defineStore("stateStore", {
         state.libraryRightMenuSize || this.libraryRightMenuSize;
       this.showLibraryRightMenu =
         state.showLibraryRightMenu || this.showLibraryRightMenu;
-      this.ribbonToggledBtnId =
-        state.ribbonToggledBtnId || this.ribbonToggledBtnId;
+      this.ribbonToggledBtnUid =
+        state.ribbonToggledBtnUid || this.ribbonToggledBtnUid;
       this.selectedFolderId = state.selectedFolderId || this.selectedFolderId;
       this.currentPageId = state.currentPageId || this.currentPageId;
       this.openedProjectIds = new Set(state.openedProjectIds); // convert to Set after loading
@@ -61,7 +61,7 @@ export const useStateStore = defineStore("stateStore", {
       return {
         _id: "appState",
         dataType: "appState",
-        ribbonToggledBtnId: this.ribbonToggledBtnId,
+        ribbonToggledBtnUid: this.ribbonToggledBtnUid,
         leftMenuSize: this.leftMenuSize,
         showLeftMenu: this.showLeftMenu,
         showPDFMenuView: this.showPDFMenuView,

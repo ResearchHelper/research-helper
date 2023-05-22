@@ -1,10 +1,10 @@
 <template>
   <ProjectNavigator
-    v-if="stateStore.ribbonToggledBtnId == 'projectNavigator'"
+    v-if="stateStore.ribbonToggledBtnUid == 'projectNavigator'"
   />
   <PluginView
-    v-else-if="!!toggledId"
-    :pluginId="toggledId"
+    v-else-if="!!toggledUid"
+    :uid="toggledUid"
   />
 </template>
 <script setup lang="ts">
@@ -15,13 +15,13 @@ import { useStateStore } from "src/stores/appState";
 
 const stateStore = useStateStore();
 // refresh the plugin view whenever the pluginId is changed
-const toggledId = ref("");
+const toggledUid = ref("");
 watch(
-  () => stateStore.ribbonToggledBtnId,
-  async (id) => {
-    toggledId.value = "";
+  () => stateStore.ribbonToggledBtnUid,
+  async (uid) => {
+    toggledUid.value = "";
     await nextTick();
-    toggledId.value = id;
+    toggledUid.value = uid;
   }
 );
 </script>

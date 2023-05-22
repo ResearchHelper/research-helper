@@ -213,7 +213,7 @@ export interface AppState {
   _id: "appState";
   _rev: string;
   dataType: "appState";
-  ribbonToggledBtnId: string; // which toggleBtn is toggled
+  ribbonToggledBtnUid: string; // which toggleBtn is toggled
   leftMenuSize: number;
   showLeftMenu: boolean; // is leftmenu expanded
   showPDFMenuView: boolean;
@@ -260,6 +260,7 @@ export enum ComponentName {
 
 export interface Button {
   id: string;
+  uid: string; // `${pluginId}-${id}`
   icon: string;
   tooltip: string;
   click: () => void;
@@ -267,11 +268,13 @@ export interface Button {
 
 export interface ToggleButton {
   id: string;
+  uid: string;
   icon: string;
   tooltip: string;
 }
 
 export interface View {
+  uid?: string;
   buttonId?: string; // corresponding buttonId
   pageLabel?: string; // tab label for a page view
   onBeforeMount?: () => void;

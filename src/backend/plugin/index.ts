@@ -200,13 +200,14 @@ class PluginManager {
   getBtns(componentName: ComponentName) {
     let btns: Button[] = [];
     let toggleBtns: ToggleButton[] = [];
-    for (let [id, plugin] of pluginManager.plugins.value.entries()) {
-      if (!pluginManager.statusMap.value.get(id)?.enabled) continue;
+    for (let [pluginId, plugin] of pluginManager.plugins.value.entries()) {
+      if (!pluginManager.statusMap.value.get(pluginId)?.enabled) continue;
       let _btns: Button[] = [];
+      let _toggleBtns: ToggleButton[] = [];
       switch (componentName) {
         case ComponentName.RIBBON:
           _btns = plugin.ribbonBtns;
-          toggleBtns = plugin.ribbonToggleBtns;
+          _toggleBtns = plugin.ribbonToggleBtns;
           break;
         case ComponentName.PDF_MENU:
           _btns = plugin.pdfMenuBtns;
@@ -216,10 +217,16 @@ class PluginManager {
           break;
       }
       for (let btn of _btns) {
+        // by preppending pluginId, we make the button id unique
+        btn.uid = `${pluginId}-${btn.id}`;
         // need to bind plugin object to click function
         // otherwise `this` keyword is undefined
         btn.click = btn.click.bind(plugin);
         btns.push(btn);
+      }
+      for (let toggleBtn of _toggleBtns) {
+        toggleBtn.uid = `${pluginId}-${toggleBtn.id}`;
+        toggleBtns.push(toggleBtn);
       }
     }
     return { btns, toggleBtns };
@@ -227,8 +234,8 @@ class PluginManager {
 
   getViews(componentName: ComponentName): View[] {
     let views: View[] = [];
-    for (let [id, plugin] of pluginManager.plugins.value.entries()) {
-      if (!pluginManager.statusMap.value.get(id)?.enabled) continue;
+    for (let [pluginId, plugin] of pluginManager.plugins.value.entries()) {
+      if (!pluginManager.statusMap.value.get(pluginId)?.enabled) continue;
       let _views: View[] = [];
       switch (componentName) {
         case ComponentName.LEFT_MENU:
@@ -242,6 +249,7 @@ class PluginManager {
           break;
       }
       for (let view of _views) {
+        if (view.buttonId) view.uid = `${pluginId}-${view.buttonId}`;
         view.onMounted = view.onMounted?.bind(plugin);
         view.onBeforeMount = view.onBeforeMount?.bind(plugin);
         view.onUnmounted = view.onUnmounted?.bind(plugin);

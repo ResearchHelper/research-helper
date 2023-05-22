@@ -37,7 +37,7 @@
       :key="index"
     >
       <FloatingMenuView
-        v-if="stateStore.showPDFMenuView && view.buttonId == clickedBtnId"
+        v-if="stateStore.showPDFMenuView && view.uid == clickedBtnUid"
         :view="view"
       ></FloatingMenuView>
     </div>
@@ -59,7 +59,7 @@ const stateStore = useStateStore();
 const pluginBtns = ref<Button[]>([]);
 const pluginToggleBtns = ref<ToggleButton[]>([]);
 const pluginViews = ref<View[]>([]);
-const clickedBtnId = ref("");
+const clickedBtnUid = ref("");
 
 function copyText() {
   let selection = window.getSelection();
@@ -67,7 +67,7 @@ function copyText() {
 }
 
 function onPluginBtnClick(button: Button) {
-  clickedBtnId.value = button.id;
+  clickedBtnUid.value = button.uid;
   button.click();
 }
 

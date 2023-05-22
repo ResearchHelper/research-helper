@@ -16,7 +16,7 @@ async function getAppState(): Promise<AppState> {
       _id: "appState",
       _rev: "",
       dataType: "appState",
-      ribbonToggledBtnId: "",
+      ribbonToggledBtnUid: "",
       leftMenuSize: 20,
       showLeftMenu: false,
       showPDFMenuView: false,

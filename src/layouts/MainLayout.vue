@@ -208,7 +208,7 @@ async function resizeLeftMenu(size: number) {
   if (layout.value) layout.value.resize();
   if (size < 8) {
     leftMenuSize.value = 0;
-    stateStore.ribbonToggledBtnId = "";
+    stateStore.ribbonToggledBtnUid = "";
     // this will trigger stateStore.showLeftMenu = false;
   }
   stateStore.leftMenuSize = size > 10 ? size : 20;
