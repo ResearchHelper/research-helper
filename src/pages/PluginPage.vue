@@ -1,10 +1,10 @@
 <template>
   <div ref="root"></div>
-  <!-- <component :is="card"></component> -->
 </template>
 <script setup lang="ts">
 import { onMounted, ref } from "vue";
 import pluginManager from "src/backend/plugin";
+import { ComponentName, View } from "src/backend/database";
 
 const props = defineProps({
   itemId: { type: String, required: true },
@@ -12,23 +12,13 @@ const props = defineProps({
 });
 
 const root = ref<HTMLDivElement | null>(null);
-const card = ref(null);
-
+const views = ref<View[]>([]);
+views.value = pluginManager.getViews(ComponentName.PLUGIN_PAGE);
 onMounted(() => {
-  for (let [pluginId, plugin] of pluginManager.plugins.value.entries()) {
-    let view = plugin.pageView;
-    if (view.pageId == props.itemId) {
-      view.mount.bind(plugin);
-      console.log(view.mount);
-      if (root.value) view.mount(root.value);
-
-      // FIXME: component is not reactive ...
-      // console.log("component", view.vueComponent);
-      // card.value = view.vueComponent;
-      // setTimeout(() => {
-      //   card.value = plugin.pageView.vueComponent;
-      //   console.log("refresh");
-      // }, 2000);
+  console.log(views.value);
+  for (let view of views.value) {
+    if (view.uid === props.itemId) {
+      if (root.value && view.onMounted) view.onMounted(root.value);
     }
   }
 });

@@ -171,7 +171,6 @@ function mountBtns() {
       slot: toggleBtn.uid,
     });
   }
-  console.log(toggleBtns.value);
 }
 
 onMounted(() => {

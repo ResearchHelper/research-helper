@@ -244,6 +244,9 @@ class PluginManager {
         case ComponentName.PDF_MENU:
           _views = plugin.pdfMenuViews;
           break;
+        case ComponentName.PLUGIN_PAGE:
+          _views = plugin.pageViews;
+          break;
         default:
           _views = [];
           break;

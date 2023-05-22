@@ -256,6 +256,7 @@ export enum ComponentName {
   RIBBON = "ribbon",
   LEFT_MENU = "leftMenu",
   PDF_MENU = "pdfMenu",
+  PLUGIN_PAGE = "pluginPage",
 }
 
 export interface Button {
@@ -276,7 +277,6 @@ export interface ToggleButton {
 export interface View {
   uid?: string;
   buttonId?: string; // corresponding buttonId
-  pageLabel?: string; // tab label for a page view
   onBeforeMount?: () => void;
   onMounted?: (root: HTMLElement) => void;
   onBeforeUnmount?: () => void;
