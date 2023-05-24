@@ -44,9 +44,19 @@ class PeekManager {
     this.closeContainer();
 
     // load pdf
+    // load cmaps for rendering translated fonts
+    let cMapUrl = "";
+    if (process.env.DEV)
+      cMapUrl = new URL("../../../cmaps/", import.meta.url).href;
+    else {
+      console.log("url?", import.meta.url);
+      cMapUrl = new URL("cmaps/", import.meta.url).href;
+    }
     let buffer = window.fs.readFileSync(filePath);
     let loadingTask = pdfjsLib.getDocument({
       data: buffer,
+      cMapUrl: cMapUrl,
+      cMapPacked: true,
     });
     loadingTask.promise.then((pdfDocument) => {
       this.pdfViewer.setDocument(pdfDocument);

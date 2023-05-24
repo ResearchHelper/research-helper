@@ -68,18 +68,23 @@ class PDFApplication {
     });
 
     eventBus.on("annotationlayerrendered", () => {
-      this.container.querySelectorAll("a").forEach((link) => {
-        if (link.classList.contains("internalLink")) {
-          // peek internal links
-          this.peekManager.peek(link);
-        } else {
-          // external links must open using default browser
-          link.onclick = (e) => {
-            e.preventDefault();
-            window.browser.openURL(link.href);
-          };
-        }
-      });
+      this.container
+        .querySelectorAll("section.linkAnnotation")
+        .forEach((section) => {
+          let link = section.querySelector("a");
+          if (!link) return;
+          if (section.hasAttribute("data-internal-link")) {
+            // peek internal links
+            this.peekManager.peek(link);
+          } else {
+            // external links must open using default browser
+            let href = link.href;
+            link.onclick = (e) => {
+              e.preventDefault();
+              window.browser.openURL(href);
+            };
+          }
+        });
     });
 
     // make saveState a debounce function
