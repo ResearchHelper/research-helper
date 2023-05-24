@@ -71,6 +71,7 @@ import {
   nextTick,
   onBeforeUnmount,
   onMounted,
+  provide,
   ref,
   watch,
 } from "vue";
@@ -96,6 +97,11 @@ const leftMenu = ref<InstanceType<typeof LeftMenu> | null>(null);
 const leftMenuSize = ref(0);
 const ready = ref(false);
 
+provide("onLayoutChanged", onLayoutChanged);
+
+/*******************
+ * Watchers
+ *******************/
 watch(
   () => stateStore.showLeftMenu,
   (visible: boolean) => {
@@ -115,9 +121,6 @@ watch(
   }
 );
 
-/*******************
- * Watchers
- *******************/
 watch(
   () => stateStore.openedPage,
   (page: Page) => {

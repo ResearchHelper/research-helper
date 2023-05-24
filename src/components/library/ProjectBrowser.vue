@@ -108,7 +108,7 @@
               class="q-pa-none"
             >
               <MetaInfoTab
-                v-if="!!rightMenuSize && !($refs.table as typeof TableView).isClickingPDF"
+                v-if="!!rightMenuSize"
                 :project="selectedProject"
               />
             </q-tab-panel>
@@ -232,6 +232,17 @@ watch(
   }
 );
 
+// onLayouChanged, appstate and layout will be saved
+const onLayoutChanged = inject("onLayoutChanged") as () => void;
+watch(
+  [
+    () => stateStore.selectedItemId,
+    () => stateStore.showLibraryRightMenu,
+    () => stateStore.libraryRightMenuSize,
+  ],
+  onLayoutChanged
+);
+
 // for projectRow
 provide(KEY_deleteDialog, showDeleteDialog);
 provide(KEY_metaDialog, showSearchMetaDialog);
@@ -244,7 +255,7 @@ provide(KEY_renameFromMeta, renameFromMeta);
 
 const bus = inject("bus") as EventBus;
 
-onMounted(() => {
+onMounted(async () => {
   getProjects();
   bus.on("updateProject", (e: BusEvent) => {
     if (e.source !== "ProjectTree") return;
@@ -253,6 +264,18 @@ onMounted(() => {
     if (index === -1) return;
     projects.value[index] = project;
   });
+
+  // selectedProject
+  console.log("itemId", stateStore.selectedItemId);
+  let project = await getProjectDB(stateStore.selectedItemId);
+  if (project && project.dataType == "project") {
+    console.log(project);
+    selectedProject.value = project;
+  }
+
+  // rightmenu
+  if (stateStore.showLibraryRightMenu)
+    rightMenuSize.value = stateStore.libraryRightMenuSize;
 });
 
 onBeforeUnmount(() => {

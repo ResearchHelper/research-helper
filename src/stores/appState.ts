@@ -49,6 +49,7 @@ export const useStateStore = defineStore("stateStore", {
         state.showLibraryRightMenu || this.showLibraryRightMenu;
       this.ribbonToggledBtnUid =
         state.ribbonToggledBtnUid || this.ribbonToggledBtnUid;
+      this.selectedItemId = state.selectedItemId || this.selectedItemId;
       this.selectedFolderId = state.selectedFolderId || this.selectedFolderId;
       this.currentPageId = state.currentPageId || this.currentPageId;
       this.openedProjectIds = new Set(state.openedProjectIds); // convert to Set after loading
@@ -69,6 +70,7 @@ export const useStateStore = defineStore("stateStore", {
         showPDFRightMenu: this.showPDFRightMenu,
         libraryRightMenuSize: this.libraryRightMenuSize,
         showLibraryRightMenu: this.showLibraryRightMenu,
+        selectedItemId: this.selectedItemId,
         selectedFolderId: this.selectedFolderId,
         currentPageId: this.currentPageId,
         openedProjectIds: [...this.openedProjectIds] as string[], // convert to Array for saving
