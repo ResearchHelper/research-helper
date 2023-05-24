@@ -123,5 +123,6 @@
   "disable": "Disable",
   "install": "Install",
   "installing": "Installing...",
-  "no-pdf": "This project has no PDF file"
+  "no-pdf": "This project has no PDF file",
+  "show-in-explorer": "Show In Explorer"
 }

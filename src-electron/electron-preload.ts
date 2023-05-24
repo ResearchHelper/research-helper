@@ -63,6 +63,14 @@ const fileBrowser = {
     });
     return result;
   },
+
+  /**
+   * Show file in system's file manager.
+   * Select file if possible
+   */
+  showFileInFolder(path: string) {
+    shell.showItemInFolder(path);
+  },
 };
 
 const browser = {

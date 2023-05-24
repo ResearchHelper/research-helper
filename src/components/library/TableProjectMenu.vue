@@ -13,6 +13,13 @@
       >
         <q-item-section>{{ $t("copy-project-id") }}</q-item-section>
       </q-item>
+      <q-item
+        clickable
+        v-close-popup
+        @click="showInExplorer"
+      >
+        <q-item-section>{{ $t("show-in-explorer") }}</q-item-section>
+      </q-item>
 
       <q-separator />
 
@@ -174,6 +181,12 @@ function openProject() {
 
 function copyProjectId() {
   copyToClipboard(props.row._id);
+}
+
+function showInExplorer() {
+  // don't use props.row.path because it might not exists
+  let path = window.path.join(stateStore.settings.storagePath, props.row._id);
+  window.fileBrowser.showFileInFolder(path);
 }
 
 function deleteProject(deleteFromDB: boolean) {

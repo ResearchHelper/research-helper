@@ -53,6 +53,13 @@
             <q-item
               clickable
               v-close-popup
+              @click="showInExplorer(prop.node)"
+            >
+              <q-item-section>{{ $t("show-in-explorer") }}</q-item-section>
+            </q-item>
+            <q-item
+              clickable
+              v-close-popup
               @click="closeProject(prop.key)"
             >
               <q-item-section>
@@ -66,6 +73,13 @@
             dense
             v-else
           >
+            <q-item
+              clickable
+              v-close-popup
+              @click="showInExplorer(prop.node)"
+            >
+              <q-item-section>{{ $t("show-in-explorer") }}</q-item-section>
+            </q-item>
             <q-item
               clickable
               v-close-popup
@@ -295,6 +309,18 @@ function selectItem(node: Project | Note) {
     else type = "NotePage";
   }
   stateStore.openPage({ id, type, label });
+}
+
+function showInExplorer(node: Project | Note) {
+  let path = "";
+  if (node.path) {
+    path = node.path;
+  } else {
+    window.path.join(stateStore.settings.storagePath, node._id);
+  }
+  // don't use props.row.path because it might not exists
+  // let path = window.path.join(stateStore.settings.storagePath, props.row._id);
+  window.fileBrowser.showFileInFolder(path);
 }
 
 async function closeProject(projectId: string) {
