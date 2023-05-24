@@ -88,8 +88,20 @@ class PDFApplication {
   }
 
   async loadPDF(filePath: string) {
+    // load cmaps for rendering translated fonts
+    let cMapUrl = "";
+    if (process.env.DEV)
+      cMapUrl = new URL("../../../cmaps/", import.meta.url).href;
+    else {
+      console.log("url?", import.meta.url);
+      cMapUrl = new URL("cmaps/", import.meta.url).href;
+    }
     let buffer = window.fs.readFileSync(filePath);
-    this.pdfDocument = await pdfjsLib.getDocument({ data: buffer }).promise;
+    this.pdfDocument = await pdfjsLib.getDocument({
+      data: buffer,
+      cMapUrl: cMapUrl,
+      cMapPacked: true,
+    }).promise;
     this.pdfLinkService.setDocument(this.pdfDocument, null);
     this.pdfFindController.setDocument(this.pdfDocument);
     this.pdfViewer.setDocument(this.pdfDocument);
