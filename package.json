@@ -35,6 +35,7 @@
     "events": "^3.3.0",
     "golden-layout": "^2.6.0",
     "katex": "^0.16.4",
+    "nodejs-file-downloader": "^4.11.2",
     "pdfjs-dist": "3.6.172",
     "pinia": "^2.0.11",
     "pouchdb": "^7.3.1",

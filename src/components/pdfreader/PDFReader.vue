@@ -2,9 +2,12 @@
   <q-splitter
     style="position: absolute; width: 100%; height: 100%"
     v-model="rightMenuSize"
-    separator-class="q-splitter-separator"
+    :separator-class="{ 'q-splitter-separator': stateStore.showPDFRightMenu }"
+    :disable="!stateStore.showPDFRightMenu"
     reverse
     :limits="[0, 60]"
+    emit-immediately
+    @update:model-value="(size) => resizeRightMenu(size)"
   >
     <template v-slot:before>
       <PDFToolBar
@@ -15,7 +18,6 @@
         "
         :pdfState="pdfState"
         :pageLabels="pageLabels"
-        :rightMenuSize="rightMenuSize"
         :matchesCount="matchesCount"
         @changePageNumber="changePageNumber"
         @changeScale="changeScale"
@@ -24,9 +26,7 @@
         @changeColor="changeColor"
         @searchText="searchText"
         @changeMatch="changeMatch"
-        @toggleRightMenu="toggleRightMenu"
       />
-
       <div
         ref="viewerContainer"
         class="viewerContainer"
@@ -35,6 +35,12 @@
           ref="viewer"
           class="pdfViewer"
         ></div>
+        <h5
+          v-if="!project?.path"
+          class="text-center"
+        >
+          {{ $t("no-pdf") }}
+        </h5>
         <AnnotCard
           v-if="showAnnotCard && selectedAnnotId"
           :style="style"
@@ -112,7 +118,9 @@ import {
   drawAnnotation,
   enableDragToMove,
 } from "src/backend/pdfannotation";
-import { copyToClipboard } from "quasar";
+import { useStateStore } from "src/stores/appState";
+
+const stateStore = useStateStore();
 
 /**
  * Props, Data, and component refs
@@ -129,7 +137,6 @@ const ready = ref(false);
 const project = ref<Project | null>(null);
 
 // right menu
-const prvRightMenuSize = ref(25);
 const rightMenuSize = ref(0);
 
 // pdf related
@@ -421,14 +428,26 @@ function setPosition(rects: DOMRect[] | DOMRectList) {
 /**********************************
  * RightMenu
  **********************************/
-function toggleRightMenu(visible: boolean) {
-  if (visible) {
-    rightMenuSize.value = prvRightMenuSize.value;
-  } else {
-    // record the rightmenu size for next use
-    prvRightMenuSize.value = rightMenuSize.value;
-    rightMenuSize.value = 0;
+watch(
+  () => stateStore.showPDFRightMenu,
+  (visible: boolean) => {
+    if (visible) {
+      // if visible, the left menu has at least 10 unit width
+      rightMenuSize.value = Math.max(stateStore.pdfRightMenuSize, 15);
+    } else {
+      // if not visible, record the size and close the menu
+      stateStore.pdfRightMenuSize = rightMenuSize.value;
+      rightMenuSize.value = 0;
+    }
   }
+);
+
+function resizeRightMenu(size: number) {
+  if (size < 8) {
+    rightMenuSize.value = 0;
+    stateStore.showPDFRightMenu = false;
+  }
+  stateStore.pdfRightMenuSize = size > 10 ? size : 30;
 }
 
 /**

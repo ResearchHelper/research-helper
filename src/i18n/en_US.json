@@ -29,7 +29,7 @@
   "welcome-to-research-helper": "Welcome to Research Helper",
   "install-updates": "Install Updates",
   "check-for-updates": "Check for updates",
-  "current-version-version": "Current version: {0}",
+  "version": "Version: {0}",
   "research-helper": "Research Helper",
   "light": "Light",
   "dark": "Dark",
@@ -113,5 +113,15 @@
   "new-project": "New Project",
   "add-excalidraw": "New Excalidraw",
   "update-meta": "Update Meta",
-  "no-related-projects-or-notes": "No related projects or notes"
+  "no-related-projects-or-notes": "No related projects or notes",
+  "plugins": "Plugins",
+  "no-plugins": "No plugins",
+  "add-plugins": "Add plugins",
+  "close": "Close",
+  "update": "Update",
+  "enable": "Enable",
+  "disable": "Disable",
+  "install": "Install",
+  "installing": "Installing...",
+  "no-pdf": "This project has no PDF file"
 }

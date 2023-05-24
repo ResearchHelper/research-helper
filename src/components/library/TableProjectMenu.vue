@@ -165,7 +165,11 @@ function expandRow(isExpand: boolean) {
 }
 
 function openProject() {
-  stateStore.openItem(props.row._id);
+  let id = props.row._id;
+  let label = props.row.label;
+  let type = "";
+  if (props.row.dataType === "project") if (props.row.path) type = "ReaderPage";
+  stateStore.openPage({ id, type, label });
 }
 
 function copyProjectId() {

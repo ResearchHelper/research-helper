@@ -109,6 +109,7 @@ import { getAllNotes } from "src/backend/project/note";
 import { db } from "src/backend/database";
 import { useI18n } from "vue-i18n";
 import { useQuasar } from "quasar";
+import pluginManager from "src/backend/plugin";
 
 const stateStore = useStateStore();
 const { t, locale } = useI18n({ useScope: "global" });
@@ -220,6 +221,8 @@ async function changeStoragePath(newStoragePath: string) {
   stateStore.settings.storagePath = newStoragePath;
   await saveAppState();
   await moveFiles(oldStoragePath, newStoragePath);
+  pluginManager.changePath(newStoragePath);
+  await pluginManager.reloadAll(); // reload plugins
 }
 
 async function moveFiles(oldPath: string, newPath: string) {
@@ -232,10 +235,10 @@ async function moveFiles(oldPath: string, newPath: string) {
   let total = projects.length + notes.length + 1;
   let current = 0;
 
-  // move excalidrawlibs
-  let oldExcalidrawLib = window.path.join(oldPath, "library.excalidrawlib");
-  let newExcalidrawLib = window.path.join(newPath, "library.excalidrawlib");
-  let error = changePath(oldExcalidrawLib, newExcalidrawLib);
+  // move hidden folders
+  let oldHiddenFolder = window.path.join(oldPath, ".research-helper");
+  let newHiddenFolder = window.path.join(newPath, ".research-helper");
+  let error = changePath(oldHiddenFolder, newHiddenFolder);
   if (error) errors.value.push(error);
   current++;
   progress.value = current / total;

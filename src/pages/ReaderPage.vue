@@ -8,7 +8,8 @@
 <script setup lang="ts">
 import PDFReader from "src/components/pdfreader/PDFReader.vue";
 const props = defineProps({
+  visible: { type: Boolean, reqruied: true },
   itemId: { type: String, required: true },
-  visible: { type: Boolean, required: true },
+  data: { type: Object, requried: false },
 });
 </script>

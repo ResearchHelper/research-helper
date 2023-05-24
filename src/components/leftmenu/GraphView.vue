@@ -41,7 +41,7 @@
 <script setup lang="ts">
 // types
 import { inject, onBeforeUnmount, onMounted, ref, watch } from "vue";
-import { Edge, Node } from "src/backend/database";
+import { Edge, Node, Note, NoteType, Project, db } from "src/backend/database";
 // db
 import { getOutEdge, getInEdges } from "src/backend/project/graph";
 import { useStateStore } from "src/stores/appState";
@@ -210,9 +210,19 @@ async function drawGraph() {
     // MUST use function(){} in order to use this.data
     // this.data is the data of the node
     // we cannot use this to access this.stateStore now
-    setTimeout(() => {
-      stateStore.openItemId = this.data("id");
-    }, 100);
+    let id = this.data("id") as string;
+    let label = this.data("label") as string;
+    let type = "";
+    db.get(id).then((item) => {
+      if ((item as Project | Note).dataType === "project") {
+        type = "ReaderPage";
+      } else if ((item as Project | Note).dataType === "note") {
+        if ((item as Note).type === NoteType.EXCALIDRAW)
+          type = "ExcalidrawPage";
+        else type = "NotePage";
+      }
+      stateStore.openPage({ id, type, label });
+    });
   });
 }
 

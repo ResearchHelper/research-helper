@@ -27,7 +27,7 @@
   "select-a-folder-to-fill-up-your-knowledge": "选择一个文件夹作为你的知识仓库吧",
   "browse": "浏览",
   "research-helper": "研究小助手",
-  "current-version-version": "当前版本：{0}",
+  "version": "版本：{0}",
   "check-for-updates": "检查更新",
   "install-updates": "安装更新",
   "moving-files": "正在移动文件",
@@ -113,5 +113,15 @@
   "new-project": "新项目",
   "add-excalidraw": "添加 Excalidraw",
   "update-meta": "更新信息",
-  "no-related-projects-or-notes": "没有相关的项目或笔记"
+  "no-related-projects-or-notes": "没有相关的项目或笔记",
+  "plugins": "插件",
+  "no-plugins": "找不到插件",
+  "add-plugins": "添加插件",
+  "close": "关闭",
+  "update": "更新",
+  "enable": "开启",
+  "disable": "关闭",
+  "install": "安装",
+  "installing": "正在安装...",
+  "no-pdf": "此项目没有PDF文件"
 }

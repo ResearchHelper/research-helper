@@ -81,7 +81,7 @@
     <q-space />
 
     <q-btn-toggle
-      v-model="showRightMenu"
+      v-model="stateStore.showLibraryRightMenu"
       clearable
       flat
       dense
@@ -91,7 +91,6 @@
       :ripple="false"
       toggle-color="primary"
       :options="[{ value: true, icon: 'list' }]"
-      @update:model-value="$emit('toggleRightMenu', showRightMenu)"
     >
       <q-tooltip>{{ $t("info") }}</q-tooltip>
     </q-btn-toggle>
@@ -100,31 +99,23 @@
 
 <script setup lang="ts">
 // types
-import { computed, nextTick, ref, watch } from "vue";
-import { QFile, debounce } from "quasar";
+import { computed } from "vue";
+import { debounce } from "quasar";
+import { useStateStore } from "src/stores/appState";
+
+const stateStore = useStateStore();
 
 const props = defineProps({
-  rightMenuSize: { type: Number, required: true },
   searchString: { type: String, required: true },
 });
 const emit = defineEmits([
   "update:searchString",
-  "toggleRightMenu",
   "addEmptyProject",
   "addByFiles",
   "addByCollection",
   "showIdentifierDialog",
   "refreshTable",
 ]);
-
-const showRightMenu = ref(false);
-
-watch(
-  () => props.rightMenuSize,
-  (size: number) => {
-    showRightMenu.value = size > 0;
-  }
-);
 
 const searchText = computed({
   get() {

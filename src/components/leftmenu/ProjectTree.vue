@@ -8,7 +8,7 @@
     :nodes="projects"
     node-key="_id"
     selected-color="primary"
-    v-model:selected="stateStore.workingItemId"
+    v-model:selected="stateStore.currentPageId"
     v-model:expanded="expanded"
   >
     <template v-slot:default-header="prop">
@@ -146,7 +146,14 @@ import {
   watch,
 } from "vue";
 import { EventBus, QTree, QTreeNode } from "quasar";
-import { BusEvent, Edge, Note, NoteType, Project } from "src/backend/database";
+import {
+  BusEvent,
+  Edge,
+  Note,
+  NoteType,
+  Page,
+  Project,
+} from "src/backend/database";
 // db
 import { useStateStore } from "src/stores/appState";
 import {
@@ -154,6 +161,7 @@ import {
   addNote as addNoteDB,
   deleteNote as deleteNoteDB,
   updateNote as updateNoteDB,
+  getNotes,
 } from "src/backend/project/note";
 import { sortTree } from "src/backend/project/utils";
 import { getProject } from "src/backend/project/project";
@@ -185,7 +193,7 @@ onMounted(async () => {
   bus.on("deleteProject", (e: BusEvent) => closeProject(e.data));
 
   await getProjectTree();
-  let selected = stateStore.workingItemId;
+  let selected = stateStore.currentPageId;
   if (!tree.value) return;
   let selectedNode = tree.value.getNodeByKey(selected);
   if (!!selectedNode && selectedNode?.children?.length > 0)
@@ -199,8 +207,10 @@ onBeforeUnmount(() => {
 });
 
 watch(
-  () => stateStore.openItemId,
-  async (id: string) => {
+  () => stateStore.openedPage,
+  async (page: Page) => {
+    if (page.type.indexOf("Plugin") > -1) return;
+    let id = page.id;
     if (!!!id || !tree.value) return;
     let node = tree.value.getNodeByKey(id);
     if (!!node) return; // if project is active already, return
@@ -210,10 +220,13 @@ watch(
       stateStore.openedProjectIds.add(id);
       pushProjectNode(id);
     } else if (item?.dataType == "note") {
+      // some notes are independent of project, like memo
+      if (!item.projectId) return;
       stateStore.openedProjectIds.add(item.projectId);
       pushProjectNode(item.projectId);
     }
-  }
+  },
+  { deep: true }
 );
 
 function menuSwitch(node: Project | Note) {
@@ -268,19 +281,32 @@ function updateProject(event: BusEvent) {
 
 function selectItem(node: Project | Note) {
   console.log(node);
-  stateStore.workingItemId = node._id;
+  stateStore.currentPageId = node._id;
   if (node.dataType === "project" && (node.children?.length as number) > 0)
     expanded.value.push(node._id);
 
   // open item
-  stateStore.openItem(node._id);
+  let id = node._id;
+  let type = "";
+  let label = node.label;
+  if (node.dataType === "project") type = "ReaderPage";
+  else if ((node as Project | Note).dataType === "note") {
+    if (node.type === NoteType.EXCALIDRAW) type = "ExcalidrawPage";
+    else type = "NotePage";
+  }
+  stateStore.openPage({ id, type, label });
 }
 
 async function closeProject(projectId: string) {
-  stateStore.closeItem(projectId);
+  stateStore.closePage(projectId);
+  let notes = await getNotes(projectId);
+  for (let note of notes) {
+    await nextTick(); // do it slowly one by one
+    stateStore.closePage(note._id);
+  }
 
-  let selected = stateStore.workingItemId;
-  if (stateStore.workingItemId == projectId) {
+  let selected = stateStore.currentPageId;
+  if (stateStore.currentPageId == projectId) {
     selected = stateStore.openedProjectIds.has(projectId)
       ? projectId
       : "library";
@@ -289,7 +315,7 @@ async function closeProject(projectId: string) {
   projects.value = projects.value.filter((p) => p._id != projectId);
 
   setTimeout(() => {
-    stateStore.workingItemId = selected;
+    stateStore.currentPageId = selected;
   }, 50);
 }
 

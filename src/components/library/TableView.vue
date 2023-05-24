@@ -170,7 +170,10 @@ function clickProject(row: Project, rowIndex: number) {
  * @param row
  */
 function dblclickProject(row: Project) {
-  stateStore.openItem(row._id);
+  let id = row._id;
+  let label = row.label;
+  let type = "ReaderPage";
+  stateStore.openPage({ id, type, label });
 }
 
 /**

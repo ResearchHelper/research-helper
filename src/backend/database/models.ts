@@ -213,10 +213,16 @@ export interface AppState {
   _id: "appState";
   _rev: string;
   dataType: "appState";
+  ribbonToggledBtnUid: string; // which toggleBtn is toggled
   leftMenuSize: number;
   showLeftMenu: boolean; // is leftmenu expanded
+  showPDFMenuView: boolean;
+  pdfRightMenuSize: number;
+  showPDFRightMenu: boolean;
+  libraryRightMenuSize: number;
+  showLibraryRightMenu: boolean;
   selectedFolderId: string;
-  workingItemId: string;
+  currentPageId: string;
   openedProjectIds: string[];
   settings: Settings;
 }
@@ -228,6 +234,13 @@ export interface Layout {
   config: LayoutConfig | ResolvedLayoutConfig;
 }
 
+export interface Page {
+  id: string;
+  type: string;
+  label: string;
+  data?: any;
+}
+
 /*******************
  * EventBus
  *******************/
@@ -236,3 +249,100 @@ export interface BusEvent {
   target?: string; // to which component
   data?: any;
 }
+
+/******************
+ * Plugin System
+ ******************/
+export enum ComponentName {
+  RIBBON = "ribbon",
+  LEFT_MENU = "leftMenu",
+  PDF_MENU = "pdfMenu",
+  PLUGIN_PAGE = "pluginPage",
+}
+
+export interface Button {
+  id: string;
+  uid: string; // `${pluginId}-${id}`
+  icon: string;
+  tooltip: string;
+  click: () => void;
+}
+
+export interface ToggleButton {
+  id: string;
+  uid: string;
+  icon: string;
+  tooltip: string;
+}
+
+export interface View {
+  uid?: string;
+  buttonId?: string; // corresponding buttonId
+  onBeforeMount?: () => void;
+  onMounted?: (root: HTMLElement) => void;
+  onBeforeUnmount?: () => void;
+  onUnmounted?: () => void;
+}
+
+interface Setting {
+  label: string;
+  description: string;
+}
+
+export interface SettingToggle extends Setting {
+  type: "toggle";
+  value: boolean;
+}
+
+export interface SettingSelect extends Setting {
+  type: "select";
+  options: Array<{ label: string; icon?: string; value: any }>;
+  value: { label: string; icon?: string; value: any };
+}
+
+export interface SettingInput extends Setting {
+  type: "input";
+  inputType: "text" | "number";
+  value: string | number;
+}
+
+export interface SettingSlider extends Setting {
+  type: "slider";
+  min: number;
+  max: number;
+  step?: number; // step between valid values > 0.0
+  snap?: boolean; // snap on valid values
+  value: number;
+}
+
+export interface Plugin {
+  ribbonBtns: Button[];
+  ribbonToggleBtns: ToggleButton[];
+  pdfMenuBtns: Button[];
+  pdfMenuToggleBtns: ToggleButton[];
+  leftMenuViews: View[];
+  pdfMenuViews: View[];
+  pageViews: View[];
+  settings: Array<SettingToggle | SettingSelect | SettingSlider | SettingInput>;
+  enable: () => void;
+  disable: () => void;
+  init: () => void;
+  loadSettings: () => void;
+  saveSettings: () => void;
+}
+
+export interface PluginMeta {
+  id: string;
+  name: string;
+  author: string;
+  version: string;
+  description: string;
+  repo: string;
+}
+
+export interface PluginStatus {
+  enabled: boolean;
+  updatable: boolean;
+}
+
+export interface PluginStatusMap extends Map<string, PluginStatus> {}
