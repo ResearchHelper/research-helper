@@ -10,10 +10,10 @@
       <q-card-section>
         <div class="text-h6">
           <q-icon
-            name="error"
-            color="negative"
+            :name="error?.name"
+            :color="error?.name == 'error' ? 'negative' : 'warning'"
           />
-          {{ error?.name || "Error" }}
+          {{ $t(error?.name || "") }}
         </div>
       </q-card-section>
       <q-card-section
@@ -38,7 +38,7 @@
 <script setup lang="ts">
 const props = defineProps({
   show: { type: Boolean, required: true },
-  error: Error,
+  error: { type: Error, required: false },
 });
 const emit = defineEmits(["update:show"]);
 

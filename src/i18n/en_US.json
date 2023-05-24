@@ -124,5 +124,8 @@
   "install": "Install",
   "installing": "Installing...",
   "no-pdf": "This project has no PDF file",
-  "show-in-explorer": "Show In Explorer"
+  "show-in-explorer": "Show In Explorer",
+  "get-meta-failed": "Unable to retrieve meta, please enter them manually",
+  "error": "Error",
+  "warning": "Warning"
 }

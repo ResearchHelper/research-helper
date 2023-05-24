@@ -35,6 +35,7 @@
       <q-card-actions align="right">
         <q-btn
           flat
+          square
           v-close-popup
           :ripple="false"
           @click="cancel"
@@ -44,6 +45,7 @@
         </q-btn>
         <q-btn
           flat
+          square
           v-close-popup
           :ripple="false"
           @click="confirm"

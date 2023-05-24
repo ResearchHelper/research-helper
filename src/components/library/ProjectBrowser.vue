@@ -190,6 +190,9 @@ import * as pdfjsLib from "pdfjs-dist";
 pdfjsLib.GlobalWorkerOptions.workerSrc =
   "node_modules/pdfjs-dist/build/pdf.worker.min.js";
 
+import { useI18n } from "vue-i18n";
+const { t } = useI18n({ useScope: "global" });
+
 const componentName = "ProjectBrowser";
 const stateStore = useStateStore();
 
@@ -408,7 +411,8 @@ async function addProjectsByFiles(filePaths: string[]) {
       // update ui
       projects.value.push(project);
     } catch (_error) {
-      error.value = _error as Error;
+      error.value = new Error(t("get-meta-failed"));
+      error.value.name = "warning";
       errorDialog.value = true;
       // refresh table
       await getProjects();
@@ -493,7 +497,8 @@ async function processIdentifier(identifier: string) {
       });
     }
   } catch (_error) {
-    error.value = _error as Error;
+    error.value = new Error(t("get-meta-failed"));
+    error.value.name = "warning";
     errorDialog.value = true;
     // refresh table
     await getProjects();
