@@ -235,9 +235,10 @@ export interface Layout {
 }
 
 export interface Page {
-  pageId: string;
-  pageType: string;
-  pageLabel: string;
+  id: string;
+  type: string;
+  label: string;
+  data?: any;
 }
 
 /*******************

@@ -126,14 +126,19 @@ async function getAllNotes(): Promise<Note[]> {
  * @param {string} noteId
  * @returns {string} content
  */
-async function loadNote(noteId: string): Promise<string> {
+async function loadNote(noteId: string, notePath?: string): Promise<string> {
   try {
-    let content = "";
     let note: Note = await db.get(noteId);
-    if (fs.existsSync(note.path)) content = fs.readFileSync(note.path, "utf8");
-    return content;
+    if (fs.existsSync(note.path)) return fs.readFileSync(note.path, "utf8");
+    else return "";
   } catch (error) {
-    console.log(error);
+    if ((error as Error).name == "not_found") {
+      if (notePath) return fs.readFileSync(notePath, "utf8");
+      else {
+        console.log("Error: Must have a valid noteId or notePath");
+        return "";
+      }
+    }
     return "";
   }
 }
@@ -143,12 +148,16 @@ async function loadNote(noteId: string): Promise<string> {
  * @param {string} noteId
  * @param {string} content
  */
-async function saveNote(noteId: string, content: string) {
+async function saveNote(noteId: string, content: string, notePath?: string) {
   try {
     let note: Note = await db.get(noteId);
     fs.writeFileSync(note.path, content);
   } catch (error) {
-    console.log(error);
+    if ((error as Error).name == "not_found") {
+      // might be a note opened by plugin
+      if (notePath) fs.writeFileSync(notePath, content);
+      else console.log("Error: Must pass in a valid noteId or valid notePath");
+    }
   }
 }
 

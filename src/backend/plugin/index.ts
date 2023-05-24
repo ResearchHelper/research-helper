@@ -31,7 +31,17 @@ class PluginManager {
   communityMetas = ref<PluginMeta[]>([]);
   plugins = ref<Map<string, Plugin>>(new Map());
 
-  constructor() {}
+  constructor() {
+    // create all necessary folders and files
+    let hiddenFolder = window.path.join(
+      stateStore.settings.storagePath,
+      ".research-helper"
+    );
+    if (!window.fs.existsSync(hiddenFolder)) window.fs.mkdirSync(hiddenFolder);
+    let pluginsFolder = window.path.join(hiddenFolder, "plugins");
+    if (!window.fs.existsSync(pluginsFolder))
+      window.fs.mkdirSync(pluginsFolder);
+  }
 
   /******************************************************
    * Get community metas, download, delete

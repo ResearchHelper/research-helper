@@ -60,16 +60,19 @@
 </template>
 <script setup lang="ts">
 import { ref } from "vue";
-import { Plugin, SettingSelect } from "src/backend/database";
+import { Plugin } from "src/backend/database";
 import pluginManager from "src/backend/plugin";
 
 const props = defineProps({
   visible: { type: Boolean, reqruied: true },
   itemId: { type: String, required: true },
+  data: { type: Object, requried: false },
 });
 
 const pluginId = ref(props.itemId);
 const plugin = pluginManager.plugins.value.get(pluginId.value) as Plugin;
+
+console.log("plugin", plugin);
 </script>
 <style scoped>
 .card {

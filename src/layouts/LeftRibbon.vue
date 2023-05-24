@@ -49,9 +49,9 @@
         :ripple="false"
         @click="
           $emit('openPage', {
-            pageId: 'library',
-            pageLabel: t('library'),
-            pageType: 'LibraryPage',
+            id: 'library',
+            label: t('library'),
+            type: 'LibraryPage',
           })
         "
       >
@@ -65,9 +65,9 @@
         icon="help"
         @click="
           $emit('openPage', {
-            pageId: 'help',
-            pageLabel: t('help'),
-            pageType: 'HelpPage',
+            id: 'help',
+            label: t('help'),
+            type: 'HelpPage',
           })
         "
       >
@@ -81,9 +81,9 @@
         icon="settings"
         @click="
           $emit('openPage', {
-            pageId: 'settings',
-            pageLabel: t('settings'),
-            pageType: 'SettingsPage',
+            id: 'settings',
+            label: t('settings'),
+            type: 'SettingsPage',
           })
         "
       >

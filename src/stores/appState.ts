@@ -31,7 +31,7 @@ export const useStateStore = defineStore("stateStore", {
     },
 
     // page
-    openedPage: { pageId: "", pageType: "", pageLabel: "" },
+    openedPage: { id: "", type: "", label: "" },
     closedPageId: "",
     currentPageId: "library",
   }),
@@ -81,7 +81,7 @@ export const useStateStore = defineStore("stateStore", {
      */
 
     openPage(page: Page | null) {
-      if (!page?.pageId) return;
+      if (!page?.id) return;
       this.openedPage = page;
     },
 

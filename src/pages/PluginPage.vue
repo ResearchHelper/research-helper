@@ -9,6 +9,7 @@ import { ComponentName, View } from "src/backend/database";
 const props = defineProps({
   itemId: { type: String, required: true },
   visible: { type: Boolean, required: true },
+  data: { type: Object, requried: false },
 });
 
 const root = ref<HTMLDivElement | null>(null);

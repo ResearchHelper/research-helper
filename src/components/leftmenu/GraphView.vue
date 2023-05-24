@@ -49,7 +49,6 @@ import { useStateStore } from "src/stores/appState";
 import cytoscape from "cytoscape";
 import cola from "cytoscape-cola";
 import { EventBus } from "quasar";
-import { getProject } from "src/backend/project/project";
 cytoscape.use(cola);
 
 interface NodeUI {
@@ -211,18 +210,18 @@ async function drawGraph() {
     // MUST use function(){} in order to use this.data
     // this.data is the data of the node
     // we cannot use this to access this.stateStore now
-    let pageId = this.data("id") as string;
-    let pageLabel = this.data("label") as string;
-    let pageType = "";
-    db.get(pageId).then((item) => {
+    let id = this.data("id") as string;
+    let label = this.data("label") as string;
+    let type = "";
+    db.get(id).then((item) => {
       if ((item as Project | Note).dataType === "project") {
-        pageType = "ReaderPage";
+        type = "ReaderPage";
       } else if ((item as Project | Note).dataType === "note") {
         if ((item as Note).type === NoteType.EXCALIDRAW)
-          pageType = "ExcalidrawPage";
-        else pageType = "NotePage";
+          type = "ExcalidrawPage";
+        else type = "NotePage";
       }
-      stateStore.openPage({ pageId, pageType, pageLabel });
+      stateStore.openPage({ id, type, label });
     });
   });
 }

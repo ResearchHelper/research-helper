@@ -17,7 +17,11 @@ import { useI18n } from "vue-i18n";
 
 const { t, locale } = useI18n({ useScope: "global" });
 const stateStore = useStateStore();
-const props = defineProps({ itemId: String, visible: Boolean });
+const props = defineProps({
+  itemId: { type: String, required: true },
+  visible: { type: Boolean, reqruied: true },
+  data: { type: Object, requried: false },
+});
 const vditorHelp = ref<HTMLElement | null>(null);
 const editor = ref<Vditor | null>(null);
 const toolbar = [

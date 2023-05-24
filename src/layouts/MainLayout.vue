@@ -173,9 +173,10 @@ watch(
 async function setComponent(page: Page) {
   if (layout.value)
     await layout.value.addGLComponent(
-      page.pageType,
-      page.pageLabel,
-      page.pageId
+      page.type,
+      page.label,
+      page.id,
+      page.data
     );
   await saveLayout();
   await saveAppState();
@@ -228,9 +229,9 @@ async function onLayoutChanged() {
   let config = layout.value.getLayoutConfig();
   if (config.root === undefined) {
     setComponent({
-      pageId: "library",
-      pageType: "LibraryPage",
-      pageLabel: t("library"),
+      id: "library",
+      label: t("library"),
+      type: "LibraryPage",
     });
     await nextTick();
   }

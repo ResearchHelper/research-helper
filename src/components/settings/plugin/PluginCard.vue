@@ -116,12 +116,12 @@ watch(
 );
 
 function openSettingPage(meta: PluginMeta) {
-  let pageId = meta.id;
-  let pageLabel = `${meta.name} Settings`;
-  let pageType = "PluginSettingsPage";
+  let id = meta.id;
+  let label = `${meta.name} Settings`;
+  let type = "PluginSettingsPage";
   setTimeout(() => {
     // need to wait abit, otherwise can't focus on the new page
-    stateStore.openPage({ pageId, pageType, pageLabel });
+    stateStore.openPage({ id, type, label });
   }, 100);
 }
 

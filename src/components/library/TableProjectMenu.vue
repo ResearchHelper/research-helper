@@ -165,12 +165,11 @@ function expandRow(isExpand: boolean) {
 }
 
 function openProject() {
-  let pageId = props.row._id;
-  let pageLabel = props.row.label;
-  let pageType = "";
-  if (props.row.dataType === "project")
-    if (props.row.path) pageType = "ReaderPage";
-  stateStore.openPage({ pageId, pageType, pageLabel });
+  let id = props.row._id;
+  let label = props.row.label;
+  let type = "";
+  if (props.row.dataType === "project") if (props.row.path) type = "ReaderPage";
+  stateStore.openPage({ id, type, label });
 }
 
 function copyProjectId() {

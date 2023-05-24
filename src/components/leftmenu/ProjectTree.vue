@@ -209,8 +209,8 @@ onBeforeUnmount(() => {
 watch(
   () => stateStore.openedPage,
   async (page: Page) => {
-    if (page.pageType.indexOf("Plugin") > -1) return;
-    let id = page.pageId;
+    if (page.type.indexOf("Plugin") > -1) return;
+    let id = page.id;
     if (!!!id || !tree.value) return;
     let node = tree.value.getNodeByKey(id);
     if (!!node) return; // if project is active already, return
@@ -286,15 +286,15 @@ function selectItem(node: Project | Note) {
     expanded.value.push(node._id);
 
   // open item
-  let pageId = node._id;
-  let pageLabel = node.label;
-  let pageType = "";
-  if (node.dataType === "project") pageType = "ReaderPage";
+  let id = node._id;
+  let type = "";
+  let label = node.label;
+  if (node.dataType === "project") type = "ReaderPage";
   else if ((node as Project | Note).dataType === "note") {
-    if (node.type === NoteType.EXCALIDRAW) pageType = "ExcalidrawPage";
-    else pageType = "NotePage";
+    if (node.type === NoteType.EXCALIDRAW) type = "ExcalidrawPage";
+    else type = "NotePage";
   }
-  stateStore.openPage({ pageId, pageType, pageLabel });
+  stateStore.openPage({ id, type, label });
 }
 
 async function closeProject(projectId: string) {

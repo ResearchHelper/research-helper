@@ -6,14 +6,7 @@
 </template>
 
 <script setup lang="ts">
-import {
-  nextTick,
-  onBeforeUnmount,
-  onMounted,
-  onUnmounted,
-  ref,
-  watch,
-} from "vue";
+import { onBeforeUnmount, onMounted, onUnmounted, ref, watch } from "vue";
 import { applyPureReactInVue } from "veaury";
 import CustomExcalidraw from "src/components/note/CustomExcalidraw";
 import { useStateStore } from "src/stores/appState";
@@ -21,8 +14,9 @@ import { useStateStore } from "src/stores/appState";
 const stateStore = useStateStore();
 
 const props = defineProps({
-  visible: { type: Boolean, reqruied: true },
   itemId: { type: String, required: true },
+  visible: { type: Boolean, reqruied: true },
+  data: { type: Object, requried: false },
 });
 
 const ExcalidrawReact = applyPureReactInVue(CustomExcalidraw);

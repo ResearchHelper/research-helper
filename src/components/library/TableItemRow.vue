@@ -183,16 +183,16 @@ function clickItem() {
 }
 
 function openItem() {
-  let pageId = props.item._id;
-  let pageLabel = props.item.label;
-  let pageType = "";
+  let id = props.item._id;
+  let label = props.item.label;
+  let type = "";
   if (props.item.dataType === "project") {
-    if (props.item.path) pageType = "ReaderPage";
+    if (props.item.path) type = "ReaderPage";
   } else if ((props.item as Project | Note).dataType === "note") {
-    if (props.item.type === NoteType.EXCALIDRAW) pageType = "ExcalidrawPage";
-    else pageType = "NotePage";
+    if (props.item.type === NoteType.EXCALIDRAW) type = "ExcalidrawPage";
+    else type = "NotePage";
   }
-  stateStore.openPage({ pageId, pageType, pageLabel });
+  stateStore.openPage({ id, type, label });
 }
 
 function setRenaming() {
