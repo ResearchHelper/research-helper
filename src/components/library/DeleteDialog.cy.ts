@@ -1,35 +1,32 @@
 import DeleteDialog from "./DeleteDialog.vue";
-
+function mount(deleteFromDB: boolean) {
+  let projects = [
+    { title: "title1" },
+    { title: "title2" },
+    { title: "title3" },
+  ];
+  let props = {
+    show: true,
+    projects: projects,
+    deleteFromDB: deleteFromDB,
+  };
+  return cy.mount(DeleteDialog, { props });
+}
 describe("<DeleteDialog />", () => {
   it("renders with deleteFromDB=true", () => {
-    let props = {
-      show: true,
-      projectTitle: "test title",
-      deleteFromDB: true,
-    };
-    cy.mount(DeleteDialog, { props });
+    mount(true);
     cy.contains("* This operation is not reversible").should("exist");
     cy.contains("* Notes in this project will be deleted").should("exist");
   });
 
   it("renders with deleteFromDB=false", () => {
-    let props = {
-      show: true,
-      projectTitle: "test title",
-      deleteFromDB: false,
-    };
-    cy.mount(DeleteDialog, { props });
+    mount(false);
     cy.contains("* This operation is not reversible").should("not.exist");
     cy.contains("* Notes in this project will be deleted").should("not.exist");
   });
 
   it("cancel", () => {
-    let props = {
-      show: true,
-      projectTitle: "test title",
-      deleteFromDB: true,
-    };
-    const vue = cy.mount(DeleteDialog, { props });
+    const vue = mount(true);
     cy.dataCy("btn-cancel").click();
     vue.then(({ wrapper }) => {
       expect(wrapper.emitted("update:show")).to.eql([[false]]);
@@ -37,12 +34,7 @@ describe("<DeleteDialog />", () => {
   });
 
   it("confirm", () => {
-    let props = {
-      show: true,
-      projectTitle: "test title",
-      deleteFromDB: true,
-    };
-    const vue = cy.mount(DeleteDialog, { props });
+    const vue = mount(true);
     cy.dataCy("btn-confirm").click();
     vue.then(({ wrapper }) => {
       expect(wrapper.emitted("update:show")).to.eql([[false]]);

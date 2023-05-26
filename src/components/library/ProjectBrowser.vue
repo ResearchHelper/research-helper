@@ -67,7 +67,6 @@
           <!-- actionbar height 36px, table view is 100%-36px -->
           <TableView
             v-model:projects="projects"
-            v-model:selectedProject="selectedProject"
             :searchString="searchString"
             style="
               position: absolute;
@@ -107,7 +106,7 @@
             >
               <MetaInfoTab
                 v-if="!!rightMenuSize"
-                :project="selectedProject"
+                :project="stateStore.selected[0]"
               />
             </q-tab-panel>
           </q-tab-panels>
@@ -203,7 +202,6 @@ const treeview = ref<typeof TreeView | null>(null);
 // data
 const searchString = ref("");
 const projects = ref<Project[]>([]);
-const selectedProject = ref<Project | undefined>(undefined);
 
 const treeViewSize = ref(20);
 const rightMenuSize = ref(0);
@@ -264,14 +262,6 @@ onMounted(async () => {
     if (index === -1) return;
     projects.value[index] = project;
   });
-
-  // selectedProject
-  console.log("itemId", stateStore.selectedItemId);
-  let project = await getProjectDB(stateStore.selectedItemId);
-  if (project && project.dataType == "project") {
-    console.log(project);
-    selectedProject.value = project;
-  }
 
   // rightmenu
   if (stateStore.showLibraryRightMenu)
@@ -490,13 +480,13 @@ async function processIdentifier(identifier: string) {
       await updateEdge(project._id, { sourceNode: sourceNode } as Edge);
 
       // update tableview UI
-      if (selectedProject.value !== undefined) {
-        for (let prop in project) selectedProject.value[prop] = project[prop];
+      if (stateStore.selected[0] !== undefined) {
+        for (let prop in project) stateStore.selected[0][prop] = project[prop];
       }
       // update projectree ui
       bus.emit("updateProject", {
         source: componentName,
-        data: selectedProject.value,
+        data: stateStore.selected[0],
       });
     }
   } catch (_error) {
@@ -513,29 +503,30 @@ async function processIdentifier(identifier: string) {
  * if deleteFromDB is true, delete the project from database and remove the actual files
  */
 async function deleteProject() {
-  if (selectedProject.value === undefined) return;
+  // delete project id
+  let deleteIds = stateStore.selected.map((p) => p._id);
   // update ui
-  projects.value = projects.value.filter(
-    (p) => p._id != (selectedProject.value as Project)._id
-  );
-  // update projectTree ui
-  bus.emit("deleteProject", {
-    source: componentName,
-    data: selectedProject.value._id,
-  });
+  projects.value = projects.value.filter((p) => !deleteIds.includes(p._id));
+  for (let projectId of deleteIds) {
+    // update projectTree ui
+    bus.emit("deleteProject", {
+      source: componentName,
+      data: projectId,
+    });
 
-  // update db
-  await nextTick(); // wait until the ui closes all windows
-  let notes = await getNotesDB(selectedProject.value._id);
-  await deleteProjectDB(
-    selectedProject.value._id,
-    deleteFromDB.value,
-    stateStore.selectedFolderId
-  );
-  if (deleteFromDB.value) {
-    await deleteEdge(selectedProject.value._id);
-    for (let note of notes) {
-      await deleteEdge(note._id);
+    // update db
+    await nextTick(); // wait until the ui closes all windows
+    let notes = await getNotesDB(projectId);
+    await deleteProjectDB(
+      projectId,
+      deleteFromDB.value,
+      stateStore.selectedFolderId
+    );
+    if (deleteFromDB.value) {
+      await deleteEdge(projectId);
+      for (let note of notes) {
+        await deleteEdge(note._id);
+      }
     }
   }
 }

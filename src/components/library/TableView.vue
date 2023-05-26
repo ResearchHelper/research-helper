@@ -115,14 +115,9 @@ const { t } = useI18n({ useScope: "global" });
 const props = defineProps({
   searchString: { type: String, required: true },
   projects: { type: Array as PropType<Project[]>, required: true },
-  selectedProject: { type: Object as PropType<Project>, required: false },
 });
 
-const emit = defineEmits([
-  "dragProject",
-  "update:projects",
-  "update:selectedProject",
-]);
+const emit = defineEmits(["dragProject", "update:projects"]);
 
 let storedSelectedRow = {};
 const isClickingPDF = ref(false);
@@ -227,7 +222,6 @@ function clickProject(
 ) {
   // row: Project, rowIndex: number
   let row = props.row;
-  let rowIndex = props.rowIndex;
   let descriptor = Object.getOwnPropertyDescriptor(props, "selected");
   if (descriptor)
     (descriptor.set as (adding: boolean, e: Event) => void)(true, e);
@@ -236,7 +230,6 @@ function clickProject(
   stateStore.selectedItemId = row._id;
   // ditinguish clicking project row or pdf row
   isClickingPDF.value = false;
-  emit("update:selectedProject", row);
   console.log(stateStore.selected);
 }
 
