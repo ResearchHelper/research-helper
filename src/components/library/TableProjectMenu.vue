@@ -142,7 +142,6 @@ const props = defineProps({
 const emit = defineEmits(["expandRow"]);
 
 const stateStore = useStateStore();
-const replaceStoredCopy = ref(false);
 
 // dialogs
 const showSearchMetaDialog = inject(KEY_metaDialog) as () => void;

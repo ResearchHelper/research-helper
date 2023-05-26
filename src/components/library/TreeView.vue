@@ -122,7 +122,6 @@ import { useI18n } from "vue-i18n";
 const stateStore = useStateStore();
 const { t } = useI18n({ useScope: "global" });
 
-const props = defineProps({ draggingProjectId: String });
 const emit = defineEmits(["exportFolder"]);
 
 const renameInput = ref<HTMLInputElement | null>(null);
@@ -304,7 +303,7 @@ function onDragLeave(e: DragEvent, node: Folder) {
 }
 
 /**
- * If draggingProjectId is not empty, then we are dropping project into folder
+ * If draggedProjects is not empty, then we are dropping projects into folder
  * Otherwise we are dropping folder into another folder
  * @param e - dragevent
  * @param node - the folder / project user is dragging
@@ -313,17 +312,16 @@ async function onDrop(e: DragEvent, node: Folder) {
   // record this first otherwise dragend events makes it null
   let _dragoverNode = dragoverNode.value as Folder;
   let _draggingNode = draggingNode.value as Folder;
-  let _draggingProjectId = props.draggingProjectId;
+  let draggedProjectsRaw = e.dataTransfer?.getData("draggedProjects");
 
-  if (!!_draggingProjectId) {
+  if (draggedProjectsRaw) {
     // drag and drop project into folder
-    let project = (await getProject(_draggingProjectId)) as Project;
-    if (!project.folderIds.includes(_dragoverNode._id)) {
-      project.folderIds.push(_dragoverNode._id);
-      await updateProject(project);
+    for (let project of JSON.parse(draggedProjectsRaw)) {
+      if (!project.folderIds.includes(_dragoverNode._id)) {
+        project.folderIds.push(_dragoverNode._id);
+        updateProject(project);
+      }
     }
-
-    onDragEnd(e);
   } else {
     // drag folder into another folder
     // update ui (do this first since parentfolder will change)

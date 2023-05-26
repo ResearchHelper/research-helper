@@ -24,8 +24,8 @@
     <template v-slot:header="props">
       <q-tr :props="props">
         <q-th auto-width>
-          <q-checkbox
-            dense
+          <input
+            type="checkbox"
             v-model="props.selected"
           />
         </q-th>
@@ -49,9 +49,10 @@
         :class="{
           'bg-primary':
             props.key === stateStore.selectedItemId && !isClickingPDF,
+          selected: props.selected,
         }"
         draggable="true"
-        @dragstart="onDragStart(props.key)"
+        @dragstart="onDragStart"
         @dragend="onDragEnd"
         @expandRow="(isExpand: boolean) => props.expand=isExpand"
         @click="(e: PointerEvent) => clickProject(props, e)"
@@ -159,9 +160,6 @@ const headers = computed(() => {
 
 function handleSelection(rows: Project[], added: boolean, evt: KeyboardEvent) {
   // ignore selection change from header of not from a direct click event
-  console.log("rows", rows);
-  console.log("added", added);
-  console.log("evt", evt);
   if (rows.length !== 1 || evt === void 0) {
     return;
   }
@@ -279,15 +277,30 @@ function toggleContextMenu(
  * Drag event starts and set draggingProject
  * @param projectId
  */
-function onDragStart(projectId: string) {
-  emit("dragProject", projectId);
+function onDragStart(e: DragEvent) {
+  let rows = document.querySelectorAll("tr.selected");
+  let div = document.createElement("div");
+  div.id = "drag-group";
+  div.style.position = "absolute";
+  div.style.top = "-1000px"; // make this invisible
+  document.body.append(div);
+  for (let row of rows) {
+    let clone = row.cloneNode(true) as HTMLElement;
+    clone.classList.add("bg-primary");
+    div.append(clone);
+  }
+  e.dataTransfer?.setDragImage(div, 0, 0);
+  e.dataTransfer?.setData(
+    "draggedProjects",
+    JSON.stringify(stateStore.selected)
+  );
 }
 
 /**
  * Drag event ends and set draggingProjectId to ""
  */
 function onDragEnd() {
-  emit("dragProject", "");
+  document.getElementById("drag-group")?.remove();
 }
 
 /**

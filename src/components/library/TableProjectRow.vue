@@ -1,8 +1,9 @@
 <template>
   <q-tr>
     <q-th auto-width>
-      <q-checkbox
-        dense
+      <input
+        type="checkbox"
+        class="q-mt-xs"
         v-model="tableProps.selected"
       />
     </q-th>

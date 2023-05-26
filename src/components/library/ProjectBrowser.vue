@@ -31,7 +31,6 @@
     <template v-slot:before>
       <TreeView
         style="background: var(--color-library-treeview-bkgd)"
-        :draggingProjectId="draggingProjectId"
         @exportFolder="(folder) => showExportFolderDialog(folder)"
         ref="treeview"
       />
@@ -76,7 +75,6 @@
               width: 100%;
               background: var(--color-library-tableview-bkgd);
             "
-            @dragProject="(key) => onDragProject(key)"
             ref="table"
           />
         </template>
@@ -231,6 +229,7 @@ const collectionPath = ref<string>("");
 watch(
   () => stateStore.selectedFolderId,
   async (folderId: string) => {
+    stateStore.selected = [];
     await getProjects();
   }
 );
@@ -675,15 +674,6 @@ async function deleteNote(note: Note, index?: number) {
 /************************************************************
  * TableView
  ************************************************************/
-
-/**
- * As a bridge to notify TreeView about the drag event
- * @param key
- */
-function onDragProject(key: string) {
-  draggingProjectId.value = key;
-  if (!!!key && treeview.value) treeview.value.onDragEnd(null);
-}
 
 /**********************************************************
  * TreeView
