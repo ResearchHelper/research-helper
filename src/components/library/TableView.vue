@@ -57,7 +57,7 @@
         @expandRow="(isExpand: boolean) => props.expand=isExpand"
         @click="(e: PointerEvent) => clickProject(props, e)"
         @dblclick="dblclickProject(props.row)"
-        @contextmenu="(e: PointerEvent) => toggleContextMenu(props, e)"
+        @contextmenu="(e:Event) => toggleContextMenu(props, e)"
       ></TableProjectRow>
 
       <!-- Expanded Rows -->
@@ -100,16 +100,7 @@
 // types
 import { computed, nextTick, PropType, ref, toRaw } from "vue";
 import { Project, Note, Author } from "src/backend/database";
-import {
-  QTable,
-  QTableColumn,
-  QTableProps,
-  QTableSlots,
-  QTd,
-  QTdProps,
-  QTr,
-  QTrProps,
-} from "quasar";
+import { QTable, QTableColumn, QTr } from "quasar";
 // components
 import TableItemRow from "./TableItemRow.vue";
 import TableSearchRow from "./TableSearchRow.vue";
@@ -246,6 +237,7 @@ function clickProject(
   // ditinguish clicking project row or pdf row
   isClickingPDF.value = false;
   emit("update:selectedProject", row);
+  console.log(stateStore.selected);
 }
 
 /**
@@ -259,18 +251,11 @@ function dblclickProject(row: Project) {
   stateStore.openPage({ id, type, label });
 }
 
-/**
- * Select the row and show context menu
- * @param row - row to be select
- * @param rowIndex
- */
-function toggleContextMenu(
-  props: { row: Project; rowIndex: number; selected: boolean },
-  e: PointerEvent
-) {
-  // we must select the row first
-  // before using the functionalities in the menu
-  clickProject(props, e);
+function toggleContextMenu(props: { selected: boolean }, e: Event) {
+  if (props.selected) return;
+  let descriptor = Object.getOwnPropertyDescriptor(props, "selected");
+  if (descriptor)
+    (descriptor.set as (adding: boolean, e: Event) => void)(true, e);
 }
 
 /**

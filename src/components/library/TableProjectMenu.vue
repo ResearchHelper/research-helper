@@ -7,6 +7,7 @@
   >
     <q-list dense>
       <q-item
+        v-if="stateStore.selected.length <= 1"
         clickable
         v-close-popup
         @click="copyProjectId"
@@ -21,10 +22,10 @@
         <q-item-section>{{ $t("show-in-explorer") }}</q-item-section>
       </q-item>
 
-      <q-separator />
+      <q-separator v-if="stateStore.selected.length == 1" />
 
       <q-item
-        v-if="row.dataType === 'project'"
+        v-if="stateStore.selected.length == 1"
         clickable
         v-close-popup
         @click="onAddNote(NoteType.MARKDOWN)"
@@ -32,7 +33,7 @@
         <q-item-section> {{ $t("add-markdown-note") }} </q-item-section>
       </q-item>
       <q-item
-        v-if="row.dataType === 'project'"
+        v-if="stateStore.selected.length == 1"
         clickable
         v-close-popup
         @click="onAddNote(NoteType.EXCALIDRAW)"
@@ -40,11 +41,16 @@
         <q-item-section> {{ $t("add-excalidraw") }} </q-item-section>
       </q-item>
       <q-item
+        v-if="stateStore.selected.length == 1"
         clickable
         @mouseover="($refs.submenu as QMenu).show()"
       >
         <q-item-section>
-          {{ !!row.path ? $t("replace-file") : $t("attach-file") }}
+          {{
+            !!stateStore.selected[0].path
+              ? $t("replace-file")
+              : $t("attach-file")
+          }}
         </q-item-section>
         <q-item-section side>
           <q-icon name="arrow_right" />
@@ -62,7 +68,7 @@
             >
               <q-item-section @click="onAttachFile(true)">
                 {{
-                  !!row.path
+                  !!stateStore.selected[0].path
                     ? $t("replace-stored-copy-of-file")
                     : $t("attach-stored-copy-of-file")
                 }}
@@ -74,7 +80,7 @@
             >
               <q-item-section @click="onAttachFile(false)">
                 {{
-                  !!row.path
+                  !!stateStore.selected[0].path
                     ? $t("replace-path-to-file")
                     : $t("attach-path-to-file")
                 }}
@@ -94,6 +100,7 @@
       </q-item>
 
       <q-item
+        v-if="stateStore.selected.length == 1"
         clickable
         v-close-popup
         @click="searchMeta"
@@ -121,9 +128,9 @@
 </template>
 <script setup lang="ts">
 // types
-import { inject, PropType, ref } from "vue";
+import { inject, nextTick } from "vue";
 import { NoteType, Project } from "src/backend/database";
-import { QMenu, QTableProps } from "quasar";
+import { QMenu } from "quasar";
 import {
   KEY_metaDialog,
   KEY_deleteDialog,
@@ -133,20 +140,14 @@ import {
 // db
 import { copyToClipboard } from "quasar";
 import { useStateStore } from "src/stores/appState";
-
-const props = defineProps({
-  row: { type: Object as PropType<Project>, required: true },
-  rowIndex: { type: Number, required: true },
-  props: { type: Object as PropType<QTableProps> },
-});
-const emit = defineEmits(["expandRow"]);
-
 const stateStore = useStateStore();
+
+const emit = defineEmits(["expandRow"]);
 
 // dialogs
 const showSearchMetaDialog = inject(KEY_metaDialog) as () => void;
 const showDeleteDialog = inject(KEY_deleteDialog) as (
-  project: Project,
+  deleteProjects: Project[],
   deleteFromDB: boolean
 ) => void;
 // note
@@ -162,7 +163,8 @@ const attachFile = inject(KEY_attachFile) as (
 ) => void;
 
 function onAddNote(type: NoteType) {
-  addNote(props.row._id, type, props.rowIndex);
+  let project = stateStore.selected[0];
+  addNote(project._id, type);
   expandRow(true);
 }
 
@@ -170,26 +172,30 @@ function expandRow(isExpand: boolean) {
   emit("expandRow", isExpand);
 }
 
-function openProject() {
-  let id = props.row._id;
-  let label = props.row.label;
-  let type = "";
-  if (props.row.dataType === "project") if (props.row.path) type = "ReaderPage";
-  stateStore.openPage({ id, type, label });
+async function openProject() {
+  for (let project of stateStore.selected) {
+    let id = project._id;
+    let label = project.label;
+    let type = "ReaderPage";
+    stateStore.openPage({ id, type, label });
+    await nextTick();
+  }
 }
 
 function copyProjectId() {
-  copyToClipboard(props.row._id);
+  copyToClipboard(stateStore.selected[0]._id);
 }
 
 function showInExplorer() {
-  // don't use props.row.path because it might not exists
-  let path = window.path.join(stateStore.settings.storagePath, props.row._id);
-  window.fileBrowser.showFileInFolder(path);
+  // don't use project.path because it might not exists
+  for (let project of stateStore.selected) {
+    let path = window.path.join(stateStore.settings.storagePath, project._id);
+    window.fileBrowser.showFileInFolder(path);
+  }
 }
 
 function deleteProject(deleteFromDB: boolean) {
-  showDeleteDialog(props.row, deleteFromDB);
+  showDeleteDialog(stateStore.selected, deleteFromDB);
 }
 
 /**
@@ -204,7 +210,7 @@ function searchMeta() {
  * @param replaceStoredCopy - replace the copy in storage?
  */
 function onAttachFile(replaceStoredCopy: boolean) {
-  attachFile(replaceStoredCopy, props.row._id, props.rowIndex);
+  attachFile(replaceStoredCopy, stateStore.selected[0]._id);
   expandRow(true);
 }
 </script>

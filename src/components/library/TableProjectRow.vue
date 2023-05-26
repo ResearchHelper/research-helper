@@ -4,7 +4,9 @@
       <input
         type="checkbox"
         class="q-mt-xs"
+        style="width: 0.9rem; height: 0.9rem"
         v-model="tableProps.selected"
+        @click.stop
       />
     </q-th>
     <q-td auto-width>
@@ -36,11 +38,7 @@
       </div>
     </q-td>
 
-    <TableProjectMenu
-      :row="tableProps.row"
-      :rowIndex="tableProps.rowIndex"
-      @expandRow="expandRow"
-    />
+    <TableProjectMenu @expandRow="expandRow" />
   </q-tr>
 </template>
 

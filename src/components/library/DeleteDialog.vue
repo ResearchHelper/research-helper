@@ -25,7 +25,7 @@
           {{ $t("are-you-sure-you-want-to-delete-the-following-project") }}
         </strong>
         <ul>
-          <li>"{{ projectTitle }}"</li>
+          <li v-for="project in projects">"{{ project.title }}"</li>
         </ul>
         <strong v-if="deleteFromDB">
           <div>{{ $t("this-operation-is-not-reversible") }}</div>
@@ -59,9 +59,11 @@
   </q-dialog>
 </template>
 <script setup lang="ts">
+import { PropType } from "vue";
+import { Project } from "src/backend/database";
 const props = defineProps({
   show: { type: Boolean, required: true },
-  projectTitle: { type: String, required: false },
+  projects: { type: Object as PropType<Project[]>, required: false },
   deleteFromDB: { type: Boolean, required: true },
 });
 const emit = defineEmits(["update:show", "confirm"]);

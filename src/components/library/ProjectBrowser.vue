@@ -13,7 +13,7 @@
   />
   <DeleteDialog
     v-model:show="deleteDialog"
-    :projectTitle="project?.title"
+    :projects="deleteProjects"
     :deleteFromDB="deleteFromDB"
     @confirm="deleteProject"
   />
@@ -208,13 +208,11 @@ const selectedProject = ref<Project | undefined>(undefined);
 const treeViewSize = ref(20);
 const rightMenuSize = ref(0);
 
-const draggingProjectId = ref("");
-
 const exportFolderDialog = ref(false);
 const folder = ref<Folder | null>(null);
 
 const deleteDialog = ref(false);
-const project = ref<Project | null>(null);
+const deleteProjects = ref<Project[]>([]);
 const deleteFromDB = ref(false);
 
 const identifierDialog = ref(false);
@@ -299,9 +297,15 @@ onBeforeUnmount(() => {
  * @param project
  * @param deleteFromDB
  */
-function showDeleteDialog(_project: Project, _deleteFromDB: boolean) {
+// function showDeleteDialog(_project: Project, _deleteFromDB: boolean) {
+//   deleteDialog.value = true;
+//   project.value = _project; // project to be delted
+//   deleteFromDB.value = _deleteFromDB;
+// }
+
+function showDeleteDialog(_deleteProjects: Project[], _deleteFromDB: boolean) {
   deleteDialog.value = true;
-  project.value = _project; // project to be delted
+  deleteProjects.value = _deleteProjects; // project to be delted
   deleteFromDB.value = _deleteFromDB;
 }
 
@@ -670,10 +674,6 @@ async function deleteNote(note: Note, index?: number) {
     data: project,
   });
 }
-
-/************************************************************
- * TableView
- ************************************************************/
 
 /**********************************************************
  * TreeView
