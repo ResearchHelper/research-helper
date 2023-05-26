@@ -1,5 +1,11 @@
 <template>
   <q-tr>
+    <q-th auto-width>
+      <q-checkbox
+        dense
+        v-model="tableProps.selected"
+      />
+    </q-th>
     <q-td auto-width>
       <q-icon
         v-if="!!tableProps.row.path || (tableProps.row.children?.length as typeof NaN) > 0"
@@ -50,6 +56,7 @@ const props = defineProps({
       cols: { name: string; value: string | Author[] }[];
       rowIndex: number;
       expand: boolean;
+      selected: boolean;
     }>,
     required: true,
   },

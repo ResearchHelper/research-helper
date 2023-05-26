@@ -127,5 +127,6 @@
   "show-in-explorer": "Show In Explorer",
   "get-meta-failed": "Unable to retrieve meta, please enter them manually",
   "error": "Error",
-  "warning": "Warning"
+  "warning": "Warning",
+  "batch-mode": "Batch mode"
 }
