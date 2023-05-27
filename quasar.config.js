@@ -206,16 +206,19 @@ module.exports = configure(function (/* ctx */) {
           releaseType: "release",
         },
         linux: {
-          target: "AppImage",
+          target: ["AppImage", "zip"],
+          category: "Education",
         },
         win: {
-          target: "nsis",
+          target: ["nsis", "zip"],
         },
         nsis: {
-          deleteAppDataOnUninstall: true,
+          oneClick: false,
+          allowToChangeInstallationDirectory: true,
         },
         mac: {
-          target: "dmg",
+          target: ["dmg", "zip"],
+          category: "public.app-category.education",
         },
       },
     },
