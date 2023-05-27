@@ -128,5 +128,6 @@
   "get-meta-failed": "Unable to retrieve meta, please enter them manually",
   "error": "Error",
   "warning": "Warning",
-  "batch-mode": "Batch mode"
+  "batch-mode": "Batch mode",
+  "category": "Categories"
 }

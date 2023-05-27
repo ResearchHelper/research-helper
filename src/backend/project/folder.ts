@@ -1,6 +1,14 @@
 import { db, Folder } from "../database";
 import { sortTree } from "./utils";
 
+async function getFolder(folderId: string): Promise<Folder | undefined> {
+  try {
+    return (await db.get(folderId)) as Folder;
+  } catch (error) {
+    console.log(error);
+  }
+}
+
 /**
  * Get the folder tree
  * @returns tree
@@ -184,6 +192,7 @@ async function moveFolderInto(dragFolderId: string, dropFolderId: string) {
 }
 
 export {
+  getFolder,
   getFolderTree,
   addFolder,
   updateFolder,

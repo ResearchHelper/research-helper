@@ -213,6 +213,26 @@
           @remove="removeTag(tag)"
         />
       </div>
+      <div class="row justify-between q-mt-sm">
+        <div
+          class="col"
+          style="font-size: 1rem"
+        >
+          {{ $t("category") }}
+        </div>
+      </div>
+      <div class="q-pb-sm">
+        <q-chip
+          v-for="(name, index) in categories"
+          :key="index"
+          :ripple="false"
+          dense
+          size="1rem"
+          icon="folder"
+          :label="name"
+        />
+      </div>
+
       <div>
         <q-btn
           class="full-width"
@@ -256,14 +276,15 @@
 
 <script setup lang="ts">
 // types
-import { ref, watch, computed, inject } from "vue";
+import { ref, watch, computed, inject, onMounted } from "vue";
 import type { PropType } from "vue";
 import { EventBus } from "quasar";
-import { Author, Edge, Meta, Project } from "src/backend/database";
+import { Author, Edge, Folder, Meta, Project } from "src/backend/database";
 // backend stuff
 import { updateProject } from "src/backend/project/project";
 import { updateEdge } from "src/backend/project/graph";
 import { getMeta } from "src/backend/project/meta";
+import { getFolder } from "src/backend/project/folder";
 
 const componentName = "MetaInfoTab";
 
@@ -272,11 +293,8 @@ const bus = inject("bus") as EventBus;
 const tab = ref("meta");
 const name = ref(""); // author name
 const tag = ref(""); // project tag
+const categories = ref<string[]>([]);
 const references = ref<{ text: string; link: string }[]>([]);
-
-watch(tab, () => {
-  if (tab.value === "reference") getReferences();
-});
 
 const meta = computed(() => props.project);
 const title = computed({
@@ -317,9 +335,37 @@ const authors = computed(() => {
   return names;
 });
 
+watch(tab, () => {
+  if (tab.value === "reference") getReferences();
+});
+watch(
+  () => props.project?.folderIds,
+  async () => {
+    await getCategories();
+  },
+  { deep: true }
+);
+
+onMounted(async () => {
+  await getCategories();
+});
+
 /**********************************************
  * Methods
  **********************************************/
+/**
+ * Get parentFolder labels of a project
+ */
+async function getCategories() {
+  categories.value = [];
+  let ids = props.project?.folderIds;
+  if (!ids) return;
+  for (let id of ids) {
+    let folder = (await getFolder(id)) as Folder | undefined;
+    if (folder) categories.value.push(folder.label);
+  }
+}
+
 /**
  * Update project info
  * @param updateEdgeData - if true, also modify the edge data

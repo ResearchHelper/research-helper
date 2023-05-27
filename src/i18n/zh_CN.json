@@ -128,5 +128,6 @@
   "get-meta-failed": "无法检索元数据，请手动输入",
   "error": "错误",
   "warning": "警告",
-  "batch-mode": "批处理模式"
+  "batch-mode": "批处理模式",
+  "category": "类别"
 }
