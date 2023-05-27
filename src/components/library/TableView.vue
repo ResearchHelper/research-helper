@@ -1,7 +1,8 @@
 <template>
   <q-table
+    id="projectList"
     class="stickyHeader no-shadow"
-    virtual-scroll
+    style="overflow-y: hidden"
     dense
     hide-bottom
     square
@@ -91,7 +92,7 @@
         }"
         :width="($refs.table as QTable).$el.getBoundingClientRect().width * 0.8"
         :text="expansionText[props.rowIndex]"
-      ></TableSearchRow>
+      />
     </template>
   </q-table>
 </template>
@@ -125,24 +126,22 @@ const showExpansion = ref(false);
 const expansionText = ref<string[]>([]);
 const loading = ref(false); // is table filtering data
 const tableRef = ref();
-const headers = computed(() => {
-  return [
-    {
-      name: "title",
-      field: "title",
-      label: t("title"),
-      align: "left",
-      sortable: true,
-    },
-    {
-      name: "author",
-      field: "author",
-      label: t("author"),
-      align: "left",
-      sortable: true,
-    },
-  ] as QTableColumn[];
-});
+const headers = [
+  {
+    name: "title",
+    field: "title",
+    label: t("title"),
+    align: "left",
+    sortable: true,
+  },
+  {
+    name: "author",
+    field: "author",
+    label: t("author"),
+    align: "left",
+    sortable: true,
+  },
+];
 
 function handleSelection(rows: Project[], added: boolean, evt: KeyboardEvent) {
   // ignore selection change from header of not from a direct click event
@@ -356,7 +355,7 @@ function searchProject(
 <style lang="scss">
 .stickyHeader {
   /* height or max-height is important */
-  height: 100%;
+  height: 20px;
 
   .q-table__top,
   .q-table__bottom,
@@ -369,11 +368,6 @@ function searchProject(
     position: sticky;
     z-index: 1;
   }
-  /* this will be the loading indicator */
-  thead tr:last-child th {
-    /* height of all previous header rows */
-    top: 48px;
-  }
   thead tr:first-child th {
     top: 0;
   }
@@ -381,5 +375,9 @@ function searchProject(
 
 .tableview-row {
   background: var(--color-library-tableview-row-bkgd);
+}
+
+#projectList td {
+  padding: 0px 2px;
 }
 </style>

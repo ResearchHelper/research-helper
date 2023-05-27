@@ -6,6 +6,7 @@
     @dblclick="openItem"
   >
     <q-td auto-width></q-td>
+    <q-td auto-width></q-td>
     <q-td
       v-if="item.dataType === 'note'"
       colspan="100%"

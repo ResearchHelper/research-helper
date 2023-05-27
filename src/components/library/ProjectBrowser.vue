@@ -69,7 +69,6 @@
             v-model:projects="projects"
             :searchString="searchString"
             style="
-              position: absolute;
               height: calc(100% - 36px);
               width: 100%;
               background: var(--color-library-tableview-bkgd);

@@ -10,8 +10,6 @@ export const useStateStore = defineStore("stateStore", {
     leftMenuSize: 20,
     showLeftMenu: false,
     showPDFMenuView: false,
-    pdfRightMenuSize: 30,
-    showPDFRightMenu: false,
     libraryRightMenuSize: 30,
     showLibraryRightMenu: false,
 
@@ -44,8 +42,6 @@ export const useStateStore = defineStore("stateStore", {
       this.leftMenuSize = state.leftMenuSize || this.leftMenuSize;
       this.showLeftMenu = state.showLeftMenu || this.showLeftMenu;
       this.showPDFMenuView = state.showPDFMenuView || this.showPDFMenuView;
-      this.pdfRightMenuSize = state.pdfRightMenuSize || this.pdfRightMenuSize;
-      this.showPDFRightMenu = state.showPDFRightMenu || this.showPDFRightMenu;
       this.libraryRightMenuSize =
         state.libraryRightMenuSize || this.libraryRightMenuSize;
       this.showLibraryRightMenu =
@@ -68,8 +64,6 @@ export const useStateStore = defineStore("stateStore", {
         leftMenuSize: this.leftMenuSize,
         showLeftMenu: this.showLeftMenu,
         showPDFMenuView: this.showPDFMenuView,
-        pdfRightMenuSize: this.pdfRightMenuSize,
-        showPDFRightMenu: this.showPDFRightMenu,
         libraryRightMenuSize: this.libraryRightMenuSize,
         showLibraryRightMenu: this.showLibraryRightMenu,
         selectedFolderId: this.selectedFolderId,
@@ -103,19 +97,6 @@ export const useStateStore = defineStore("stateStore", {
         this.showLeftMenu = !this.showLeftMenu;
       } else {
         this.showLeftMenu = visible;
-      }
-    },
-
-    /**
-     * Toggle PDF right menu
-     * If visible is given, set the state as it is
-     * @param visible
-     */
-    togglePDFRightMenu(visible?: boolean) {
-      if (visible === undefined) {
-        this.showPDFRightMenu = !this.showPDFRightMenu;
-      } else {
-        this.showPDFRightMenu = visible;
       }
     },
 
