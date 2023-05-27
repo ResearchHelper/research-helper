@@ -2,8 +2,8 @@
   <q-splitter
     style="position: absolute; width: 100%; height: 100%"
     v-model="rightMenuSize"
-    :separator-class="{ 'q-splitter-separator': stateStore.showPDFRightMenu }"
-    :disable="!stateStore.showPDFRightMenu"
+    :separator-class="{ 'q-splitter-separator': showRightMenu }"
+    :disable="!showRightMenu"
     reverse
     :limits="[0, 60]"
     emit-immediately
@@ -19,6 +19,7 @@
         :pdfState="pdfState"
         :pageLabels="pageLabels"
         :matchesCount="matchesCount"
+        v-model:showRightMenu="showRightMenu"
         @changePageNumber="changePageNumber"
         @changeScale="changeScale"
         @changeSpreadMode="changeSpreadMode"
@@ -73,7 +74,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, watch, nextTick, provide, onMounted } from "vue";
+import {
+  ref,
+  reactive,
+  watch,
+  nextTick,
+  provide,
+  onMounted,
+  computed,
+} from "vue";
 import {
   Annotation,
   AnnotationType,
@@ -136,8 +145,22 @@ const viewer = ref(null);
 const ready = ref(false);
 const project = ref<Project | null>(null);
 
-// right menu
+// right menu (don't use stateStore since there will be many readerPages)
 const rightMenuSize = ref(0);
+const prvRightMenuSize = ref(0);
+const showRightMenu = computed({
+  get() {
+    return rightMenuSize.value > 0;
+  },
+  set(visible: boolean) {
+    if (visible) {
+      rightMenuSize.value = Math.max(prvRightMenuSize.value, 15);
+    } else {
+      prvRightMenuSize.value = rightMenuSize.value;
+      rightMenuSize.value = 0;
+    }
+  },
+});
 
 // pdf related
 const pdfState = reactive<PDFState>({} as PDFState);
@@ -425,31 +448,6 @@ function setPosition(rects: DOMRect[] | DOMRectList) {
   `;
 }
 
-/**********************************
- * RightMenu
- **********************************/
-watch(
-  () => stateStore.showPDFRightMenu,
-  (visible: boolean) => {
-    if (visible) {
-      // if visible, the left menu has at least 10 unit width
-      rightMenuSize.value = Math.max(stateStore.pdfRightMenuSize, 15);
-    } else {
-      // if not visible, record the size and close the menu
-      stateStore.pdfRightMenuSize = rightMenuSize.value;
-      rightMenuSize.value = 0;
-    }
-  }
-);
-
-function resizeRightMenu(size: number) {
-  if (size < 8) {
-    rightMenuSize.value = 0;
-    stateStore.showPDFRightMenu = false;
-  }
-  stateStore.pdfRightMenuSize = size > 10 ? size : 30;
-}
-
 /**
  * Provides
  */
@@ -499,6 +497,14 @@ watch(selectedAnnotId, (annotId) => {
     changePageNumber(annot.pageNumber);
   }
 });
+
+function resizeRightMenu(size: number) {
+  if (size < 8) {
+    rightMenuSize.value = 0;
+    showRightMenu.value = false;
+  }
+  prvRightMenuSize.value = size > 10 ? size : 30;
+}
 
 /**
  * onMounted

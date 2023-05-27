@@ -282,7 +282,8 @@
 
     <!-- right menu -->
     <q-btn-toggle
-      v-model="stateStore.showPDFRightMenu"
+      :model-value="showRightMenu"
+      @update:model-value="(visible: boolean) => $emit('update:showRightMenu', visible)"
       clearable
       unelevated
       :ripple="false"
@@ -305,9 +306,7 @@ import { AnnotationType, PDFState } from "src/backend/database";
 import ColorPicker from "./ColorPicker.vue";
 import { useI18n } from "vue-i18n";
 import { useQuasar } from "quasar";
-import { useStateStore } from "src/stores/appState";
 
-const stateStore = useStateStore();
 const $q = useQuasar();
 const { t } = useI18n({ useScope: "global" });
 
@@ -317,6 +316,7 @@ const { t } = useI18n({ useScope: "global" });
 const props = defineProps({
   pdfState: { type: Object as PropType<PDFState>, required: true },
   pageLabels: { type: Object as PropType<string[]>, required: true },
+  showRightMenu: { type: Boolean, required: true },
   matchesCount: {
     type: Object as PropType<{ current: number; total: number }>,
     required: false,
@@ -331,6 +331,7 @@ const emit = defineEmits([
   "changeColor",
   "searchText",
   "changeMatch",
+  "update:showRightMenu",
 ]);
 
 const search = reactive({

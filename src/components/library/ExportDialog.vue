@@ -34,12 +34,14 @@
       <q-card-actions align="right">
         <q-btn
           flat
+          square
           label="cancel"
           @click="cancel"
           data-cy="btn-cancel"
         />
         <q-btn
           flat
+          square
           label="confirm"
           @click="confirm"
           data-cy="btn-confirm"

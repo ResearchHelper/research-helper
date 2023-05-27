@@ -13,7 +13,7 @@
   />
   <DeleteDialog
     v-model:show="deleteDialog"
-    :projectTitle="project?.title"
+    :projects="deleteProjects"
     :deleteFromDB="deleteFromDB"
     @confirm="deleteProject"
   />
@@ -31,7 +31,6 @@
     <template v-slot:before>
       <TreeView
         style="background: var(--color-library-treeview-bkgd)"
-        :draggingProjectId="draggingProjectId"
         @exportFolder="(folder) => showExportFolderDialog(folder)"
         ref="treeview"
       />
@@ -68,15 +67,12 @@
           <!-- actionbar height 36px, table view is 100%-36px -->
           <TableView
             v-model:projects="projects"
-            v-model:selectedProject="selectedProject"
             :searchString="searchString"
             style="
-              position: absolute;
               height: calc(100% - 36px);
               width: 100%;
               background: var(--color-library-tableview-bkgd);
             "
-            @dragProject="(key) => onDragProject(key)"
             ref="table"
           />
         </template>
@@ -108,8 +104,8 @@
               class="q-pa-none"
             >
               <MetaInfoTab
-                v-if="!!rightMenuSize && !($refs.table as typeof TableView).isClickingPDF"
-                :project="selectedProject"
+                v-if="!!rightMenuSize"
+                :project="stateStore.selected[0]"
               />
             </q-tab-panel>
           </q-tab-panels>
@@ -190,6 +186,9 @@ import * as pdfjsLib from "pdfjs-dist";
 pdfjsLib.GlobalWorkerOptions.workerSrc =
   "node_modules/pdfjs-dist/build/pdf.worker.min.js";
 
+import { useI18n } from "vue-i18n";
+const { t } = useI18n({ useScope: "global" });
+
 const componentName = "ProjectBrowser";
 const stateStore = useStateStore();
 
@@ -202,18 +201,15 @@ const treeview = ref<typeof TreeView | null>(null);
 // data
 const searchString = ref("");
 const projects = ref<Project[]>([]);
-const selectedProject = ref<Project | undefined>(undefined);
 
 const treeViewSize = ref(20);
 const rightMenuSize = ref(0);
-
-const draggingProjectId = ref("");
 
 const exportFolderDialog = ref(false);
 const folder = ref<Folder | null>(null);
 
 const deleteDialog = ref(false);
-const project = ref<Project | null>(null);
+const deleteProjects = ref<Project[]>([]);
 const deleteFromDB = ref(false);
 
 const identifierDialog = ref(false);
@@ -228,8 +224,20 @@ const collectionPath = ref<string>("");
 watch(
   () => stateStore.selectedFolderId,
   async (folderId: string) => {
+    stateStore.selected = [];
     await getProjects();
   }
+);
+
+// onLayouChanged, appstate and layout will be saved
+const onLayoutChanged = inject("onLayoutChanged") as () => void;
+watch(
+  [
+    () => stateStore.selectedItemId,
+    () => stateStore.showLibraryRightMenu,
+    () => stateStore.libraryRightMenuSize,
+  ],
+  onLayoutChanged
 );
 
 // for projectRow
@@ -244,7 +252,7 @@ provide(KEY_renameFromMeta, renameFromMeta);
 
 const bus = inject("bus") as EventBus;
 
-onMounted(() => {
+onMounted(async () => {
   getProjects();
   bus.on("updateProject", (e: BusEvent) => {
     if (e.source !== "ProjectTree") return;
@@ -253,6 +261,10 @@ onMounted(() => {
     if (index === -1) return;
     projects.value[index] = project;
   });
+
+  // rightmenu
+  if (stateStore.showLibraryRightMenu)
+    rightMenuSize.value = stateStore.libraryRightMenuSize;
 });
 
 onBeforeUnmount(() => {
@@ -274,9 +286,15 @@ onBeforeUnmount(() => {
  * @param project
  * @param deleteFromDB
  */
-function showDeleteDialog(_project: Project, _deleteFromDB: boolean) {
+// function showDeleteDialog(_project: Project, _deleteFromDB: boolean) {
+//   deleteDialog.value = true;
+//   project.value = _project; // project to be delted
+//   deleteFromDB.value = _deleteFromDB;
+// }
+
+function showDeleteDialog(_deleteProjects: Project[], _deleteFromDB: boolean) {
   deleteDialog.value = true;
-  project.value = _project; // project to be delted
+  deleteProjects.value = _deleteProjects; // project to be delted
   deleteFromDB.value = _deleteFromDB;
 }
 
@@ -385,7 +403,8 @@ async function addProjectsByFiles(filePaths: string[]) {
       // update ui
       projects.value.push(project);
     } catch (_error) {
-      error.value = _error as Error;
+      error.value = new Error(t("get-meta-failed"));
+      error.value.name = "warning";
       errorDialog.value = true;
       // refresh table
       await getProjects();
@@ -460,17 +479,18 @@ async function processIdentifier(identifier: string) {
       await updateEdge(project._id, { sourceNode: sourceNode } as Edge);
 
       // update tableview UI
-      if (selectedProject.value !== undefined) {
-        for (let prop in project) selectedProject.value[prop] = project[prop];
+      if (stateStore.selected[0] !== undefined) {
+        for (let prop in project) stateStore.selected[0][prop] = project[prop];
       }
       // update projectree ui
       bus.emit("updateProject", {
         source: componentName,
-        data: selectedProject.value,
+        data: stateStore.selected[0],
       });
     }
   } catch (_error) {
-    error.value = _error as Error;
+    error.value = new Error(t("get-meta-failed"));
+    error.value.name = "warning";
     errorDialog.value = true;
     // refresh table
     await getProjects();
@@ -482,29 +502,30 @@ async function processIdentifier(identifier: string) {
  * if deleteFromDB is true, delete the project from database and remove the actual files
  */
 async function deleteProject() {
-  if (selectedProject.value === undefined) return;
+  // delete project id
+  let deleteIds = stateStore.selected.map((p) => p._id);
   // update ui
-  projects.value = projects.value.filter(
-    (p) => p._id != (selectedProject.value as Project)._id
-  );
-  // update projectTree ui
-  bus.emit("deleteProject", {
-    source: componentName,
-    data: selectedProject.value._id,
-  });
+  projects.value = projects.value.filter((p) => !deleteIds.includes(p._id));
+  for (let projectId of deleteIds) {
+    // update projectTree ui
+    bus.emit("deleteProject", {
+      source: componentName,
+      data: projectId,
+    });
 
-  // update db
-  await nextTick(); // wait until the ui closes all windows
-  let notes = await getNotesDB(selectedProject.value._id);
-  await deleteProjectDB(
-    selectedProject.value._id,
-    deleteFromDB.value,
-    stateStore.selectedFolderId
-  );
-  if (deleteFromDB.value) {
-    await deleteEdge(selectedProject.value._id);
-    for (let note of notes) {
-      await deleteEdge(note._id);
+    // update db
+    await nextTick(); // wait until the ui closes all windows
+    let notes = await getNotesDB(projectId);
+    await deleteProjectDB(
+      projectId,
+      deleteFromDB.value,
+      stateStore.selectedFolderId
+    );
+    if (deleteFromDB.value) {
+      await deleteEdge(projectId);
+      for (let note of notes) {
+        await deleteEdge(note._id);
+      }
     }
   }
 }
@@ -642,19 +663,6 @@ async function deleteNote(note: Note, index?: number) {
     source: componentName,
     data: project,
   });
-}
-
-/************************************************************
- * TableView
- ************************************************************/
-
-/**
- * As a bridge to notify TreeView about the drag event
- * @param key
- */
-function onDragProject(key: string) {
-  draggingProjectId.value = key;
-  if (!!!key && treeview.value) treeview.value.onDragEnd(null);
 }
 
 /**********************************************************

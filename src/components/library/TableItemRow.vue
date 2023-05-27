@@ -6,6 +6,7 @@
     @dblclick="openItem"
   >
     <q-td auto-width></q-td>
+    <q-td auto-width></q-td>
     <q-td
       v-if="item.dataType === 'note'"
       colspan="100%"
@@ -76,6 +77,12 @@
         >
           <q-item-section>{{ $t("copy-note-id") }}</q-item-section>
         </q-item>
+        <q-item
+          clickable
+          @click="showInExplorer"
+        >
+          <q-item-section>{{ $t("show-in-explorer") }}</q-item-section>
+        </q-item>
 
         <q-separator />
 
@@ -109,6 +116,12 @@
           @click="openItem"
         >
           <q-item-section>{{ $t("open-pdf") }}</q-item-section>
+        </q-item>
+        <q-item
+          clickable
+          @click="showInExplorer"
+        >
+          <q-item-section>{{ $t("show-in-explorer") }}</q-item-section>
         </q-item>
 
         <q-item
@@ -176,6 +189,11 @@ const renameFromMeta = inject(KEY_renameFromMeta) as (
 
 function copyID() {
   copyToClipboard(props.item._id);
+}
+
+function showInExplorer() {
+  // don't use props.row.path because it might not exists
+  window.fileBrowser.showFileInFolder(props.item.path as string);
 }
 
 function clickItem() {

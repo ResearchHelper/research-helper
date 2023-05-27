@@ -123,5 +123,11 @@
   "disable": "关闭",
   "install": "安装",
   "installing": "正在安装...",
-  "no-pdf": "此项目没有PDF文件"
+  "no-pdf": "此项目没有PDF文件",
+  "show-in-explorer": "打开所在文件夹",
+  "get-meta-failed": "无法检索元数据，请手动输入",
+  "error": "错误",
+  "warning": "警告",
+  "batch-mode": "批处理模式",
+  "category": "类别"
 }
