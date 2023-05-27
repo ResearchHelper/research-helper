@@ -67,6 +67,8 @@ function expandRow(isExpand: boolean) {
 }
 
 function shortAuthorString(authors: Author[]) {
+  if (authors === undefined) return;
+
   if (authors.length === 0) return "";
   else if (authors.length === 1) {
     let author = authors[0];

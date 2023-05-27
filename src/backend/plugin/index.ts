@@ -173,8 +173,8 @@ class PluginManager {
     this.saveStatus();
     if (enabled) {
       plugin.init();
-      plugin.enable();
       plugin.loadSettings();
+      plugin.enable();
     } else plugin.disable();
   }
 
