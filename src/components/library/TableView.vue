@@ -2,7 +2,6 @@
   <q-table
     id="projectList"
     class="stickyHeader no-shadow"
-    style="overflow-y: hidden"
     dense
     hide-bottom
     square
@@ -24,9 +23,13 @@
   >
     <template v-slot:header="props">
       <q-tr :props="props">
-        <q-th auto-width>
+        <q-th
+          auto-width
+          style="padding: 0"
+        >
           <input
             type="checkbox"
+            style="width: 1.1rem; height: 1.1rem"
             v-model="props.selected"
           />
         </q-th>
@@ -35,8 +38,9 @@
           v-for="col in (props.cols as Array<{name: string, label:string}>)"
           :key="col.name"
           :props="props"
+          style="padding: 0"
         >
-          <div class="text-subtitle1 text-bold">{{ col.label }}</div>
+          <span class="text-subtitle1 text-bold">{{ col.label }}</span>
         </q-th>
       </q-tr>
     </template>
@@ -141,7 +145,7 @@ const headers = [
     align: "left",
     sortable: true,
   },
-];
+] as QTableColumn[];
 
 function handleSelection(rows: Project[], added: boolean, evt: KeyboardEvent) {
   // ignore selection change from header of not from a direct click event
@@ -361,7 +365,7 @@ function searchProject(
   .q-table__bottom,
   thead tr:first-child th {
     /* bg color is important for th; just specify one */
-    background-color: var(--color-library-tableview-bkgd);
+    background-color: var(--color-library-tableview-header-bkgd);
   }
 
   thead tr th {
@@ -378,6 +382,6 @@ function searchProject(
 }
 
 #projectList td {
-  padding: 0px 2px;
+  padding: 0;
 }
 </style>

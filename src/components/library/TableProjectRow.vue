@@ -24,14 +24,14 @@
     >
       <div
         v-if="col.name === 'author'"
-        style="font-size: 1rem; width: 20em"
+        style="font-size: 1rem"
         class="ellipsis"
       >
-        {{ authorString(col.value as Author[]) }}
+        {{ shortAuthorString(col.value as Author[]) }}
       </div>
       <div
         v-else
-        style="font-size: 1rem; width: 30rem"
+        style="font-size: 1rem; width: 50vw"
         class="ellipsis"
       >
         {{ col.value }}
@@ -66,15 +66,23 @@ function expandRow(isExpand: boolean) {
   emit("expandRow", isExpand);
 }
 
-function authorString(authors: Author[]) {
-  if (!!!authors?.length) return "";
-
-  let names = [];
-  for (let author of authors) {
-    if (!!!author) continue;
-    if (!!author.literal) names.push(author.literal);
-    else names.push(`${author.given} ${author.family}`);
+function shortAuthorString(authors: Author[]) {
+  if (authors.length === 0) return "";
+  else if (authors.length === 1) {
+    let author = authors[0];
+    if (author.literal) return author.literal;
+    else return author.family;
+  } else if (authors.length === 2) {
+    let surnames = [];
+    for (let i = 0; i < 2; i++) {
+      if (authors[0].literal) surnames.push(authors[0].literal);
+      else surnames.push(authors[0].family);
+    }
+    return surnames.join(" and ");
+  } else {
+    let author = authors[0];
+    if (author.literal) return author.literal;
+    else return `${author.family} et al.`;
   }
-  return names.join(", ");
 }
 </script>
