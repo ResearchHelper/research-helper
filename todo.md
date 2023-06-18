@@ -5,7 +5,7 @@ FIXME:
 [x] select project when mouse down, don't wait until mouse up!
 
 TODO:
-[ ] text search in PDF using ctrl+F
+[x] text search in PDF using ctrl+F
 [x] add more entries to metainfo tab: publisher, jornal name ...
 
 [ ] [refactor] able to get current highlight/annotation in PDF reader
