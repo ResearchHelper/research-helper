@@ -1,5 +1,5 @@
 <template>
-  <!-- show this after rightMenu is shown, 
+  <!-- show this after rightMenu is shown,
     otherwise autogrow extends to full-height -->
   <q-tabs
     v-if="!!meta && !!meta.reference && meta.reference.length > 0"
@@ -60,7 +60,37 @@
           class="col-8 input"
           type="text"
           v-model="year"
-          @blur="modifyInfo(true)"
+          @blur="modifyInfo()"
+        />
+      </div>
+
+      <div class="row justify-between q-mt-sm">
+        <div
+          class="col"
+          style="font-size: 1rem"
+        >
+          {{ $t("journal") }}
+        </div>
+        <input
+          class="col-8 input"
+          type="text"
+          v-model="meta['container-title']"
+          @blur="modifyInfo()"
+        />
+      </div>
+
+      <div class="row justify-between q-mt-sm">
+        <div
+          class="col"
+          style="font-size: 1rem"
+        >
+          {{ $t("publisher") }}
+        </div>
+        <input
+          class="col-8 input"
+          type="text"
+          v-model="meta.publisher"
+          @blur="modifyInfo()"
         />
       </div>
 
@@ -122,7 +152,7 @@
         <input
           class="col-8 input"
           type="text"
-          v-model="meta.DOI"
+          v-model.trim="meta.DOI"
           @blur="modifyInfo(false)"
         />
       </div>
@@ -137,7 +167,7 @@
         <input
           class="col-8 input"
           type="text"
-          v-model="meta.ISBN"
+          v-model.trim="meta.ISBN"
           @blur="modifyInfo(false)"
         />
       </div>
@@ -370,7 +400,7 @@ async function getCategories() {
  * Update project info
  * @param updateEdgeData - if true, also modify the edge data
  */
-async function modifyInfo(updateEdgeData: boolean) {
+async function modifyInfo(updateEdgeData?: boolean) {
   if (meta.value === undefined) return;
   // update db and also update rev in this.project
   let newMeta = (await updateProject(meta.value as Project)) as Project;

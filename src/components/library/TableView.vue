@@ -60,7 +60,7 @@
         @dragstart="onDragStart"
         @dragend="onDragEnd"
         @expandRow="(isExpand: boolean) => props.expand=isExpand"
-        @click="(e: PointerEvent) => clickProject(props, e)"
+        @mousedown="(e: PointerEvent) => clickProject(props, e)"
         @dblclick="dblclickProject(props.row)"
         @contextmenu="(e:Event) => toggleContextMenu(props, e)"
       ></TableProjectRow>
@@ -233,7 +233,6 @@ function clickProject(
   stateStore.selectedItemId = row._id;
   // ditinguish clicking project row or pdf row
   isClickingPDF.value = false;
-  console.log(stateStore.selected);
 }
 
 /**

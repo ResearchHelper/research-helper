@@ -6,7 +6,7 @@
         class="q-mt-xs"
         style="width: 0.9rem; height: 0.9rem"
         v-model="tableProps.selected"
-        @click.stop
+        @mousedown.stop
       />
     </q-th>
     <q-td auto-width>

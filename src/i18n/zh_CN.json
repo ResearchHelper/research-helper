@@ -11,6 +11,8 @@
   "type": "类型",
   "title": "标题",
   "year": "出版年",
+  "journal": "期刊",
+  "publisher": "出版社",
   "first-last-last-first": "名 姓 / 姓，名",
   "abstract": "摘要",
   "file": "文件",

@@ -2,7 +2,6 @@
 .thumbs.db
 node_modules
 .vscode
-todo.md
 
 # couchdb server info
 log.txt
