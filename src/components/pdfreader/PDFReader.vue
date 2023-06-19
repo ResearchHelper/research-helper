@@ -51,7 +51,7 @@
           v-if="showFloatingMenu"
           :style="style"
           @highlightText="(color: string) => {
-              createAnnot(AnnotationType.HIGHLIGHT, color, selectionPage, null); 
+              createAnnot(AnnotationType.HIGHLIGHT, color, selectionPage, null);
               toggleFloatingMenu();
             }"
         />

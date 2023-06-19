@@ -33,7 +33,7 @@
           square
           :ripple="false"
           no-caps
-          :label="$t('install-updates')"
+          :label="$t('download-updates')"
           color="primary"
           @click="downloadUpdate"
           :disable="disabled"

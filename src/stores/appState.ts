@@ -80,6 +80,7 @@ export const useStateStore = defineStore("stateStore", {
     openPage(page: Page | null) {
       if (!page?.id) return;
       this.openedPage = page;
+      if (page.type === "ReaderPage") this.openedProjectIds.add(page.id);
     },
 
     closePage(pageId: string) {

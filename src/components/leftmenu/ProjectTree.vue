@@ -12,7 +12,7 @@
     v-model:expanded="expanded"
   >
     <template v-slot:default-header="prop">
-      <!-- use full-width so that click trailing empty space 
+      <!-- use full-width so that click trailing empty space
         of the node still fires click event -->
       <!-- only note can drop into a project -->
       <div
@@ -150,15 +150,7 @@
   </q-tree>
 </template>
 <script setup lang="ts">
-import {
-  computed,
-  inject,
-  nextTick,
-  onBeforeUnmount,
-  onMounted,
-  ref,
-  watch,
-} from "vue";
+import { inject, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { EventBus, QTree, QTreeNode } from "quasar";
 import {
   BusEvent,
@@ -255,6 +247,7 @@ function menuSwitch(node: Project | Note) {
 
 async function getProjectTree() {
   projects.value = [] as Project[];
+  console.log("opened projects?:", stateStore.openedProjectIds);
   for (let projectId of stateStore.openedProjectIds) {
     await pushProjectNode(projectId);
   }

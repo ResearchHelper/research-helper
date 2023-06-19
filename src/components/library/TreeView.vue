@@ -1,5 +1,5 @@
 <template>
-  <!-- 
+  <!--
     div spans the entire background.
     q-tree only spans enough height to display its elements
   -->
@@ -31,7 +31,6 @@
           @dragover="(e: DragEvent) => onDragOver(e, prop.node)"
           @dragleave="(e: DragEvent) => onDragLeave(e, prop.node)"
           @drop="((e: DragEvent) => onDrop(e, prop.node) as any)"
-          @dragend="(e: DragEvent) => onDragEnd(e)"
         >
           <q-menu
             touch-position
@@ -102,7 +101,7 @@
 <script setup lang="ts">
 // types
 import { onMounted, ref, watch } from "vue";
-import { Folder, Project } from "src/backend/database";
+import { Folder } from "src/backend/database";
 import { QTree, QTreeNode } from "quasar";
 //db
 import { useStateStore } from "src/stores/appState";
@@ -114,7 +113,7 @@ import {
   moveFolderInto,
   getParentFolder,
 } from "src/backend/project/folder";
-import { getProject, updateProject } from "src/backend/project/project";
+import { updateProject } from "src/backend/project/project";
 import { updateAppState } from "src/backend/appState";
 import { sortTree } from "src/backend/project/utils";
 import { useI18n } from "vue-i18n";
@@ -340,6 +339,8 @@ async function onDrop(e: DragEvent, node: Folder) {
     // update db
     await moveFolderInto(_draggingNode._id, node._id);
   }
+
+  onDragEnd(e);
 }
 
 /**

@@ -7,8 +7,11 @@
    viewBox="0 0 12.7 12.7"
    version="1.1"
    id="svg5"
-   inkscape:version="1.1.2 (0a00cf5339, 2022-02-04)"
+   inkscape:version="1.2.2 (b0a8486541, 2022-12-01)"
    sodipodi:docname="logo.svg"
+   inkscape:export-filename="../../../../Desktop/logo.png"
+   inkscape:export-xdpi="2049.2329"
+   inkscape:export-ydpi="2049.2329"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns="http://www.w3.org/2000/svg"
@@ -25,20 +28,29 @@
      showgrid="false"
      units="px"
      inkscape:zoom="11.95881"
-     inkscape:cx="26.925755"
-     inkscape:cy="17.309414"
-     inkscape:window-width="1920"
-     inkscape:window-height="1043"
-     inkscape:window-x="1920"
-     inkscape:window-y="0"
-     inkscape:window-maximized="1"
-     inkscape:current-layer="layer1" />
+     inkscape:cx="8.9055684"
+     inkscape:cy="24.584386"
+     inkscape:window-width="1741"
+     inkscape:window-height="895"
+     inkscape:window-x="134"
+     inkscape:window-y="136"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="layer1"
+     inkscape:showpageshadow="2"
+     inkscape:deskcolor="#d1d1d1" />
   <defs
      id="defs2" />
   <g
      inkscape:label="Layer 1"
      inkscape:groupmode="layer"
      id="layer1">
+    <rect
+       style="fill:#ffffff;fill-opacity:1;stroke:#ffffff;stroke-width:0.684;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
+       id="rect234"
+       width="12.00836"
+       height="12.01197"
+       x="0.35264406"
+       y="0.34395847" />
     <path
        style="fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:0.0322151;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
        d="M 3.0494152,10.300253 4.7025928,8.2374412 C 4.4664491,7.2689736 4.9812427,6.9746013 5.6145635,6.2611472 6.2478844,5.5476929 6.9485441,4.900899 7.5164677,4.2942005 l 0.05335,0.7398479 0.1762501,-0.9224532 c 0,0 0.5286453,-0.4687655 0.8359203,-0.6524693 C 8.8153121,3.3196306 9.0323367,3.2838615 9.2124177,3.3729176 9.4675992,3.4991131 9.4893212,3.8839239 9.4053328,4.0572792 8.8467949,5.2101174 7.9445389,6.0533201 7.1359707,7.0889461 L 6.387875,7.347147 6.988151,7.3351388 C 6.8257553,7.7018663 6.5000378,7.9728992 6.1669291,8.2089918 5.9301797,8.3767892 5.6602938,8.567562 5.3588893,8.5742989 5.2209906,8.577381 4.9804093,8.423886 4.9804093,8.423886 L 7.4745039,5.5067895 Z"

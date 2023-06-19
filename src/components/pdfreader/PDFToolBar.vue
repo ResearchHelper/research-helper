@@ -224,6 +224,7 @@
         persistent
         @show="$emit('searchText', search)"
         @hide="clearSearch"
+        ref="searchMenu"
       >
         <q-item
           dense
@@ -300,12 +301,20 @@
 </template>
 
 <script setup lang="ts">
-import { computed, PropType, reactive, ref, watch } from "vue";
+import {
+  computed,
+  onBeforeUnmount,
+  onMounted,
+  PropType,
+  reactive,
+  ref,
+  watch,
+} from "vue";
 import { AnnotationType, PDFState } from "src/backend/database";
 
 import ColorPicker from "./ColorPicker.vue";
 import { useI18n } from "vue-i18n";
-import { useQuasar } from "quasar";
+import { QMenu, useQuasar } from "quasar";
 
 const $q = useQuasar();
 const { t } = useI18n({ useScope: "global" });
@@ -334,6 +343,7 @@ const emit = defineEmits([
   "update:showRightMenu",
 ]);
 
+const searchMenu = ref<QMenu>();
 const search = reactive({
   query: "",
   highlightAll: true,
@@ -386,6 +396,11 @@ function changePage(pageLabel: string) {
   emit("changePageNumber", pageNumber);
 }
 
+function toggleSearchMenu(e: KeyboardEvent) {
+  if (e.ctrlKey && e.key.toLowerCase() === "f" && searchMenu.value)
+    searchMenu.value.toggle();
+}
+
 function clearSearch() {
   emit("searchText", { query: "" });
 }
@@ -401,4 +416,13 @@ async function exitFullscreen() {
   // after exit fullscreen, show leftmenu again
   fullscreen.value = false;
 }
+
+onMounted(() => {
+  // hot keys
+  document.addEventListener("keypress", toggleSearchMenu);
+});
+
+onBeforeUnmount(() => {
+  document.removeEventListener("keypress", toggleSearchMenu);
+});
 </script>
