@@ -59,6 +59,10 @@
           icon: 'comment',
           slot: AnnotationType.COMMENT,
         },
+        {
+          value: AnnotationType.INK,
+          slot: AnnotationType.INK,
+        },
       ]"
     >
       <template v-slot:cursor>
@@ -79,11 +83,19 @@
       <template v-slot:comment>
         <q-tooltip>{{ $t("comment") }}</q-tooltip>
       </template>
+      <template v-slot:ink>
+        <InkDropDownBtn
+          :inkThickness="pdfState.inkThickness"
+          :inkOpacity="pdfState.inkOpacity"
+          @changeThickness="changeThickness"
+          @changeOpacity="changeOpacity"
+        />
+      </template>
     </q-btn-toggle>
     <q-btn
       :style="`background: ${pdfState.color}`"
-      flat
       :ripple="false"
+      flat
       size="0.5rem"
     >
       <q-tooltip>{{ $t("highlight-color") }}</q-tooltip>
@@ -110,9 +122,9 @@
       padding="xs"
       data-cy="btn-dropdown-view"
     >
-      <template v-slot:label
-        ><q-tooltip>{{ $t("view") }}</q-tooltip></template
-      >
+      <template v-slot:label>
+        <q-tooltip>{{ $t("view") }}</q-tooltip>
+      </template>
       <q-list dense>
         <q-item class="row justify-between items-center">
           <q-btn
@@ -313,6 +325,7 @@ import {
 import { AnnotationType, PDFState } from "src/backend/database";
 
 import ColorPicker from "./ColorPicker.vue";
+import InkDropDownBtn from "./InkDropDownBtn.vue";
 import { useI18n } from "vue-i18n";
 import { QMenu, useQuasar } from "quasar";
 
@@ -338,6 +351,8 @@ const emit = defineEmits([
   "changeSpreadMode",
   "changeTool",
   "changeColor",
+  "changeInkThickness",
+  "changeInkOpacity",
   "searchText",
   "changeMatch",
   "update:showRightMenu",
@@ -415,6 +430,14 @@ async function exitFullscreen() {
   await $q.fullscreen.exit();
   // after exit fullscreen, show leftmenu again
   fullscreen.value = false;
+}
+
+function changeThickness(thickness: number) {
+  emit("changeInkThickness", thickness);
+}
+
+function changeOpacity(opacity: number) {
+  emit("changeInkOpacity", opacity);
 }
 
 onMounted(() => {

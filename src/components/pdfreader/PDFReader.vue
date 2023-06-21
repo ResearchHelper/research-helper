@@ -25,6 +25,8 @@
         @changeSpreadMode="changeSpreadMode"
         @changeTool="changeTool"
         @changeColor="changeColor"
+        @changeInkThickness="changeInkThickness"
+        @changeInkOpacity="changeInkOpacity"
         @searchText="searchText"
         @changeMatch="changeMatch"
       />
@@ -92,6 +94,7 @@ import {
   SpreadMode,
   TOCNode,
 } from "src/backend/database";
+import { AnnotationEditorType, AnnotationEditorParamsType } from "pdfjs-dist";
 import {
   PDFFindController,
   PDFPageView,
@@ -238,10 +241,41 @@ function clickTOC(node: TOCNode) {
  **********************************/
 function changeColor(color: string) {
   pdfState.color = color;
+
+  if (pdfState.tool === AnnotationType.INK) {
+    pdfApp.pdfViewer.annotationEditorParams = {
+      type: AnnotationEditorParamsType.INK_COLOR,
+      value: color,
+    };
+  }
+}
+
+function changeInkThickness(thickness: number) {
+  pdfState.inkThickness = thickness;
+
+  if (pdfState.tool === AnnotationType.INK)
+    pdfApp.pdfViewer.annotationEditorParams = {
+      type: AnnotationEditorParamsType.INK_THICKNESS,
+      value: thickness,
+    };
+}
+
+function changeInkOpacity(opacity: number) {
+  pdfState.inkOpacity = opacity;
+  if (pdfState.tool === AnnotationType.INK)
+    pdfApp.pdfViewer.annotationEditorParams = {
+      type: AnnotationEditorParamsType.INK_OPACITY,
+      value: opacity,
+    };
 }
 
 function changeTool(tool: AnnotationType) {
   pdfState.tool = tool;
+
+  // Ink tool is a built-in pdf.js tool
+  if (tool === AnnotationType.INK) {
+    pdfApp.pdfViewer.annotationEditorMode = AnnotationEditorType.INK;
+  } else pdfApp.pdfViewer.annotationEditorMode = AnnotationEditorType.NONE; // cursor mode
 }
 
 function getAnnot(annotId: string): Annotation {
@@ -295,7 +329,7 @@ async function createAnnot(
 }
 
 /**
- * Draw annotation on annotationEditorLayer
+ * Draw annotation on annotationLayer
  * @param annot
  */
 async function drawAnnot(annot: Annotation) {
@@ -516,17 +550,26 @@ onMounted(async () => {
     viewerContainer.value as HTMLDivElement,
     peekContainer.value as HTMLDivElement
   );
+
   pdfApp.eventBus.on("pagesinit", () => {
     changePageNumber(pdfState.currentPageNumber);
     changeSpreadMode(pdfState.spreadMode);
     changeScale({ scale: pdfState.currentScale });
+    changeTool(pdfState.tool);
     pdfState.pagesCount = pdfApp.pdfViewer.pagesCount;
-    ready.value = true;
+    // ready.value = true;
   });
   pdfApp.eventBus.on(
     "annotationeditorlayerrendered",
     (e: { error: Error | null; pageNumber: number; source: PDFPageView }) => {
+      if (!ready.value) {
+        changeColor(pdfState.color);
+        changeInkThickness(pdfState.inkThickness);
+        changeInkOpacity(pdfState.inkOpacity);
+        ready.value = true;
+      }
       // draw annotations from db
+      console.log("annotationeditorLayerrendered");
       let annotsOnPage = annots.value.filter(
         (annot) => annot.pageNumber === e.pageNumber
       );
@@ -550,7 +593,7 @@ onMounted(async () => {
             ?.querySelector(
               `div.page[data-page-number='${pdfState.currentPageNumber}']`
             )
-            ?.querySelector(".annotationEditorLayer") as HTMLElement;
+            ?.querySelector(".annotationLayer") as HTMLElement;
           let layerRect = annotLayer.getBoundingClientRect();
           tempRect = document.createElement("div");
           tempRect.style.position = "absolute";
@@ -666,7 +709,8 @@ onMounted(async () => {
 });
 </script>
 <style lang="scss">
-@import "pdfjs-dist/web/pdf_viewer.css";
+// @import "pdfjs-dist/web/pdf_viewer.css";
+@use "pdfjs-dist/web/pdf_viewer.css";
 .viewerContainer {
   position: absolute;
   overflow: auto;
@@ -690,10 +734,17 @@ onMounted(async () => {
   box-sizing: unset;
 }
 
-.annotationEditorLayer {
-  // for pdfjs-dist ~ 3.6
-  z-index: unset;
-  display: block;
+// FIXME: when editorMode is off, set to this. otherwise, use the pdfjs default
+// .annotationLayer {
+//   // fix pdfjs-dist 3.7.107 non-standard annot covers up canvas even when mix-blend-mode is set
+//   z-index: unset;
+//   display: block;
+// }
+
+.hidden,
+[hidden] {
+  // fix pdfjs-dist 3.7.107 standard annot popup won't hidden
+  display: none !important;
 }
 
 .activeAnnotation {
@@ -701,6 +752,7 @@ onMounted(async () => {
   outline: dashed 2px $primary;
 }
 
+// fix popup not correctly rendered
 .annotationLayer .popup {
   // fix white text color in standard annotations
   // standard annotation means annotation made by adobe pdf etc
@@ -711,5 +763,24 @@ onMounted(async () => {
   font-weight: bold;
   line-height: unset;
   letter-spacing: unset;
+}
+
+// fix ink editor not correctly rendered
+.disabled,
+.disabled *,
+[disabled],
+[disabled] * {
+  cursor: unset !important;
+  outline: unset !important;
+}
+.annotationEditorLayer .selectedEditor {
+  outline: var(--focus-outline) !important;
+}
+.annotationEditorLayer :is(.freeTextEditor, .inkEditor)[draggable="true"] {
+  cursor: move !important;
+}
+.annotationEditorLayer
+  :is(.freeTextEditor, .inkEditor):hover:not(.selectedEditor) {
+  outline: var(--hover-outline) !important;
 }
 </style>

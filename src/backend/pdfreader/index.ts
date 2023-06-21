@@ -121,6 +121,7 @@ class PDFApplication {
 
       let state = result.docs[0] as PDFState;
       if (!!!state) {
+        // default state
         state = {
           dataType: "pdfState",
           projectId: projectId,
@@ -131,6 +132,8 @@ class PDFApplication {
           spreadMode: 0,
           tool: "cursor",
           color: "#FFFF00",
+          inkThickness: 5,
+          inkOpacity: 100,
           scrollLeft: 0,
           scrollTop: 0,
         } as PDFState;

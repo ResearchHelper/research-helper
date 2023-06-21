@@ -146,11 +146,11 @@ function createAnnotation(
   }
 
   // transform rects to percentage relative to annotLayer
-  let annotationEditorLayer = container
+  let annotationLayer = container
     ?.querySelector(`div.page[data-page-number='${pageNumber}']`)
-    ?.querySelector(".annotationEditorLayer") as HTMLElement;
+    ?.querySelector(".annotationLayer") as HTMLElement;
   for (let [i, rect] of rects.entries()) {
-    rects[i] = offsetTransform(rect, annotationEditorLayer);
+    rects[i] = offsetTransform(rect, annotationLayer);
   }
 
   return {
@@ -167,7 +167,7 @@ function createAnnotation(
 
 /**
  * Generate doms according to annot,
- * insert them to annotationEditorLayer,
+ * insert them to annotationLayer,
  * then mount necessary eventhandler
  * @param annot
  */
@@ -210,6 +210,8 @@ function enableDragToMove(dom: HTMLElement) {
   let shiftY = 0;
   let left: number;
   let top: number;
+  let tmpLeft: number;
+  let tmpTop: number;
 
   dom.draggable = true;
   dom.ondragstart = (e) => {
@@ -222,18 +224,16 @@ function enableDragToMove(dom: HTMLElement) {
   };
 
   dom.ondrag = (e) => {
-    left = e.pageX - offsetX - shiftX;
-    top = e.pageY - offsetY - shiftY;
+    // when drag is released, e.pageX and e.pageY will jump to 0, weird
+    // need to calculate tmpLeft/tmpTop first to avoid this
+    tmpLeft = e.pageX - offsetX - shiftX;
+    tmpTop = e.pageY - offsetY - shiftY;
 
-    if (left < 0) left = 0;
-    if (left + domRect.width > annotLayerRect.width)
-      left = annotLayerRect.width - domRect.width;
-    if (top < 0) top = 0;
-    if (top + domRect.height > annotLayerRect.height)
-      top = annotLayerRect.height - domRect.height;
+    if (tmpLeft < 0 || tmpLeft + domRect.width > annotLayerRect.width) return;
+    if (tmpTop < 0 || tmpTop + domRect.height > annotLayerRect.height) return;
 
-    left = (left / annotLayerRect.width) * 100;
-    top = (top / annotLayerRect.height) * 100;
+    left = (tmpLeft / annotLayerRect.width) * 100;
+    top = (tmpTop / annotLayerRect.height) * 100;
 
     dom.style.left = `${left}%`;
     dom.style.top = `${top}%`;

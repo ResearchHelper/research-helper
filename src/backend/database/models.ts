@@ -135,6 +135,8 @@ export interface PDFState {
   spreadMode: SpreadMode; // 0: no spread, 1: odd spread, 2: even spread
   tool: AnnotationType;
   color: string; // hex value
+  inkThickness: number;
+  inkOpacity: number;
   scrollLeft: number; // current scrollLeft position
   scrollTop: number; // current scrollTop position
 }
@@ -153,6 +155,7 @@ export enum AnnotationType {
   RECTANGLE = "rectangle",
   UNDERLINE = "underline",
   STRIKEOUT = "strikeout",
+  INK = "ink",
 }
 
 export enum SpreadMode {

@@ -13,7 +13,7 @@ jobs:
       - name: Setup Node.js & yarn install if no cache exists
         uses: actions/setup-node@v3
         with:
-          node-version: 16
+          node-version: 18
           cache: "yarn"
       - run: yarn install
 
