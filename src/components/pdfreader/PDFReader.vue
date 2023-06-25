@@ -53,9 +53,9 @@
           v-if="showFloatingMenu"
           :style="style"
           @highlightText="(color: string) => {
-              createAnnot(AnnotationType.HIGHLIGHT, color, selectionPage, null);
-              toggleFloatingMenu();
-            }"
+          createAnnot(AnnotationType.HIGHLIGHT, color, selectionPage, null);
+          toggleFloatingMenu();
+        }"
         />
       </div>
 
@@ -329,7 +329,7 @@ async function createAnnot(
 }
 
 /**
- * Draw annotation on annotationLayer
+ * Draw annotation in canvasWrapper
  * @param annot
  */
 async function drawAnnot(annot: Annotation) {
@@ -337,11 +337,18 @@ async function drawAnnot(annot: Annotation) {
 
   let doms = drawAnnotation(viewerContainer.value as HTMLElement, annot);
 
-  // click to highlight annotation
-  for (let [i, dom] of doms.entries()) {
+  for (let [_, dom] of doms.entries()) {
+    // click to highlight annotation
     dom.onclick = () => {
       setActiveAnnot(dom.getAttribute("annotation-id") as string);
     };
+
+    // set z-index according to annotaitonEditorMode
+    if (pdfState.tool === AnnotationType.INK) {
+      dom.style.zIndex = "0";
+    } else {
+      dom.style.zIndex = "100";
+    }
   }
 
   // enable dragging for annotation
@@ -569,7 +576,6 @@ onMounted(async () => {
         ready.value = true;
       }
       // draw annotations from db
-      console.log("annotationeditorLayerrendered");
       let annotsOnPage = annots.value.filter(
         (annot) => annot.pageNumber === e.pageNumber
       );
@@ -711,6 +717,7 @@ onMounted(async () => {
 <style lang="scss">
 // @import "pdfjs-dist/web/pdf_viewer.css";
 @use "pdfjs-dist/web/pdf_viewer.css";
+
 .viewerContainer {
   position: absolute;
   overflow: auto;
@@ -734,13 +741,6 @@ onMounted(async () => {
   box-sizing: unset;
 }
 
-// FIXME: when editorMode is off, set to this. otherwise, use the pdfjs default
-// .annotationLayer {
-//   // fix pdfjs-dist 3.7.107 non-standard annot covers up canvas even when mix-blend-mode is set
-//   z-index: unset;
-//   display: block;
-// }
-
 .hidden,
 [hidden] {
   // fix pdfjs-dist 3.7.107 standard annot popup won't hidden
@@ -758,6 +758,7 @@ onMounted(async () => {
   // standard annotation means annotation made by adobe pdf etc
   color: black;
 }
+
 .annotationLayer .popup h1 {
   // fix weird title in standard annotation
   font-weight: bold;
@@ -773,12 +774,15 @@ onMounted(async () => {
   cursor: unset !important;
   outline: unset !important;
 }
+
 .annotationEditorLayer .selectedEditor {
   outline: var(--focus-outline) !important;
 }
+
 .annotationEditorLayer :is(.freeTextEditor, .inkEditor)[draggable="true"] {
   cursor: move !important;
 }
+
 .annotationEditorLayer
   :is(.freeTextEditor, .inkEditor):hover:not(.selectedEditor) {
   outline: var(--hover-outline) !important;

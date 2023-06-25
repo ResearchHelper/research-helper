@@ -1,6 +1,17 @@
 <p align="center">
-<img src="src/assets/logo.svg" 
+<img src="src/assets/logo.svg"
 style="width: 100px; vertical-align:middle">
+<br>
+<h2 align="center">Accelerate Your Research</h2>
+<br>
+<a title="Build Status" target="_blank" href="https://github.com/ResearchHelper/research-helper/actions"><img src="https://img.shields.io/github/actions/workflow/status/ResearchHelper/research-helper/build.yml?style=flat-square"></a>
+<a title="Release" target="_blank" href="https://github.com/ResearchHelper/research-helper/releases"><img src="https://img.shields.io/github/v/release/ResearchHelper/research-helper?style=flat-square"></a>
+<a title="Downloads" target="_blank" href="https://github.com/ResearchHelper/research-helper/releases"><img src="https://img.shields.io/github/downloads/ResearchHelper/research-helper/total?style=flat-square"></a>
+<a title="Stars" target="_blank" href="https://github.com/ResearchHelper/research-helper"><img src="https://img.shields.io/github/stars/ResearchHelper/research-helper?style=flat-square"></a>
+<a title="Commits" target="_blank" href="https://github.com/ResearchHelper/research-helper/commits/main"><img src="https://img.shields.io/github/commit-activity/m/ResearchHelper/research-helper?style=flat-square"></a>
+<br>
+<a title="Twitter" target="_blank" href="https://twitter.com/Reseach_Helper"><img alt="Twitter Follow" src="https://img.shields.io/twitter/follow/Research_Helper?label=@Research_Helper&style=social"></a>
+<a title="QQ" target="_blank" href=""><img alt="QQ Group" src="https://img.shields.io/badge/QQ:808198109-1976d2?logo=tencentqq&style=social"></a>
 </p>
 
 <p align="center">

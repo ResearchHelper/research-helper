@@ -4,9 +4,14 @@ FIXME:
 [x] let standard comment annotation uses the annotation-note.svg with background color.
 [x] ink editor not correctly rendered
 [x] moving comment, coordinates not correct
-[x] draw rects on canvas, rather than setting background color of section in annotationLayer. By doing this we can leave the z-index of annotationLayer alone.
-[ ] plan out a different logic for updateAnnotation, deleteAnnotation
+[x] insert non-standard annotations into canvasWrapper so we can mix-and-blend highlights
+[ ] when in ink editor mode, set z-index of all non-standard annotations to 0. After ink mode, set z-index back to 100 or some high number.
+  - [x] when annotationeditorlayer renders, the z-index of doms will change
+  - [ ] when changing tools only (annotationeditorlayer event not firing), change the z-index of doms. on `annotationeditormodechanged` event, redraw annotations, but how do I know which page I should redraw?
 
+
+[ ] graph view not able to get links in markdown editor
+[ ] don't show any error / warning messages to users when meta info is not able to retrieve
 
 TODO:
 [x] bump nodejs to 18
