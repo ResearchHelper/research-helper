@@ -28,6 +28,18 @@
           </div>
         </div>
       </q-item>
+      <q-item>
+        <div
+          class="button full-width"
+          v-close-popup
+          @click="$emit('scrollIntoView')"
+        >
+          <div style="font-size: 1rem">
+            <q-icon name="gps_not_fixed"> </q-icon>
+            {{ $t("scroll-into-view") }}
+          </div>
+        </div>
+      </q-item>
     </q-list>
   </q-menu>
 </template>
@@ -35,7 +47,12 @@
 <script setup lang="ts">
 import ColorPicker from "./ColorPicker.vue";
 
-const emit = defineEmits(["changeColor", "deleteAnnot", "copyID"]);
+const emit = defineEmits([
+  "changeColor",
+  "deleteAnnot",
+  "copyID",
+  "scrollIntoView",
+]);
 const changeColor = (color: string) => emit("changeColor", color);
 const deleteAnnot = () => emit("deleteAnnot");
 const copyID = () => emit("copyID");
@@ -46,6 +63,7 @@ const copyID = () => emit("copyID");
   cursor: pointer;
   padding-left: 10px !important;
   padding-right: 10px !important;
+
   &:hover {
     background: grey;
   }

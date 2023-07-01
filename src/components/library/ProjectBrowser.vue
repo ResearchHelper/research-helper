@@ -1,112 +1,49 @@
 <template>
-  <ImportDialog
-    v-model:show="importDialog"
-    @confirm="(isCreateFolder) => addProjectsByCollection(isCreateFolder)"
-  />
-  <ExportDialog
-    v-model:show="exportFolderDialog"
-    @confirm="(format, options) => exportFolder(format, options)"
-  />
-  <IdentifierDialog
-    v-model:show="identifierDialog"
-    @confirm="(identifier) => processIdentifier(identifier)"
-  />
-  <DeleteDialog
-    v-model:show="deleteDialog"
-    :projects="deleteProjects"
-    :deleteFromDB="deleteFromDB"
-    @confirm="deleteProject"
-  />
-  <ErrorDialog
-    v-model:show="errorDialog"
-    :error="error"
-  />
+  <ImportDialog v-model:show="importDialog" @confirm="(isCreateFolder) => addProjectsByCollection(isCreateFolder)" />
+  <ExportDialog v-model:show="exportFolderDialog" @confirm="(format, options) => exportFolder(format, options)" />
+  <IdentifierDialog v-model:show="identifierDialog" @confirm="(identifier) => processIdentifier(identifier)" />
+  <DeleteDialog v-model:show="deleteDialog" :projects="deleteProjects" :deleteFromDB="deleteFromDB"
+    @confirm="deleteProject" />
+  <ErrorDialog v-model:show="errorDialog" :error="error" />
 
-  <q-splitter
-    style="position: absolute; width: 100%; height: 100%"
-    :limits="[10, 30]"
-    separator-class="q-splitter-separator"
-    v-model="treeViewSize"
-  >
+  <q-splitter style="position: absolute; width: 100%; height: 100%" :limits="[10, 30]"
+    separator-class="q-splitter-separator" v-model="treeViewSize">
     <template v-slot:before>
-      <TreeView
-        style="background: var(--color-library-treeview-bkgd)"
-        @exportFolder="(folder) => showExportFolderDialog(folder)"
-        ref="treeview"
-      />
+      <TreeView style="background: var(--color-library-treeview-bkgd)"
+        @exportFolder="(folder) => showExportFolderDialog(folder)" ref="treeview" />
     </template>
     <template v-slot:after>
-      <q-splitter
-        style="overflow: hidden"
-        reverse
-        :limits="[0, 60]"
-        :separator-class="{
-          'q-splitter-separator': stateStore.showLibraryRightMenu,
-        }"
-        :disable="!stateStore.showLibraryRightMenu"
-        v-model="rightMenuSize"
-        emit-immediately
-        @update:model-value="(size: number) => resizeRightMenu(size)"
-      >
+      <q-splitter style="overflow: hidden" reverse :limits="[0, 60]" :separator-class="{
+        'q-splitter-separator': stateStore.showLibraryRightMenu,
+      }" :disable="!stateStore.showLibraryRightMenu" v-model="rightMenuSize" emit-immediately
+        @update:model-value="(size: number) => resizeRightMenu(size)">
         <template v-slot:before>
-          <ActionBar
-            style="
+          <ActionBar style="
               min-height: 36px;
               background: var(--color-library-toolbar-bkgd);
-            "
-            v-model:searchString="searchString"
-            @addEmptyProject="addEmptyProject"
-            @addByFiles="(filePaths) => addProjectsByFiles(filePaths)"
-            @addByCollection="
-              (collectionPath) => showImportDialog(collectionPath)
-            "
-            @showIdentifierDialog="showIdentifierDialog(true)"
-            @refreshTable="getProjects"
-            ref="actionBar"
-          />
+            " v-model:searchString="searchString" @addEmptyProject="addEmptyProject"
+            @addByFiles="(filePaths) => addProjectsByFiles(filePaths)" @addByCollection="(collectionPath) => showImportDialog(collectionPath)
+              " @showIdentifierDialog="showIdentifierDialog(true)" @refreshTable="getProjects" ref="actionBar" />
           <!-- actionbar height 36px, table view is 100%-36px -->
-          <TableView
-            v-model:projects="projects"
-            :searchString="searchString"
-            style="
+          <TableView v-model:projects="projects" :searchString="searchString" style="
               height: calc(100% - 36px);
               width: 100%;
               background: var(--color-library-tableview-bkgd);
-            "
-            ref="table"
-          />
+            " ref="table" />
         </template>
         <template v-slot:after>
-          <q-tabs
-            dense
-            indicator-color="transparent"
-            active-bg-color="primary"
-            model-value="metaInfoTab"
-          >
-            <q-tab
-              name="metaInfoTab"
-              icon="info"
-              :ripple="false"
-            >
+          <q-tabs dense indicator-color="transparent" active-bg-color="primary" model-value="metaInfoTab">
+            <q-tab name="metaInfoTab" icon="info" :ripple="false">
               <q-tooltip>{{ $t("info") }}</q-tooltip>
             </q-tab>
           </q-tabs>
           <!-- q-tab height 36px -->
-          <q-tab-panels
-            style="
+          <q-tab-panels style="
               height: calc(100% - 36px);
               background: var(--color-rightmenu-tab-panel-bkgd);
-            "
-            model-value="metaInfoTab"
-          >
-            <q-tab-panel
-              name="metaInfoTab"
-              class="q-pa-none"
-            >
-              <MetaInfoTab
-                v-if="!!rightMenuSize"
-                :project="stateStore.selected[0]"
-              />
+            " model-value="metaInfoTab">
+            <q-tab-panel name="metaInfoTab" class="q-pa-none">
+              <MetaInfoTab v-if="!!rightMenuSize" :project="stateStore.selected[0]" />
             </q-tab-panel>
           </q-tab-panels>
         </template>
@@ -452,48 +389,38 @@ async function addProjectsByCollection(isCreateFolder: boolean) {
 async function processIdentifier(identifier: string) {
   if (!identifier) return;
 
-  try {
-    let metas = await getMeta(identifier, "json");
-    let meta = metas[0];
+  let metas = await getMeta(identifier, "json");
+  let meta = metas[0];
 
-    if (createProject.value) {
-      // add a new project to db and update it with meta
-      let project = (await addProjectDB(
-        stateStore.selectedFolderId
-      )) as Project;
-      console.log("project", project);
-      project = (await updateProjectByMetaDB(project, meta)) as Project;
-      await createEdge(project);
+  if (createProject.value) {
+    // add a new project to db and update it with meta
+    let project = (await addProjectDB(stateStore.selectedFolderId)) as Project;
+    console.log("project", project);
+    project = (await updateProjectByMetaDB(project, meta)) as Project;
+    await createEdge(project);
 
-      // update ui
-      projects.value.push(project);
-    } else {
-      // update an existing project meta
-      let project = (await getProjectDB(stateStore.selectedItemId)) as Project;
-      project = (await updateProjectByMetaDB(project, meta)) as Project;
-      let sourceNode = {
-        id: project._id,
-        label: project.title,
-        type: "project",
-      };
-      await updateEdge(project._id, { sourceNode: sourceNode } as Edge);
+    // update ui
+    projects.value.push(project);
+  } else {
+    // update an existing project meta
+    let project = (await getProjectDB(stateStore.selectedItemId)) as Project;
+    project = (await updateProjectByMetaDB(project, meta)) as Project;
+    let sourceNode = {
+      id: project._id,
+      label: project.title,
+      type: "project",
+    };
+    await updateEdge(project._id, { sourceNode: sourceNode } as Edge);
 
-      // update tableview UI
-      if (stateStore.selected[0] !== undefined) {
-        for (let prop in project) stateStore.selected[0][prop] = project[prop];
-      }
-      // update projectree ui
-      bus.emit("updateProject", {
-        source: componentName,
-        data: stateStore.selected[0],
-      });
+    // update tableview UI
+    if (stateStore.selected[0] !== undefined) {
+      for (let prop in project) stateStore.selected[0][prop] = project[prop];
     }
-  } catch (_error) {
-    error.value = new Error(t("get-meta-failed"));
-    error.value.name = "warning";
-    errorDialog.value = true;
-    // refresh table
-    await getProjects();
+    // update projectree ui
+    bus.emit("updateProject", {
+      source: componentName,
+      data: stateStore.selected[0],
+    });
   }
 }
 
@@ -563,7 +490,7 @@ async function attachFile(
 async function renameFromMeta(project: Project, index?: number) {
   if (project.path === undefined) return;
   let author = "";
-  let year = project.year || "Unknown";
+  let year = project.issued["date-parts"][0][0] || "Unknown";
   let title = project.title;
   let extname = window.path.extname(project.path);
   if (!project.author || project.author.length === 0) {

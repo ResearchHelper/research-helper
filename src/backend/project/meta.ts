@@ -27,7 +27,6 @@ async function getMeta(
     else return data.format(format, options);
   } catch (error) {
     console.log(error);
-    throw error; // frontend needs display this
   }
 }
 

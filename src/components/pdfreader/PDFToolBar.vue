@@ -89,6 +89,7 @@
           :inkOpacity="pdfState.inkOpacity"
           @changeThickness="changeThickness"
           @changeOpacity="changeOpacity"
+          @setInkTool="$emit('changeTool', AnnotationType.INK)"
         />
       </template>
     </q-btn-toggle>

@@ -7,6 +7,7 @@ import {
   rectangle,
   underline,
   strikeout,
+  ink,
 } from "./annotations";
 
 async function getAnnotation(annotId: string): Promise<Annotation | undefined> {
@@ -65,10 +66,11 @@ async function addAnnotation(annot: Annotation) {
  */
 async function updateAnnotation(
   id: string,
-  props: { color?: string; content?: string; rects?: Rect[] }
+  props: Annotation
 ): Promise<Annotation | undefined> {
   try {
     let annot = (await db.get(id)) as Annotation;
+    props._rev = annot._rev;
     Object.assign(annot, props);
     await db.put(annot);
     return db.get(annot._id);
@@ -191,6 +193,9 @@ function drawAnnotation(
       break;
     case AnnotationType.STRIKEOUT:
       doms = strikeout(container, annot);
+      break;
+    case AnnotationType.INK:
+      doms = ink(container, annot);
       break;
   }
 

@@ -28,7 +28,7 @@ export function comment(
   section.style.pointerEvents = "auto";
   section.style.cursor = "pointer";
   section.style.backgroundColor = annot.color;
-  section.style.zIndex = "100";
+  section.style.zIndex = "3";
   section.classList.add("textAnnotation");
 
   let img = document.createElement("img");
@@ -74,7 +74,7 @@ export function highlight(
     section.style.cursor = "pointer";
     section.style.backgroundColor = annot.color;
     section.style.mixBlendMode = "multiply";
-    section.style.zIndex = "100";
+    section.style.zIndex = "3";
     section.className = "highlightAnnotation";
 
     // put dom on the annotation layer
@@ -112,7 +112,7 @@ export function rectangle(
   section.style.cursor = "pointer";
   section.style.backgroundColor = annot.color;
   section.style.mixBlendMode = "multiply";
-  section.style.zIndex = "100";
+  section.style.zIndex = "3";
   section.className = "rectangleAnnotation";
 
   // put dom on the annotation layer
@@ -151,7 +151,7 @@ export function underline(
     section.style.borderBottomStyle = "solid";
     section.style.borderBottomColor = annot.color;
     section.style.borderBottomWidth = "2px";
-    section.style.zIndex = "100";
+    section.style.zIndex = "3";
 
     section.className = "underlineAnnotation";
 
@@ -193,7 +193,7 @@ export function strikeout(
     section.style.borderBottomStyle = "solid";
     section.style.borderBottomColor = annot.color;
     section.style.borderBottomWidth = "2px";
-    section.style.zIndex = "100";
+    section.style.zIndex = "3";
     section.className = "strikeoutAnnotation";
 
     // put dom on the annotation layer
@@ -201,5 +201,56 @@ export function strikeout(
     doms.push(section);
   }
 
+  return doms;
+}
+
+export function ink(container: HTMLElement, annot: Annotation): HTMLElement[] {
+  // draw ink from db data
+  let doms = [] as HTMLElement[];
+  if (!!!annot._id) return doms;
+
+  let annotationEditorLayer = container
+    ?.querySelector(`div.page[data-page-number='${annot.pageNumber}']`)
+    ?.querySelector(".annotationEditorLayer") as HTMLElement;
+
+  let existed = !!annotationEditorLayer.querySelector(
+    `section[annotation-id='${annot._id}']`
+  );
+
+  let div = document.createElement("div");
+  div.classList.add("inkEditor");
+  div.setAttribute("annotation-id", annot._id);
+  div.setAttribute("data-editor-rotation", "0");
+  div.setAttribute("aria-label", "Draw Editor");
+  div.style.position = "absolute";
+  div.draggable = true;
+  for (let rect of annot.rects) {
+    div.style.left = `${rect.left}%`;
+    div.style.top = `${rect.top}%`;
+    div.style.width = `${rect.width}%`;
+    div.style.height = `${rect.height}%`;
+    div.style.minWidth = `${
+      0.001 * rect.width * annotationEditorLayer.clientWidth
+    }px`;
+    div.style.minHeight = `${
+      0.001 * rect.height * annotationEditorLayer.clientHeight
+    }px`;
+    let canvas = document.createElement("canvas");
+    canvas.classList.add("inkEditorCanvas");
+    canvas.setAttribute("aria-label", "User-created image");
+    canvas.style.visibility = "visible";
+    let canvasWrapper = container
+      ?.querySelector(`div.page[data-page-number='${annot.pageNumber}']`)
+      ?.querySelector(".canvasWrapper") as HTMLElement;
+    canvas.width = 0.01 * rect.width * canvasWrapper.clientWidth;
+    canvas.height = 0.01 * rect.height * canvasWrapper.clientHeight;
+    let ctx = canvas.getContext("2d");
+    let img = new Image();
+    img.onload = () => ctx?.drawImage(img, 0, 0);
+    img.src = annot.content;
+    div.append(canvas);
+    if (!existed) annotationEditorLayer.appendChild(div);
+    doms.push(div);
+  }
   return doms;
 }

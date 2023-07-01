@@ -2,10 +2,12 @@
   <q-btn-dropdown
     dense
     flat
+    split
     :ripple="false"
     icon="draw"
     size="0.7rem"
     padding="none"
+    @click="$emit('setInkTool')"
   >
     <template v-slot:label>
       <q-tooltip>{{ $t("ink") }}</q-tooltip>
@@ -72,7 +74,7 @@ const props = defineProps({
   inkThickness: { type: Number, required: true, default: 5 },
   inkOpacity: { type: Number, required: true, default: 100 },
 });
-const emit = defineEmits(["changeThickness", "changeOpacity"]);
+const emit = defineEmits(["setInkTool", "changeThickness", "changeOpacity"]);
 
 watch(
   () => props.inkThickness,

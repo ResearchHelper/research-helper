@@ -8,6 +8,7 @@
     :limits="[0, 60]"
     emit-immediately
     @update:model-value="(size) => resizeRightMenu(size)"
+    ref="pdfreader"
   >
     <template v-slot:before>
       <PDFToolBar
@@ -103,6 +104,7 @@ import {
 import {
   KEY_updateAnnot,
   KEY_deleteAnnot,
+  KEY_scrollAnnotIntoView,
   KEY_clickTOC,
   KEY_outline,
   KEY_project,
@@ -131,7 +133,9 @@ import {
   enableDragToMove,
 } from "src/backend/pdfannotation";
 import { useStateStore } from "src/stores/appState";
+import { QSplitter, uid, colors } from "quasar";
 
+const { rgbToHex } = colors;
 const stateStore = useStateStore();
 
 /**
@@ -140,6 +144,7 @@ const stateStore = useStateStore();
 const props = defineProps({ projectId: { type: String, required: true } });
 
 // viewer containers
+const pdfreader = ref<InstanceType<typeof QSplitter>>();
 const viewerContainer = ref(null);
 const peekContainer = ref(null);
 const viewer = ref(null);
@@ -172,6 +177,7 @@ const pageLabels = ref<string[]>([]);
 const outline = ref<TOCNode[]>([]);
 const annots = ref<Annotation[]>([]);
 const selectedAnnotId = ref("");
+const inkAnnotIdMap = new Map<string, string>();
 
 // annot card & colorpicker
 const showAnnotCard = ref(false);
@@ -241,32 +247,26 @@ function clickTOC(node: TOCNode) {
  **********************************/
 function changeColor(color: string) {
   pdfState.color = color;
-
-  if (pdfState.tool === AnnotationType.INK) {
-    pdfApp.pdfViewer.annotationEditorParams = {
-      type: AnnotationEditorParamsType.INK_COLOR,
-      value: color,
-    };
-  }
+  pdfApp.pdfViewer.annotationEditorParams = {
+    type: AnnotationEditorParamsType.INK_COLOR,
+    value: color,
+  };
 }
 
 function changeInkThickness(thickness: number) {
   pdfState.inkThickness = thickness;
-
-  if (pdfState.tool === AnnotationType.INK)
-    pdfApp.pdfViewer.annotationEditorParams = {
-      type: AnnotationEditorParamsType.INK_THICKNESS,
-      value: thickness,
-    };
+  pdfApp.pdfViewer.annotationEditorParams = {
+    type: AnnotationEditorParamsType.INK_THICKNESS,
+    value: thickness,
+  };
 }
 
 function changeInkOpacity(opacity: number) {
   pdfState.inkOpacity = opacity;
-  if (pdfState.tool === AnnotationType.INK)
-    pdfApp.pdfViewer.annotationEditorParams = {
-      type: AnnotationEditorParamsType.INK_OPACITY,
-      value: opacity,
-    };
+  pdfApp.pdfViewer.annotationEditorParams = {
+    type: AnnotationEditorParamsType.INK_OPACITY,
+    value: opacity,
+  };
 }
 
 function changeTool(tool: AnnotationType) {
@@ -286,19 +286,19 @@ function setActiveAnnot(annotId: string) {
   if (viewerContainer.value === null) return;
   selectedAnnotId.value = annotId;
 
+  // deselect annotation first
+  (viewerContainer.value as HTMLElement)
+    .querySelectorAll(".activeAnnotation")
+    .forEach((dom) => {
+      dom.classList.remove("activeAnnotation");
+    });
+
   if (!!annotId) {
     // highlight it
     (viewerContainer.value as HTMLElement)
-      .querySelectorAll(`section[annotation-id="${annotId}"]`)
+      .querySelectorAll(`[annotation-id="${annotId}"]`)
       .forEach((dom) => {
         dom.classList.add("activeAnnotation");
-      });
-  } else {
-    // deselect annotation
-    (viewerContainer.value as HTMLElement)
-      .querySelectorAll(".activeAnnotation")
-      .forEach((dom) => {
-        dom.classList.remove("activeAnnotation");
       });
   }
 }
@@ -339,22 +339,15 @@ async function drawAnnot(annot: Annotation) {
 
   for (let [_, dom] of doms.entries()) {
     // click to highlight annotation
-    dom.onclick = () => {
+    dom.onclick = () =>
       setActiveAnnot(dom.getAttribute("annotation-id") as string);
-    };
-
-    // set z-index according to annotaitonEditorMode
-    if (pdfState.tool === AnnotationType.INK) {
-      dom.style.zIndex = "0";
-    } else {
-      dom.style.zIndex = "100";
-    }
   }
 
   // enable dragging for annotation
   if (
     annot.type === AnnotationType.COMMENT ||
-    annot.type === AnnotationType.RECTANGLE
+    annot.type === AnnotationType.RECTANGLE ||
+    annot.type === AnnotationType.INK
   ) {
     enableDragToMove(doms[0]);
   }
@@ -396,14 +389,26 @@ async function deleteAnnot(id: string) {
   // close any annot menu
   showAnnotCard.value = false;
   // update PDFReader UI
+  // remove annots other than ink
   document.querySelectorAll(`section[annotation-id="${id}"]`).forEach((dom) => {
+    dom.remove();
+  });
+  // remove ink
+  document.querySelectorAll(`div[annotation-id="${id}"]`).forEach((dom) => {
     dom.remove();
   });
   // update AnnotationList UI
   annots.value = annots.value.filter((annot) => annot._id != id);
+  // update ink list
+  inkAnnotIdMap.forEach((annotId, key) => {
+    if (annotId === id) {
+      inkAnnotIdMap.delete(key);
+      return;
+    }
+  });
 }
 
-/*******************************
+/*************{******************
  * AnnotCard & FloatingMenu
  *******************************/
 /**
@@ -453,6 +458,11 @@ async function toggleAnnotCard() {
   let doms = document.querySelectorAll(
     `section[annotation-id="${selectedAnnotId.value}"]`
   );
+  if (doms.length == 0) {
+    doms = document.querySelectorAll(
+      `div[annotation-id="${selectedAnnotId.value}"]`
+    );
+  }
   let rects = [];
   for (let dom of doms) rects.push(dom.getBoundingClientRect());
   showAnnotCard.value = true;
@@ -502,6 +512,7 @@ provide(KEY_selectedAnnotId, selectedAnnotId);
 provide(KEY_outline, outline);
 provide(KEY_project, project);
 provide(KEY_annots, annots);
+provide(KEY_scrollAnnotIntoView, scrollAnnotIntoView);
 
 /**
  * Watchers
@@ -513,23 +524,36 @@ watch(pdfState, (state) => {
   pdfApp.saveState(state);
 });
 
-watch(selectedAnnotId, (annotId) => {
+// TODO: set an option in AnnotCardMenu to scroll into view
+async function scrollAnnotIntoView(annotId: string) {
+  await nextTick();
   setActiveAnnot("");
   if (!!!annotId) return;
+  let annot = await getAnnot(annotId);
 
   // scroll to the selected annot
   if (viewerContainer.value === null) return;
-  let dom = (viewerContainer.value as HTMLElement).querySelector(
-    `section[annotation-id="${annotId}"]`
-  );
+  let dom: HTMLElement | null;
+  if (annot.type === AnnotationType.INK) {
+    dom = (viewerContainer.value as HTMLElement).querySelector(
+      `div[annotation-id="${annotId}"]`
+    );
+  } else {
+    dom = (viewerContainer.value as HTMLElement).querySelector(
+      `section[annotation-id="${annotId}"]`
+    );
+  }
+
   if (!!dom) {
     // if the dom is already there, scroll into view
-    dom.scrollIntoView({
-      behavior: "smooth",
-      block: "nearest",
-      inline: "nearest",
-    });
-    setActiveAnnot(annotId);
+    setTimeout(() => {
+      (dom as HTMLElement).scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+        inline: "nearest",
+      });
+      setActiveAnnot(annotId);
+    }, 200);
   } else {
     // otherwise change the page first
     let annot = annots.value.find(
@@ -537,7 +561,7 @@ watch(selectedAnnotId, (annotId) => {
     ) as Annotation;
     changePageNumber(annot.pageNumber);
   }
-});
+}
 
 function resizeRightMenu(size: number) {
   if (size < 8) {
@@ -564,23 +588,19 @@ onMounted(async () => {
     changeScale({ scale: pdfState.currentScale });
     changeTool(pdfState.tool);
     pdfState.pagesCount = pdfApp.pdfViewer.pagesCount;
-    // ready.value = true;
+    ready.value = true;
   });
   pdfApp.eventBus.on(
     "annotationeditorlayerrendered",
     (e: { error: Error | null; pageNumber: number; source: PDFPageView }) => {
-      if (!ready.value) {
-        changeColor(pdfState.color);
-        changeInkThickness(pdfState.inkThickness);
-        changeInkOpacity(pdfState.inkOpacity);
-        ready.value = true;
-      }
+      console.log("annotationeditorlayerrendered");
       // draw annotations from db
+      (e.source.annotationEditorLayer?.div as HTMLDivElement).hidden = false;
       let annotsOnPage = annots.value.filter(
         (annot) => annot.pageNumber === e.pageNumber
       );
       for (let annot of annotsOnPage) drawAnnot(annot);
-      // handle user's mouse event
+      // NONE mode, handle user's mouse event
       e.source.div.onmousedown = (ev) => {
         // determine if user is clicking on an annotation
         if (!ev.target) return;
@@ -641,11 +661,65 @@ onMounted(async () => {
           if (tempRect) tempRect.remove();
         };
       };
+
+      // INK mode, handle user's mouse event
+      if (pdfreader.value) {
+        changeColor(pdfState.color);
+        changeInkThickness(pdfState.inkThickness);
+        changeInkOpacity(pdfState.inkOpacity);
+
+        pdfreader.value.$el.onmouseup = () => {
+          if (pdfState.tool === AnnotationType.INK) {
+            let inkAnnots = pdfApp.pdfDocument?.annotationStorage.serializable;
+            inkAnnots?.forEach((inkAnnot, key) => {
+              let inkAnnotDom = document.getElementById(key) as HTMLElement;
+              let rect = {
+                left: parseFloat(inkAnnotDom.style.left),
+                top: parseFloat(inkAnnotDom.style.top),
+                width: parseFloat(inkAnnotDom.style.width),
+                height: parseFloat(inkAnnotDom.style.height),
+              };
+              let content = (
+                inkAnnotDom.firstChild as HTMLCanvasElement
+              ).toDataURL();
+              let colorHex = rgbToHex({
+                r: inkAnnot.color[0],
+                g: inkAnnot.color[1],
+                b: inkAnnot.color[2],
+              });
+              let annot = {
+                _id: inkAnnotIdMap.get(key) || uid(),
+                _rev: "",
+                dataType: "pdfAnnotation",
+                projectId: props.projectId,
+                type: AnnotationType.INK,
+                pageNumber: inkAnnot.pageIndex + 1,
+                rects: [rect],
+                content: content,
+                color: colorHex,
+                thickness: inkAnnot.thickness,
+                opacity: inkAnnot.opacity,
+              } as Annotation;
+              inkAnnotDom.setAttribute("annotation-id", annot._id);
+
+              let id = inkAnnotIdMap.get(key);
+              if (id) {
+                updateAnnotation(id, annot);
+              } else {
+                inkAnnotIdMap.set(key, annot._id);
+                addAnnotation(annot);
+                annots.value.push(annot);
+              }
+            });
+            console.log(inkAnnots);
+          }
+        };
+      }
     }
   );
   pdfApp.eventBus.on(
     "pagechanging",
-    (e: {
+    async (e: {
       source: PDFViewer;
       pageNumber: number;
       pageLabels: string | null;
@@ -659,11 +733,11 @@ onMounted(async () => {
       // do not remove if (!ready) otherwise pdf can't scroll
       if (!ready.value) {
         if (viewerContainer.value === null) return;
+        await nextTick();
         (viewerContainer.value as HTMLElement).scrollTo(
           pdfState.scrollLeft,
           pdfState.scrollTop
         );
-        ready.value = true;
       }
     }
   );
@@ -786,5 +860,11 @@ onMounted(async () => {
 .annotationEditorLayer
   :is(.freeTextEditor, .inkEditor):hover:not(.selectedEditor) {
   outline: var(--hover-outline) !important;
+}
+
+// .annotationEditorLayer will be hidden if there is no pdfjs-generated annotation
+// do not hide user injected annotations
+.annotationEditorLayer {
+  display: unset !important;
 }
 </style>

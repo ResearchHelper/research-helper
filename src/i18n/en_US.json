@@ -132,5 +132,6 @@
   "error": "Error",
   "warning": "Warning",
   "batch-mode": "Batch mode",
-  "category": "Categories"
+  "category": "Categories",
+  "scroll-into-view": "Scroll into view"
 }

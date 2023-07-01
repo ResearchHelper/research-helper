@@ -9,8 +9,9 @@
 <a title="Stars" target="_blank" href="https://github.com/ResearchHelper/research-helper"><img src="https://img.shields.io/github/stars/ResearchHelper/research-helper?style=flat-square"></a>
 <a title="Commits" target="_blank" href="https://github.com/ResearchHelper/research-helper/commits/main"><img src="https://img.shields.io/github/commit-activity/m/ResearchHelper/research-helper?style=flat-square"></a>
 <br>
-<a title="Twitter" target="_blank" href="https://twitter.com/Reseach_Helper"><img alt="Twitter Follow" src="https://img.shields.io/twitter/follow/Research_Helper?label=@Research_Helper&style=social"></a>
+<a title="Twitter" target="_blank" href="https://twitter.com/Reseach_Helper"><img alt="Twitter Follow" src="https://img.shields.io/badge/@Research_Helper-1976d2?logo=twitter&style=social"></a>
 <a title="QQ" target="_blank" href=""><img alt="QQ Group" src="https://img.shields.io/badge/QQ:808198109-1976d2?logo=tencentqq&style=social"></a>
+<a title="Discord" target="_blank" href="https://discord.gg/GQNATNqWkM"><img alt="Twitter Follow" src="https://img.shields.io/badge/research--helper-1976d2?logo=discord&style=social"></a>
 </p>
 
 <p align="center">

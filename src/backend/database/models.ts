@@ -177,6 +177,8 @@ export interface Annotation {
   color: string; // hex value
   rects: Rect[]; // a multiline highlight annotation has more than 1 rect
   type: AnnotationType;
+  thickness?: number;
+  opacity?: number;
 }
 
 /**
