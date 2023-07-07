@@ -132,11 +132,8 @@ import {
   drawAnnotation,
   enableDragToMove,
 } from "src/backend/pdfannotation";
-import { useStateStore } from "src/stores/appState";
 import { QSplitter, uid, colors } from "quasar";
-
 const { rgbToHex } = colors;
-const stateStore = useStateStore();
 
 /**
  * Props, Data, and component refs
@@ -145,13 +142,13 @@ const props = defineProps({ projectId: { type: String, required: true } });
 
 // viewer containers
 const pdfreader = ref<InstanceType<typeof QSplitter>>();
-const viewerContainer = ref(null);
-const peekContainer = ref(null);
-const viewer = ref(null);
+const viewerContainer = ref<HTMLDivElement>();
+const peekContainer = ref<HTMLDivElement>();
+const viewer = ref<HTMLDivElement>();
 
 // ready to save data
 const ready = ref(false);
-const project = ref<Project | null>(null);
+const project = ref<Project>();
 
 // right menu (don't use stateStore since there will be many readerPages)
 const rightMenuSize = ref(0);
@@ -283,7 +280,7 @@ function getAnnot(annotId: string): Annotation {
 }
 
 function setActiveAnnot(annotId: string) {
-  if (viewerContainer.value === null) return;
+  if (!viewerContainer.value) return;
   selectedAnnotId.value = annotId;
 
   // deselect annotation first
@@ -308,7 +305,7 @@ async function createAnnot(
   pageNumber: number,
   corner: { x1: number; y1: number; x2: number; y2: number } | null
 ) {
-  if (viewerContainer.value === null) return;
+  if (!viewerContainer.value) return;
 
   let annot = createAnnotation(
     viewerContainer.value as HTMLElement,
@@ -333,7 +330,7 @@ async function createAnnot(
  * @param annot
  */
 async function drawAnnot(annot: Annotation) {
-  if (viewerContainer.value === null) return;
+  if (!viewerContainer.value) return;
 
   let doms = drawAnnotation(viewerContainer.value as HTMLElement, annot);
 
@@ -408,7 +405,7 @@ async function deleteAnnot(id: string) {
   });
 }
 
-/*************{******************
+/*******************************
  * AnnotCard & FloatingMenu
  *******************************/
 /**
@@ -474,7 +471,7 @@ async function toggleAnnotCard() {
  * @param rects - doms of text selections / annotation
  */
 function setPosition(rects: DOMRect[] | DOMRectList) {
-  if (viewer.value === null) return;
+  if (!viewer.value) return;
 
   let bgRect = (viewer.value as HTMLElement).getBoundingClientRect();
   // unit: px
@@ -524,7 +521,6 @@ watch(pdfState, (state) => {
   pdfApp.saveState(state);
 });
 
-// TODO: set an option in AnnotCardMenu to scroll into view
 async function scrollAnnotIntoView(annotId: string) {
   await nextTick();
   setActiveAnnot("");
@@ -532,7 +528,7 @@ async function scrollAnnotIntoView(annotId: string) {
   let annot = await getAnnot(annotId);
 
   // scroll to the selected annot
-  if (viewerContainer.value === null) return;
+  if (!viewerContainer.value) return;
   let dom: HTMLElement | null;
   if (annot.type === AnnotationType.INK) {
     dom = (viewerContainer.value as HTMLElement).querySelector(
@@ -593,7 +589,6 @@ onMounted(async () => {
   pdfApp.eventBus.on(
     "annotationeditorlayerrendered",
     (e: { error: Error | null; pageNumber: number; source: PDFPageView }) => {
-      console.log("annotationeditorlayerrendered");
       // draw annotations from db
       (e.source.annotationEditorLayer?.div as HTMLDivElement).hidden = false;
       let annotsOnPage = annots.value.filter(
@@ -614,12 +609,12 @@ onMounted(async () => {
         let y1 = ev.clientY;
         let tempRect: HTMLElement;
         if (!clickedAnnotId && pdfState.tool === AnnotationType.RECTANGLE) {
-          if (viewerContainer.value === null) return;
+          if (!viewerContainer.value) return;
           let annotLayer = (viewerContainer.value as HTMLElement)
             ?.querySelector(
               `div.page[data-page-number='${pdfState.currentPageNumber}']`
             )
-            ?.querySelector(".annotationLayer") as HTMLElement;
+            ?.querySelector(".canvasWrapper") as HTMLElement;
           let layerRect = annotLayer.getBoundingClientRect();
           tempRect = document.createElement("div");
           tempRect.style.position = "absolute";
@@ -664,15 +659,20 @@ onMounted(async () => {
 
       // INK mode, handle user's mouse event
       if (pdfreader.value) {
-        changeColor(pdfState.color);
-        changeInkThickness(pdfState.inkThickness);
-        changeInkOpacity(pdfState.inkOpacity);
+        pdfreader.value.$el.onmouseenter = () => {
+          changeColor(pdfState.color);
+          changeInkThickness(pdfState.inkThickness);
+          changeInkOpacity(pdfState.inkOpacity);
+        };
 
         pdfreader.value.$el.onmouseup = () => {
           if (pdfState.tool === AnnotationType.INK) {
             let inkAnnots = pdfApp.pdfDocument?.annotationStorage.serializable;
             inkAnnots?.forEach((inkAnnot, key) => {
-              let inkAnnotDom = document.getElementById(key) as HTMLElement;
+              if (!viewer.value) return;
+              let inkAnnotDom = viewer.value.querySelector(
+                `#${key}`
+              ) as HTMLElement;
               let rect = {
                 left: parseFloat(inkAnnotDom.style.left),
                 top: parseFloat(inkAnnotDom.style.top),
@@ -711,7 +711,6 @@ onMounted(async () => {
                 annots.value.push(annot);
               }
             });
-            console.log(inkAnnots);
           }
         };
       }
@@ -732,7 +731,7 @@ onMounted(async () => {
       // then the position will be slightly different each time
       // do not remove if (!ready) otherwise pdf can't scroll
       if (!ready.value) {
-        if (viewerContainer.value === null) return;
+        if (!viewerContainer.value) return;
         await nextTick();
         (viewerContainer.value as HTMLElement).scrollTo(
           pdfState.scrollLeft,

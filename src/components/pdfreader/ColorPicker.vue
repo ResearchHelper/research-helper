@@ -10,6 +10,7 @@
       size="sm"
       padding="sm"
       square
+      v-close-popup
       @click="selectColor(color)"
       :data-cy="`btn-${color.slice(1)}`"
     ></q-btn>
@@ -18,7 +19,7 @@
 
 <script setup lang="ts">
 import { ref } from "vue";
-const colors = ref(["#ffff00", "#019a9d", "#d9b801", "#e8045a", "#b2028a"]);
+const colors = ref(["#ffff00", "#019a9d", "#e8045a", "#1976d2", "#000000"]);
 const emit = defineEmits(["selected"]);
 const selectColor = (color: string) => {
   emit("selected", color);

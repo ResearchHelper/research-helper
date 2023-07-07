@@ -148,11 +148,11 @@ function createAnnotation(
   }
 
   // transform rects to percentage relative to annotLayer
-  let annotationLayer = container
+  let canvasWrapper = container
     ?.querySelector(`div.page[data-page-number='${pageNumber}']`)
-    ?.querySelector(".annotationLayer") as HTMLElement;
+    ?.querySelector(".canvasWrapper") as HTMLElement;
   for (let [i, rect] of rects.entries()) {
-    rects[i] = offsetTransform(rect, annotationLayer);
+    rects[i] = offsetTransform(rect, canvasWrapper);
   }
 
   return {
@@ -169,7 +169,7 @@ function createAnnotation(
 
 /**
  * Generate doms according to annot,
- * insert them to annotationLayer,
+ * insert them to canvas,
  * then mount necessary eventhandler
  * @param annot
  */

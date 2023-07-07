@@ -12,6 +12,9 @@ FIXME:
 - [x] when pdf is loaded, scrollTop not working ?
 - [x] rectangular highlight not able to drag
 - [x] activeAnnotation class keeps hanging on annotation until a click on something not an annotation
+- [x] annotation position failed in chinese pdf, rects have infinity
+- [x] click on pdf to close color picker and ink params setting
+- [ ] some pdfs can't set pen color
 
 TODO:
 
@@ -38,6 +41,10 @@ TODO:
 - [x] update ink (enable drag to move)
 - [x] do not scroll pages when select annotation in AnnotationList
 - [x] add an action to AnnotCardMenu to scroll annot into view
+- [x] add few more colors to color picker (for ink)
+- [x] different pdf saves the same ink
+- [x] different ink params in different project
+- [x] change `ref(null)` to `ref<type>()`
 
 IMPROVE:
 
