@@ -14,6 +14,7 @@ FIXME:
 - [x] activeAnnotation class keeps hanging on annotation until a click on something not an annotation
 - [x] annotation position failed in chinese pdf, rects have infinity
 - [x] click on pdf to close color picker and ink params setting
+- [x] rectangle tool still works after changing to other tools
 - [ ] some pdfs can't set pen color
 
 TODO:
@@ -45,6 +46,23 @@ TODO:
 - [x] different pdf saves the same ink
 - [x] different ink params in different project
 - [x] change `ref(null)` to `ref<type>()`
+- [ ] refactoring pdfannotation
+
+  - [x] implement `draw()` for each annotation
+  - [x] implement eventhandlers for each annotation
+  - [x] install eventhandlers whenever tool, color, thickness, opacity changed
+  - [x] toggleFloatingMenu
+  - [x] setActive annotation
+    - [x] toggleAnnotCard
+  - [x] Annotation interface change to AnnotationData
+  - [x] AnnotCard uses annotation object rather than data
+  - [x] inject annotations into AnnotList
+  - [ ] implement eventhandlers for ink
+  - [ ] Thumbnails of pdf
+
+- [ ] RightMenu.cy.ts
+- [ ] AnnotationList.cy.ts
+- [ ] AnnotCard.cy.ts
 
 IMPROVE:
 

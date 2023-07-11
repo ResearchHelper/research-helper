@@ -1,7 +1,7 @@
 <template>
   <!-- systembar: 32px, tab: 36px  -->
   <div
-    v-if="annots.length === 0"
+    v-if="annotStore.annots.length === 0"
     style="font-size: 1rem"
   >
     No annotations on this PDF
@@ -12,14 +12,14 @@
   >
     <q-item
       style="padding: 5px 5px"
-      v-for="(annot, index) in annots"
-      :key="annot._id"
+      v-for="(annot, index) in annotStore.annots"
+      :key="annot.data._id"
     >
       <AnnotCard
-        :annot="annot"
+        :annot="(annot as Annotation)"
         :style="'width: 100%'"
-        :class="{ activeAnnotation: selectedAnnotId === annot._id }"
-        @click="setActiveAnnot(annot._id)"
+        :class="{ activeAnnotation: annotStore.selectedId === annot.data._id }"
+        @click="annotStore.setActive(annot.data._id)"
         ref="cards"
         :data-cy="`annot-card-${index}`"
       />
@@ -28,17 +28,14 @@
 </template>
 
 <script setup lang="ts">
-import { inject, PropType } from "vue";
-import { Annotation } from "src/backend/database";
-import { KEY_setActiveAnnot } from "./injectKeys";
+import { inject } from "vue";
 
 import AnnotCard from "./AnnotCard.vue";
+import { AnnotationStore } from "src/backend/pdfannotation";
+import { Annotation } from "src/backend/pdfannotation/annotations";
+import { KEY_annotStore } from "./injectKeys";
 
-const props = defineProps({
-  annots: { type: Object as PropType<Annotation[]>, required: true },
-  selectedAnnotId: { type: String, required: true },
-});
-const setActiveAnnot = inject(KEY_setActiveAnnot) as (id: string) => void;
+const annotStore = inject(KEY_annotStore) as AnnotationStore;
 </script>
 
 <style scoped>

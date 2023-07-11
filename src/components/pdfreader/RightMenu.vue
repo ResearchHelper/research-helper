@@ -49,24 +49,15 @@
     </q-tab-panel>
 
     <q-tab-panel name="annotationTab">
-      <AnnotationList
-        :annots="annots"
-        :selectedAnnotId="selectedAnnotId"
-      />
+      <AnnotationList />
     </q-tab-panel>
   </q-tab-panels>
 </template>
 
 <script setup lang="ts">
 import { inject, Ref, ref } from "vue";
-import { Annotation, Project, TOCNode } from "src/backend/database";
-import {
-  KEY_annots,
-  KEY_clickTOC,
-  KEY_outline,
-  KEY_project,
-  KEY_selectedAnnotId,
-} from "./injectKeys";
+import { Project, TOCNode } from "src/backend/database";
+import { KEY_clickTOC, KEY_outline, KEY_project } from "./injectKeys";
 
 import MetaInfoTab from "../MetaInfoTab.vue";
 import PDFTOC from "./PDFTOC.vue";
@@ -74,8 +65,6 @@ import AnnotationList from "./AnnotationList.vue";
 
 const rightMenuTab = ref("metaInfoTab");
 
-let selectedAnnotId = inject(KEY_selectedAnnotId) as string;
-const annots = inject(KEY_annots) as Ref<Annotation[]>;
 const outline = inject(KEY_outline) as Ref<TOCNode[]>;
 const project = inject(KEY_project) as Ref<Project>;
 

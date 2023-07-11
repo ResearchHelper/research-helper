@@ -7,19 +7,21 @@
     @dblclick="editing = true"
   >
     <q-card-section
-      :style="`background: ${annot.color}`"
+      :style="`background: ${annot.data.color}`"
       class="q-py-none"
     >
       <div
-        :annot-card-id="annot._id"
+        :annot-card-id="annot.data._id"
         class="row justify-between items-center"
       >
         <div
           style="font-size: 1rem"
           class="q-mr-md text-white"
-          :class="{ 'text-black': luminosity(annot.color) > 0.4 }"
+          :class="{ 'text-black': luminosity(annot.data.color) > 0.4 }"
         >
-          {{ annot.type.toUpperCase() + " - page" + annot.pageNumber }}
+          {{
+            annot.data.type.toUpperCase() + " - page" + annot.data.pageNumber
+          }}
         </div>
 
         <q-btn
@@ -33,8 +35,8 @@
           <AnnotMenu
             @changeColor="(color: string) => changeColor(color)"
             @deleteAnnot="deleteAnnot()"
-            @copyID="copyToClipboard(annot._id)"
-            @scrollIntoView="scrollAnnotIntoView(annot._id)"
+            @copyID="copyToClipboard(annot.data._id)"
+            @scrollIntoView="scrollAnnotIntoView(annot.data._id)"
           />
         </q-btn>
       </div>
@@ -79,24 +81,22 @@
 </template>
 <script setup lang="ts">
 import { ref, inject, nextTick, PropType, computed } from "vue";
-import { Annotation } from "src/backend/database";
-import {
-  KEY_deleteAnnot,
-  KEY_scrollAnnotIntoView,
-  KEY_updateAnnot,
-} from "./injectKeys";
+import { Annotation } from "src/backend/pdfannotation/annotations";
+import { KEY_annotStore, KEY_scrollAnnotIntoView } from "./injectKeys";
 
 import AnnotMenu from "./AnnotMenu.vue";
 
 import { debounce, copyToClipboard, colors } from "quasar";
 import renderMathInElement from "katex/dist/contrib/auto-render";
 import "katex/dist/katex.min.css";
+import { AnnotationStore } from "src/backend/pdfannotation";
+import { AnnotationData } from "src/backend/database";
 
 const { luminosity } = colors;
 
 const props = defineProps({
-  annot: Object as PropType<Annotation>,
-  style: String,
+  annot: { type: Object as PropType<Annotation>, required: true },
+  style: { type: String, required: true },
 });
 
 const editing = ref(false);
@@ -105,28 +105,34 @@ const content = ref(null); // ref to the <pre> tag
 const annotContent = computed({
   get() {
     liveRender(); // render immediately after get content
-    return !!props.annot ? props.annot.content : "";
+    return !!props.annot ? props.annot.data.content : "";
   },
   set(content) {
     saveContent(content);
   },
 });
 
-const _updateAnnot = inject(KEY_updateAnnot) as (params: any) => void;
-const _deleteAnnot = inject(KEY_deleteAnnot) as (id: string) => void;
+const annotStore = inject(KEY_annotStore) as AnnotationStore;
 const scrollAnnotIntoView = inject(KEY_scrollAnnotIntoView) as (
   id: string
 ) => void;
 
 const _saveContent = (content: string) => {
-  if (props.annot === undefined) return;
-  _updateAnnot({
-    id: props.annot._id,
-    data: { content: content },
-  });
+  annotStore.update(props.annot.data._id, {
+    content: content,
+  } as AnnotationData);
+};
+const saveContent = debounce(_saveContent, 200) as (content: string) => void;
+
+const changeColor = (color: string) => {
+  annotStore.update(props.annot.data._id, {
+    color: color,
+  } as AnnotationData);
 };
 
-const saveContent = debounce(_saveContent, 200) as (content: string) => void;
+const deleteAnnot = () => {
+  annotStore.delete(props.annot.data._id);
+};
 
 const liveRender = async () => {
   await nextTick();
@@ -149,15 +155,5 @@ const liveRender = async () => {
     ],
     throwOnError: false,
   });
-};
-
-const changeColor = (color: string) => {
-  if (props.annot === undefined) return;
-  _updateAnnot({ id: props.annot._id, data: { color: color } });
-};
-
-const deleteAnnot = () => {
-  if (props.annot === undefined) return;
-  _deleteAnnot(props.annot._id);
 };
 </script>

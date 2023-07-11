@@ -165,9 +165,9 @@ export enum SpreadMode {
 }
 
 /**
- * Goes into database and UI display
+ * Goes into database
  */
-export interface Annotation {
+export interface AnnotationData {
   _id: string; // handled by db
   _rev: string; // handled by db
   dataType: "pdfAnnotation"; // for database search
