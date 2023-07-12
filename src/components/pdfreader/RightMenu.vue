@@ -43,8 +43,8 @@
 
     <q-tab-panel name="tocTab">
       <PDFTOC
-        :outline="outline"
-        @clickTOC="(node: TOCNode) => clickTOC(node)"
+        :outline="pdfApp.outline"
+        @clickTOC="(node: TOCNode) => pdfApp.clickTOC(node)"
       />
     </q-tab-panel>
 
@@ -57,16 +57,15 @@
 <script setup lang="ts">
 import { inject, Ref, ref } from "vue";
 import { Project, TOCNode } from "src/backend/database";
-import { KEY_clickTOC, KEY_outline, KEY_project } from "./injectKeys";
+import { KEY_project } from "./injectKeys";
 
 import MetaInfoTab from "../MetaInfoTab.vue";
 import PDFTOC from "./PDFTOC.vue";
 import AnnotationList from "./AnnotationList.vue";
+import { PDFApplication } from "src/backend/pdfreader";
 
 const rightMenuTab = ref("metaInfoTab");
 
-const outline = inject(KEY_outline) as Ref<TOCNode[]>;
+const pdfApp = inject("pdfApp") as PDFApplication;
 const project = inject(KEY_project) as Ref<Project>;
-
-const clickTOC = inject(KEY_clickTOC) as (node: TOCNode) => void;
 </script>

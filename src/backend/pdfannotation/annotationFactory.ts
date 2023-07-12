@@ -9,30 +9,27 @@ import {
 } from "./annotations";
 import { AnnotationType, AnnotationData, Rect, PDFState } from "../database";
 import { uid } from "quasar";
-import AnnotationStore from "./annotationStore";
-import { PDFPageView } from "pdfjs-dist/web/pdf_viewer";
 
 /**
  * use event handlers to generate different annotation classes
  */
 export default class AnnotationFactory {
-  viewer: HTMLElement;
-  pdfState: PDFState;
-  activePages: number[]; // active page numbers
-  store: AnnotationStore;
+  projectId: string;
+  container: HTMLElement | undefined;
 
-  constructor(viewer: HTMLElement, pdfState: PDFState, store: AnnotationStore) {
-    this.viewer = viewer;
-    this.pdfState = pdfState;
-    this.activePages = [];
-    this.store = store;
+  constructor(projectId: string) {
+    this.projectId = projectId;
+  }
+
+  init(container: HTMLElement) {
+    this.container = container;
   }
 
   /**
    * Get user selected rects
    * @returns selection rectangles
    */
-  private getSelectionRects(): Rect[] {
+  getSelectionRects(): Rect[] {
     let selection = window.getSelection();
     if (!selection || selection.isCollapsed) return [];
     let range = selection.getRangeAt(0);
@@ -99,7 +96,7 @@ export default class AnnotationFactory {
     return newRects;
   }
 
-  private offsetTransform(rect: Rect, canvasWrapper: HTMLElement) {
+  offsetTransform(rect: Rect, canvasWrapper: HTMLElement) {
     let ost = this.computePageOffset(canvasWrapper);
     let left_1 = rect.left - ost.left;
     let top_1 = rect.top - ost.top;
@@ -112,7 +109,7 @@ export default class AnnotationFactory {
     };
   }
 
-  private computePageOffset(canvasWrapper: HTMLElement): Rect {
+  computePageOffset(canvasWrapper: HTMLElement): Rect {
     let rect = canvasWrapper.getBoundingClientRect();
     return {
       top: rect.top,
@@ -122,163 +119,32 @@ export default class AnnotationFactory {
     } as Rect;
   }
 
-  setState(pdfState: PDFState) {
-    this.pdfState = pdfState;
-  }
-
-  /**
-   * Set event handlers on page
-   * if no pageNumber is given, that means user is changing tools and other things...
-   * @param e
-   */
-  setEventHandlers(e: {
-    error: Error | null;
-    pageNumber: number;
-    source: PDFPageView;
-  }) {
-    e.source.div.onmousedown = (ev: MouseEvent) => {
-      switch (this.pdfState.tool) {
-        case AnnotationType.HIGHLIGHT:
-        case AnnotationType.UNDERLINE:
-        case AnnotationType.STRIKEOUT:
-          e.source.div.onmouseup = () =>
-            this.buildSelectionBasedAnnot(
-              this.pdfState.tool,
-              this.pdfState.color,
-              e.pageNumber
-            );
-          break;
-        case AnnotationType.RECTANGLE:
-          let canvasWrapper = e.source.div.querySelector(
-            ".canvasWrapper"
-          ) as HTMLElement;
-          // temporary rectangle for rectangular highlight
-          let x1 = ev.clientX;
-          let y1 = ev.clientY;
-          let layerRect = canvasWrapper.getBoundingClientRect();
-          let tempRect = document.createElement("div");
-          tempRect.style.position = "absolute";
-          tempRect.style.background = this.pdfState.color;
-          tempRect.style.mixBlendMode = "multiply";
-          tempRect.style.left = `${x1 - layerRect.x}px`;
-          tempRect.style.top = `${y1 - layerRect.y}px`;
-          canvasWrapper.append(tempRect);
-
-          e.source.div.onmousemove = (ev: MouseEvent) => {
-            ev.preventDefault();
-            if (!tempRect) return;
-            tempRect.style.width = `${ev.clientX - x1}px`;
-            tempRect.style.height = `${ev.clientY - y1}px`;
-          };
-          e.source.div.onmouseup = (ev: MouseEvent) => {
-            tempRect.remove();
-            // create annotation
-            let rects = [
-              {
-                left: Math.min(x1, ev.clientX),
-                top: Math.min(y1, ev.clientY),
-                width: Math.abs(x1 - ev.clientX),
-                height: Math.abs(y1 - ev.clientY),
-              },
-            ];
-            if (rects[0].width < 1 || rects[0].height < 1) return;
-            rects[0] = this.offsetTransform(rects[0], canvasWrapper);
-
-            let annotData = {
-              _id: uid(),
-              _rev: "",
-              type: AnnotationType.RECTANGLE,
-              rects: rects,
-              color: this.pdfState.color,
-              pageNumber: e.pageNumber,
-              projectId: this.pdfState.projectId,
-              dataType: "pdfAnnotation",
-              content: "",
-            } as AnnotationData;
-            let annot = this.build(annotData);
-            if (annot) {
-              let id = annot.data._id;
-              annot.draw();
-              annot.doms.forEach((dom) => {
-                dom.onmousedown = () => this.store.setActive(id);
-              });
-              this.store.add(annot, true);
-            }
-            e.source.div.onmousemove = null;
-            e.source.div.onmouseup = null;
-          };
-          break;
-        case AnnotationType.COMMENT:
-          e.source.div.onmouseup = (ev: MouseEvent) => {
-            let canvasWrapper = e.source.div.querySelector(
-              ".canvasWrapper"
-            ) as HTMLElement;
-            // create annotation
-            let rects = [
-              {
-                left: ev.clientX,
-                top: ev.clientY,
-                width: 0,
-                height: 0,
-              },
-            ];
-            rects[0] = this.offsetTransform(rects[0], canvasWrapper);
-            let annotData = {
-              _id: uid(),
-              _rev: "",
-              type: AnnotationType.COMMENT,
-              rects: rects,
-              color: this.pdfState.color,
-              pageNumber: e.pageNumber,
-              projectId: this.pdfState.projectId,
-              dataType: "pdfAnnotation",
-              content: "",
-            } as AnnotationData;
-            let annot = this.build(annotData);
-            if (annot) {
-              let id = annot.data._id;
-              annot.draw();
-              annot.doms.forEach((dom) => {
-                dom.onmousedown = () => this.store.setActive(id);
-                dom.onblur = () => {
-                  console.log("blur!!!!");
-                };
-              });
-              this.store.add(annot, true);
-            }
-          };
-          break;
-        case AnnotationType.INK:
-          break;
-      }
-    };
-  }
-
   /**
    * Build Annotation by annotation data
    * @param annotData
    * @returns
    */
   build(annotData: AnnotationData) {
+    if (!this.container) return null;
     let annot: Annotation | null;
     switch (annotData.type) {
       case AnnotationType.HIGHLIGHT:
-        annot = new Highlight(annotData, this.viewer);
+        annot = new Highlight(annotData, this.container);
         break;
       case AnnotationType.UNDERLINE:
-        annot = new Underline(annotData, this.viewer);
+        annot = new Underline(annotData, this.container);
         break;
       case AnnotationType.STRIKEOUT:
-        annot = new Strikeout(annotData, this.viewer);
+        annot = new Strikeout(annotData, this.container);
         break;
       case AnnotationType.RECTANGLE:
-        annot = new Rectangle(annotData, this.viewer);
+        annot = new Rectangle(annotData, this.container);
         break;
       case AnnotationType.COMMENT:
-        annot = new Comment(annotData, this.viewer);
+        annot = new Comment(annotData, this.container);
         break;
       case AnnotationType.INK:
-        annot = new Ink(annotData, this.viewer);
+        annot = new Ink(annotData, this.container);
         break;
       default:
         annot = null;
@@ -294,15 +160,11 @@ export default class AnnotationFactory {
    * @param pageNumber
    * @returns
    */
-  buildSelectionBasedAnnot(
-    tool: AnnotationType,
-    color: string,
-    pageNumber: number
-  ) {
+  buildTextHighlight(tool: AnnotationType, color: string, pageNumber: number) {
     let rects = this.getSelectionRects();
     if (rects.length === 0) return;
-    let canvasWrapper = this.viewer
-      .querySelector(`div.page[data-page-number='${pageNumber}']`)
+    let canvasWrapper = this.container
+      ?.querySelector(`div.page[data-page-number='${pageNumber}']`)
       ?.querySelector(".canvasWrapper") as HTMLElement;
     for (let [i, rect] of rects.entries())
       rects[i] = this.offsetTransform(rect, canvasWrapper);
@@ -314,15 +176,11 @@ export default class AnnotationFactory {
       rects: rects,
       color: color,
       pageNumber: pageNumber,
-      projectId: this.pdfState.projectId,
+      projectId: this.projectId,
       dataType: "pdfAnnotation",
       content: "",
     } as AnnotationData;
 
-    let annot = this.build(annotData);
-    if (annot) {
-      annot.draw();
-      this.store.add(annot, true);
-    }
+    return this.build(annotData);
   }
 }

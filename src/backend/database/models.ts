@@ -156,6 +156,7 @@ export enum AnnotationType {
   UNDERLINE = "underline",
   STRIKEOUT = "strikeout",
   INK = "ink",
+  ERASER = "eraser",
 }
 
 export enum SpreadMode {

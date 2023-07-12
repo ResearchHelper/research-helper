@@ -82,15 +82,15 @@
 <script setup lang="ts">
 import { ref, inject, nextTick, PropType, computed } from "vue";
 import { Annotation } from "src/backend/pdfannotation/annotations";
-import { KEY_annotStore, KEY_scrollAnnotIntoView } from "./injectKeys";
+import { KEY_scrollAnnotIntoView } from "./injectKeys";
 
 import AnnotMenu from "./AnnotMenu.vue";
 
 import { debounce, copyToClipboard, colors } from "quasar";
 import renderMathInElement from "katex/dist/contrib/auto-render";
 import "katex/dist/katex.min.css";
-import { AnnotationStore } from "src/backend/pdfannotation";
 import { AnnotationData } from "src/backend/database";
+import PDFApplication from "src/backend/pdfreader";
 
 const { luminosity } = colors;
 
@@ -112,26 +112,26 @@ const annotContent = computed({
   },
 });
 
-const annotStore = inject(KEY_annotStore) as AnnotationStore;
+const pdfApp = inject("pdfApp") as PDFApplication;
 const scrollAnnotIntoView = inject(KEY_scrollAnnotIntoView) as (
   id: string
 ) => void;
 
 const _saveContent = (content: string) => {
-  annotStore.update(props.annot.data._id, {
+  pdfApp.annotStore?.update(props.annot.data._id, {
     content: content,
   } as AnnotationData);
 };
 const saveContent = debounce(_saveContent, 200) as (content: string) => void;
 
 const changeColor = (color: string) => {
-  annotStore.update(props.annot.data._id, {
+  pdfApp.annotStore?.update(props.annot.data._id, {
     color: color,
   } as AnnotationData);
 };
 
 const deleteAnnot = () => {
-  annotStore.delete(props.annot.data._id);
+  pdfApp.annotStore?.delete(props.annot.data._id);
 };
 
 const liveRender = async () => {

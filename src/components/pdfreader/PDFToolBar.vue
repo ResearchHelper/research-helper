@@ -7,13 +7,17 @@
         :value="pageLabel"
         @keydown.enter="(e: KeyboardEvent) => changePage((e.target as HTMLInputElement).value)"
       />
-      <span v-if="!!pageLabels">
+      <span v-if="!!pdfApp.pageLabels">
         {{
-          "(" + pdfState.currentPageNumber + " of " + pdfState.pagesCount + ")"
+          "(" +
+          pdfApp.state.currentPageNumber +
+          " of " +
+          pdfApp.state.pagesCount +
+          ")"
         }}
       </span>
       <span v-else>
-        {{ " of " + pdfState.pagesCount }}
+        {{ " of " + pdfApp.state.pagesCount }}
       </span>
     </div>
 
@@ -21,8 +25,8 @@
 
     <!-- tools -->
     <q-btn-toggle
-      :model-value="pdfState.tool"
-      @update:model-value="(tool: string) => $emit('changeTool', tool)"
+      :model-value="pdfApp.state.tool"
+      @update:model-value="(tool: AnnotationType) => pdfApp.changeTool(tool)"
       :ripple="false"
       flat
       size="0.7rem"
@@ -63,6 +67,11 @@
           value: AnnotationType.INK,
           slot: AnnotationType.INK,
         },
+        {
+          value: 'eraser',
+          icon: 'bi-eraser-fill',
+          slot: 'eraser',
+        },
       ]"
     >
       <template v-slot:cursor>
@@ -85,16 +94,19 @@
       </template>
       <template v-slot:ink>
         <InkDropDownBtn
-          :inkThickness="pdfState.inkThickness"
-          :inkOpacity="pdfState.inkOpacity"
-          @changeThickness="changeThickness"
-          @changeOpacity="changeOpacity"
-          @setInkTool="$emit('changeTool', AnnotationType.INK)"
+          :inkThickness="pdfApp.state.inkThickness"
+          :inkOpacity="pdfApp.state.inkOpacity"
+          @changeThickness="(thickness: number) => pdfApp.changeInkThickness(thickness)"
+          @changeOpacity="(opacity: number) => pdfApp.changeInkOpacity(opacity)"
+          @setInkTool="pdfApp.changeTool(AnnotationType.INK)"
         />
+      </template>
+      <template v-slot:eraser>
+        <q-tooltip>Eraser</q-tooltip>
       </template>
     </q-btn-toggle>
     <q-btn
-      :style="`background: ${pdfState.color}`"
+      :style="`background: ${pdfApp.state.color}`"
       :ripple="false"
       flat
       size="0.5rem"
@@ -109,7 +121,7 @@
           style="width: 10rem"
         >
           <ColorPicker
-            @selected="(color: string) => $emit('changeColor', color)"
+            @selected="(color: string) => pdfApp.changeColor(color)"
           />
         </q-item>
       </q-menu>
@@ -134,7 +146,7 @@
             :ripple="false"
             icon="expand"
             class="rotate-90"
-            @click="$emit('changeScale', { scaleValue: 'page-width' })"
+            @click="pdfApp.changeScale({ scaleValue: 'page-width' })"
           >
             <q-tooltip>{{ $t("page-width") }}</q-tooltip>
           </q-btn>
@@ -143,7 +155,7 @@
             flat
             :ripple="false"
             icon="expand"
-            @click="$emit('changeScale', { scaleValue: 'page-height' })"
+            @click="pdfApp.changeScale({ scaleValue: 'page-height' })"
           >
             <q-tooltip>{{ $t("page-height") }}</q-tooltip>
           </q-btn>
@@ -155,19 +167,19 @@
             flat
             :ripple="false"
             icon="zoom_out"
-            @click="$emit('changeScale', { delta: -0.1 })"
+            @click="pdfApp.changeScale({ delta: -0.1 })"
           >
             <q-tooltip>{{ $t("zoom-out") }}</q-tooltip>
           </q-btn>
           <div data-cy="scale">
-            {{ Math.trunc(pdfState.currentScale * 100) + "%" }}
+            {{ Math.trunc(pdfApp.state.currentScale * 100) + "%" }}
           </div>
           <q-btn
             dense
             flat
             :ripple="false"
             icon="zoom_in"
-            @click="$emit('changeScale', { delta: 0.1 })"
+            @click="pdfApp.changeScale({ delta: 0.1 })"
           >
             <q-tooltip>{{ $t("zoom-in") }}</q-tooltip>
           </q-btn>
@@ -188,8 +200,8 @@
               { label: $t('odd-spreads'), value: 1 },
               { label: $t('even-spreads'), value: 2 },
             ]"
-            :model-value="pdfState.spreadMode"
-            @update:model-value="(mode: number) => $emit('changeSpreadMode', mode)"
+            :model-value="pdfApp.state.spreadMode"
+            @update:model-value="(mode: number) => pdfApp.changeSpreadMode(mode)"
             data-cy="btn-toggle-spread"
           />
         </q-item>
@@ -235,7 +247,7 @@
       <q-tooltip>{{ $t("search") }}</q-tooltip>
       <q-menu
         persistent
-        @show="$emit('searchText', search)"
+        @show="pdfApp.searchText(search)"
         @hide="clearSearch"
         ref="searchMenu"
       >
@@ -250,21 +262,21 @@
             hide-bottom-space
             :placeholder="$t('search')"
             v-model="search.query"
-            @keydown.enter="$emit('changeMatch', 1)"
+            @keydown.enter="pdfApp.changeMatch(1)"
           ></q-input>
           <q-btn
             dense
             flat
             icon="arrow_back"
             :ripple="false"
-            @click="$emit('changeMatch', -1)"
+            @click="pdfApp.changeMatch(-1)"
           />
           <q-btn
             dense
             flat
             icon="arrow_forward"
             :ripple="false"
-            @click="$emit('changeMatch', 1)"
+            @click="pdfApp.changeMatch(1)"
           />
         </q-item>
         <q-item>
@@ -316,6 +328,7 @@
 <script setup lang="ts">
 import {
   computed,
+  inject,
   onBeforeUnmount,
   onMounted,
   PropType,
@@ -323,12 +336,13 @@ import {
   ref,
   watch,
 } from "vue";
-import { AnnotationType, PDFState } from "src/backend/database";
+import { AnnotationType, PDFSearch, PDFState } from "src/backend/database";
 
 import ColorPicker from "./ColorPicker.vue";
 import InkDropDownBtn from "./InkDropDownBtn.vue";
 import { useI18n } from "vue-i18n";
 import { QMenu, useQuasar } from "quasar";
+import { PDFApplication } from "src/backend/pdfreader";
 
 const $q = useQuasar();
 const { t } = useI18n({ useScope: "global" });
@@ -337,27 +351,12 @@ const { t } = useI18n({ useScope: "global" });
  * Props, emits, data
  */
 const props = defineProps({
-  pdfState: { type: Object as PropType<PDFState>, required: true },
-  pageLabels: { type: Object as PropType<string[]>, required: true },
   showRightMenu: { type: Boolean, required: true },
-  matchesCount: {
-    type: Object as PropType<{ current: number; total: number }>,
-    required: false,
-  },
 });
 
-const emit = defineEmits([
-  "changePageNumber",
-  "changeScale",
-  "changeSpreadMode",
-  "changeTool",
-  "changeColor",
-  "changeInkThickness",
-  "changeInkOpacity",
-  "searchText",
-  "changeMatch",
-  "update:showRightMenu",
-]);
+const pdfApp = inject("pdfApp") as PDFApplication;
+
+const emit = defineEmits(["update:showRightMenu"]);
 
 const searchMenu = ref<QMenu>();
 const search = reactive({
@@ -369,12 +368,12 @@ const search = reactive({
 const fullscreen = ref(false);
 
 watch(search, (newSearch) => {
-  emit("searchText", newSearch);
+  pdfApp.searchText(newSearch);
 });
 
 const searchSummary = computed(() => {
   let text = "";
-  let matchesCount = props.matchesCount;
+  let matchesCount = pdfApp.matchesCount;
   if (!!matchesCount) {
     if (matchesCount.total != 0) {
       text = t("matchescount-current-of-matchescount-total-matches", [
@@ -390,9 +389,9 @@ const searchSummary = computed(() => {
 });
 
 const pageLabel = computed(() => {
-  let pageNumber = props.pdfState.currentPageNumber;
-  if (props.pageLabels?.length > 0) {
-    return props.pageLabels[pageNumber - 1];
+  let pageNumber = pdfApp.state.currentPageNumber;
+  if (pdfApp.pageLabels?.length > 0) {
+    return pdfApp.pageLabels[pageNumber - 1];
   } else {
     return pageNumber;
   }
@@ -400,16 +399,16 @@ const pageLabel = computed(() => {
 
 function changePage(pageLabel: string) {
   let pageNumber = 1;
-  if (props.pageLabels.length > 0) {
+  if (pdfApp.pageLabels.length > 0) {
     // If pageLabels exists
-    let pageIndex = props.pageLabels.indexOf(pageLabel);
+    let pageIndex = pdfApp.pageLabels.indexOf(pageLabel);
     if (pageIndex === -1) return; // do nothing if not finding the label
     pageNumber = pageIndex + 1;
   } else {
     // If there are no pageLabels
     pageNumber = parseInt(pageLabel);
   }
-  emit("changePageNumber", pageNumber);
+  pdfApp.changePageNumber(pageNumber);
 }
 
 function toggleSearchMenu(e: KeyboardEvent) {
@@ -418,7 +417,7 @@ function toggleSearchMenu(e: KeyboardEvent) {
 }
 
 function clearSearch() {
-  emit("searchText", { query: "" });
+  pdfApp.searchText({ query: "" } as PDFSearch);
 }
 
 async function requestFullscreen() {

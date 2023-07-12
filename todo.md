@@ -15,7 +15,9 @@ FIXME:
 - [x] annotation position failed in chinese pdf, rects have infinity
 - [x] click on pdf to close color picker and ink params setting
 - [x] rectangle tool still works after changing to other tools
-- [ ] some pdfs can't set pen color
+- [x] rectangle still works when dragging on another rectangle
+- [x] floatingmenu position not right if selection is further down
+- [ ] the canvas insertion always goes to next page?
 
 TODO:
 
