@@ -135,10 +135,11 @@ export interface PDFState {
   spreadMode: SpreadMode; // 0: no spread, 1: odd spread, 2: even spread
   tool: AnnotationType;
   color: string; // hex value
-  inkThickness: number;
-  inkOpacity: number;
   scrollLeft: number; // current scrollLeft position
   scrollTop: number; // current scrollTop position
+  inkThickness: number;
+  inkOpacity: number;
+  eraserThickness: number;
 }
 
 export interface Rect {
@@ -178,8 +179,6 @@ export interface AnnotationData {
   color: string; // hex value
   rects: Rect[]; // a multiline highlight annotation has more than 1 rect
   type: AnnotationType;
-  thickness?: number;
-  opacity?: number;
 }
 
 /**

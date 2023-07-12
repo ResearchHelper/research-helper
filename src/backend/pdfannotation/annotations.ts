@@ -1,6 +1,9 @@
 import { reactive } from "vue";
 import { AnnotationData, AnnotationType, PDFState, Rect } from "../database";
 import { db } from "../database";
+import Konva from "konva";
+import { PDFPageView } from "pdfjs-dist/web/pdf_viewer";
+import { debounce } from "quasar";
 
 /**
  * Abstract class for all annotation
@@ -10,6 +13,8 @@ export abstract class Annotation {
   private _data = reactive<AnnotationData>({} as AnnotationData);
   private _doms = reactive<HTMLElement[]>([]);
   container: HTMLElement;
+  hasEvtHandler: boolean;
+  updateDB: (props: AnnotationData) => void;
 
   get data() {
     return this._data;
@@ -30,6 +35,9 @@ export abstract class Annotation {
   constructor(annotData: AnnotationData, container: HTMLElement) {
     this.data = annotData;
     this.container = container;
+    this.hasEvtHandler = false;
+
+    this.updateDB = debounce(this._updateDB, 1000);
   }
 
   /**
@@ -37,7 +45,11 @@ export abstract class Annotation {
    * also add event listeners to doms
    * Child class must implement this
    */
-  abstract draw(): void;
+  abstract draw(e: {
+    error: Error | null;
+    pageNumber: number;
+    source: PDFPageView;
+  }): void;
 
   undraw() {
     for (let dom of this.doms) dom.remove();
@@ -50,8 +62,6 @@ export abstract class Annotation {
       else dom.classList.remove("activeAnnotation");
     }
   }
-
-  scrollIntoView() {}
 
   /**
    * Enable drag to move annotation
@@ -125,6 +135,19 @@ export abstract class Annotation {
     }
   }
 
+  private async _updateDB(props: AnnotationData) {
+    try {
+      let annot = (await db.get(this.data._id)) as AnnotationData;
+      props._rev = annot._rev;
+      Object.assign(annot, props);
+      let result = await db.put(annot);
+      annot._rev = result.rev;
+      this.data = annot;
+    } catch (err) {
+      console.log(err);
+    }
+  }
+
   /**
    * Update annotation doms and data in database
    */
@@ -142,16 +165,7 @@ export abstract class Annotation {
     }
 
     // update db
-    try {
-      let annot = (await db.get(this.data._id)) as AnnotationData;
-      props._rev = annot._rev;
-      Object.assign(annot, props);
-      let result = await db.put(annot);
-      annot._rev = result.rev;
-      this.data = annot;
-    } catch (err) {
-      console.log(err);
-    }
+    this.updateDB(props);
   }
 
   /**
@@ -172,7 +186,11 @@ export abstract class Annotation {
 }
 
 export class Highlight extends Annotation {
-  draw(): void {
+  draw(e: {
+    error: Error | null;
+    pageNumber: number;
+    source: PDFPageView;
+  }): void {
     if (!this.data._id) this.doms = [];
 
     let canvasWrapper = this.container
@@ -210,7 +228,11 @@ export class Highlight extends Annotation {
   }
 }
 export class Underline extends Annotation {
-  draw(): void {
+  draw(e: {
+    error: Error | null;
+    pageNumber: number;
+    source: PDFPageView;
+  }): void {
     if (!this.data._id) this.doms = [];
 
     let canvasWrapper = this.container
@@ -249,7 +271,11 @@ export class Underline extends Annotation {
   }
 }
 export class Strikeout extends Annotation {
-  draw(): void {
+  draw(e: {
+    error: Error | null;
+    pageNumber: number;
+    source: PDFPageView;
+  }): void {
     if (!this.data._id) this.doms = [];
 
     let canvasWrapper = this.container
@@ -288,7 +314,11 @@ export class Strikeout extends Annotation {
   }
 }
 export class Rectangle extends Annotation {
-  draw(): void {
+  draw(e: {
+    error: Error | null;
+    pageNumber: number;
+    source: PDFPageView;
+  }): void {
     if (!this.data._id) this.doms = [];
 
     let canvasWrapper = this.container
@@ -323,7 +353,11 @@ export class Rectangle extends Annotation {
 }
 
 export class Comment extends Annotation {
-  draw(): void {
+  draw(e: {
+    error: Error | null;
+    pageNumber: number;
+    source: PDFPageView;
+  }): void {
     if (!this.data._id) this.doms = [];
     if (this.data.rects.length !== 1) this.doms = [];
 
@@ -366,54 +400,109 @@ export class Comment extends Annotation {
   }
 }
 export class Ink extends Annotation {
-  draw(): void {
-    // draw ink from db data
-    let doms = [] as HTMLElement[];
-    if (!this.data._id) this.doms = doms;
+  stage: Konva.Stage | undefined;
 
-    let annotationEditorLayer = this.container
-      ?.querySelector(`div.page[data-page-number='${this.data.pageNumber}']`)
-      ?.querySelector(".annotationEditorLayer") as HTMLElement;
+  // for dev use
+  setDrawable(isDrawable: boolean) {
+    if (!this.stage) return;
+    this.stage.content.style.zIndex = isDrawable ? "3" : "2";
+  }
 
-    let existed = !!annotationEditorLayer.querySelector(
-      `section[annotation-id='${this.data._id}']`
-    );
+  scale(view: PDFPageView) {
+    if (!this.stage) return;
+    this.stage.scale({ x: view.scale, y: view.scale });
+    this.stage.size({
+      width: view.width,
+      height: view.height,
+    });
+  }
 
-    let div = document.createElement("div");
-    div.classList.add("inkEditor");
-    div.setAttribute("annotation-id", this.data._id);
-    div.setAttribute("data-editor-rotation", "0");
-    div.setAttribute("aria-label", "Draw Editor");
-    div.style.position = "absolute";
-    div.draggable = true;
-    for (let rect of this.data.rects) {
-      div.style.left = `${rect.left}%`;
-      div.style.top = `${rect.top}%`;
-      div.style.width = `${rect.width}%`;
-      div.style.height = `${rect.height}%`;
-      div.style.minWidth = `${
-        0.001 * rect.width * annotationEditorLayer.clientWidth
-      }px`;
-      div.style.minHeight = `${
-        0.001 * rect.height * annotationEditorLayer.clientHeight
-      }px`;
-      let canvas = document.createElement("canvas");
-      canvas.classList.add("inkEditorCanvas");
-      canvas.setAttribute("aria-label", "User-created image");
-      canvas.style.visibility = "visible";
-      let canvasWrapper = this.container
-        ?.querySelector(`div.page[data-page-number='${this.data.pageNumber}']`)
-        ?.querySelector(".canvasWrapper") as HTMLElement;
-      canvas.width = 0.01 * rect.width * canvasWrapper.clientWidth;
-      canvas.height = 0.01 * rect.height * canvasWrapper.clientHeight;
-      let ctx = canvas.getContext("2d");
-      let img = new Image();
-      img.onload = () => ctx?.drawImage(img, 0, 0);
-      img.src = this.data.content;
-      div.append(canvas);
-      if (!existed) annotationEditorLayer.appendChild(div);
-      doms.push(div);
+  draw(e: {
+    error: Error | null;
+    pageNumber: number;
+    source: PDFPageView;
+  }): void {
+    // find editor layer
+    let annotationEditorLayer = e.source.annotationEditorLayer
+      ?.div as HTMLDivElement;
+    // make this layer accessible
+    annotationEditorLayer.style.pointerEvents = "auto";
+
+    if (!this.stage) {
+      // create konva stage in editor layer if there is none
+      if (this.data.content) {
+        // create stage directly from path data
+        this.stage = Konva.Node.create(
+          this.data.content,
+          annotationEditorLayer
+        ) as Konva.Stage;
+        this.scale(e.source);
+      } else {
+        // if no path on this page, create a new stage
+        this.stage = new Konva.Stage({
+          container: annotationEditorLayer,
+          width: e.source.width,
+          height: e.source.height,
+          scale: { x: e.source.scale, y: e.source.scale },
+        });
+        this.stage.content.style.zIndex = "2";
+        let layer = new Konva.Layer();
+        this.stage.add(layer);
+      }
+    } else {
+      this.scale(e.source);
     }
-    this.doms = doms;
+  }
+
+  bindEventHandlers(state: PDFState) {
+    if (!this.stage) return;
+    // set drawable to konva stage stage
+    if (
+      state.tool === AnnotationType.INK ||
+      state.tool === AnnotationType.ERASER
+    )
+      this.setDrawable(true);
+    else this.setDrawable(false);
+    // free draw core funcitons
+    let isPaint: boolean;
+    let lastLine: Konva.Line;
+    this.stage.on("mousedown touchstart", (e) => {
+      console.log("pageNumber", state.currentPageNumber);
+      if (!this.stage) return;
+      isPaint = true;
+      let pos = this.stage.getRelativePointerPosition();
+      if (!pos) return;
+      lastLine = new Konva.Line({
+        stroke: state.color,
+        strokeWidth:
+          state.tool === AnnotationType.INK
+            ? state.inkThickness
+            : state.eraserThickness,
+        opacity: state.tool === AnnotationType.INK ? state.inkOpacity : 1,
+        globalCompositeOperation:
+          state.tool === AnnotationType.INK ? "source-over" : "destination-out",
+        // round cap for smoother lines
+        lineCap: "round",
+        lineJoin: "round",
+        // add point twice, so we have some drawings even on a simple click
+        points: [pos.x, pos.y, pos.x, pos.y],
+      });
+      this.stage.getLayers()[0].add(lastLine);
+    });
+    this.stage.on("mouseup touchend", () => {
+      isPaint = false;
+      if (!this.stage) return;
+      let content = this.stage.toJSON();
+      this.update({ content: content } as AnnotationData);
+    });
+    this.stage.on("mousemove touchmove", (e) => {
+      if (!this.stage || !isPaint) return;
+      // prevent scrolling on touch devices
+      e.evt.preventDefault();
+      const pos = this.stage.getRelativePointerPosition();
+      if (!pos) return;
+      let newPoints = lastLine.points().concat([pos.x, pos.y]);
+      lastLine.points(newPoints);
+    });
   }
 }

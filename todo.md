@@ -17,7 +17,8 @@ FIXME:
 - [x] rectangle tool still works after changing to other tools
 - [x] rectangle still works when dragging on another rectangle
 - [x] floatingmenu position not right if selection is further down
-- [ ] the canvas insertion always goes to next page?
+- [x] the canvas insertion always goes to next page?
+- [x] page spread options not working correctly
 
 TODO:
 
@@ -48,7 +49,7 @@ TODO:
 - [x] different pdf saves the same ink
 - [x] different ink params in different project
 - [x] change `ref(null)` to `ref<type>()`
-- [ ] refactoring pdfannotation
+- [x] refactoring pdfannotation
 
   - [x] implement `draw()` for each annotation
   - [x] implement eventhandlers for each annotation
@@ -58,9 +59,20 @@ TODO:
     - [x] toggleAnnotCard
   - [x] Annotation interface change to AnnotationData
   - [x] AnnotCard uses annotation object rather than data
-  - [x] inject annotations into AnnotList
-  - [ ] implement eventhandlers for ink
-  - [ ] Thumbnails of pdf
+  - [x] inject aniotations into AnnotList
+
+- [x] ink
+
+  - [x] load drawn ink on each page
+    - [x] create Konva stage in `annotationEditorLayer` when page load
+    - [x] set scale correctly when scale changes (too slow and not quite correct)
+    - [x] pointer position not correct in different scale
+    - [x] don't create duplicated Konva stage when page load
+    - [x] don't repeatly bind events
+  - [x] save drawn ink on each page
+  - [x] eraser thickness
+
+- [x] leave tools in the middle, view, full-screen to the left and find to the right
 
 - [ ] RightMenu.cy.ts
 - [ ] AnnotationList.cy.ts
@@ -70,7 +82,6 @@ IMPROVE:
 
 LONG-TERM TODO:
 
-- [ ] enable changing properperties of an injected ink
 - [ ] put pdf annotations to markdown as a link. we can click to jump to the specific annotation
 - [ ] Terminology library
 - [ ] reduce memory usage #55

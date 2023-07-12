@@ -133,6 +133,6 @@
   "warning": "警告",
   "batch-mode": "批处理模式",
   "category": "类别",
-   "scroll-into-view": "显示注释"
-
+  "scroll-into-view": "显示注释",
+  "eraser": "擦除"
 }

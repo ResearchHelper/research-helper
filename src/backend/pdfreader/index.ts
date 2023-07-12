@@ -61,10 +61,11 @@ export default class PDFApplication {
       spreadMode: 0,
       tool: "cursor",
       color: "#FFFF00",
-      inkThickness: 5,
-      inkOpacity: 100,
       scrollLeft: 0,
       scrollTop: 0,
+      inkThickness: 5,
+      inkOpacity: 1,
+      eraserThickness: 20,
     } as PDFState);
   }
 
@@ -174,6 +175,12 @@ export default class PDFApplication {
         // let pdfApp calculate the scale, then change the pdfState
         this.state.currentScale = e.scale;
         if (e.presetValue) this.state.currentScaleValue = e.presetValue;
+      }
+    );
+    eventBus.on(
+      "spreadmodechanged",
+      (e: { source: PDFViewer; mode: number }) => {
+        this.state.spreadMode = e.mode;
       }
     );
     // find controller
@@ -328,12 +335,6 @@ export default class PDFApplication {
 
   changeTool(tool: AnnotationType) {
     this.state.tool = tool;
-
-    // for (let stage of stages) {
-    //   if (tool === AnnotationType.INK || tool === AnnotationType.ERASER)
-    //     stage.content.style.zIndex = "3";
-    //   else stage.content.style.zIndex = "2";
-    // }
   }
 
   changeColor(color: string) {

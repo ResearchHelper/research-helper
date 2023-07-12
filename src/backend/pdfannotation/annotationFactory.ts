@@ -7,7 +7,7 @@ import {
   Comment,
   Ink,
 } from "./annotations";
-import { AnnotationType, AnnotationData, Rect, PDFState } from "../database";
+import { AnnotationType, AnnotationData, Rect } from "../database";
 import { uid } from "quasar";
 
 /**

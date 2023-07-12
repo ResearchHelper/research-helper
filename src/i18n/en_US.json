@@ -133,5 +133,6 @@
   "warning": "Warning",
   "batch-mode": "Batch mode",
   "category": "Categories",
-  "scroll-into-view": "Scroll into view"
+  "scroll-into-view": "Scroll into view",
+  "eraser": "Eraser"
 }

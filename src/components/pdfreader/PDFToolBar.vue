@@ -9,26 +9,34 @@
       />
       <span v-if="!!pdfApp.pageLabels">
         {{
-          "(" +
+          " (" +
           pdfApp.state.currentPageNumber +
           " of " +
           pdfApp.state.pagesCount +
-          ")"
+          ") "
         }}
       </span>
       <span v-else>
         {{ " of " + pdfApp.state.pagesCount }}
       </span>
     </div>
+    <ViewDropdownBtn
+      :currentScale="pdfApp.state.currentScale"
+      :spreadMode="pdfApp.state.spreadMode"
+      :isFullscreen="isFullscreen"
+      @changeScale="(params) => pdfApp.changeScale(params)"
+      @changeSpreadMode="(mode) => pdfApp.changeSpreadMode(mode)"
+      @toggleFullscreen="toggleFullscreen"
+    />
 
     <q-space />
 
     <!-- tools -->
     <q-btn-toggle
-      :model-value="pdfApp.state.tool"
-      @update:model-value="(tool: AnnotationType) => pdfApp.changeTool(tool)"
+      v-model="pdfApp.state.tool"
       :ripple="false"
-      flat
+      fab
+      push
       size="0.7rem"
       padding="xs"
       toggle-color="primary"
@@ -69,7 +77,6 @@
         },
         {
           value: 'eraser',
-          icon: 'bi-eraser-fill',
           slot: 'eraser',
         },
       ]"
@@ -93,22 +100,23 @@
         <q-tooltip>{{ $t("comment") }}</q-tooltip>
       </template>
       <template v-slot:ink>
-        <InkDropDownBtn
-          :inkThickness="pdfApp.state.inkThickness"
-          :inkOpacity="pdfApp.state.inkOpacity"
-          @changeThickness="(thickness: number) => pdfApp.changeInkThickness(thickness)"
-          @changeOpacity="(opacity: number) => pdfApp.changeInkOpacity(opacity)"
+        <InkDropdownBtn
+          v-model:inkThickness="pdfApp.state.inkThickness"
+          v-model:inkOpacity="pdfApp.state.inkOpacity"
           @setInkTool="pdfApp.changeTool(AnnotationType.INK)"
         />
       </template>
       <template v-slot:eraser>
-        <q-tooltip>Eraser</q-tooltip>
+        <EraserDropdownBtn
+          v-model:eraserThickness="pdfApp.state.eraserThickness"
+          @setEraserTool="pdfApp.changeTool(AnnotationType.ERASER)"
+        />
       </template>
     </q-btn-toggle>
     <q-btn
       :style="`background: ${pdfApp.state.color}`"
       :ripple="false"
-      flat
+      push
       size="0.5rem"
     >
       <q-tooltip>{{ $t("highlight-color") }}</q-tooltip>
@@ -126,122 +134,16 @@
         </q-item>
       </q-menu>
     </q-btn>
-    <q-btn-dropdown
-      dense
-      flat
-      :ripple="false"
-      icon="visibility"
-      size="0.7rem"
-      padding="xs"
-      data-cy="btn-dropdown-view"
-    >
-      <template v-slot:label>
-        <q-tooltip>{{ $t("view") }}</q-tooltip>
-      </template>
-      <q-list dense>
-        <q-item class="row justify-between items-center">
-          <q-btn
-            dense
-            flat
-            :ripple="false"
-            icon="expand"
-            class="rotate-90"
-            @click="pdfApp.changeScale({ scaleValue: 'page-width' })"
-          >
-            <q-tooltip>{{ $t("page-width") }}</q-tooltip>
-          </q-btn>
-          <q-btn
-            dense
-            flat
-            :ripple="false"
-            icon="expand"
-            @click="pdfApp.changeScale({ scaleValue: 'page-height' })"
-          >
-            <q-tooltip>{{ $t("page-height") }}</q-tooltip>
-          </q-btn>
-        </q-item>
-        <q-separator />
-        <q-item class="row justify-center items-center">
-          <q-btn
-            dense
-            flat
-            :ripple="false"
-            icon="zoom_out"
-            @click="pdfApp.changeScale({ delta: -0.1 })"
-          >
-            <q-tooltip>{{ $t("zoom-out") }}</q-tooltip>
-          </q-btn>
-          <div data-cy="scale">
-            {{ Math.trunc(pdfApp.state.currentScale * 100) + "%" }}
-          </div>
-          <q-btn
-            dense
-            flat
-            :ripple="false"
-            icon="zoom_in"
-            @click="pdfApp.changeScale({ delta: 0.1 })"
-          >
-            <q-tooltip>{{ $t("zoom-in") }}</q-tooltip>
-          </q-btn>
-        </q-item>
-        <q-separator />
-        <q-item class="justify-center">
-          <q-btn-toggle
-            class="column"
-            flat
-            stack
-            dense
-            square
-            no-caps
-            :ripple="false"
-            toggle-color="primary"
-            :options="[
-              { label: $t('no-spreads'), value: 0 },
-              { label: $t('odd-spreads'), value: 1 },
-              { label: $t('even-spreads'), value: 2 },
-            ]"
-            :model-value="pdfApp.state.spreadMode"
-            @update:model-value="(mode: number) => pdfApp.changeSpreadMode(mode)"
-            data-cy="btn-toggle-spread"
-          />
-        </q-item>
-      </q-list>
-    </q-btn-dropdown>
 
-    <q-btn
-      v-if="!fullscreen"
-      dense
-      square
-      flat
-      :ripple="false"
-      icon="fullscreen"
-      size="0.9rem"
-      padding="none"
-      @click="requestFullscreen"
-    >
-      <q-tooltip>{{ $t("enter-full-screen") }}</q-tooltip>
-    </q-btn>
-    <q-btn
-      v-else
-      dense
-      square
-      flat
-      size="0.9rem"
-      padding="none"
-      :ripple="false"
-      icon="fullscreen_exit"
-      @click="exitFullscreen"
-    >
-      <q-tooltip>{{ $t("exit-full-screen") }}</q-tooltip>
-    </q-btn>
+    <q-space />
 
+    <!-- right menu -->
     <q-btn
-      square
-      flat
+      push
       :ripple="false"
       icon="search"
       size="0.8rem"
-      padding="none"
+      padding="xs"
       ref="searchBtn"
     >
       <q-tooltip>{{ $t("search") }}</q-tooltip>
@@ -304,14 +206,11 @@
       </q-menu>
     </q-btn>
 
-    <q-space />
-
-    <!-- right menu -->
     <q-btn-toggle
       :model-value="showRightMenu"
       @update:model-value="(visible: boolean) => $emit('update:showRightMenu', visible)"
       clearable
-      unelevated
+      push
       :ripple="false"
       size="0.7rem"
       padding="xs"
@@ -331,18 +230,19 @@ import {
   inject,
   onBeforeUnmount,
   onMounted,
-  PropType,
   reactive,
   ref,
   watch,
 } from "vue";
-import { AnnotationType, PDFSearch, PDFState } from "src/backend/database";
+import { AnnotationType, PDFSearch } from "src/backend/database";
 
 import ColorPicker from "./ColorPicker.vue";
-import InkDropDownBtn from "./InkDropDownBtn.vue";
+import InkDropdownBtn from "./InkDropdownBtn.vue";
 import { useI18n } from "vue-i18n";
 import { QMenu, useQuasar } from "quasar";
-import { PDFApplication } from "src/backend/pdfreader";
+import PDFApplication from "src/backend/pdfreader";
+import EraserDropdownBtn from "./EraserDropdownBtn.vue";
+import ViewDropdownBtn from "./ViewDropdownBtn.vue";
 
 const $q = useQuasar();
 const { t } = useI18n({ useScope: "global" });
@@ -353,11 +253,9 @@ const { t } = useI18n({ useScope: "global" });
 const props = defineProps({
   showRightMenu: { type: Boolean, required: true },
 });
-
-const pdfApp = inject("pdfApp") as PDFApplication;
-
 const emit = defineEmits(["update:showRightMenu"]);
 
+const pdfApp = inject("pdfApp") as PDFApplication;
 const searchMenu = ref<QMenu>();
 const search = reactive({
   query: "",
@@ -365,7 +263,7 @@ const search = reactive({
   caseSensitive: false,
   entireWord: false,
 });
-const fullscreen = ref(false);
+const isFullscreen = ref(false);
 
 watch(search, (newSearch) => {
   pdfApp.searchText(newSearch);
@@ -420,24 +318,11 @@ function clearSearch() {
   pdfApp.searchText({ query: "" } as PDFSearch);
 }
 
-async function requestFullscreen() {
-  await $q.fullscreen.request();
-  // after successfully fullscreened, remove leftmenu
-  fullscreen.value = true;
-}
+async function toggleFullscreen() {
+  if (isFullscreen.value) await $q.fullscreen.exit();
+  else await $q.fullscreen.request();
 
-async function exitFullscreen() {
-  await $q.fullscreen.exit();
-  // after exit fullscreen, show leftmenu again
-  fullscreen.value = false;
-}
-
-function changeThickness(thickness: number) {
-  emit("changeInkThickness", thickness);
-}
-
-function changeOpacity(opacity: number) {
-  emit("changeInkOpacity", opacity);
+  isFullscreen.value = !isFullscreen.value;
 }
 
 onMounted(() => {

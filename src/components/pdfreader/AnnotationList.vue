@@ -16,6 +16,7 @@
       :key="annot.data._id"
     >
       <AnnotCard
+        v-if="annot.data.type !== AnnotationType.INK"
         :annot="(annot as Annotation)"
         :style="'width: 100%'"
         :class="{
@@ -35,6 +36,7 @@ import { inject } from "vue";
 import AnnotCard from "./AnnotCard.vue";
 import PDFApplicaiton from "src/backend/pdfreader";
 import { Annotation } from "src/backend/pdfannotation/annotations";
+import { AnnotationType } from "src/backend/database";
 
 const pdfApp = inject("pdfApp") as PDFApplicaiton;
 </script>

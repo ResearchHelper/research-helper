@@ -61,20 +61,13 @@
 </template>
 
 <script setup lang="ts">
-import {
-  ref,
-  reactive,
-  watch,
-  nextTick,
-  provide,
-  onMounted,
-  computed,
-} from "vue";
+import { ref, watch, nextTick, provide, onMounted, computed } from "vue";
 import {
   AnnotationData,
   AnnotationType,
   PDFState,
   Project,
+  Rect,
 } from "src/backend/database";
 import { PDFPageView } from "pdfjs-dist/web/pdf_viewer";
 import {
@@ -90,6 +83,7 @@ import FloatingMenu from "./FloatingMenu.vue";
 
 import { getProject } from "src/backend/project/project";
 import PDFApplication from "src/backend/pdfreader";
+import { Ink } from "src/backend/pdfannotation/annotations";
 import { QSplitter, uid } from "quasar";
 import { Annotation } from "src/backend/pdfannotation/annotations";
 import Konva from "konva";
@@ -131,7 +125,6 @@ const style = ref("");
 
 // PDFApplicaiton
 const pdfApp = new PDFApplication(props.projectId);
-const stages = reactive<Konva.Stage[]>([]); // ink
 
 /******************************
  * RightMenu
@@ -290,21 +283,65 @@ onMounted(async () => {
 
   pdfApp.eventBus?.on(
     "annotationeditorlayerrendered",
-    (e: { error: Error | null; pageNumber: number; source: PDFPageView }) => {
-      let annots = pdfApp.annotStore.getByPage(e.pageNumber);
+    async (e: {
+      error: Error | null;
+      pageNumber: number;
+      source: PDFPageView;
+    }) => {
       // draw annotations on active page
+      let annots = pdfApp.annotStore.getByPage(e.pageNumber);
+      let hasKonvaStage = false;
       for (let annot of annots) {
-        annot.draw();
-        // bind event handlers to doms
-        annot.doms.forEach((dom) => {
-          dom.onmousedown = () => pdfApp.annotStore.setActive(annot.data._id);
-          dom.onmouseup = () => toggleAnnotCard();
-          if (
-            annot.data.type === AnnotationType.RECTANGLE ||
-            annot.data.type === AnnotationType.COMMENT
-          )
-            annot.enableDragToMove();
-        });
+        // draw annotations (create Konva stage if it's ink)
+        annot.draw(e);
+        if (annot.data.type === AnnotationType.INK) {
+          // bind event handlers to Konva stage
+          hasKonvaStage = true;
+          if (!annot.hasEvtHandler) {
+            (annot as Ink).bindEventHandlers(pdfApp.state);
+            annot.hasEvtHandler = true;
+          }
+        } else {
+          // bind event handlers to doms
+          if (!annot.hasEvtHandler) {
+            annot.doms.forEach((dom) => {
+              dom.onmousedown = () =>
+                pdfApp.annotStore.setActive(annot.data._id);
+              dom.onmouseup = () => toggleAnnotCard();
+              if (
+                annot.data.type === AnnotationType.RECTANGLE ||
+                annot.data.type === AnnotationType.COMMENT
+              )
+                annot.enableDragToMove();
+            });
+          }
+          annot.hasEvtHandler = true;
+        }
+      }
+
+      // create Konva stage if needed
+      if (
+        (pdfApp.state.tool === AnnotationType.INK ||
+          pdfApp.state.tool === AnnotationType.ERASER) &&
+        !hasKonvaStage
+      ) {
+        let annotData = {
+          _id: uid(),
+          _rev: "",
+          dataType: "pdfAnnotation",
+          projectId: props.projectId,
+          pageNumber: e.pageNumber,
+          content: "",
+          color: "",
+          rects: [] as Rect[],
+          type: AnnotationType.INK,
+        } as AnnotationData;
+        let annot = pdfApp.annotFactory.build(annotData);
+        if (annot) {
+          annot.draw(e);
+          pdfApp.annotStore.add(annot, true);
+          (annot as Ink).bindEventHandlers(pdfApp.state);
+        }
       }
 
       // event handlers to handle user interactions
@@ -331,7 +368,7 @@ onMounted(async () => {
               );
               if (annot) {
                 pdfApp.annotStore.add(annot, true);
-                annot.draw();
+                annot.draw(e);
                 for (let dom of annot.doms)
                   dom.onmousedown = () =>
                     pdfApp.annotStore.setActive(annot?.data._id as string);
@@ -391,7 +428,7 @@ onMounted(async () => {
               let annot = pdfApp.annotFactory.build(annotData);
               if (annot) {
                 let id = annot.data._id;
-                annot.draw();
+                annot.draw(e);
                 annot.doms.forEach((dom) => {
                   dom.onmousedown = () => pdfApp.annotStore.setActive(id);
                 });
@@ -433,7 +470,7 @@ onMounted(async () => {
               let annot = pdfApp.annotFactory.build(annotData);
               if (annot) {
                 let id = annot.data._id;
-                annot.draw();
+                annot.draw(e);
                 annot.doms.forEach((dom) => {
                   dom.onmousedown = () => pdfApp.annotStore.setActive(id);
                 });
@@ -442,7 +479,6 @@ onMounted(async () => {
             };
             break;
           case AnnotationType.INK:
-            console.log("hererererere", e.pageNumber);
             break;
         }
       };
