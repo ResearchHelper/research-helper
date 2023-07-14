@@ -17,6 +17,7 @@ import {
 } from "pdfjs-dist/web/pdf_viewer";
 import * as pdfjsLib from "pdfjs-dist";
 import * as pdfjsViewer from "pdfjs-dist/web/pdf_viewer";
+import { Annotation } from "../pdfannotation/annotations";
 pdfjsLib.GlobalWorkerOptions.workerSrc =
   "node_modules/pdfjs-dist/build/pdf.worker.min.js";
 
@@ -46,7 +47,7 @@ export default class PDFApplication {
 
   constructor(projectId: string) {
     this.projectId = projectId;
-    this.annotStore = new AnnotationStore();
+    this.annotStore = new AnnotationStore(projectId);
     this.annotFactory = new AnnotationFactory(projectId);
     // make saveState a debounce function
     // it ignores the signals 500ms after each call
@@ -97,9 +98,6 @@ export default class PDFApplication {
     });
     // must have this otherwise find controller does not work
     pdfLinkService.setViewer(pdfViewer);
-
-    // annotation factory
-    this.annotFactory.init(container);
 
     this.container = container;
     this.peekContainer = peekContainer;
@@ -302,7 +300,7 @@ export default class PDFApplication {
    * Create annotations from db
    */
   async loadAnnotations() {
-    let annotDatas = await this.annotStore.loadFromDB(this.projectId);
+    let annotDatas = await this.annotStore.loadFromDB();
     for (let annotData of annotDatas) {
       let annot = this.annotFactory.build(annotData);
       if (annot) this.annotStore.add(annot);
@@ -476,6 +474,16 @@ export default class PDFApplication {
     this.eventBus.dispatch("updatetextlayermatches", {
       source: this.pdfFindController,
       pageIndex: pageIdx,
+    });
+  }
+
+  scrollAnnotIntoView(annotId: string) {
+    if (!!!annotId) return;
+    let annot = this.annotStore.getById(annotId) as Annotation;
+    // change number first in case the dom is not rendered
+    this.changePageNumber(annot.data.pageNumber);
+    nextTick(() => {
+      this.annotStore.setActive(annotId);
     });
   }
 }

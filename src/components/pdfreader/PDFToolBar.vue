@@ -113,7 +113,10 @@
         />
       </template>
     </q-btn-toggle>
+
+    <!-- color btn -->
     <q-btn
+      class="q-ml-xs"
       :style="`background: ${pdfApp.state.color}`"
       :ripple="false"
       push
@@ -137,75 +140,13 @@
 
     <q-space />
 
+    <SearchDropdownBtn
+      :matchesCount="pdfApp.matchesCount"
+      @search="(params) => pdfApp.searchText(params)"
+      @clear="pdfApp.searchText({ query: '' } as PDFSearch)"
+      @changeMatch="(delta) => pdfApp.changeMatch(delta)"
+    />
     <!-- right menu -->
-    <q-btn
-      push
-      :ripple="false"
-      icon="search"
-      size="0.8rem"
-      padding="xs"
-      ref="searchBtn"
-    >
-      <q-tooltip>{{ $t("search") }}</q-tooltip>
-      <q-menu
-        persistent
-        @show="pdfApp.searchText(search)"
-        @hide="clearSearch"
-        ref="searchMenu"
-      >
-        <q-item
-          dense
-          class="row"
-        >
-          <q-input
-            class="col q-mt-sm"
-            dense
-            outlined
-            hide-bottom-space
-            :placeholder="$t('search')"
-            v-model="search.query"
-            @keydown.enter="pdfApp.changeMatch(1)"
-          ></q-input>
-          <q-btn
-            dense
-            flat
-            icon="arrow_back"
-            :ripple="false"
-            @click="pdfApp.changeMatch(-1)"
-          />
-          <q-btn
-            dense
-            flat
-            icon="arrow_forward"
-            :ripple="false"
-            @click="pdfApp.changeMatch(1)"
-          />
-        </q-item>
-        <q-item>
-          <q-checkbox
-            dense
-            :label="$t('highlight-all')"
-            v-model="search.highlightAll"
-          />
-          <q-checkbox
-            dense
-            :label="$t('match-case')"
-            class="q-ml-sm"
-            v-model="search.caseSensitive"
-          />
-          <q-checkbox
-            dense
-            :label="$t('whole-words')"
-            class="q-ml-sm"
-            v-model="search.entireWord"
-          />
-        </q-item>
-        <q-item class="q-py-none">
-          {{ searchSummary }}
-        </q-item>
-      </q-menu>
-    </q-btn>
-
     <q-btn-toggle
       :model-value="showRightMenu"
       @update:model-value="(visible: boolean) => $emit('update:showRightMenu', visible)"
@@ -225,27 +166,19 @@
 </template>
 
 <script setup lang="ts">
-import {
-  computed,
-  inject,
-  onBeforeUnmount,
-  onMounted,
-  reactive,
-  ref,
-  watch,
-} from "vue";
+import { useQuasar } from "quasar";
+import { computed, inject, ref } from "vue";
 import { AnnotationType, PDFSearch } from "src/backend/database";
+import { KEY_pdfApp } from "./injectKeys";
+import PDFApplication from "src/backend/pdfreader";
 
 import ColorPicker from "./ColorPicker.vue";
 import InkDropdownBtn from "./InkDropdownBtn.vue";
-import { useI18n } from "vue-i18n";
-import { QMenu, useQuasar } from "quasar";
-import PDFApplication from "src/backend/pdfreader";
 import EraserDropdownBtn from "./EraserDropdownBtn.vue";
 import ViewDropdownBtn from "./ViewDropdownBtn.vue";
+import SearchDropdownBtn from "./SearchDropdownBtn.vue";
 
 const $q = useQuasar();
-const { t } = useI18n({ useScope: "global" });
 
 /**
  * Props, emits, data
@@ -255,36 +188,9 @@ const props = defineProps({
 });
 const emit = defineEmits(["update:showRightMenu"]);
 
-const pdfApp = inject("pdfApp") as PDFApplication;
-const searchMenu = ref<QMenu>();
-const search = reactive({
-  query: "",
-  highlightAll: true,
-  caseSensitive: false,
-  entireWord: false,
-});
+const pdfApp = inject(KEY_pdfApp) as PDFApplication;
+
 const isFullscreen = ref(false);
-
-watch(search, (newSearch) => {
-  pdfApp.searchText(newSearch);
-});
-
-const searchSummary = computed(() => {
-  let text = "";
-  let matchesCount = pdfApp.matchesCount;
-  if (!!matchesCount) {
-    if (matchesCount.total != 0) {
-      text = t("matchescount-current-of-matchescount-total-matches", [
-        matchesCount.current,
-        matchesCount.total,
-      ]);
-    } else {
-      text = t("phrase-not-found");
-    }
-  }
-
-  return text;
-});
 
 const pageLabel = computed(() => {
   let pageNumber = pdfApp.state.currentPageNumber;
@@ -309,28 +215,10 @@ function changePage(pageLabel: string) {
   pdfApp.changePageNumber(pageNumber);
 }
 
-function toggleSearchMenu(e: KeyboardEvent) {
-  if (e.ctrlKey && e.key.toLowerCase() === "f" && searchMenu.value)
-    searchMenu.value.toggle();
-}
-
-function clearSearch() {
-  pdfApp.searchText({ query: "" } as PDFSearch);
-}
-
 async function toggleFullscreen() {
   if (isFullscreen.value) await $q.fullscreen.exit();
   else await $q.fullscreen.request();
 
   isFullscreen.value = !isFullscreen.value;
 }
-
-onMounted(() => {
-  // hot keys
-  document.addEventListener("keypress", toggleSearchMenu);
-});
-
-onBeforeUnmount(() => {
-  document.removeEventListener("keypress", toggleSearchMenu);
-});
 </script>

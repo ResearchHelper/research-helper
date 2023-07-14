@@ -1,6 +1,5 @@
 import RightMenu from "./RightMenu.vue";
-import { KEY_project, KEY_outline, KEY_clickTOC } from "./injectKeys";
-import { TOCNode } from "src/backend/database";
+import { KEY_project } from "./injectKeys";
 
 describe("<RightMenu />", () => {
   beforeEach(() => {
@@ -12,10 +11,6 @@ describe("<RightMenu />", () => {
       global: {
         provide: {
           [KEY_project]: this.project,
-          [KEY_outline]: this.outline,
-          [KEY_clickTOC]: (node: TOCNode) => {
-            console.log("clickTOC:", node);
-          },
         },
       },
     });

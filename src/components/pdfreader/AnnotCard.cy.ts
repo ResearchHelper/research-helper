@@ -1,11 +1,14 @@
 import AnnotCard from "./AnnotCard.vue";
+import { AnnotationFactory } from "src/backend/pdfannotation";
 
 describe("<AnnotCard />", () => {
   beforeEach(() => {
-    cy.fixture("annots.json").as("annots");
+    cy.fixture("annots.json").as("annotDatas");
   });
 
   it("renders", function () {
+    let annotFactory = new AnnotationFactory("projectId");
+    let annot = annotFactory.build(this.annotDatas);
     cy.mount(AnnotCard, {
       props: {
         annot: this.annots[0],

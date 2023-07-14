@@ -1,5 +1,11 @@
 import { reactive } from "vue";
-import { AnnotationData, AnnotationType, PDFState, Rect } from "../database";
+import {
+  AnnotationData,
+  AnnotationType,
+  PDFState,
+  Rect,
+  RenderEvt,
+} from "../database";
 import { db } from "../database";
 import Konva from "konva";
 import { PDFPageView } from "pdfjs-dist/web/pdf_viewer";
@@ -12,7 +18,6 @@ import { debounce } from "quasar";
 export abstract class Annotation {
   private _data = reactive<AnnotationData>({} as AnnotationData);
   private _doms = reactive<HTMLElement[]>([]);
-  container: HTMLElement;
   hasEvtHandler: boolean;
   updateDB: (props: AnnotationData) => void;
 
@@ -32,9 +37,14 @@ export abstract class Annotation {
     Object.assign(this._doms, annotDoms);
   }
 
-  constructor(annotData: AnnotationData, container: HTMLElement) {
+  isDrawn(e: RenderEvt) {
+    return !!e.source.canvas?.parentElement?.querySelector(
+      `[annotation-id="${this.data._id}"]`
+    );
+  }
+
+  constructor(annotData: AnnotationData) {
     this.data = annotData;
-    this.container = container;
     this.hasEvtHandler = false;
 
     this.updateDB = debounce(this._updateDB, 1000);
@@ -67,6 +77,7 @@ export abstract class Annotation {
    * Enable drag to move annotation
    */
   enableDragToMove() {
+    if (this.hasEvtHandler) return;
     // we assume the draggable annotations are: comment, rectangle
     // these annotations only have 1 dom
     if (this.doms.length != 1) return;
@@ -122,6 +133,8 @@ export abstract class Annotation {
         ],
       } as AnnotationData);
     };
+
+    this.hasEvtHandler = true;
   }
 
   /**
@@ -186,22 +199,10 @@ export abstract class Annotation {
 }
 
 export class Highlight extends Annotation {
-  draw(e: {
-    error: Error | null;
-    pageNumber: number;
-    source: PDFPageView;
-  }): void {
-    if (!this.data._id) this.doms = [];
+  draw(e: RenderEvt): void {
+    if (this.isDrawn(e) || !this.data._id) return;
 
-    let canvasWrapper = this.container
-      ?.querySelector(`div.page[data-page-number='${this.data.pageNumber}']`)
-      ?.querySelector(".canvasWrapper") as HTMLElement;
-
-    let existed = !!canvasWrapper.querySelector(
-      `section[annotation-id='${this.data._id}]'`
-    );
-
-    let doms = [] as HTMLElement[];
+    let canvasWrapper = e.source.canvas?.parentElement as HTMLElement;
     for (let rect of this.data.rects) {
       // update UI
       let section = document.createElement("section");
@@ -220,30 +221,16 @@ export class Highlight extends Annotation {
       section.className = "highlightAnnotation";
 
       // put dom on the annotation layer
-      if (!existed) canvasWrapper.appendChild(section);
-      doms.push(section);
+      canvasWrapper.appendChild(section);
+      this.doms.push(section);
     }
-
-    this.doms = doms;
   }
 }
 export class Underline extends Annotation {
-  draw(e: {
-    error: Error | null;
-    pageNumber: number;
-    source: PDFPageView;
-  }): void {
-    if (!this.data._id) this.doms = [];
+  draw(e: RenderEvt): void {
+    if (this.isDrawn(e) || !this.data._id) return;
 
-    let canvasWrapper = this.container
-      ?.querySelector(`div.page[data-page-number='${this.data.pageNumber}']`)
-      ?.querySelector(".canvasWrapper") as HTMLElement;
-
-    let existed = !!canvasWrapper.querySelector(
-      `section[annotation-id='${this.data._id}']`
-    );
-
-    let doms = [] as HTMLElement[];
+    let canvasWrapper = e.source.canvas?.parentElement as HTMLElement;
     for (let rect of this.data.rects) {
       // update UI
       let section = document.createElement("section");
@@ -264,29 +251,16 @@ export class Underline extends Annotation {
       section.classList.add("underlineAnnotation");
 
       // put dom on the annotation layer
-      if (!existed) canvasWrapper.appendChild(section);
-      doms.push(section);
+      canvasWrapper.appendChild(section);
+      this.doms.push(section);
     }
-    this.doms = doms;
   }
 }
 export class Strikeout extends Annotation {
-  draw(e: {
-    error: Error | null;
-    pageNumber: number;
-    source: PDFPageView;
-  }): void {
-    if (!this.data._id) this.doms = [];
+  draw(e: RenderEvt): void {
+    if (this.isDrawn(e) || !this.data._id) return;
 
-    let canvasWrapper = this.container
-      ?.querySelector(`div.page[data-page-number='${this.data.pageNumber}']`)
-      ?.querySelector(".canvasWrapper") as HTMLElement;
-
-    let existed = !!canvasWrapper.querySelector(
-      `section[annotation-id='${this.data._id}']`
-    );
-
-    let doms = [] as HTMLElement[];
+    let canvasWrapper = e.source.canvas?.parentElement as HTMLElement;
     for (let rect of this.data.rects) {
       // update UI
       let section = document.createElement("section");
@@ -296,39 +270,34 @@ export class Strikeout extends Annotation {
       section.style.left = `${rect.left}%`;
       section.style.top = `${rect.top}%`;
       section.style.width = `${rect.width}%`;
-      section.style.height = `${rect.height / 2}%`; // so that the bottom line is in the middle of text
+      section.style.height = `${rect.height}%`; // so that the bottom line is in the middle of text
       section.style.pointerEvents = "auto";
       section.style.cursor = "pointer";
-      section.style.borderBottomStyle = "solid";
-      section.style.borderBottomColor = this.data.color;
-      section.style.borderBottomWidth = "2px";
       section.style.zIndex = "3";
       section.className = "strikeoutAnnotation";
 
-      // put dom on the annotation layer
-      if (!existed) canvasWrapper.appendChild(section);
-      doms.push(section);
-    }
+      let div = document.createElement("div");
+      div.style.position = "relative";
+      div.style.top = "0";
+      div.style.left = "0";
+      div.style.width = "100%";
+      div.style.height = "50%";
+      div.style.borderBottomStyle = "solid";
+      div.style.borderBottomColor = this.data.color;
+      div.style.borderBottomWidth = "2px";
 
-    this.doms = doms;
+      section.append(div);
+      // put dom on the annotation layer
+      canvasWrapper.appendChild(section);
+      this.doms.push(section);
+    }
   }
 }
 export class Rectangle extends Annotation {
-  draw(e: {
-    error: Error | null;
-    pageNumber: number;
-    source: PDFPageView;
-  }): void {
-    if (!this.data._id) this.doms = [];
+  draw(e: RenderEvt): void {
+    if (this.isDrawn(e) || !this.data._id) return;
 
-    let canvasWrapper = this.container
-      ?.querySelector(`div.page[data-page-number='${this.data.pageNumber}']`)
-      ?.querySelector(".canvasWrapper") as HTMLElement;
-
-    let existed = !!canvasWrapper.querySelector(
-      `section[annotation-id='${this.data._id}']`
-    );
-
+    let canvasWrapper = e.source.canvas?.parentElement as HTMLElement;
     // update UI
     let section = document.createElement("section");
     section.setAttribute("annotation-id", this.data._id);
@@ -344,31 +313,17 @@ export class Rectangle extends Annotation {
     section.style.mixBlendMode = "multiply";
     section.style.zIndex = "3";
     section.classList.add("rectangleAnnotation");
+    canvasWrapper.appendChild(section);
 
-    // put dom on the annotation layer
-    if (!existed) canvasWrapper.appendChild(section);
-
-    this.doms = [section];
+    this.doms.push(section);
   }
 }
 
 export class Comment extends Annotation {
-  draw(e: {
-    error: Error | null;
-    pageNumber: number;
-    source: PDFPageView;
-  }): void {
-    if (!this.data._id) this.doms = [];
-    if (this.data.rects.length !== 1) this.doms = [];
+  draw(e: RenderEvt): void {
+    if (this.isDrawn(e) || !this.data._id) return;
 
-    let canvasWrapper = this.container
-      ?.querySelector(`div.page[data-page-number='${this.data.pageNumber}']`)
-      ?.querySelector(".canvasWrapper") as HTMLElement;
-
-    let existed = !!canvasWrapper.querySelector(
-      `section[annotation-id='${this.data._id}']`
-    );
-
+    let canvasWrapper = e.source.canvas?.parentElement as HTMLElement;
     // update UI
     let section = document.createElement("section");
     section.setAttribute("annotation-id", this.data._id);
@@ -386,7 +341,6 @@ export class Comment extends Annotation {
     section.classList.add("textAnnotation");
 
     let img = document.createElement("img");
-    // img.src = commentIcon;
     img.src = "annotation-note-transparent.svg";
     img.style.position = "absolute";
     img.style.left = "0px";
@@ -394,18 +348,21 @@ export class Comment extends Annotation {
     img.draggable = false; // only the section tag to be draggable
     section.append(img);
 
-    if (!existed) canvasWrapper.appendChild(section);
+    canvasWrapper.appendChild(section);
 
-    this.doms = [section];
+    this.doms.push(section);
   }
 }
 export class Ink extends Annotation {
   stage: Konva.Stage | undefined;
+  annotationEditorLayer: HTMLDivElement | undefined;
 
   // for dev use
   setDrawable(isDrawable: boolean) {
-    if (!this.stage) return;
-    this.stage.content.style.zIndex = isDrawable ? "3" : "2";
+    if (!this.annotationEditorLayer) return;
+    this.annotationEditorLayer.style.pointerEvents = isDrawable
+      ? "auto"
+      : "none";
   }
 
   scale(view: PDFPageView) {
@@ -417,30 +374,24 @@ export class Ink extends Annotation {
     });
   }
 
-  draw(e: {
-    error: Error | null;
-    pageNumber: number;
-    source: PDFPageView;
-  }): void {
+  draw(e: RenderEvt): void {
     // find editor layer
-    let annotationEditorLayer = e.source.annotationEditorLayer
+    this.annotationEditorLayer = e.source.annotationEditorLayer
       ?.div as HTMLDivElement;
-    // make this layer accessible
-    annotationEditorLayer.style.pointerEvents = "auto";
 
-    if (!this.stage) {
+    if (!this.annotationEditorLayer.firstChild) {
       // create konva stage in editor layer if there is none
       if (this.data.content) {
         // create stage directly from path data
         this.stage = Konva.Node.create(
           this.data.content,
-          annotationEditorLayer
+          this.annotationEditorLayer
         ) as Konva.Stage;
         this.scale(e.source);
       } else {
         // if no path on this page, create a new stage
         this.stage = new Konva.Stage({
-          container: annotationEditorLayer,
+          container: this.annotationEditorLayer,
           width: e.source.width,
           height: e.source.height,
           scale: { x: e.source.scale, y: e.source.scale },
@@ -455,19 +406,11 @@ export class Ink extends Annotation {
   }
 
   bindEventHandlers(state: PDFState) {
-    if (!this.stage) return;
-    // set drawable to konva stage stage
-    if (
-      state.tool === AnnotationType.INK ||
-      state.tool === AnnotationType.ERASER
-    )
-      this.setDrawable(true);
-    else this.setDrawable(false);
+    if (!this.stage || this.hasEvtHandler) return;
     // free draw core funcitons
     let isPaint: boolean;
     let lastLine: Konva.Line;
     this.stage.on("mousedown touchstart", (e) => {
-      console.log("pageNumber", state.currentPageNumber);
       if (!this.stage) return;
       isPaint = true;
       let pos = this.stage.getRelativePointerPosition();
@@ -504,5 +447,8 @@ export class Ink extends Annotation {
       let newPoints = lastLine.points().concat([pos.x, pos.y]);
       lastLine.points(newPoints);
     });
+
+    // set this to true to prevent repeatly binding
+    this.hasEvtHandler = true;
   }
 }

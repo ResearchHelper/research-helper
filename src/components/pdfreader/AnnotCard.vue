@@ -1,6 +1,5 @@
 <template>
   <q-card
-    v-if="!!annot"
     :style="style"
     bordered
     flat
@@ -36,7 +35,7 @@
             @changeColor="(color: string) => changeColor(color)"
             @deleteAnnot="deleteAnnot()"
             @copyID="copyToClipboard(annot.data._id)"
-            @scrollIntoView="scrollAnnotIntoView(annot.data._id)"
+            @scrollIntoView="pdfApp.scrollAnnotIntoView(annot.data._id)"
           />
         </q-btn>
       </div>
@@ -82,7 +81,6 @@
 <script setup lang="ts">
 import { ref, inject, nextTick, PropType, computed } from "vue";
 import { Annotation } from "src/backend/pdfannotation/annotations";
-import { KEY_scrollAnnotIntoView } from "./injectKeys";
 
 import AnnotMenu from "./AnnotMenu.vue";
 
@@ -91,6 +89,7 @@ import renderMathInElement from "katex/dist/contrib/auto-render";
 import "katex/dist/katex.min.css";
 import { AnnotationData } from "src/backend/database";
 import PDFApplication from "src/backend/pdfreader";
+import { KEY_pdfApp } from "./injectKeys";
 
 const { luminosity } = colors;
 
@@ -112,10 +111,7 @@ const annotContent = computed({
   },
 });
 
-const pdfApp = inject("pdfApp") as PDFApplication;
-const scrollAnnotIntoView = inject(KEY_scrollAnnotIntoView) as (
-  id: string
-) => void;
+const pdfApp = inject(KEY_pdfApp) as PDFApplication;
 
 const _saveContent = (content: string) => {
   pdfApp.annotStore?.update(props.annot.data._id, {

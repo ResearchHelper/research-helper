@@ -1,11 +1,11 @@
-import AnnotationList from "./AnnotationList.vue";
+import AnnotList from "./AnnotList.vue";
 
-describe("<AnnotationList />", () => {
+describe("<AnnotList />", () => {
   beforeEach(() => {
     cy.fixture("annots.json").as("annots");
   });
   it("renders", function () {
-    cy.mount(AnnotationList, {
+    cy.mount(AnnotList, {
       props: {
         selectedAnnotId: this.annots[0]._id,
         annots: this.annots,

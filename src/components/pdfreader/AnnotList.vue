@@ -37,8 +37,9 @@ import AnnotCard from "./AnnotCard.vue";
 import PDFApplicaiton from "src/backend/pdfreader";
 import { Annotation } from "src/backend/pdfannotation/annotations";
 import { AnnotationType } from "src/backend/database";
+import { KEY_pdfApp } from "./injectKeys";
 
-const pdfApp = inject("pdfApp") as PDFApplicaiton;
+const pdfApp = inject(KEY_pdfApp) as PDFApplicaiton;
 </script>
 
 <style scoped>

@@ -1,11 +1,12 @@
 import { reactive, ref } from "vue";
 import { AnnotationData, AnnotationType, db, Rect } from "../database";
-import { Annotation } from "./annotations";
+import { Annotation, Ink } from "./annotations";
 
 /**
  * Use this to communicate with database
  */
 export default class AnnotationStore {
+  projectId: string;
   annots = reactive<Annotation[]>([]);
   _selectedId = ref<string>("");
 
@@ -14,6 +15,13 @@ export default class AnnotationStore {
   }
   set selectedId(id: string) {
     this._selectedId.value = id;
+  }
+  get selected() {
+    return this.getById(this.selectedId);
+  }
+
+  constructor(projectId: string) {
+    this.projectId = projectId;
   }
 
   /**
@@ -53,14 +61,13 @@ export default class AnnotationStore {
 
   /**
    * Load and return annotDatas from db
-   * @param projectId
    * @returns annotDatas
    */
-  async loadFromDB(projectId: string) {
+  async loadFromDB() {
     try {
       // get all annotations of the currentry {
       let result = await db.find({
-        selector: { dataType: "pdfAnnotation", projectId: projectId },
+        selector: { dataType: "pdfAnnotation", projectId: this.projectId },
       });
       return result.docs as AnnotationData[];
     } catch (err) {
@@ -75,6 +82,14 @@ export default class AnnotationStore {
 
   getById(annotId: string) {
     return this.annots.find((annot) => annot.data._id === annotId);
+  }
+
+  getInk(pageNumber: number) {
+    return this.annots.find(
+      (annot) =>
+        annot.data.pageNumber === pageNumber &&
+        annot.data.type === AnnotationType.INK
+    ) as Ink | undefined;
   }
 
   setActive(annotId: string) {

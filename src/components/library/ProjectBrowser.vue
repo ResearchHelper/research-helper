@@ -1,49 +1,108 @@
 <template>
-  <ImportDialog v-model:show="importDialog" @confirm="(isCreateFolder) => addProjectsByCollection(isCreateFolder)" />
-  <ExportDialog v-model:show="exportFolderDialog" @confirm="(format, options) => exportFolder(format, options)" />
-  <IdentifierDialog v-model:show="identifierDialog" @confirm="(identifier) => processIdentifier(identifier)" />
-  <DeleteDialog v-model:show="deleteDialog" :projects="deleteProjects" :deleteFromDB="deleteFromDB"
-    @confirm="deleteProject" />
-  <ErrorDialog v-model:show="errorDialog" :error="error" />
+  <ImportDialog
+    v-model:show="importDialog"
+    @confirm="(isCreateFolder) => addProjectsByCollection(isCreateFolder)"
+  />
+  <ExportDialog
+    v-model:show="exportFolderDialog"
+    @confirm="(format, options) => exportFolder(format, options)"
+  />
+  <IdentifierDialog
+    v-model:show="identifierDialog"
+    @confirm="(identifier) => processIdentifier(identifier)"
+  />
+  <DeleteDialog
+    v-model:show="deleteDialog"
+    :projects="deleteProjects"
+    :deleteFromDB="deleteFromDB"
+    @confirm="deleteProject"
+  />
 
-  <q-splitter style="position: absolute; width: 100%; height: 100%" :limits="[10, 30]"
-    separator-class="q-splitter-separator" v-model="treeViewSize">
+  <q-splitter
+    style="position: absolute; width: 100%; height: 100%"
+    :limits="[10, 30]"
+    separator-class="q-splitter-separator"
+    v-model="treeViewSize"
+  >
     <template v-slot:before>
-      <TreeView style="background: var(--color-library-treeview-bkgd)"
-        @exportFolder="(folder) => showExportFolderDialog(folder)" ref="treeview" />
+      <TreeView
+        style="background: var(--color-library-treeview-bkgd)"
+        @exportFolder="(folder) => showExportFolderDialog(folder)"
+        ref="treeview"
+      />
     </template>
     <template v-slot:after>
-      <q-splitter style="overflow: hidden" reverse :limits="[0, 60]" :separator-class="{
-        'q-splitter-separator': stateStore.showLibraryRightMenu,
-      }" :disable="!stateStore.showLibraryRightMenu" v-model="rightMenuSize" emit-immediately
-        @update:model-value="(size: number) => resizeRightMenu(size)">
+      <q-splitter
+        style="overflow: hidden"
+        reverse
+        :limits="[0, 60]"
+        :separator-class="{
+          'q-splitter-separator': stateStore.showLibraryRightMenu,
+        }"
+        :disable="!stateStore.showLibraryRightMenu"
+        v-model="rightMenuSize"
+        emit-immediately
+        @update:model-value="(size: number) => resizeRightMenu(size)"
+      >
         <template v-slot:before>
-          <ActionBar style="
+          <ActionBar
+            style="
               min-height: 36px;
               background: var(--color-library-toolbar-bkgd);
-            " v-model:searchString="searchString" @addEmptyProject="addEmptyProject"
-            @addByFiles="(filePaths) => addProjectsByFiles(filePaths)" @addByCollection="(collectionPath) => showImportDialog(collectionPath)
-              " @showIdentifierDialog="showIdentifierDialog(true)" @refreshTable="getProjects" ref="actionBar" />
+            "
+            v-model:searchString="searchString"
+            @addEmptyProject="addEmptyProject"
+            @addByFiles="(filePaths) => addProjectsByFiles(filePaths)"
+            @addByCollection="
+              (collectionPath) => showImportDialog(collectionPath)
+            "
+            @showIdentifierDialog="showIdentifierDialog(true)"
+            @refreshTable="getProjects"
+            ref="actionBar"
+          />
           <!-- actionbar height 36px, table view is 100%-36px -->
-          <TableView v-model:projects="projects" :searchString="searchString" style="
+          <TableView
+            v-model:projects="projects"
+            :searchString="searchString"
+            style="
               height: calc(100% - 36px);
               width: 100%;
               background: var(--color-library-tableview-bkgd);
-            " ref="table" />
+            "
+            ref="table"
+          />
         </template>
         <template v-slot:after>
-          <q-tabs dense indicator-color="transparent" active-bg-color="primary" model-value="metaInfoTab">
-            <q-tab name="metaInfoTab" icon="info" :ripple="false">
+          <q-tabs
+            dense
+            indicator-color="transparent"
+            active-bg-color="primary"
+            model-value="metaInfoTab"
+          >
+            <q-tab
+              name="metaInfoTab"
+              icon="info"
+              :ripple="false"
+            >
               <q-tooltip>{{ $t("info") }}</q-tooltip>
             </q-tab>
           </q-tabs>
           <!-- q-tab height 36px -->
-          <q-tab-panels style="
+          <q-tab-panels
+            style="
               height: calc(100% - 36px);
               background: var(--color-rightmenu-tab-panel-bkgd);
-            " model-value="metaInfoTab">
-            <q-tab-panel name="metaInfoTab" class="q-pa-none">
-              <MetaInfoTab v-if="!!rightMenuSize" :project="stateStore.selected[0]" />
+            "
+            model-value="metaInfoTab"
+          >
+            <q-tab-panel
+              name="metaInfoTab"
+              class="q-pa-none"
+            >
+              <MetaInfoTab
+                v-if="!!rightMenuSize"
+                :project="stateStore.selected[0]"
+              />
             </q-tab-panel>
           </q-tab-panels>
         </template>
@@ -90,7 +149,6 @@ import MetaInfoTab from "src/components/MetaInfoTab.vue";
 import ExportDialog from "src/components/library/ExportDialog.vue";
 import IdentifierDialog from "src/components/library/IdentifierDialog.vue";
 import DeleteDialog from "src/components/library/DeleteDialog.vue";
-import ErrorDialog from "src/components/ErrorDialog.vue";
 import ImportDialog from "src/components/library/ImportDialog.vue";
 // db
 import {
@@ -151,9 +209,6 @@ const deleteFromDB = ref(false);
 
 const identifierDialog = ref(false);
 const createProject = ref(false);
-
-const errorDialog = ref(false);
-const error = ref<Error | undefined>(undefined);
 
 const importDialog = ref(false);
 const collectionPath = ref<string>("");
@@ -339,10 +394,7 @@ async function addProjectsByFiles(filePaths: string[]) {
 
       // update ui
       projects.value.push(project);
-    } catch (_error) {
-      error.value = new Error(t("get-meta-failed"));
-      error.value.name = "warning";
-      errorDialog.value = true;
+    } catch (error) {
       // refresh table
       await getProjects();
     }

@@ -1,5 +1,6 @@
 import { QTreeNode } from "quasar";
 import { LayoutConfig, ResolvedLayoutConfig } from "golden-layout";
+import { PDFPageView } from "pdfjs-dist/web/pdf_viewer";
 
 /***********************************
  * Project, Note, Folder and related data types
@@ -189,6 +190,9 @@ type RefProxy = {
   gen: number;
 };
 
+/**
+ * Table of Content Node
+ */
 export interface TOCNode extends QTreeNode {
   dest?: string | any[] | null; // destination
   ref?: RefProxy;
@@ -202,6 +206,12 @@ export interface PDFSearch {
   highlightAll: boolean;
   caseSensitive: boolean;
   entireWord: boolean;
+}
+
+export interface RenderEvt {
+  error: Error | null;
+  pageNumber: number;
+  source: PDFPageView;
 }
 
 /**************************************************

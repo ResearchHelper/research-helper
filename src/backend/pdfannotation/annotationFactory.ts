@@ -9,20 +9,16 @@ import {
 } from "./annotations";
 import { AnnotationType, AnnotationData, Rect } from "../database";
 import { uid } from "quasar";
+import { PDFPageView } from "pdfjs-dist/web/pdf_viewer";
 
 /**
  * use event handlers to generate different annotation classes
  */
 export default class AnnotationFactory {
   projectId: string;
-  container: HTMLElement | undefined;
 
   constructor(projectId: string) {
     this.projectId = projectId;
-  }
-
-  init(container: HTMLElement) {
-    this.container = container;
   }
 
   /**
@@ -125,26 +121,25 @@ export default class AnnotationFactory {
    * @returns
    */
   build(annotData: AnnotationData) {
-    if (!this.container) return null;
     let annot: Annotation | null;
     switch (annotData.type) {
       case AnnotationType.HIGHLIGHT:
-        annot = new Highlight(annotData, this.container);
+        annot = new Highlight(annotData);
         break;
       case AnnotationType.UNDERLINE:
-        annot = new Underline(annotData, this.container);
+        annot = new Underline(annotData);
         break;
       case AnnotationType.STRIKEOUT:
-        annot = new Strikeout(annotData, this.container);
+        annot = new Strikeout(annotData);
         break;
       case AnnotationType.RECTANGLE:
-        annot = new Rectangle(annotData, this.container);
+        annot = new Rectangle(annotData);
         break;
       case AnnotationType.COMMENT:
-        annot = new Comment(annotData, this.container);
+        annot = new Comment(annotData);
         break;
       case AnnotationType.INK:
-        annot = new Ink(annotData, this.container);
+        annot = new Ink(annotData);
         break;
       default:
         annot = null;
@@ -157,15 +152,17 @@ export default class AnnotationFactory {
    * Used to build Highlight, Underline, and Strikeout annotation
    * @param tool
    * @param color
-   * @param pageNumber
+   * @param e
    * @returns
    */
-  buildTextHighlight(tool: AnnotationType, color: string, pageNumber: number) {
+  buildSelectionBasedAnnot(
+    tool: AnnotationType,
+    color: string,
+    e: { pageNumber: number; source: PDFPageView }
+  ) {
     let rects = this.getSelectionRects();
     if (rects.length === 0) return;
-    let canvasWrapper = this.container
-      ?.querySelector(`div.page[data-page-number='${pageNumber}']`)
-      ?.querySelector(".canvasWrapper") as HTMLElement;
+    let canvasWrapper = e.source.canvas?.parentElement as HTMLElement;
     for (let [i, rect] of rects.entries())
       rects[i] = this.offsetTransform(rect, canvasWrapper);
 
@@ -175,11 +172,13 @@ export default class AnnotationFactory {
       type: tool,
       rects: rects,
       color: color,
-      pageNumber: pageNumber,
+      pageNumber: e.pageNumber,
       projectId: this.projectId,
       dataType: "pdfAnnotation",
       content: "",
     } as AnnotationData;
+
+    console.log("annotData", annotData);
 
     return this.build(annotData);
   }
