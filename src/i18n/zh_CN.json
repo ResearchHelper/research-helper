@@ -134,5 +134,7 @@
   "batch-mode": "批处理模式",
   "category": "类别",
   "scroll-into-view": "显示注释",
-  "eraser": "擦除"
+  "eraser": "擦除",
+  "thickness": "厚度",
+  "opacity": "透明度"
 }

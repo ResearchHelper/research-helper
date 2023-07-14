@@ -5,7 +5,7 @@
     icon="search"
     size="0.8rem"
     padding="xs"
-    ref="searchBtn"
+    data-cy="btn-dropdown"
   >
     <q-tooltip>{{ $t("search") }}</q-tooltip>
     <q-menu
@@ -13,6 +13,7 @@
       @show="$emit('search', search)"
       @hide="$emit('clear')"
       ref="searchMenu"
+      data-cy="menu-dropdown"
     >
       <q-item
         dense
@@ -26,6 +27,7 @@
           :placeholder="$t('search')"
           v-model="search.query"
           @keydown.enter="$emit('changeMatch', 1)"
+          data-cy="input-search"
         ></q-input>
         <q-btn
           dense
@@ -33,6 +35,7 @@
           icon="arrow_back"
           :ripple="false"
           @click="$emit('changeMatch', -1)"
+          data-cy="btn-change-match-prev"
         />
         <q-btn
           dense
@@ -40,6 +43,7 @@
           icon="arrow_forward"
           :ripple="false"
           @click="$emit('changeMatch', 1)"
+          data-cy="btn-change-match-next"
         />
       </q-item>
       <q-item>
@@ -47,28 +51,34 @@
           dense
           :label="$t('highlight-all')"
           v-model="search.highlightAll"
+          data-cy="checkbox-highlight-all"
         />
         <q-checkbox
           dense
           :label="$t('match-case')"
           class="q-ml-sm"
           v-model="search.caseSensitive"
+          data-cy="checkbox-case-sensitive"
         />
         <q-checkbox
           dense
           :label="$t('whole-words')"
           class="q-ml-sm"
           v-model="search.entireWord"
+          data-cy="checkbox-entire-word"
         />
       </q-item>
-      <q-item class="q-py-none">
+      <q-item
+        class="q-py-none"
+        data-cy="search-summary"
+      >
         {{ searchSummary }}
       </q-item>
     </q-menu>
   </q-btn>
 </template>
 <script setup lang="ts">
-import { QMenu } from "quasar";
+import { QMenu, debounce } from "quasar";
 import {
   computed,
   reactive,
@@ -97,9 +107,12 @@ const search = reactive({
   caseSensitive: false,
   entireWord: false,
 });
-watch(search, (newSearch) => {
-  emit("search", newSearch);
-});
+watch(
+  search,
+  debounce((newSearch) => {
+    emit("search", newSearch);
+  }, 400)
+);
 
 const searchSummary = computed(() => {
   let text = "";

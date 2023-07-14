@@ -11,6 +11,7 @@
       name="metaInfoTab"
       icon="info"
       :ripple="false"
+      data-cy="tab-meta-info"
     >
       <q-tooltip>{{ $t("info") }}</q-tooltip>
     </q-tab>
@@ -18,6 +19,7 @@
       name="tocTab"
       icon="toc"
       :ripple="false"
+      data-cy="tab-toc"
     >
       <q-tooltip>{{ $t("toc") }}</q-tooltip>
     </q-tab>
@@ -25,6 +27,7 @@
       name="annotationTab"
       icon="edit"
       :ripple="false"
+      data-cy="tab-annot-list"
     >
       <q-tooltip>{{ $t("comment") }}</q-tooltip>
     </q-tab>
@@ -49,7 +52,11 @@
     </q-tab-panel>
 
     <q-tab-panel name="annotationTab">
-      <AnnotList />
+      <AnnotList
+        :annots="(pdfApp.annotStore.annots as Annotation[])"
+        :selectedId="pdfApp.annotStore.selectedId"
+        @setActive="(id) => pdfApp.annotStore.setActive(id)"
+      />
     </q-tab-panel>
   </q-tab-panels>
 </template>
@@ -58,11 +65,12 @@
 import { inject, Ref, ref } from "vue";
 import { Project, TOCNode } from "src/backend/database";
 import { KEY_pdfApp, KEY_project } from "./injectKeys";
+import PDFApplication from "src/backend/pdfreader";
+import { Annotation } from "src/backend/pdfannotation/annotations";
 
 import MetaInfoTab from "../MetaInfoTab.vue";
 import PDFTOC from "./PDFTOC.vue";
 import AnnotList from "./AnnotList.vue";
-import PDFApplication from "src/backend/pdfreader";
 
 const rightMenuTab = ref("metaInfoTab");
 

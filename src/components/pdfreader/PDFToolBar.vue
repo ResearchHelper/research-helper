@@ -7,7 +7,7 @@
         :value="pageLabel"
         @keydown.enter="(e: KeyboardEvent) => changePage((e.target as HTMLInputElement).value)"
       />
-      <span v-if="!!pdfApp.pageLabels">
+      <span v-if="pdfApp.pageLabels?.length > 0">
         {{
           " (" +
           pdfApp.state.currentPageNumber +
@@ -221,4 +221,6 @@ async function toggleFullscreen() {
 
   isFullscreen.value = !isFullscreen.value;
 }
+
+defineExpose({ changePage });
 </script>

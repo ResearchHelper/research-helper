@@ -134,5 +134,7 @@
   "batch-mode": "Batch mode",
   "category": "Categories",
   "scroll-into-view": "Scroll into view",
-  "eraser": "Eraser"
+  "eraser": "Eraser",
+  "thickness": "Thickness",
+  "opacity": "Opacity"
 }

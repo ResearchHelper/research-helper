@@ -7,6 +7,7 @@
     icon="bi-eraser-fill"
     padding="none"
     @click="$emit('setEraserTool')"
+    data-cy="btn-dropdown"
   >
     <template v-slot:label>
       <q-tooltip>{{ $t("eraser") }}</q-tooltip>
@@ -15,10 +16,12 @@
       <q-item style="width: 300px">
         <div class="full-width q-pt-sm">
           <div>
-            Thickness:
+            {{ $t("thickness") + ":" }}
             <input
               v-model="thickness"
               style="width: 3em"
+              type="number"
+              data-cy="input"
             />px
           </div>
           <q-slider
@@ -27,6 +30,7 @@
             :max="30"
             :step="1"
             color="primary"
+            data-cy="slider"
           />
         </div>
       </q-item>

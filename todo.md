@@ -15,14 +15,14 @@ TODO:
 - [x] refactoring pdfannotation
 - [x] leave tools in the middle, view, full-screen to the left and find to the right
 
-- [ ] SearchBtn.cy.ts
-- [ ] EraserDropdownBtn.cy.ts
-- [ ] InkDropdownBtn.cy.ts
-- [ ] ViewDropdownBtn.cy.ts
-- [ ] PDFToolBar.cy.ts
-- [ ] AnnotCard.cy.ts
-- [ ] AnnotList.cy.ts
-- [ ] RightMenu.cy.ts
+- [x] SearchBtn.cy.ts
+- [x] EraserDropdownBtn.cy.ts
+- [x] InkDropdownBtn.cy.ts
+- [x] ViewDropdownBtn.cy.ts
+- [x] PDFToolBar.cy.ts
+- [x] AnnotCard.cy.ts
+- [x] AnnotList.cy.ts
+- [x] RightMenu.cy.ts
 
 IMPROVE:
 
