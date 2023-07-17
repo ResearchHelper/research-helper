@@ -3,7 +3,7 @@ import { AnnotationFactory } from "src/backend/pdfannotation";
 
 describe("<AnnotCard />", () => {
   beforeEach(() => {
-    cy.fixture("annots.json").as("annotDatas");
+    cy.fixture("annotDatas.json").as("annotDatas");
   });
 
   it("renders", function () {

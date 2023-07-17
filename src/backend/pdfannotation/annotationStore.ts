@@ -1,5 +1,5 @@
 import { reactive, ref } from "vue";
-import { AnnotationData, AnnotationType, db, Rect } from "../database";
+import { AnnotationData, AnnotationType, db } from "../database";
 import { Annotation, Ink } from "./annotations";
 
 /**

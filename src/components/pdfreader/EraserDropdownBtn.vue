@@ -28,6 +28,7 @@
             { label: t('pixel-eraser'), value: EraserType.PIXEL },
           ]"
           @update:model-value="(type) => $emit('update:eraserType', type)"
+          data-cy="btn-toggle"
         />
       </q-item>
       <q-item

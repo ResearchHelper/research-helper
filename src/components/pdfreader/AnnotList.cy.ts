@@ -1,15 +1,15 @@
 import AnnotList from "./AnnotList.vue";
 import { Annotation } from "src/backend/pdfannotation/annotations";
 import { AnnotationFactory } from "src/backend/pdfannotation";
+import { AnnotationData, AnnotationType } from "src/backend/database";
 
 describe("<AnnotList />", () => {
   beforeEach(() => {
-    cy.fixture("annots.json").as("annotDatas");
+    cy.fixture("annotDatas.json").as("annotDatas");
   });
   it("renders", function () {
     let annotFactory = new AnnotationFactory("projectId");
     let annots = [];
-    console.log("datas", this.annotDatas);
     for (let data of this.annotDatas) {
       annots.push(annotFactory.build(data) as Annotation);
     }
@@ -22,7 +22,9 @@ describe("<AnnotList />", () => {
 
     cy.get('[data-cy*="annot-card"]').should(
       "have.length",
-      this.annotDatas.length
+      this.annotDatas.filter(
+        (data: AnnotationData) => data.type !== AnnotationType.INK
+      ).length
     );
   });
   it("changeActive", function () {

@@ -1,21 +1,42 @@
+import { EraserType } from "src/backend/database";
 import EraserDropdownBtn from "./EraserDropdownBtn.vue";
 
 describe("<EraserDropdownBtn />", () => {
-  it("renders", () => {
+  it("renders - strokeEraser", () => {
     // see: https://on.cypress.io/mounting-vue
     cy.mount(EraserDropdownBtn, {
       props: {
+        eraserType: EraserType.STROKE,
         eraserThickness: 20,
       },
     });
 
     cy.dataCy("btn-dropdown").click();
+    cy.dataCy("btn-toggle")
+      .get('[aria-pressed="true"]')
+      .should("have.text", "Stroke Eraser");
+    cy.dataCy("input").should("be.disabled").and("have.value", 20);
+  });
+  it("renders - pixelEraser", () => {
+    // see: https://on.cypress.io/mounting-vue
+    cy.mount(EraserDropdownBtn, {
+      props: {
+        eraserType: EraserType.PIXEL,
+        eraserThickness: 20,
+      },
+    });
+
+    cy.dataCy("btn-dropdown").click();
+    cy.dataCy("btn-toggle")
+      .get('[aria-pressed="true"]')
+      .should("have.text", "Pixel Eraser");
     cy.dataCy("input").should("have.value", 20);
   });
   it("update:inkThickness - slider", () => {
     // see: https://on.cypress.io/mounting-vue
     const vue = cy.mount(EraserDropdownBtn, {
       props: {
+        eraserType: EraserType.PIXEL,
         eraserThickness: 5,
       },
     });
@@ -39,6 +60,7 @@ describe("<EraserDropdownBtn />", () => {
     // see: https://on.cypress.io/mounting-vue
     const vue = cy.mount(EraserDropdownBtn, {
       props: {
+        eraserType: EraserType.PIXEL,
         eraserThickness: 5,
       },
     });
@@ -58,6 +80,7 @@ describe("<EraserDropdownBtn />", () => {
     // see: https://on.cypress.io/mounting-vue
     const vue = cy.mount(EraserDropdownBtn, {
       props: {
+        eraserType: EraserType.PIXEL,
         eraserThickness: 5,
       },
     });
