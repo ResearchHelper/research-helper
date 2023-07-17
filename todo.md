@@ -14,6 +14,11 @@ TODO:
 - [x] implement eraser tool
 - [x] refactoring pdfannotation
 - [x] leave tools in the middle, view, full-screen to the left and find to the right
+- [x] stroke eraser
+
+  - [x] prototype by trying to bind eventhandlers to Line object
+  - [x] load all line objects with their event handlers
+  - [x] make stroke eraser and pixel eraser compatible
 
 - [x] SearchBtn.cy.ts
 - [x] EraserDropdownBtn.cy.ts

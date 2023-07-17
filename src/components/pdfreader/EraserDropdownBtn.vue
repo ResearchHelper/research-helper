@@ -2,6 +2,7 @@
   <q-btn-dropdown
     dense
     split
+    unelevated
     size="0.8rem"
     :ripple="false"
     icon="bi-eraser-fill"
@@ -13,7 +14,26 @@
       <q-tooltip>{{ $t("eraser") }}</q-tooltip>
     </template>
     <q-list dense>
-      <q-item style="width: 300px">
+      <q-item class="q-mt-sm justify-center">
+        <q-btn-toggle
+          class="full-width"
+          dense
+          square
+          spread
+          no-caps
+          :ripple="false"
+          :model-value="eraserType"
+          :options="[
+            { label: t('strok-eraser'), value: EraserType.STROKE },
+            { label: t('pixel-eraser'), value: EraserType.PIXEL },
+          ]"
+          @update:model-value="(type) => $emit('update:eraserType', type)"
+        />
+      </q-item>
+      <q-item
+        style="width: 300px"
+        :disable="eraserType !== EraserType.PIXEL"
+      >
         <div class="full-width q-pt-sm">
           <div>
             {{ $t("thickness") + ":" }}
@@ -21,6 +41,7 @@
               v-model="thickness"
               style="width: 3em"
               type="number"
+              :disabled="eraserType !== EraserType.PIXEL"
               data-cy="input"
             />px
           </div>
@@ -29,6 +50,7 @@
             :min="5"
             :max="30"
             :step="1"
+            :disable="eraserType !== EraserType.PIXEL"
             color="primary"
             data-cy="slider"
           />
@@ -38,12 +60,23 @@
   </q-btn-dropdown>
 </template>
 <script setup lang="ts">
-import { computed } from "vue";
+import { EraserType } from "src/backend/database";
+import { PropType, computed } from "vue";
+import { useI18n } from "vue-i18n";
+const { t } = useI18n({ useScope: "global" });
 
 const props = defineProps({
+  eraserType: {
+    type: String as PropType<EraserType>,
+    required: true,
+  },
   eraserThickness: { type: Number, required: true },
 });
-const emit = defineEmits(["setEraserTool", "update:eraserThickness"]);
+const emit = defineEmits([
+  "update:eraserType",
+  "update:eraserThickness",
+  "setEraserTool",
+]);
 
 const thickness = computed({
   get() {

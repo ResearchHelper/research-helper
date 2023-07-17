@@ -35,8 +35,7 @@
     <q-btn-toggle
       v-model="pdfApp.state.tool"
       :ripple="false"
-      fab
-      push
+      unelevated
       size="0.7rem"
       padding="xs"
       toggle-color="primary"
@@ -76,7 +75,7 @@
           slot: AnnotationType.INK,
         },
         {
-          value: 'eraser',
+          value: AnnotationType.ERASER,
           slot: 'eraser',
         },
       ]"
@@ -108,6 +107,7 @@
       </template>
       <template v-slot:eraser>
         <EraserDropdownBtn
+          v-model:eraserType="(pdfApp.state.eraserType as EraserType)"
           v-model:eraserThickness="pdfApp.state.eraserThickness"
           @setEraserTool="pdfApp.changeTool(AnnotationType.ERASER)"
         />
@@ -119,10 +119,10 @@
       class="q-ml-xs"
       :style="`background: ${pdfApp.state.color}`"
       :ripple="false"
-      push
+      flat
       size="0.5rem"
     >
-      <q-tooltip>{{ $t("highlight-color") }}</q-tooltip>
+      <q-tooltip>{{ $t("color") }}</q-tooltip>
       <q-menu
         anchor="bottom middle"
         self="top middle"
@@ -151,7 +151,7 @@
       :model-value="showRightMenu"
       @update:model-value="(visible: boolean) => $emit('update:showRightMenu', visible)"
       clearable
-      push
+      unelevated
       :ripple="false"
       size="0.7rem"
       padding="xs"
@@ -168,7 +168,7 @@
 <script setup lang="ts">
 import { useQuasar } from "quasar";
 import { computed, inject, ref } from "vue";
-import { AnnotationType, PDFSearch } from "src/backend/database";
+import { AnnotationType, EraserType, PDFSearch } from "src/backend/database";
 import { KEY_pdfApp } from "./injectKeys";
 import PDFApplication from "src/backend/pdfreader";
 

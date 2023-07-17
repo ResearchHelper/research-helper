@@ -12,11 +12,12 @@
   >
     <q-item
       style="padding: 5px 5px"
-      v-for="(annot, index) in annots"
+      v-for="(annot, index) in annots.filter(
+        (annot) => annot.data.type !== AnnotationType.INK
+      )"
       :key="annot.data._id"
     >
       <AnnotCard
-        v-if="annot.data.type !== AnnotationType.INK"
         :annot="(annot as Annotation)"
         :style="'width: 100%'"
         :class="{

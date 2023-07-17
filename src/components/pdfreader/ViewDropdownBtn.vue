@@ -1,7 +1,8 @@
 <template>
   <q-btn
     dense
-    push
+    flat
+    square
     :ripple="false"
     icon="visibility"
     size="0.7rem"

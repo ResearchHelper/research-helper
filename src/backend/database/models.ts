@@ -140,6 +140,7 @@ export interface PDFState {
   scrollTop: number; // current scrollTop position
   inkThickness: number;
   inkOpacity: number;
+  eraserType: EraserType;
   eraserThickness: number;
 }
 
@@ -159,6 +160,11 @@ export enum AnnotationType {
   STRIKEOUT = "strikeout",
   INK = "ink",
   ERASER = "eraser",
+}
+
+export enum EraserType {
+  STROKE = "stroke",
+  PIXEL = "pixel",
 }
 
 export enum SpreadMode {

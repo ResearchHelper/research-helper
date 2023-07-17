@@ -1,6 +1,6 @@
 <template>
   <q-btn
-    push
+    unelevated
     :ripple="false"
     icon="search"
     size="0.8rem"

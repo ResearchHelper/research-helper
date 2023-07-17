@@ -2,6 +2,7 @@
   <q-btn-dropdown
     dense
     split
+    unelevated
     size="0.8rem"
     :ripple="false"
     icon="draw"

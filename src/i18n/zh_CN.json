@@ -46,7 +46,7 @@
   "delete-annot": "删除注释",
   "cursor": "指针",
   "highlight": "高亮",
-  "highlight-color": "高亮颜色",
+  "color": "颜色",
   "view": "视图",
   "enter-full-screen": "进入全屏",
   "exit-full-screen": "退出全屏",
@@ -134,7 +134,9 @@
   "batch-mode": "批处理模式",
   "category": "类别",
   "scroll-into-view": "显示注释",
-  "eraser": "擦除",
+  "eraser": "橡皮擦",
   "thickness": "厚度",
-  "opacity": "透明度"
+  "opacity": "不透明度",
+  "strok-eraser": "线条橡皮擦",
+  "pixel-eraser": "像素橡皮擦"
 }

@@ -1,6 +1,7 @@
 import {
   AnnotationType,
   db,
+  EraserType,
   PDFSearch,
   PDFState,
   SpreadMode,
@@ -66,6 +67,7 @@ export default class PDFApplication {
       scrollTop: 0,
       inkThickness: 5,
       inkOpacity: 1,
+      eraserType: EraserType.STROKE,
       eraserThickness: 20,
     } as PDFState);
   }

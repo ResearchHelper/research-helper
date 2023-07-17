@@ -29,6 +29,7 @@
           padding="none"
           :ripple="false"
           icon="more_vert"
+          :class="{ 'text-black': luminosity(annot.data.color) > 0.4 }"
           data-cy="btn-menu"
         >
           <AnnotMenu
@@ -40,16 +41,7 @@
         </q-btn>
       </div>
     </q-card-section>
-    <div
-      v-if="annotContent.indexOf('data:') == 0"
-      class="q-px-xs q-pt-xs q-pb-none"
-    >
-      <img
-        style="width: 100%; max-height: 30vh; border: 0.1rem dashed grey"
-        :src="annotContent"
-      />
-    </div>
-    <div v-else>
+    <div>
       <q-input
         v-if="editing"
         outlined
@@ -61,7 +53,7 @@
         @blur="editing = false"
       />
       <pre
-        ref="content"
+        ref="preTag"
         style="
           font-size: 1rem;
           min-height: 5em;
@@ -97,28 +89,23 @@ const props = defineProps({
   annot: { type: Object as PropType<Annotation>, required: true },
   style: { type: String, required: true },
 });
+const pdfApp = inject(KEY_pdfApp) as PDFApplication;
 
 const editing = ref(false);
-const content = ref(null); // ref to the <pre> tag
-
+const preTag = ref<HTMLElement>(); // ref to the <pre> tag
+const content = ref(props.annot.data.content || "");
 const annotContent = computed({
   get() {
     liveRender(); // render immediately after get content
-    return !!props.annot ? props.annot.data.content : "";
+    return content.value;
   },
-  set(content) {
-    saveContent(content);
+  set(text) {
+    content.value = text;
+    pdfApp.annotStore?.update(props.annot.data._id, {
+      content: content.value,
+    } as AnnotationData);
   },
 });
-
-const pdfApp = inject(KEY_pdfApp) as PDFApplication;
-
-const _saveContent = (content: string) => {
-  pdfApp.annotStore?.update(props.annot.data._id, {
-    content: content,
-  } as AnnotationData);
-};
-const saveContent = debounce(_saveContent, 200) as (content: string) => void;
 
 const changeColor = (color: string) => {
   pdfApp.annotStore?.update(props.annot.data._id, {
@@ -132,8 +119,8 @@ const deleteAnnot = () => {
 
 const liveRender = async () => {
   await nextTick();
-  if (!content.value) return;
-  renderMathInElement(content.value, {
+  if (!preTag.value) return;
+  renderMathInElement(preTag.value, {
     delimiters: [
       { left: "$$", right: "$$", display: true },
       { left: "$", right: "$", display: false },

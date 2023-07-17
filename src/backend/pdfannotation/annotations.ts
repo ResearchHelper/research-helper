@@ -2,6 +2,7 @@ import { reactive } from "vue";
 import {
   AnnotationData,
   AnnotationType,
+  EraserType,
   PDFState,
   Rect,
   RenderEvt,
@@ -353,9 +354,16 @@ export class Comment extends Annotation {
     this.doms.push(section);
   }
 }
+
+/**
+ * Ink Annotation is a Canvas created by Konva
+ * After draw, the drawings will be displayed on a specific page
+ * The event handlers are those for drawings: freehand, eraser
+ */
 export class Ink extends Annotation {
   stage: Konva.Stage | undefined;
   annotationEditorLayer: HTMLDivElement | undefined;
+  lines: Konva.Line[] = [];
 
   // for dev use
   setDrawable(isDrawable: boolean) {
@@ -407,47 +415,86 @@ export class Ink extends Annotation {
 
   bindEventHandlers(state: PDFState) {
     if (!this.stage || this.hasEvtHandler) return;
-    // free draw core funcitons
-    let isPaint: boolean;
-    let lastLine: Konva.Line;
-    this.stage.on("mousedown touchstart", (e) => {
+    // used to determine if user if pressing button
+    let isPressed: boolean;
+    // make all lines removable by stroke eraser
+    this.stage.find("Line").forEach((line) => {
+      line.on("mouseover touchover", (e) => {
+        if (
+          state.tool === AnnotationType.ERASER &&
+          state.eraserType === EraserType.STROKE &&
+          isPressed
+        )
+          line.remove();
+      });
+    });
+    // core event handlers for freedrawing
+    this.stage.on("pointerdown", (e) => {
       if (!this.stage) return;
-      isPaint = true;
+      isPressed = true;
       let pos = this.stage.getRelativePointerPosition();
       if (!pos) return;
-      lastLine = new Konva.Line({
-        stroke: state.color,
-        strokeWidth:
-          state.tool === AnnotationType.INK
-            ? state.inkThickness
-            : state.eraserThickness,
-        opacity: state.tool === AnnotationType.INK ? state.inkOpacity : 1,
-        globalCompositeOperation:
-          state.tool === AnnotationType.INK ? "source-over" : "destination-out",
-        // round cap for smoother lines
-        lineCap: "round",
-        lineJoin: "round",
-        // add point twice, so we have some drawings even on a simple click
-        points: [pos.x, pos.y, pos.x, pos.y],
-      });
-      this.stage.getLayers()[0].add(lastLine);
+      if (
+        !(
+          state.tool === AnnotationType.ERASER &&
+          state.eraserType == EraserType.STROKE
+        )
+      ) {
+        // draw line for normal pen or pixel eraser
+        let line = new Konva.Line({
+          stroke: state.color,
+          strokeWidth:
+            state.tool === AnnotationType.INK
+              ? state.inkThickness
+              : state.eraserThickness,
+          opacity: state.tool === AnnotationType.INK ? state.inkOpacity : 1,
+          globalCompositeOperation:
+            state.tool === AnnotationType.INK
+              ? "source-over"
+              : "destination-out",
+          lineCap: "round",
+          lineJoin: "round",
+          shadowEnabled: false,
+        });
+        this.stage.getLayers()[0].add(line);
+        this.lines.push(line);
+        if (state.tool === AnnotationType.INK) {
+          // make the line removable after drawn
+          line.on("pointermove", () => {
+            if (
+              state.tool === AnnotationType.ERASER &&
+              state.eraserType === EraserType.STROKE &&
+              isPressed
+            )
+              line.remove();
+          });
+        }
+      }
     });
-    this.stage.on("mouseup touchend", () => {
-      isPaint = false;
+    this.stage.on("pointermove", (e) => {
+      if (!this.stage || !isPressed) return;
+      // prevent scrolling on touch devices
+      e.evt.preventDefault();
+      if (
+        state.tool !== AnnotationType.INK &&
+        !(
+          state.tool === AnnotationType.ERASER &&
+          state.eraserType === EraserType.PIXEL
+        )
+      )
+        return;
+      const pos = this.stage.getRelativePointerPosition();
+      if (!pos) return;
+      let lastLine = this.lines.slice(-1)[0];
+      let newPoints = lastLine.points().concat([pos.x, pos.y]);
+      lastLine.points(newPoints);
+    });
+    this.stage.on("pointerup", () => {
+      isPressed = false;
       if (!this.stage) return;
       let content = this.stage.toJSON();
       this.update({ content: content } as AnnotationData);
     });
-    this.stage.on("mousemove touchmove", (e) => {
-      if (!this.stage || !isPaint) return;
-      // prevent scrolling on touch devices
-      e.evt.preventDefault();
-      const pos = this.stage.getRelativePointerPosition();
-      if (!pos) return;
-      let newPoints = lastLine.points().concat([pos.x, pos.y]);
-      lastLine.points(newPoints);
-    });
-
     // set this to true to prevent repeatly binding
     this.hasEvtHandler = true;
   }
