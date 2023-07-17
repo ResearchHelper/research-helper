@@ -1,21 +1,41 @@
 FIXME:
-[x] projecttree does not capture opened project
-[x] DOI,ISBN strip input
-[x] remove folder highlight after drag and drop project
-[x] select project when mouse down, don't wait until mouse up!
+
+- [x] standard annotation popups won't disappear
+- [x] don't show any error / warning messages to users when meta info is not able to retrieve
+- [x] rename file by meta, year part not working properly
+- [x] annotation position failed in chinese pdf, rects have infinity
 
 TODO:
-[x] text search in PDF using ctrl+F
-[x] add more entries to metainfo tab: publisher, jornal name ...
 
-[ ] put pdf annotations to markdown as a link. we can click to jump to the specific annotation
-[ ] Terminology library
+- [x] bump nodejs to 18
+- [x] bump version of node in github workflows
+- [x] bump pdfjs to v3.7.107
+- [x] implement ink tool
+- [x] implement eraser tool
+- [x] refactoring pdfannotation
+- [x] leave tools in the middle, view, full-screen to the left and find to the right
+- [x] stroke eraser
+
+  - [x] prototype by trying to bind eventhandlers to Line object
+  - [x] load all line objects with their event handlers
+  - [x] make stroke eraser and pixel eraser compatible
+
+- [x] SearchBtn.cy.ts
+- [x] EraserDropdownBtn.cy.ts
+- [x] InkDropdownBtn.cy.ts
+- [x] ViewDropdownBtn.cy.ts
+- [x] PDFToolBar.cy.ts
+- [x] AnnotCard.cy.ts
+- [x] AnnotList.cy.ts
+- [x] RightMenu.cy.ts
 
 IMPROVE:
-[x] better update button prompt
 
 LONG-TERM TODO:
-[ ] reduce memory usage #55
-[ ] cloud sync
-[ ] ai read paper
-[ ] documentations
+
+- [ ] put pdf annotations to markdown as a link. we can click to jump to the specific annotation
+- [ ] Terminology library
+- [ ] reduce memory usage #55
+- [ ] cloud sync
+- [ ] ai read paper
+- [ ] documentations

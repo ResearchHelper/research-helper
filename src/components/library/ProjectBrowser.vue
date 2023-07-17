@@ -17,10 +17,6 @@
     :deleteFromDB="deleteFromDB"
     @confirm="deleteProject"
   />
-  <ErrorDialog
-    v-model:show="errorDialog"
-    :error="error"
-  />
 
   <q-splitter
     style="position: absolute; width: 100%; height: 100%"
@@ -153,7 +149,6 @@ import MetaInfoTab from "src/components/MetaInfoTab.vue";
 import ExportDialog from "src/components/library/ExportDialog.vue";
 import IdentifierDialog from "src/components/library/IdentifierDialog.vue";
 import DeleteDialog from "src/components/library/DeleteDialog.vue";
-import ErrorDialog from "src/components/ErrorDialog.vue";
 import ImportDialog from "src/components/library/ImportDialog.vue";
 // db
 import {
@@ -214,9 +209,6 @@ const deleteFromDB = ref(false);
 
 const identifierDialog = ref(false);
 const createProject = ref(false);
-
-const errorDialog = ref(false);
-const error = ref<Error | undefined>(undefined);
 
 const importDialog = ref(false);
 const collectionPath = ref<string>("");
@@ -402,10 +394,7 @@ async function addProjectsByFiles(filePaths: string[]) {
 
       // update ui
       projects.value.push(project);
-    } catch (_error) {
-      error.value = new Error(t("get-meta-failed"));
-      error.value.name = "warning";
-      errorDialog.value = true;
+    } catch (error) {
       // refresh table
       await getProjects();
     }
@@ -452,48 +441,38 @@ async function addProjectsByCollection(isCreateFolder: boolean) {
 async function processIdentifier(identifier: string) {
   if (!identifier) return;
 
-  try {
-    let metas = await getMeta(identifier, "json");
-    let meta = metas[0];
+  let metas = await getMeta(identifier, "json");
+  let meta = metas[0];
 
-    if (createProject.value) {
-      // add a new project to db and update it with meta
-      let project = (await addProjectDB(
-        stateStore.selectedFolderId
-      )) as Project;
-      console.log("project", project);
-      project = (await updateProjectByMetaDB(project, meta)) as Project;
-      await createEdge(project);
+  if (createProject.value) {
+    // add a new project to db and update it with meta
+    let project = (await addProjectDB(stateStore.selectedFolderId)) as Project;
+    console.log("project", project);
+    project = (await updateProjectByMetaDB(project, meta)) as Project;
+    await createEdge(project);
 
-      // update ui
-      projects.value.push(project);
-    } else {
-      // update an existing project meta
-      let project = (await getProjectDB(stateStore.selectedItemId)) as Project;
-      project = (await updateProjectByMetaDB(project, meta)) as Project;
-      let sourceNode = {
-        id: project._id,
-        label: project.title,
-        type: "project",
-      };
-      await updateEdge(project._id, { sourceNode: sourceNode } as Edge);
+    // update ui
+    projects.value.push(project);
+  } else {
+    // update an existing project meta
+    let project = (await getProjectDB(stateStore.selectedItemId)) as Project;
+    project = (await updateProjectByMetaDB(project, meta)) as Project;
+    let sourceNode = {
+      id: project._id,
+      label: project.title,
+      type: "project",
+    };
+    await updateEdge(project._id, { sourceNode: sourceNode } as Edge);
 
-      // update tableview UI
-      if (stateStore.selected[0] !== undefined) {
-        for (let prop in project) stateStore.selected[0][prop] = project[prop];
-      }
-      // update projectree ui
-      bus.emit("updateProject", {
-        source: componentName,
-        data: stateStore.selected[0],
-      });
+    // update tableview UI
+    if (stateStore.selected[0] !== undefined) {
+      for (let prop in project) stateStore.selected[0][prop] = project[prop];
     }
-  } catch (_error) {
-    error.value = new Error(t("get-meta-failed"));
-    error.value.name = "warning";
-    errorDialog.value = true;
-    // refresh table
-    await getProjects();
+    // update projectree ui
+    bus.emit("updateProject", {
+      source: componentName,
+      data: stateStore.selected[0],
+    });
   }
 }
 
@@ -563,7 +542,7 @@ async function attachFile(
 async function renameFromMeta(project: Project, index?: number) {
   if (project.path === undefined) return;
   let author = "";
-  let year = project.year || "Unknown";
+  let year = project.issued["date-parts"][0][0] || "Unknown";
   let title = project.title;
   let extname = window.path.extname(project.path);
   if (!project.author || project.author.length === 0) {

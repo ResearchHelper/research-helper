@@ -16,26 +16,16 @@
           top: 0;
           background: var(--color-pdfreader-toolbar-bkgd);
         "
-        :pdfState="pdfState"
-        :pageLabels="pageLabels"
-        :matchesCount="matchesCount"
+        :pdfState="pdfApp.state"
+        :pageLabels="pdfApp.pageLabels"
+        :matchesCount="pdfApp.matchesCount"
         v-model:showRightMenu="showRightMenu"
-        @changePageNumber="changePageNumber"
-        @changeScale="changeScale"
-        @changeSpreadMode="changeSpreadMode"
-        @changeTool="changeTool"
-        @changeColor="changeColor"
-        @searchText="searchText"
-        @changeMatch="changeMatch"
       />
       <div
         ref="viewerContainer"
         class="viewerContainer"
       >
-        <div
-          ref="viewer"
-          class="pdfViewer"
-        ></div>
+        <div class="pdfViewer"></div>
         <h5
           v-if="!project?.path"
           class="text-center"
@@ -43,17 +33,14 @@
           {{ $t("no-pdf") }}
         </h5>
         <AnnotCard
-          v-if="showAnnotCard && selectedAnnotId"
+          v-if="showAnnotCard && pdfApp.annotStore.selected"
           :style="style"
-          :annot="getAnnot(selectedAnnotId)"
+          :annot="(pdfApp.annotStore.selected as Annotation)"
         />
         <FloatingMenu
           v-if="showFloatingMenu"
           :style="style"
-          @highlightText="(color: string) => {
-              createAnnot(AnnotationType.HIGHLIGHT, color, selectionPage, null);
-              toggleFloatingMenu();
-            }"
+          @highlightText="(color: string) => highlightText(color)"
         />
       </div>
 
@@ -61,10 +48,7 @@
         ref="peekContainer"
         class="peekContainer"
       >
-        <div
-          ref="peekViewer"
-          class="pdfViewer"
-        ></div>
+        <div class="pdfViewer"></div>
       </div>
     </template>
     <template v-slot:after>
@@ -74,76 +58,39 @@
 </template>
 
 <script setup lang="ts">
+import { ref, watch, provide, onMounted, computed } from "vue";
 import {
-  ref,
-  reactive,
-  watch,
-  nextTick,
-  provide,
-  onMounted,
-  computed,
-} from "vue";
-import {
-  Annotation,
+  AnnotationData,
   AnnotationType,
-  PDFSearch,
   PDFState,
   Project,
-  SpreadMode,
-  TOCNode,
+  Rect,
 } from "src/backend/database";
-import {
-  PDFFindController,
-  PDFPageView,
-  PDFViewer,
-} from "pdfjs-dist/web/pdf_viewer";
-import {
-  KEY_updateAnnot,
-  KEY_deleteAnnot,
-  KEY_clickTOC,
-  KEY_outline,
-  KEY_project,
-  KEY_annots,
-  KEY_setActiveAnnot,
-  KEY_selectedAnnotId,
-  KEY_createAnnot,
-  KEY_getAnnot,
-} from "./injectKeys";
+import { PDFPageView } from "pdfjs-dist/web/pdf_viewer";
+import { KEY_pdfApp, KEY_project } from "./injectKeys";
 
 import PDFToolBar from "./PDFToolBar.vue";
 import RightMenu from "./RightMenu.vue";
 import AnnotCard from "./AnnotCard.vue";
 import FloatingMenu from "./FloatingMenu.vue";
 
-import { PDFApplication } from "src/backend/pdfreader";
 import { getProject } from "src/backend/project/project";
+import PDFApplication from "src/backend/pdfreader";
+import { Ink } from "src/backend/pdfannotation/annotations";
+import { QSplitter, throttle, uid } from "quasar";
+import { Annotation } from "src/backend/pdfannotation/annotations";
 
-import {
-  getAnnotations,
-  addAnnotation,
-  updateAnnotation,
-  deleteAnnotation,
-  createAnnotation,
-  drawAnnotation,
-  enableDragToMove,
-} from "src/backend/pdfannotation";
-import { useStateStore } from "src/stores/appState";
-
-const stateStore = useStateStore();
-
-/**
+/**********************************
  * Props, Data, and component refs
- */
+ **********************************/
 const props = defineProps({ projectId: { type: String, required: true } });
 
 // viewer containers
-const viewerContainer = ref(null);
-const peekContainer = ref(null);
-const viewer = ref(null);
+const viewerContainer = ref<HTMLDivElement>();
+const peekContainer = ref<HTMLDivElement>();
 
 // ready to save data
-const ready = ref(false);
-const project = ref<Project | null>(null);
+const project = ref<Project>();
 
 // right menu (don't use stateStore since there will be many readerPages)
 const rightMenuSize = ref(0);
@@ -162,204 +109,29 @@ const showRightMenu = computed({
   },
 });
 
-// pdf related
-const pdfState = reactive<PDFState>({} as PDFState);
-const matchesCount = reactive({ current: -1, total: 0 });
-const pageLabels = ref<string[]>([]);
-const outline = ref<TOCNode[]>([]);
-const annots = ref<Annotation[]>([]);
-const selectedAnnotId = ref("");
-
 // annot card & colorpicker
 const showAnnotCard = ref(false);
 const showFloatingMenu = ref(false);
 const selectionPage = ref(0);
 const style = ref("");
 
-let pdfApp: PDFApplication;
+// PDFApplicaiton
+const pdfApp = new PDFApplication(props.projectId);
+const renderEvt = ref<{
+  pageNumber: number;
+  source: PDFPageView;
+  error: Error | null;
+}>();
 
-/**
- * Methods
- */
-async function loadPDF(id: string) {
-  project.value = (await getProject(id)) as Project;
-  if (project.value.dataType != "project") return;
-  if (!project.value.path) return; // if no attached file
-  // load state before loading pdf
-  Object.assign(
-    pdfState,
-    (await pdfApp.loadState(project.value._id)) as PDFState
-  );
-  annots.value = (await getAnnotations(props.projectId)) as Annotation[];
-  await pdfApp.loadPDF(project.value.path);
-  outline.value = await pdfApp.getTOC();
-  pageLabels.value = await pdfApp.getPageLabels();
-}
-
-/**********************************
- * PDFApplication - PdfViewer
- **********************************/
-function changePageNumber(pageNumber: number) {
-  pdfApp.changePageNumber(pageNumber);
-  // pdfState is modified in pagechanging event
-}
-function changeScale(params: {
-  delta?: number;
-  scaleValue?: "page-width" | "page-height";
-  scale?: number;
-}) {
-  pdfApp.changeScale(params);
-  // pdfState is modified in scalechanging event
-}
-function changeSpreadMode(spreadMode: SpreadMode) {
-  pdfApp.changeSpreadMode(spreadMode);
-  pdfState.spreadMode = spreadMode;
-}
-
-/**********************************
- * PDFApplication - Find Controller
- **********************************/
-function searchText(search: PDFSearch) {
-  pdfApp.searchText(search);
-}
-function changeMatch(delta: number) {
-  pdfApp.changeMatch(delta);
-}
-
-/**********************************
- * PDFApplication - TOC
- **********************************/
-function clickTOC(node: TOCNode) {
-  pdfApp.clickTOC(node);
-}
-
-/**********************************
- * Annotation
- **********************************/
-function changeColor(color: string) {
-  pdfState.color = color;
-}
-
-function changeTool(tool: AnnotationType) {
-  pdfState.tool = tool;
-}
-
-function getAnnot(annotId: string): Annotation {
-  return annots.value.find((annot) => annot._id === annotId) as Annotation;
-}
-
-function setActiveAnnot(annotId: string) {
-  if (viewerContainer.value === null) return;
-  selectedAnnotId.value = annotId;
-
-  if (!!annotId) {
-    // highlight it
-    (viewerContainer.value as HTMLElement)
-      .querySelectorAll(`section[annotation-id="${annotId}"]`)
-      .forEach((dom) => {
-        dom.classList.add("activeAnnotation");
-      });
-  } else {
-    // deselect annotation
-    (viewerContainer.value as HTMLElement)
-      .querySelectorAll(".activeAnnotation")
-      .forEach((dom) => {
-        dom.classList.remove("activeAnnotation");
-      });
+/******************************
+ * RightMenu
+ ******************************/
+function resizeRightMenu(size: number) {
+  if (size < 8) {
+    rightMenuSize.value = 0;
+    showRightMenu.value = false;
   }
-}
-async function createAnnot(
-  tool: AnnotationType,
-  color: string,
-  pageNumber: number,
-  corner: { x1: number; y1: number; x2: number; y2: number } | null
-) {
-  if (viewerContainer.value === null) return;
-
-  let annot = createAnnotation(
-    viewerContainer.value as HTMLElement,
-    pageNumber,
-    tool,
-    color,
-    props.projectId,
-    corner
-  );
-
-  if (!annot) return;
-  // update ui
-  annots.value.push(annot); // update list
-  drawAnnot(annot); // draw it on pdf
-  window.getSelection()?.empty(); // clear any text selection
-  // update db
-  await addAnnotation(annot);
-}
-
-/**
- * Draw annotation on annotationEditorLayer
- * @param annot
- */
-async function drawAnnot(annot: Annotation) {
-  if (viewerContainer.value === null) return;
-
-  let doms = drawAnnotation(viewerContainer.value as HTMLElement, annot);
-
-  // click to highlight annotation
-  for (let [i, dom] of doms.entries()) {
-    dom.onclick = () => {
-      setActiveAnnot(dom.getAttribute("annotation-id") as string);
-    };
-  }
-
-  // enable dragging for annotation
-  if (
-    annot.type === AnnotationType.COMMENT ||
-    annot.type === AnnotationType.RECTANGLE
-  ) {
-    enableDragToMove(doms[0]);
-  }
-}
-
-async function updateAnnot(params: { id: string; data: any }) {
-  let id = params.id;
-  let data = params.data;
-  if (id === undefined || data === undefined) return;
-
-  // update db
-  let annot = (await updateAnnotation(params.id, params.data)) as Annotation;
-
-  // update PDFReader UI
-  if ("color" in data) {
-    document
-      .querySelectorAll(`section[annotation-id="${id}"]`)
-      .forEach((dom) => {
-        if (
-          annot.type === AnnotationType.UNDERLINE ||
-          annot.type === AnnotationType.STRIKEOUT
-        )
-          (dom as HTMLElement).style.borderBottomColor = data.color;
-        else (dom as HTMLElement).style.background = data.color;
-      });
-  }
-  // update AnnotationList UI
-  for (let i in annots.value) {
-    if (annots.value[i]._id == annot._id) {
-      annots.value[i] = annot;
-    }
-  }
-}
-
-async function deleteAnnot(id: string) {
-  // update db
-  await deleteAnnotation(id);
-
-  // close any annot menu
-  showAnnotCard.value = false;
-  // update PDFReader UI
-  document.querySelectorAll(`section[annotation-id="${id}"]`).forEach((dom) => {
-    dom.remove();
-  });
-  // update AnnotationList UI
-  annots.value = annots.value.filter((annot) => annot._id != id);
+  prvRightMenuSize.value = size > 10 ? size : 30;
 }
 
 /*******************************
@@ -369,53 +141,45 @@ async function deleteAnnot(id: string) {
  * Toggle Floating Menu after text selection
  * @param page - the pageNumber where the selection is on
  */
-async function toggleFloatingMenu(page?: number) {
-  // close all menus first
-  showAnnotCard.value = false;
-  showFloatingMenu.value = false;
-  await nextTick();
+function toggleFloatingMenu(show: boolean, page?: number) {
+  if (!show) {
+    showFloatingMenu.value = false;
+  } else {
+    // if no page is given, that means no seleciton
+    if (!page) return;
+    selectionPage.value = page;
 
-  // close floatingMenu if pageNumber (means no selection)
-  if (!page) return;
-  selectionPage.value = page;
-
-  let hasSelection = false;
-  let selection = window.getSelection();
-  if (selection === null) return;
-  let rects = [] as DOMRectList | DOMRect[];
-  if (!!selection.focusNode) {
-    rects = selection.getRangeAt(0).getClientRects();
-    if (rects.length > 1) {
-      hasSelection = true;
-    } else if (rects.length == 1 && rects[0].width > 1) {
-      hasSelection = true;
-    } else {
-      hasSelection = false;
+    // find the selection on the page
+    let hasSelection = false;
+    let selection = window.getSelection();
+    if (selection === null) return;
+    let rects = [] as DOMRectList | DOMRect[];
+    if (!!selection.focusNode) {
+      rects = selection.getRangeAt(0).getClientRects();
+      if (rects.length > 1) {
+        hasSelection = true;
+      } else if (rects.length == 1 && rects[0].width > 1) {
+        hasSelection = true;
+      } else {
+        hasSelection = false;
+      }
     }
-  }
 
-  if (hasSelection) {
-    showFloatingMenu.value = true;
-    setPosition(rects);
+    if (hasSelection) {
+      showFloatingMenu.value = true;
+      setPosition(rects);
+    }
   }
 }
 
-async function toggleAnnotCard() {
-  // close all menus first
-  showAnnotCard.value = false;
-  showFloatingMenu.value = false;
-  await nextTick();
-
-  if (!selectedAnnotId.value) return;
-
-  // show annot card
-  let doms = document.querySelectorAll(
-    `section[annotation-id="${selectedAnnotId.value}"]`
-  );
-  let rects = [];
-  for (let dom of doms) rects.push(dom.getBoundingClientRect());
-  showAnnotCard.value = true;
-  setPosition(rects);
+function toggleAnnotCard(show: boolean, annot?: Annotation) {
+  if (!show) {
+    showAnnotCard.value = false;
+  } else {
+    if (!annot) return;
+    setPosition(annot.doms.map((dom) => dom.getBoundingClientRect()));
+    showAnnotCard.value = true;
+  }
 }
 
 /**
@@ -423,10 +187,11 @@ async function toggleAnnotCard() {
  * @param rects - doms of text selections / annotation
  */
 function setPosition(rects: DOMRect[] | DOMRectList) {
-  if (viewer.value === null) return;
-
-  let bgRect = (viewer.value as HTMLElement).getBoundingClientRect();
-  // unit: px
+  if (!viewerContainer.value) return;
+  let viewer = viewerContainer.value.querySelector(
+    "div.pdfViewer"
+  ) as HTMLElement;
+  let bgRect = viewer.getBoundingClientRect();
   let top = 0;
   let mid = 0;
   let n = 0; // number of non-empty rect
@@ -442,231 +207,282 @@ function setPosition(rects: DOMRect[] | DOMRectList) {
   background: var(--color-pdfreader-colorpicker-bkgd);
   position: absolute;
   left: ${mid - bgRect.left - 75}px;
-  top: ${top - bgRect.top + 10}px;
+  top: ${top - bgRect.top + 20}px;
   min-width: 150px;
   z-index: 100;
   `;
 }
 
-/**
+function highlightText(color: string) {
+  if (!renderEvt.value) return;
+  let annot = pdfApp.annotFactory.buildSelectionBasedAnnot(
+    AnnotationType.HIGHLIGHT,
+    color,
+    renderEvt.value
+  );
+  if (annot) {
+    pdfApp.annotStore.add(annot, true);
+    annot.draw(renderEvt.value);
+    let annotId = annot.data._id;
+    annot.doms.forEach((dom) => {
+      dom.onmousedown = () => pdfApp.annotStore.setActive(annotId);
+    });
+    annot.hasEvtHandler = true;
+  }
+  toggleFloatingMenu(false);
+}
+
+/***************************
+ * PDF realated
+ ***************************/
+async function loadPDF(id: string) {
+  project.value = (await getProject(id)) as Project;
+  if (project.value.dataType != "project") return;
+  if (!project.value.path) return; // if no attached file
+  // load state before loading pdf
+  Object.assign(
+    pdfApp.state,
+    (await pdfApp.loadState(project.value._id)) as PDFState
+  );
+  await pdfApp.loadPDF(project.value.path);
+  await pdfApp.loadAnnotations();
+}
+
+/******************
  * Provides
- */
-provide(KEY_getAnnot, getAnnot);
-provide(KEY_createAnnot, createAnnot);
-provide(KEY_updateAnnot, updateAnnot);
-provide(KEY_deleteAnnot, deleteAnnot);
-provide(KEY_setActiveAnnot, setActiveAnnot);
-provide(KEY_clickTOC, clickTOC);
-provide(KEY_selectedAnnotId, selectedAnnotId);
-provide(KEY_outline, outline);
+ ******************/
 provide(KEY_project, project);
-provide(KEY_annots, annots);
+provide(KEY_pdfApp, pdfApp);
 
-/**
+/***********************
  * Watchers
- */
-
-watch(pdfState, (state) => {
+ ***********************/
+watch(pdfApp.state, (state) => {
   // pdfState is reactive, so it's deep wather automatically
-  if (!ready.value) return;
+  if (!pdfApp.ready.value) return;
   pdfApp.saveState(state);
 });
 
-watch(selectedAnnotId, (annotId) => {
-  setActiveAnnot("");
-  if (!!!annotId) return;
-
-  // scroll to the selected annot
-  if (viewerContainer.value === null) return;
-  let dom = (viewerContainer.value as HTMLElement).querySelector(
-    `section[annotation-id="${annotId}"]`
-  );
-  if (!!dom) {
-    // if the dom is already there, scroll into view
-    dom.scrollIntoView({
-      behavior: "smooth",
-      block: "nearest",
-      inline: "nearest",
-    });
-    setActiveAnnot(annotId);
-  } else {
-    // otherwise change the page first
-    let annot = annots.value.find(
-      (annot) => annot._id === annotId
-    ) as Annotation;
-    changePageNumber(annot.pageNumber);
-  }
-});
-
-function resizeRightMenu(size: number) {
-  if (size < 8) {
-    rightMenuSize.value = 0;
-    showRightMenu.value = false;
-  }
-  prvRightMenuSize.value = size > 10 ? size : 30;
-}
-
-/**
- * onMounted
- */
-
+/**************************************************
+ * Implement eventhandlers and init PDFApplication
+ **************************************************/
 onMounted(async () => {
   if (!viewerContainer.value || !peekContainer.value) return;
-  pdfApp = new PDFApplication(
+  pdfApp.init(
     viewerContainer.value as HTMLDivElement,
     peekContainer.value as HTMLDivElement
   );
-  pdfApp.eventBus.on("pagesinit", () => {
-    changePageNumber(pdfState.currentPageNumber);
-    changeSpreadMode(pdfState.spreadMode);
-    changeScale({ scale: pdfState.currentScale });
-    pdfState.pagesCount = pdfApp.pdfViewer.pagesCount;
-    ready.value = true;
-  });
-  pdfApp.eventBus.on(
+
+  pdfApp.eventBus?.on(
     "annotationeditorlayerrendered",
-    (e: { error: Error | null; pageNumber: number; source: PDFPageView }) => {
-      // draw annotations from db
-      let annotsOnPage = annots.value.filter(
-        (annot) => annot.pageNumber === e.pageNumber
-      );
-      for (let annot of annotsOnPage) drawAnnot(annot);
-      // handle user's mouse event
-      e.source.div.onmousedown = (ev) => {
-        // determine if user is clicking on an annotation
-        if (!ev.target) return;
-        let clickedAnnotId: string | null =
+    async (e: {
+      error: Error | null;
+      pageNumber: number;
+      source: PDFPageView;
+    }) => {
+      // draw annotations on active page
+      let annots = pdfApp.annotStore.getByPage(e.pageNumber);
+      let inkAnnot: Ink | undefined = undefined;
+      let clickedAnnotId: string;
+      for (let annot of annots) {
+        // draw annotations (create Konva stage if it's ink)
+        annot.draw(e);
+        if (annot.data.type === AnnotationType.INK) {
+          // bind event handlers to Konva stage
+          inkAnnot = annot as Ink;
+          inkAnnot.bindEventHandlers(pdfApp.state);
+        } else {
+          // bind event handlers to doms
+          if (
+            annot.data.type === AnnotationType.RECTANGLE ||
+            annot.data.type === AnnotationType.COMMENT
+          )
+            annot.enableDragToMove();
+        }
+      }
+
+      // monitor tool change and create konva stage as needed
+      e.source.div.onmousemove = throttle(() => {
+        if (
+          pdfApp.state.tool === AnnotationType.INK ||
+          pdfApp.state.tool === AnnotationType.ERASER
+        ) {
+          // in freedraw mose
+          if (!inkAnnot) {
+            // create canvas if there is none
+            let annotData = {
+              _id: uid(),
+              _rev: "",
+              dataType: "pdfAnnotation",
+              projectId: props.projectId,
+              pageNumber: e.pageNumber,
+              content: "",
+              color: "",
+              rects: [] as Rect[],
+              type: AnnotationType.INK,
+            } as AnnotationData;
+            let annot = pdfApp.annotFactory.build(annotData);
+            if (annot) {
+              pdfApp.annotStore.add(annot, true);
+              inkAnnot = annot as Ink;
+              inkAnnot.draw(e);
+              inkAnnot.bindEventHandlers(pdfApp.state);
+            }
+          }
+          inkAnnot?.setDrawable(true);
+        } else {
+          inkAnnot?.setDrawable(false);
+        }
+      }, 500);
+
+      // event handlers to handle user interactions
+      e.source.div.onmousedown = (ev: MouseEvent) => {
+        toggleAnnotCard(false);
+        toggleFloatingMenu(false);
+        // if clicking on an annotation, set it active and return;
+        clickedAnnotId =
           (ev.target as HTMLElement).getAttribute("annotation-id") ||
           ((ev.target as HTMLElement).parentNode as HTMLElement).getAttribute(
             "annotation-id"
-          );
-        // temporary rectangle for rectangular highlight
-        let x1 = ev.clientX;
-        let y1 = ev.clientY;
-        let tempRect: HTMLElement;
-        if (!clickedAnnotId && pdfState.tool === AnnotationType.RECTANGLE) {
-          if (viewerContainer.value === null) return;
-          let annotLayer = (viewerContainer.value as HTMLElement)
-            ?.querySelector(
-              `div.page[data-page-number='${pdfState.currentPageNumber}']`
-            )
-            ?.querySelector(".annotationEditorLayer") as HTMLElement;
-          let layerRect = annotLayer.getBoundingClientRect();
-          tempRect = document.createElement("div");
-          tempRect.style.position = "absolute";
-          tempRect.style.background = pdfState.color;
-          tempRect.style.mixBlendMode = "multiply";
-          tempRect.style.left = `${x1 - layerRect.x}px`;
-          tempRect.style.top = `${y1 - layerRect.y}px`;
-          annotLayer.append(tempRect);
-          e.source.div.onmousemove = (ev) => {
-            ev.preventDefault();
-            tempRect.style.width = `${ev.clientX - x1}px`;
-            tempRect.style.height = `${ev.clientY - y1}px`;
+          ) ||
+          "";
+        pdfApp.annotStore.setActive(clickedAnnotId);
+        if (clickedAnnotId) {
+          e.source.div.onmouseup = () => {
+            toggleAnnotCard(true, pdfApp.annotStore.selected as Annotation);
           };
+          return;
         }
-        // draw annotations when mouse is up
-        e.source.div.onmouseup = async (ev) => {
-          if (clickedAnnotId) {
-            setActiveAnnot(clickedAnnotId);
-            toggleAnnotCard();
-          } else {
-            setActiveAnnot("");
-            if (pdfState.tool === AnnotationType.CURSOR) {
-              // toggle menu under text selection
-              toggleFloatingMenu(e.pageNumber);
-            } else {
-              await createAnnot(pdfState.tool, pdfState.color, e.pageNumber, {
-                x1,
-                y1,
-                x2: ev.clientX,
-                y2: ev.clientY,
-              });
-              // change back to cursor if comment is placed
-              // otherwise it's easy to create another one while user just want to click meaninglessly
-              if (pdfState.tool === AnnotationType.COMMENT)
-                changeTool(AnnotationType.CURSOR);
-            }
-          }
-          e.source.div.onmousemove = null;
-          if (tempRect) tempRect.remove();
-        };
+
+        // otherwise continue to determine what user is doing
+        switch (pdfApp.state.tool) {
+          case AnnotationType.CURSOR:
+            e.source.div.onmouseup = () => {
+              toggleFloatingMenu(true, e.pageNumber);
+              renderEvt.value = e;
+            };
+            break;
+          case AnnotationType.HIGHLIGHT:
+          case AnnotationType.UNDERLINE:
+          case AnnotationType.STRIKEOUT:
+            e.source.div.onmouseup = () => {
+              let annot = pdfApp.annotFactory.buildSelectionBasedAnnot(
+                pdfApp.state.tool,
+                pdfApp.state.color,
+                e
+              );
+              if (annot) {
+                pdfApp.annotStore.add(annot, true);
+                annot.draw(e);
+              }
+            };
+            break;
+          case AnnotationType.RECTANGLE:
+            let canvasWrapper = e.source.div.querySelector(
+              ".canvasWrapper"
+            ) as HTMLElement;
+            // temporary rectangle for rectangular highlight
+            let x1 = ev.clientX;
+            let y1 = ev.clientY;
+            let layerRect = canvasWrapper.getBoundingClientRect();
+            let tempRect = document.createElement("div");
+            tempRect.style.position = "absolute";
+            tempRect.style.background = pdfApp.state.color;
+            tempRect.style.mixBlendMode = "multiply";
+            tempRect.style.left = `${x1 - layerRect.x}px`;
+            tempRect.style.top = `${y1 - layerRect.y}px`;
+            canvasWrapper.append(tempRect);
+
+            e.source.div.onmousemove = (ev: MouseEvent) => {
+              ev.preventDefault();
+              if (!tempRect) return;
+              tempRect.style.width = `${ev.clientX - x1}px`;
+              tempRect.style.height = `${ev.clientY - y1}px`;
+            };
+            e.source.div.onmouseup = (ev: MouseEvent) => {
+              tempRect.remove();
+              // create annotation
+              let rects = [
+                {
+                  left: Math.min(x1, ev.clientX),
+                  top: Math.min(y1, ev.clientY),
+                  width: Math.abs(x1 - ev.clientX),
+                  height: Math.abs(y1 - ev.clientY),
+                },
+              ];
+              if (rects[0].width < 1 || rects[0].height < 1) return;
+              rects[0] = pdfApp.annotFactory.offsetTransform(
+                rects[0],
+                canvasWrapper
+              );
+
+              let annotData = {
+                _id: uid(),
+                _rev: "",
+                type: AnnotationType.RECTANGLE,
+                rects: rects,
+                color: pdfApp.state.color,
+                pageNumber: e.pageNumber,
+                projectId: pdfApp.state.projectId,
+                dataType: "pdfAnnotation",
+                content: "",
+              } as AnnotationData;
+              let annot = pdfApp.annotFactory.build(annotData);
+              if (annot) {
+                annot.draw(e);
+                pdfApp.annotStore.add(annot, true);
+              }
+              e.source.div.onmousemove = null;
+              e.source.div.onmouseup = null;
+            };
+            break;
+          case AnnotationType.COMMENT:
+            e.source.div.onmouseup = (ev: MouseEvent) => {
+              let canvasWrapper = e.source.div.querySelector(
+                ".canvasWrapper"
+              ) as HTMLElement;
+              // create annotation
+              let rects = [
+                {
+                  left: ev.clientX,
+                  top: ev.clientY,
+                  width: 0,
+                  height: 0,
+                },
+              ];
+              rects[0] = pdfApp.annotFactory.offsetTransform(
+                rects[0],
+                canvasWrapper
+              );
+              let annotData = {
+                _id: uid(),
+                _rev: "",
+                type: AnnotationType.COMMENT,
+                rects: rects,
+                color: pdfApp.state.color,
+                pageNumber: e.pageNumber,
+                projectId: pdfApp.state.projectId,
+                dataType: "pdfAnnotation",
+                content: "",
+              } as AnnotationData;
+              let annot = pdfApp.annotFactory.build(annotData);
+              if (annot) {
+                annot.draw(e);
+                pdfApp.annotStore.add(annot, true);
+              }
+            };
+            break;
+        }
       };
     }
   );
-  pdfApp.eventBus.on(
-    "pagechanging",
-    (e: {
-      source: PDFViewer;
-      pageNumber: number;
-      pageLabels: string | null;
-      previous: number;
-    }) => {
-      // update pdfState when scrolling
-      pdfState.currentPageNumber = e.pageNumber;
-      // if the pdf is initially loaded, scroll to last position
-      // this line is here because if the scrollto is called too early
-      // then the position will be slightly different each time
-      // do not remove if (!ready) otherwise pdf can't scroll
-      if (!ready.value) {
-        if (viewerContainer.value === null) return;
-        (viewerContainer.value as HTMLElement).scrollTo(
-          pdfState.scrollLeft,
-          pdfState.scrollTop
-        );
-        ready.value = true;
-      }
-    }
-  );
-  pdfApp.eventBus.on(
-    "scalechanging",
-    (e: {
-      source: PDFPageView;
-      scale: number;
-      presetValue: string | undefined;
-    }) => {
-      // let pdfApp calculate the scale, then change the pdfState
-      pdfState.currentScale = e.scale;
-      if (e.presetValue) pdfState.currentScaleValue = e.presetValue;
-    }
-  );
-  // find controller
-  pdfApp.eventBus.on(
-    "updatefindmatchescount",
-    (e: {
-      source: PDFFindController;
-      matchesCount: { current: number; total: number };
-    }) => {
-      // update the current/total founded during searching
-      // this will only fired when something found
-      Object.assign(matchesCount, e.matchesCount);
-    }
-  );
-  pdfApp.eventBus.on(
-    "updatetextlayermatches",
-    (e: { source: PDFFindController; pageIndex: number }) => {
-      // if not found, set the matchesCount.total to 0
-      let findController = e.source;
-      let selected = findController.selected;
-      if (selected === undefined) return;
-      if (findController.pageMatches === undefined) return;
-      if (selected.matchIdx == -1 && selected.pageIdx == -1) {
-        Object.assign(matchesCount, { current: -1, total: 0 });
-      } else {
-        let pageIdx = selected.pageIdx;
-        let current = selected.matchIdx + 1;
-        for (let i = 0; i < pageIdx; i++) {
-          current += findController.pageMatches[i].length;
-        }
-        matchesCount.current = current;
-      }
-    }
-  );
+
   loadPDF(props.projectId);
 });
 </script>
 <style lang="scss">
-@import "pdfjs-dist/web/pdf_viewer.css";
+@use "pdfjs-dist/web/pdf_viewer.css";
+
 .viewerContainer {
   position: absolute;
   overflow: auto;
@@ -690,10 +506,10 @@ onMounted(async () => {
   box-sizing: unset;
 }
 
-.annotationEditorLayer {
-  // for pdfjs-dist ~ 3.6
-  z-index: unset;
-  display: block;
+.hidden,
+[hidden] {
+  // fix pdfjs-dist 3.7.107 standard annot popup won't hidden
+  display: none !important;
 }
 
 .activeAnnotation {
@@ -701,15 +517,23 @@ onMounted(async () => {
   outline: dashed 2px $primary;
 }
 
+// fix popup not correctly rendered
 .annotationLayer .popup {
   // fix white text color in standard annotations
   // standard annotation means annotation made by adobe pdf etc
   color: black;
 }
+
 .annotationLayer .popup h1 {
   // fix weird title in standard annotation
   font-weight: bold;
   line-height: unset;
   letter-spacing: unset;
+}
+
+// .annotationEditorLayer will be hidden if there is no pdfjs-generated annotation
+// do not hide user injected annotations
+.annotationEditorLayer {
+  display: unset !important;
 }
 </style>

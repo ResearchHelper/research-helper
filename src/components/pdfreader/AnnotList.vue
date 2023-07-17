@@ -12,14 +12,18 @@
   >
     <q-item
       style="padding: 5px 5px"
-      v-for="(annot, index) in annots"
-      :key="annot._id"
+      v-for="(annot, index) in annots.filter(
+        (annot) => annot.data.type !== AnnotationType.INK
+      )"
+      :key="annot.data._id"
     >
       <AnnotCard
-        :annot="annot"
+        :annot="(annot as Annotation)"
         :style="'width: 100%'"
-        :class="{ activeAnnotation: selectedAnnotId === annot._id }"
-        @click="setActiveAnnot(annot._id)"
+        :class="{
+          activeAnnotation: selectedId === annot.data._id,
+        }"
+        @click="$emit('setActive', annot.data._id)"
         ref="cards"
         :data-cy="`annot-card-${index}`"
       />
@@ -28,21 +32,15 @@
 </template>
 
 <script setup lang="ts">
-import { inject, PropType } from "vue";
-import { Annotation } from "src/backend/database";
-import { KEY_setActiveAnnot } from "./injectKeys";
+import { PropType } from "vue";
+import { Annotation } from "src/backend/pdfannotation/annotations";
+import { AnnotationType } from "src/backend/database";
 
 import AnnotCard from "./AnnotCard.vue";
 
 const props = defineProps({
   annots: { type: Object as PropType<Annotation[]>, required: true },
-  selectedAnnotId: { type: String, required: true },
+  selectedId: { type: String, required: true },
 });
-const setActiveAnnot = inject(KEY_setActiveAnnot) as (id: string) => void;
+const emit = defineEmits(["setActive"]);
 </script>
-
-<style scoped>
-.activeAnnotationCard {
-  border: dashed 2px cyan;
-}
-</style>

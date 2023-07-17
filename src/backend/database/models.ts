@@ -1,5 +1,6 @@
 import { QTreeNode } from "quasar";
 import { LayoutConfig, ResolvedLayoutConfig } from "golden-layout";
+import { PDFPageView } from "pdfjs-dist/web/pdf_viewer";
 
 /***********************************
  * Project, Note, Folder and related data types
@@ -137,6 +138,10 @@ export interface PDFState {
   color: string; // hex value
   scrollLeft: number; // current scrollLeft position
   scrollTop: number; // current scrollTop position
+  inkThickness: number;
+  inkOpacity: number;
+  eraserType: EraserType;
+  eraserThickness: number;
 }
 
 export interface Rect {
@@ -153,6 +158,13 @@ export enum AnnotationType {
   RECTANGLE = "rectangle",
   UNDERLINE = "underline",
   STRIKEOUT = "strikeout",
+  INK = "ink",
+  ERASER = "eraser",
+}
+
+export enum EraserType {
+  STROKE = "stroke",
+  PIXEL = "pixel",
 }
 
 export enum SpreadMode {
@@ -162,9 +174,9 @@ export enum SpreadMode {
 }
 
 /**
- * Goes into database and UI display
+ * Goes into database
  */
-export interface Annotation {
+export interface AnnotationData {
   _id: string; // handled by db
   _rev: string; // handled by db
   dataType: "pdfAnnotation"; // for database search
@@ -184,6 +196,9 @@ type RefProxy = {
   gen: number;
 };
 
+/**
+ * Table of Content Node
+ */
 export interface TOCNode extends QTreeNode {
   dest?: string | any[] | null; // destination
   ref?: RefProxy;
@@ -197,6 +212,12 @@ export interface PDFSearch {
   highlightAll: boolean;
   caseSensitive: boolean;
   entireWord: boolean;
+}
+
+export interface RenderEvt {
+  error: Error | null;
+  pageNumber: number;
+  source: PDFPageView;
 }
 
 /**************************************************

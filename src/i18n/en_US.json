@@ -55,8 +55,9 @@
   "exit-full-screen": "Exit full screen",
   "enter-full-screen": "Enter full screen",
   "view": "View",
-  "highlight-color": "Highlight color",
+  "color": "Color",
   "comment": "Comment",
+  "ink": "Ink",
   "highlight": "Highlight",
   "cursor": "Cursor",
   "add-project": "Add Project",
@@ -131,5 +132,11 @@
   "error": "Error",
   "warning": "Warning",
   "batch-mode": "Batch mode",
-  "category": "Categories"
+  "category": "Categories",
+  "scroll-into-view": "Scroll into view",
+  "eraser": "Eraser",
+  "thickness": "Thickness",
+  "opacity": "Opacity",
+  "strok-eraser": "Stroke Eraser",
+  "pixel-eraser": "Pixel Eraser"
 }

@@ -11,6 +11,7 @@
       name="metaInfoTab"
       icon="info"
       :ripple="false"
+      data-cy="tab-meta-info"
     >
       <q-tooltip>{{ $t("info") }}</q-tooltip>
     </q-tab>
@@ -18,6 +19,7 @@
       name="tocTab"
       icon="toc"
       :ripple="false"
+      data-cy="tab-toc"
     >
       <q-tooltip>{{ $t("toc") }}</q-tooltip>
     </q-tab>
@@ -25,6 +27,7 @@
       name="annotationTab"
       icon="edit"
       :ripple="false"
+      data-cy="tab-annot-list"
     >
       <q-tooltip>{{ $t("comment") }}</q-tooltip>
     </q-tab>
@@ -43,15 +46,16 @@
 
     <q-tab-panel name="tocTab">
       <PDFTOC
-        :outline="outline"
-        @clickTOC="(node: TOCNode) => clickTOC(node)"
+        :outline="pdfApp.outline"
+        @clickTOC="(node: TOCNode) => pdfApp.clickTOC(node)"
       />
     </q-tab-panel>
 
     <q-tab-panel name="annotationTab">
-      <AnnotationList
-        :annots="annots"
-        :selectedAnnotId="selectedAnnotId"
+      <AnnotList
+        :annots="(pdfApp.annotStore.annots as Annotation[])"
+        :selectedId="pdfApp.annotStore.selectedId"
+        @setActive="(id) => pdfApp.annotStore.setActive(id)"
       />
     </q-tab-panel>
   </q-tab-panels>
@@ -59,25 +63,17 @@
 
 <script setup lang="ts">
 import { inject, Ref, ref } from "vue";
-import { Annotation, Project, TOCNode } from "src/backend/database";
-import {
-  KEY_annots,
-  KEY_clickTOC,
-  KEY_outline,
-  KEY_project,
-  KEY_selectedAnnotId,
-} from "./injectKeys";
+import { Project, TOCNode } from "src/backend/database";
+import { KEY_pdfApp, KEY_project } from "./injectKeys";
+import PDFApplication from "src/backend/pdfreader";
+import { Annotation } from "src/backend/pdfannotation/annotations";
 
 import MetaInfoTab from "../MetaInfoTab.vue";
 import PDFTOC from "./PDFTOC.vue";
-import AnnotationList from "./AnnotationList.vue";
+import AnnotList from "./AnnotList.vue";
 
 const rightMenuTab = ref("metaInfoTab");
 
-let selectedAnnotId = inject(KEY_selectedAnnotId) as string;
-const annots = inject(KEY_annots) as Ref<Annotation[]>;
-const outline = inject(KEY_outline) as Ref<TOCNode[]>;
+const pdfApp = inject(KEY_pdfApp) as PDFApplication;
 const project = inject(KEY_project) as Ref<Project>;
-
-const clickTOC = inject(KEY_clickTOC) as (node: TOCNode) => void;
 </script>

@@ -1,87 +1,95 @@
-import { AnnotationType, PDFState } from "src/backend/database";
+import PDFApplication from "src/backend/pdfreader";
 import PDFToolBar from "./PDFToolBar.vue";
+import { PDFState } from "src/backend/database";
+import { KEY_pdfApp } from "./injectKeys";
 
-const spreadMode = ["No Spreads", "Odd Spreads", "Even Spreads"];
+function testPageControl(pdfState: PDFState, pageLabels: string[]) {
+  const pdfApp = new PDFApplication("projectId");
+  pdfApp.state = pdfState;
+  pdfApp.pageLabels = pageLabels;
 
-function testcase(
-  pdfState: {
-    currentPageNumber: number;
-    pagesCount: number;
-    currentScale: number;
-    spreadMode: number;
-  },
-  pageLabels: string[],
-  rightMenuSize: number
-) {
   cy.mount(PDFToolBar, {
-    props: { pdfState, pageLabels, rightMenuSize },
+    global: {
+      provide: {
+        [KEY_pdfApp]: pdfApp,
+      },
+    },
   });
 
   // page control
-  const pageControl = cy.dataCy("page-control");
-  if (pageLabels.length > 0)
-    pageControl
-      .find("span")
+  if (pdfApp.pageLabels?.length > 0) {
+    // I cannot factor out cy.dataCy("page-control") as a variable
+    // otherwise the query becomes weird...
+    cy.dataCy("page-control")
+      .children("input")
+      .should(
+        "have.value",
+        pdfApp.pageLabels[pdfApp.state.currentPageNumber - 1]
+      );
+
+    cy.dataCy("page-control")
+      .children("span")
       .should(
         "have.text",
-        `(${pdfState.currentPageNumber} of ${pdfState.pagesCount})`
+        ` (${pdfApp.state.currentPageNumber} of ${pdfApp.state.pagesCount}) `
       );
-  else {
-    pageControl
-      .find("input")
-      .should("have.value", pageLabels[pdfState.currentPageNumber]);
-    pageControl.get("span").should("have.text", `of ${pdfState.pagesCount}`);
+  } else {
+    cy.dataCy("page-control")
+      .children("input")
+      .should("have.value", pdfApp.state.currentPageNumber);
+    cy.dataCy("page-control")
+      .children("span")
+      .should("have.text", ` of ${pdfApp.state.pagesCount}`);
   }
-
-  // view dropdown
-  cy.dataCy("btn-dropdown-view").click();
-
-  // scale
-  cy.dataCy("scale").should(
-    "have.text",
-    Math.trunc(pdfState.currentScale * 100) + "%"
-  );
-
-  // spread
-  cy.dataCy("btn-toggle-spread")
-    .children(".text-primary")
-    .should("have.text", spreadMode[pdfState.spreadMode]);
 }
 
 describe("<PDFToolBar />", () => {
-  it("test case 1", () => {
-    const pdfState = {
-      currentPageNumber: 1,
+  it("renders - normal pageLabels", () => {
+    let state = {
+      dataType: "pdfState",
+      projectId: "projectId",
       pagesCount: 100,
-      currentScale: 1,
-      spreadMode: 0,
-    };
+      currentPageNumber: 1,
+      tool: "cursor",
+      color: "#FFFF00",
+    } as PDFState;
 
-    const pageLabels = [];
+    let pageLabels = [];
     for (let i = 1; i <= 100; i++) {
       pageLabels.push(i.toString());
     }
 
-    const rightMenuSize = 10;
-
-    testcase(pdfState, pageLabels, rightMenuSize);
+    testPageControl(state, pageLabels);
   });
+  it("renders - pageLabels with letters", () => {
+    let state = {
+      dataType: "pdfState",
+      projectId: "projectId",
+      pagesCount: 100,
+      currentPageNumber: 1,
+      tool: "cursor",
+      color: "#FFFF00",
+    } as PDFState;
 
-  it("test case 2", () => {
-    const pdfState = {
-      currentPageNumber: 2,
-      pagesCount: 50,
-      currentScale: 1.2,
-      spreadMode: 1,
-    };
-
-    const pageLabels = ["a", "b", "c"];
-    for (let i = 1; i <= 50 - 4; i++) {
+    let pageLabels = ["a"];
+    for (let i = 2; i <= 100; i++) {
       pageLabels.push(i.toString());
     }
 
-    const rightMenuSize = 10;
+    testPageControl(state, pageLabels);
+  });
+  it("renders - empty pageLabels", () => {
+    let state = {
+      dataType: "pdfState",
+      projectId: "projectId",
+      pagesCount: 100,
+      currentPageNumber: 1,
+      tool: "cursor",
+      color: "#FFFF00",
+    } as PDFState;
 
-    testcase(pdfState, pageLabels, rightMenuSize);
+    let pageLabels = [] as string[];
+
+    testPageControl(state, pageLabels);
   });
 });
