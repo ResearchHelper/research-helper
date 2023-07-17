@@ -28,7 +28,6 @@
     "@excalidraw/excalidraw": "^0.15.2",
     "@quasar/extras": "^1.15.8",
     "axios": "^0.21.1",
-    "canvas": "^2.11.2",
     "citation-js": "^0.6.5",
     "cytoscape": "^3.23.0",
     "cytoscape-cola": "^2.5.1",
