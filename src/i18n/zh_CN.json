@@ -138,5 +138,6 @@
   "thickness": "厚度",
   "opacity": "不透明度",
   "strok-eraser": "线条橡皮擦",
-  "pixel-eraser": "像素橡皮擦"
+  "pixel-eraser": "像素橡皮擦",
+  "loading": "加载中"
 }

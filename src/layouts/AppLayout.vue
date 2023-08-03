@@ -1,25 +1,60 @@
 <template>
-  <WelcomeCarousel v-model="showWelcomeCarousel" />
+  <div
+    v-if="loading"
+    style="margin-top: 50vh"
+    class="q-px-xl row justify-center"
+  >
+    <div class="text-h6">{{ $t("loading") + "..." }}</div>
+    <q-linear-progress
+      v-if="loading"
+      size="1.5rem"
+      color="primary"
+      :value="1"
+    >
+      <div class="absolute-full flex flex-center">
+        <q-badge
+          color="white"
+          text-color="primary"
+          label="100%"
+        />
+      </div>
+    </q-linear-progress>
+  </div>
+  <WelcomeCarousel
+    v-else-if="showWelcomeCarousel"
+    v-model="showWelcomeCarousel"
+  />
+  <MainLayout v-else />
 </template>
 <script setup lang="ts">
-import { onMounted, ref } from "vue";
 import WelcomeCarousel from "src/components/WelcomeCarousel.vue";
-import { getAppState } from "src/backend/appState";
+import MainLayout from "./MainLayout.vue";
+
 import { useQuasar } from "quasar";
-import { useI18n } from "vue-i18n";
+import { getAppState } from "src/backend/appState";
 import { useStateStore } from "src/stores/appState";
-const stateStore = useStateStore();
+import { onMounted, ref } from "vue";
+import { useI18n } from "vue-i18n";
 const $q = useQuasar();
 const { locale } = useI18n({ useScope: "global" });
-const showWelcomeCarousel = ref(false);
+const stateStore = useStateStore();
+// must determine the existence of storagePath before heading to MainLayout
+const showWelcomeCarousel = ref(true);
+const loading = ref(true);
 
 onMounted(async () => {
+  // show progress bar during appState retrival
+  setTimeout(() => {
+    loading.value = false;
+  }, 500);
   let state = await getAppState();
   stateStore.loadState(state);
 
   // if there is no path, show welcome carousel
   if (!stateStore.settings.storagePath) {
     showWelcomeCarousel.value = true;
+  } else {
+    showWelcomeCarousel.value = false;
   }
 
   // apply settings

@@ -31,7 +31,11 @@ class PluginManager {
   communityMetas = ref<PluginMeta[]>([]);
   plugins = ref<Map<string, Plugin>>(new Map());
 
-  constructor() {
+  /**
+   * Initialize pluginManager
+   * Do this after stateStore is initialized
+   */
+  init() {
     // create all necessary folders and files
     let hiddenFolder = window.path.join(
       stateStore.settings.storagePath,

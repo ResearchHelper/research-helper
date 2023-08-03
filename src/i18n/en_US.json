@@ -138,5 +138,6 @@
   "thickness": "Thickness",
   "opacity": "Opacity",
   "strok-eraser": "Stroke Eraser",
-  "pixel-eraser": "Pixel Eraser"
+  "pixel-eraser": "Pixel Eraser",
+  "loading": "Loading"
 }
