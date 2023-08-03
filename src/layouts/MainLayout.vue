@@ -1,5 +1,4 @@
 <template>
-  <WelcomeLayout />
   <q-splitter
     :model-value="40"
     unit="px"
@@ -47,7 +46,6 @@
 // types
 import { Project, Note, BusEvent, Page, NoteType } from "src/backend/database";
 // components
-import WelcomeLayout from "./WelcomeLayout.vue";
 import LeftRibbon from "./LeftRibbon.vue";
 import LeftMenu from "src/components/leftmenu/LeftMenu.vue";
 // GoldenLayout
@@ -276,7 +274,7 @@ function onUpdateProject(project: Project) {
 onMounted(async () => {
   let state = await getAppState();
   stateStore.loadState(state);
-  pluginManager.init();
+  pluginManager.init(); // initialize pluginManager after storagePath is set
 
   // apply layout related settings
   if (stateStore.showLeftMenu) leftMenuSize.value = state.leftMenuSize;
