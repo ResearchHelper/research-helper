@@ -1,6 +1,6 @@
 {
   "name": "research-helper",
-  "version": "3.1.0-beta",
+  "version": "3.1.1-beta",
   "description": "A paper / book / note management tool",
   "productName": "Research Helper",
   "author": "Hunt Feng <spacecurvature@gmail.com>",
@@ -11,7 +11,7 @@
     "format": "prettier --write \"**/*.{js,ts,vue,scss,html,md,json}\" --ignore-path .gitignore",
     "test": "echo \"See package.json => scripts for available tests.\" && exit 0",
     "dev": "yarn run pouchdb-server --port 3000 -d remote_database &  quasar dev -m electron",
-    "debug": "quasar build -m electron -T AppImage --debug",
+    "debug": "quasar build -m electron --debug",
     "build": "quasar build -m electron",
     "test:ci": "yarn run test:unit:ci && yarn run test:component:ci",
     "test:unit": "vitest --no-threads",
