@@ -56,8 +56,7 @@ import "src/css/goldenlayout/base.scss";
 import "src/css/goldenlayout/theme.scss";
 // db
 import { useStateStore } from "src/stores/appState";
-import { getProject } from "src/backend/project/project";
-import { getNote, getNotes } from "src/backend/project/note";
+import { getNote } from "src/backend/project/note";
 import {
   getLayout,
   updateLayout,
@@ -76,7 +75,7 @@ import {
   watch,
 } from "vue";
 import { useI18n } from "vue-i18n";
-import { EventBus, debounce } from "quasar";
+import { EventBus } from "quasar";
 import pluginManager from "src/backend/plugin";
 
 interface PageItem {
@@ -277,6 +276,7 @@ function onUpdateProject(project: Project) {
 onMounted(async () => {
   let state = await getAppState();
   stateStore.loadState(state);
+  pluginManager.init();
 
   // apply layout related settings
   if (stateStore.showLeftMenu) leftMenuSize.value = state.leftMenuSize;

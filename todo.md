@@ -1,13 +1,14 @@
 FIXME:
 
 - [ ] macos white screen
+  - [ ] storage path is empty when initially booted, the app is trying to create `.research-helper` out of nowhere. To fix this, initialize plugin manager after storage path is set.
 
 TODO:
 
 - [ ] timestamps on necessary data
 - [ ] new special folder, recently added
 - [ ] change attachFile to attachPDF
-- [ ] set attachFile to adding new file into the project folder 
+- [ ] set attachFile to adding new file into the project folder
 - [ ] put pdf annotations to markdown as a link. we can click to jump to the specific annotation
 
 IMPROVE:

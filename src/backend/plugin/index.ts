@@ -7,6 +7,7 @@ import {
   View,
   ComponentName,
   ToggleButton,
+  AppState,
 } from "../database";
 import { Buffer } from "buffer";
 import { getAppState } from "../appState";
@@ -31,12 +32,32 @@ class PluginManager {
   communityMetas = ref<PluginMeta[]>([]);
   plugins = ref<Map<string, Plugin>>(new Map());
 
-  constructor() {
+  // constructor() {
+  //   // create all necessary folders and files
+  //   let hiddenFolder = window.path.join(
+  //     stateStore.settings.storagePath,
+  //     ".research-helper"
+  //   );
+  //   console.log("storage path", stateStore.settings.storagePath)
+  //   console.log("hiddenFolder", hiddenFolder)
+  //   if (!window.fs.existsSync(hiddenFolder)) window.fs.mkdirSync(hiddenFolder);
+  //   let pluginsFolder = window.path.join(hiddenFolder, "plugins");
+  //   if (!window.fs.existsSync(pluginsFolder))
+  //     window.fs.mkdirSync(pluginsFolder);
+  // }
+
+  /**
+   * Initialize pluginManager
+   * Do this after stateStore is initialized 
+   */
+  init() {
     // create all necessary folders and files
     let hiddenFolder = window.path.join(
       stateStore.settings.storagePath,
       ".research-helper"
     );
+    console.log("storage path", stateStore.settings.storagePath)
+    console.log("hiddenFolder", hiddenFolder)
     if (!window.fs.existsSync(hiddenFolder)) window.fs.mkdirSync(hiddenFolder);
     let pluginsFolder = window.path.join(hiddenFolder, "plugins");
     if (!window.fs.existsSync(pluginsFolder))
