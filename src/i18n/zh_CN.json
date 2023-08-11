@@ -143,5 +143,6 @@
   "added": "添加",
   "favorites": "收藏",
   "date-added": "添加日期",
-  "date-modified": "修改日期"
+  "date-modified": "修改日期",
+  "set-favorite": "收藏"
 }

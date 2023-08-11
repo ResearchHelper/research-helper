@@ -22,10 +22,11 @@
   - [x] display time sorted table when selected
 - [x] MetaInfoTab shows timestamps
 - [ ] Add favorites to library page
-  - [x] folder UI
+  - [ ] folder UI
   - [ ] a star button in front of each project entry
-  - [ ] add `favorite` (boolean) to `Project` data
-  - [ ] display projects with `favorite=true`
+  - [x] add `favorite` (boolean) to `Project` data
+  - [ ] display favorite in `ProjectTableRow` as a star-shape checkbox
+  - [ ] update project data when clicked
 - [ ] Add meta data to folders
 - [ ] Able to add notes to folders as well ??
 - [ ] Able to pin figures
@@ -33,3 +34,20 @@
 ### Improvements:
 
 - [ ] Compactification of database
+
+TODO: refactor project related stuff
+
+- [ ] `Project` class
+  - [ ] save
+  - [ ] update
+  - [ ] delete
+- [ ] `ProjectStore` class
+  - [ ] loadFromDB
+  - [ ] add
+  - [ ] update
+  - [ ] delete
+        ????????? do we need this
+- [ ] `ProjectFactory` class, use chain responsibility here so we can freely combine the following
+  - [ ] createProjectByMeta
+  - [ ] createProjectByFile
+  - [ ] createEmptyProject

@@ -31,7 +31,7 @@
       </div>
       <div
         v-else
-        style="font-size: 1rem; width: 50vw"
+        style="font-size: 1rem; min-width: 20vw; max-width: 50vw"
         class="ellipsis"
       >
         {{ col.value }}

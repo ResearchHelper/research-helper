@@ -143,5 +143,6 @@
   "added": "Added",
   "favorites": "Favorites",
   "date-added": "Added",
-  "date-modified": "Modified"
+  "date-modified": "Modified",
+  "set-favorite": "Set as favorite"
 }

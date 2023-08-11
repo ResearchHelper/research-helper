@@ -6,11 +6,11 @@
     hide-bottom
     square
     separator="none"
+    table-header-style="white-space: nowarp"
     :rows-per-page-options="[0]"
     :columns="headers"
     :rows="projects"
     row-key="_id"
-    :wrap-cells="true"
     :filter="searchString"
     :filter-method="(searchProject as any)"
     :loading="loading"
