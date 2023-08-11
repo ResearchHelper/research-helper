@@ -36,9 +36,10 @@ const bus = inject("bus") as EventBus;
 const props = defineProps({
   noteId: { type: String, required: true },
   hasToolbar: { type: Boolean, required: true },
+  data: { type: Object, required: false },
 });
 
-const currentNote = ref<Note>({} as Note);
+const currentNote = ref<Note>();
 const vditor = ref<Vditor | null>(null);
 const vditorDiv = ref<HTMLElement | null>(null);
 const showEditor = ref(false);
@@ -56,10 +57,16 @@ watch(
 );
 
 onMounted(async () => {
-  currentNote.value = (await getNote(props.noteId)) as Note;
-  linkBase.value = window.path.dirname(currentNote.value.path);
-  if (process.env.DEV) {
-    linkBase.value = "file://" + linkBase.value;
+  try {
+    currentNote.value = (await getNote(props.noteId)) as Note;
+    linkBase.value = window.path.dirname(currentNote.value.path);
+    if (process.env.DEV) {
+      linkBase.value = "file://" + linkBase.value;
+    }
+  } catch (error) {
+    if (!props.data?.notePath) {
+      throw Error("Must pass in a valid noteId or a valid notePath");
+    }
   }
   if (!vditorDiv.value) return;
   vditorDiv.value.setAttribute("id", `vditor-${props.noteId}`);
@@ -210,7 +217,7 @@ function setTheme(theme: string) {
 
 async function setContent() {
   if (!vditor.value) return;
-  let content = await loadNote(props.noteId);
+  let content = await loadNote(props.noteId, props.data?.notePath);
   vditor.value.setValue(content);
   changeLinks();
   addImgResizer();
@@ -221,14 +228,14 @@ async function _saveContent() {
   // this will be called before unmount
   if (!vditor.value) return;
   let content = vditor.value.getValue();
-  await saveNote(props.noteId, content);
-  await saveLinks();
+  await saveNote(props.noteId, content, props.data?.notePath);
+  if (currentNote.value) await saveLinks(); // only save links if it's a built-in note
 }
 
 const saveContent = debounce(_saveContent, 100) as () => void;
 
 async function saveLinks() {
-  if (!vditor.value) return;
+  if (!vditor.value || !currentNote.value) return;
   let sourceNode = {
     id: currentNote.value._id,
     label: currentNote.value.label,
