@@ -66,10 +66,29 @@ export default class AnnotationStore {
   async loadFromDB() {
     try {
       // get all annotations of the currentry {
-      let result = await db.find({
-        selector: { dataType: "pdfAnnotation", projectId: this.projectId },
-      });
-      return result.docs as AnnotationData[];
+      let annotDatas = (
+        await db.find({
+          selector: { dataType: "pdfAnnotation", projectId: this.projectId },
+        })
+      ).docs as AnnotationData[];
+
+      // TODO: remove this few more versions later
+      let flag = false;
+      for (let annotData of annotDatas)
+        if (!annotData.timestampAdded) {
+          annotData.timestampAdded = Date.now();
+          annotData.timestampModified = Date.now();
+          flag = true;
+        }
+      if (flag) {
+        let responses = await db.bulkDocs(annotDatas);
+        for (let i in responses) {
+          let rev = responses[i].rev;
+          if (rev) annotDatas[i]._rev = rev;
+        }
+      }
+
+      return annotDatas;
     } catch (err) {
       console.log(err);
       return [];

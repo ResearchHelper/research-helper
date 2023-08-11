@@ -169,6 +169,8 @@ export default class AnnotationFactory {
     let annotData = {
       _id: uid(),
       _rev: "",
+      timestampAdded: Date.now(),
+      timestampModified: Date.now(),
       type: tool,
       rects: rects,
       color: color,

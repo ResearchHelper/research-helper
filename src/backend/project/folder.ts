@@ -1,3 +1,4 @@
+import { uid } from "quasar";
 import { db, Folder } from "../database";
 import { sortTree } from "./utils";
 
@@ -28,6 +29,8 @@ async function getFolderTree(): Promise<Folder[] | undefined> {
       let library = {
         _id: "library",
         _rev: "",
+        timestampAdded: Date.now(),
+        timestampModified: Date.now(),
         label: "Library",
         icon: "home",
         children: [],
@@ -37,10 +40,27 @@ async function getFolderTree(): Promise<Folder[] | undefined> {
       return [library];
     }
 
+    // TODO: remove this few more versions later
+    let flag = false;
+    for (let folder of result.docs as Folder[])
+      if (!folder.timestampAdded) {
+        folder.timestampAdded = Date.now();
+        folder.timestampModified = Date.now();
+        flag = true;
+      }
+    if (flag) {
+      let responses = await db.bulkDocs(result.docs);
+      for (let i in responses) {
+        let rev = responses[i].rev;
+        if (rev) result.docs[i]._rev = rev;
+      }
+    }
+
     // create a dict for later use
     let folders: { [k: string]: Folder } = {};
-    for (let doc of docs) folders[doc._id] = doc as Folder;
-
+    for (let folder of docs as Folder[]) {
+      folders[folder._id] = folder;
+    }
     // create tree using depth first search
     function _dfs(root: Folder, folderTreeRoot: Folder) {
       Object.assign(folderTreeRoot, root);
@@ -51,11 +71,11 @@ async function getFolderTree(): Promise<Folder[] | undefined> {
       }
     }
 
-    let tree = {} as Folder;
-    _dfs(folders["library"], tree);
-    sortTree(tree);
+    let library = {} as Folder;
+    _dfs(folders["library"], library);
+    sortTree(library);
 
-    return [tree];
+    return [library];
   } catch (err) {
     console.log(err);
   }
@@ -68,20 +88,24 @@ async function getFolderTree(): Promise<Folder[] | undefined> {
 async function addFolder(parentId: string) {
   try {
     // add to database
-    let result = await db.post({
+    let folder = {
+      _id: uid(),
+      _rev: "",
+      timestampAdded: Date.now(),
+      timestampModified: Date.now(),
       label: "New Folder",
       icon: "folder",
       children: [],
       dataType: "folder",
-    });
-    let node: Folder = await db.get(result.id);
+    } as Folder;
+    await db.put(folder);
 
     // push to children of parent Node
     let parentNode: Folder = await db.get(parentId);
-    parentNode.children.push(node._id);
+    parentNode.children.push(folder._id);
     await updateFolder(parentId, { children: parentNode.children } as Folder);
 
-    return node;
+    return folder;
   } catch (err) {
     console.log(err);
   }
@@ -96,6 +120,7 @@ async function updateFolder(folderId: string, props: Folder) {
   try {
     let folder: Folder = await db.get(folderId);
     props._rev = folder._rev;
+    props.timestampModified = Date.now();
     Object.assign(folder, props);
     let result = await db.put(folder);
     folder._rev = result.rev;

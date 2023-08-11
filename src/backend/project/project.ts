@@ -1,4 +1,4 @@
-import { db, Meta, Project } from "../database";
+import { db, Meta, Project, SpecialFolder } from "../database";
 import { uid } from "quasar";
 import { createProjectFolder, deleteProjectFolder } from "./file";
 
@@ -14,6 +14,8 @@ async function addProject(folderId: string): Promise<Project | void> {
     let project = {
       _id: uid(),
       _rev: "",
+      timestampAdded: Date.now(),
+      timestampModified: Date.now(),
       dataType: "project",
       label: "New Project",
       title: "New Project",
@@ -87,6 +89,7 @@ async function updateProject(project: Project): Promise<Project | undefined> {
   try {
     let oldProject = await db.get(project._id);
     project._rev = oldProject._rev;
+    project.timestampModified = Date.now();
     project.label = project.title; // also update label
     let result = await db.put(project);
     project._rev = result.rev;
@@ -146,13 +149,69 @@ async function getAllProjects(): Promise<Project[]> {
  * @returns {Array} array of projects
  */
 async function getProjectsByFolderId(folderId: string): Promise<Project[]> {
-  let result = await db.find({
-    selector: {
-      dataType: "project",
-      folderIds: { $in: [folderId] },
-    },
-  });
-  return result.docs as Project[];
+  let projects = [] as Project[];
+  switch (folderId) {
+    case SpecialFolder.LIBRARY:
+      projects = (
+        await db.find({
+          selector: { dataType: "project" },
+        })
+      ).docs as Project[];
+      break;
+    case SpecialFolder.ADDED:
+      let date = new Date();
+      // get recently added project in the last 30 days
+      let timestamp = date.setDate(date.getDate() - 30);
+      projects = (
+        await db.find({
+          selector: {
+            dataType: "project",
+            timestampAdded: {
+              $gt: timestamp,
+            },
+          },
+        })
+      ).docs as Project[];
+      // sort projects in descending order
+      projects.sort((a, b) => b.timestampAdded - a.timestampAdded);
+      break;
+    case SpecialFolder.FAVORITES:
+      projects = (
+        await db.find({
+          selector: {
+            dateType: "project",
+            favorite: true,
+          },
+        })
+      ).docs as Project[];
+      break;
+    default:
+      projects = (
+        await db.find({
+          selector: {
+            dataType: "project",
+            folderIds: { $in: [folderId] },
+          },
+        })
+      ).docs as Project[];
+      break;
+  }
+  // TODO: remove this few more versions later
+  let flag = false;
+  for (let project of projects)
+    if (!project.timestampAdded) {
+      project.timestampAdded = Date.now();
+      project.timestampModified = Date.now();
+      flag = true;
+    }
+  if (flag) {
+    let responses = await db.bulkDocs(projects);
+    for (let i in responses) {
+      let rev = responses[i].rev;
+      if (rev) projects[i]._rev = rev;
+    }
+  }
+  return projects;
 }
 
 export {

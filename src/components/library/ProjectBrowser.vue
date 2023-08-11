@@ -25,9 +25,9 @@
     v-model="treeViewSize"
   >
     <template v-slot:before>
-      <TreeView
+      <FolderTree
         style="background: var(--color-library-treeview-bkgd)"
-        @exportFolder="(folder) => showExportFolderDialog(folder)"
+        @exportFolder="(folder: Folder) => showExportFolderDialog(folder)"
         ref="treeview"
       />
     </template>
@@ -61,7 +61,7 @@
             ref="actionBar"
           />
           <!-- actionbar height 36px, table view is 100%-36px -->
-          <TableView
+          <ProjectTable
             v-model:projects="projects"
             :searchString="searchString"
             style="
@@ -143,8 +143,8 @@ import { TextItem } from "pdfjs-dist/types/src/display/api";
 import { EventBus } from "quasar";
 // components
 import ActionBar from "src/components/library/ActionBar.vue";
-import TableView from "src/components/library/TableView.vue";
-import TreeView from "src/components/library/TreeView.vue";
+import ProjectTable from "src/components/library/ProjectTable.vue";
+import FolderTree from "src/components/library/FolderTree.vue";
 import MetaInfoTab from "src/components/MetaInfoTab.vue";
 import ExportDialog from "src/components/library/ExportDialog.vue";
 import IdentifierDialog from "src/components/library/IdentifierDialog.vue";
@@ -191,7 +191,7 @@ const stateStore = useStateStore();
  * Data
  *********************************/
 // component refs
-const treeview = ref<typeof TreeView | null>(null);
+const treeview = ref<typeof FolderTree | null>(null);
 
 // data
 const searchString = ref("");
@@ -542,7 +542,7 @@ async function attachFile(
 async function renameFromMeta(project: Project, index?: number) {
   if (project.path === undefined) return;
   let author = "";
-  let year = project.issued["date-parts"][0][0] || "Unknown";
+  let year = project.issued?.["date-parts"][0][0] || "Unknown";
   let title = project.title;
   let extname = window.path.extname(project.path);
   if (!project.author || project.author.length === 0) {
@@ -645,7 +645,7 @@ async function deleteNote(note: Note, index?: number) {
 }
 
 /**********************************************************
- * TreeView
+ * FolderTree
  **********************************************************/
 
 function showExportFolderDialog(_folder: Folder) {

@@ -45,7 +45,7 @@
                 <q-item-section>{{ $t("add-folder") }}</q-item-section>
               </q-item>
               <q-item
-                v-if="!specialFolderIds.includes(prop.node._id)"
+                v-if="!Object.values(SpecialFolder).includes(prop.node._id)"
                 clickable
                 v-close-popup
                 @click="setRenameFolder(prop.node)"
@@ -60,7 +60,7 @@
                 <q-item-section>{{ $t("export-references") }}</q-item-section>
               </q-item>
               <q-item
-                v-if="!specialFolderIds.includes(prop.node._id)"
+                v-if="!Object.values(SpecialFolder).includes(prop.node._id)"
                 clickable
                 v-close-popup
                 @click="deleteFolder(prop.node)"
@@ -101,7 +101,7 @@
 <script setup lang="ts">
 // types
 import { onMounted, ref, watch } from "vue";
-import { Folder } from "src/backend/database";
+import { Folder, SpecialFolder } from "src/backend/database";
 import { QTree, QTreeNode } from "quasar";
 //db
 import { useStateStore } from "src/stores/appState";
@@ -126,7 +126,6 @@ const emit = defineEmits(["exportFolder"]);
 const renameInput = ref<HTMLInputElement | null>(null);
 const tree = ref<QTree | null>(null);
 
-const specialFolderIds = ref(["library"]);
 const folders = ref<QTreeNode[]>([]);
 const expandedKeys = ref(["library"]);
 const renamingFolderId = ref("");
@@ -138,7 +137,7 @@ const enterTime = ref(0);
 watch(
   () => stateStore.settings.language,
   () => {
-    for (let id of specialFolderIds.value) {
+    for (let id of Object.values(SpecialFolder)) {
       let node = tree.value?.getNodeByKey(id) as QTreeNode;
       node.label = t(id);
     }
@@ -148,6 +147,18 @@ watch(
 onMounted(async () => {
   folders.value = (await getFolderTree()) as QTreeNode[];
   folders.value[0].label = t("library");
+
+  // add other special folders
+  folders.value.push({
+    _id: "added",
+    label: t("added"),
+    icon: "history",
+  });
+  folders.value.push({
+    _id: "favorites",
+    label: t("favorites"),
+    icon: "star",
+  });
 });
 
 async function saveState() {
@@ -193,7 +204,7 @@ async function addFolder(parentNode: Folder, label?: string, focus?: boolean) {
  * @param node
  */
 function deleteFolder(node: Folder) {
-  if (specialFolderIds.value.includes(node._id)) return;
+  if ((Object.values(SpecialFolder) as string[]).includes(node._id)) return;
 
   // remove from ui
   function _dfs(oldNode: Folder): Folder[] {

@@ -7,6 +7,7 @@ db.createIndex({
   index: {
     fields: [
       "dataType",
+      "timestampAdded",
       "projectId",
       "pageNumber",
       "folderIds",

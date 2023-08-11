@@ -263,6 +263,26 @@
         />
       </div>
 
+      <div class="row justify-between q-mt-sm">
+        <div
+          class="col"
+          style="font-size: 1rem"
+        >
+          {{ $t("date-added") }}
+        </div>
+        <div>{{ new Date(meta.timestampAdded).toLocaleString() }}</div>
+      </div>
+
+      <div class="row justify-between q-mt-sm">
+        <div
+          class="col"
+          style="font-size: 1rem"
+        >
+          {{ $t("date-modified") }}
+        </div>
+        <div>{{ new Date(meta.timestampModified).toLocaleString() }}</div>
+      </div>
+
       <div>
         <q-btn
           class="full-width"

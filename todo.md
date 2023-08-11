@@ -1,27 +1,35 @@
-FIXME:
+### Fixes:
 
-- [x] macos white screen: storage path is empty when initially booted, the app is trying to create `.research-helper` out of nowhere. To fix this, initialize plugin manager after storage path is set.
-  - [x] when there is no storagePath in db
-  - [x] when there is storagePath in db
-  - [x] show progress bar during the retrival of appState
+- [ ] Project opened repeatedly
 
-TODO:
+### Features:
 
-- [ ] timestamps on necessary data
-- [ ] new special folder, recently added
-- [ ] change attachFile to attachPDF
-- [ ] set attachFile to adding new file into the project folder
-- [ ] put pdf annotations to markdown as a link. we can click to jump to the specific annotation
+- [x] Add time stamp to data with type `Folder, Project, Note, AnnotationData`
+  - [x] put timestampAdded if there is none in getProjects
+  - [x] put timestampAdded if there is none in getNotes
+  - [x] put timestampAdded if there is none in getFolderTree
+  - [x] put timestampAdded if there is none in getAnnotations
+  - [x] put timestampAdded in addProject
+  - [x] put timestampAdded in addNote
+  - [x] put timestampAdded in addFolder
+  - [x] put timestampAdded in addAnnotation
+  - [x] update timestampModified in updateProject
+  - [x] update timestampModified in updateNote
+  - [x] update timestampModified in updateFolder
+  - [x] update timestampModified in updateAnnotation
+- [x] Add new category `Recently added` to library page
+  - [x] UI
+  - [x] display time sorted table when selected
+- [x] MetaInfoTab shows timestamps
+- [ ] Add favorites to library page
+  - [x] folder UI
+  - [ ] a star button in front of each project entry
+  - [ ] add `favorite` (boolean) to `Project` data
+  - [ ] display projects with `favorite=true`
+- [ ] Add meta data to folders
+- [ ] Able to add notes to folders as well ??
+- [ ] Able to pin figures
 
-IMPROVE:
+### Improvements:
 
-- [ ] compactification of db
-
-LONG-TERM TODO:
-
-- [ ] reduce memory usage #55 by changing backend to tauri
-- [ ] change product name from 'Research Helper' to other
-- [ ] Terminology library
-- [ ] cloud sync
-- [ ] ai read paper
-- [ ] documentations
+- [ ] Compactification of database

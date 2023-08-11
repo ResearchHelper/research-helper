@@ -26,12 +26,15 @@ async function addNote(
     // add to db
     let note = {
       _id: noteId,
+      _rev: "",
+      timestampAdded: Date.now(),
+      timestampModified: Date.now(),
       dataType: "note",
       projectId: projectId,
       label: "New Note",
       path: filePath,
       type: type,
-    };
+    } as Note;
     await db.put(note);
 
     return await db.get(noteId);
@@ -65,6 +68,7 @@ async function updateNote(newNote: Note): Promise<Note | undefined> {
   try {
     let note: Note = await db.get(newNote._id);
     newNote._rev = note._rev;
+    newNote.timestampModified = Date.now();
     let result = await db.put(newNote);
     newNote._rev = result.rev;
     return newNote;
@@ -93,14 +97,32 @@ async function getNote(noteId: string): Promise<Note | undefined> {
  */
 async function getNotes(projectId: string): Promise<Note[]> {
   try {
-    let result = await db.find({
-      selector: {
-        dataType: "note",
-        projectId: projectId,
-      },
-    });
+    let notes = (
+      await db.find({
+        selector: {
+          dataType: "note",
+          projectId: projectId,
+        },
+      })
+    ).docs as Note[];
 
-    return result.docs as Note[];
+    // TODO: remove this few more versions later
+    let flag = false;
+    for (let note of notes)
+      if (!note.timestampAdded) {
+        note.timestampAdded = Date.now();
+        note.timestampModified = Date.now();
+        flag = true;
+      }
+    if (flag) {
+      let responses = await db.bulkDocs(notes);
+      for (let i in responses) {
+        let rev = responses[i].rev;
+        if (rev) notes[i]._rev = rev;
+      }
+    }
+
+    return notes as Note[];
   } catch (error) {
     console.log(error);
     return [];
