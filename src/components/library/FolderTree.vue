@@ -105,6 +105,7 @@ import { Folder, SpecialFolder } from "src/backend/database";
 import { QTree, QTreeNode } from "quasar";
 //db
 import { useStateStore } from "src/stores/appState";
+import { useProjectStore } from "src/stores/projectStore";
 import {
   getFolderTree,
   addFolder as addFolderDB,
@@ -113,12 +114,12 @@ import {
   moveFolderInto,
   getParentFolder,
 } from "src/backend/project/folder";
-import { updateProject } from "src/backend/project/project";
 import { updateAppState } from "src/backend/appState";
 import { sortTree } from "src/backend/project/utils";
 import { useI18n } from "vue-i18n";
 
 const stateStore = useStateStore();
+const projectStore = useProjectStore();
 const { t } = useI18n({ useScope: "global" });
 
 const emit = defineEmits(["exportFolder"]);
@@ -329,7 +330,7 @@ async function onDrop(e: DragEvent, node: Folder) {
     for (let project of JSON.parse(draggedProjectsRaw)) {
       if (!project.folderIds.includes(_dragoverNode._id)) {
         project.folderIds.push(_dragoverNode._id);
-        updateProject(project);
+        await projectStore.updateProject(project._id, project);
       }
     }
   } else {

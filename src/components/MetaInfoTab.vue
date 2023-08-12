@@ -326,20 +326,16 @@
 
 <script setup lang="ts">
 // types
-import { ref, watch, computed, inject, onMounted } from "vue";
+import { ref, watch, computed, onMounted } from "vue";
 import type { PropType } from "vue";
-import { EventBus } from "quasar";
-import { Author, Edge, Folder, Meta, Project } from "src/backend/database";
+import { Author, Folder, Meta, Project } from "src/backend/database";
 // backend stuff
-import { updateProject } from "src/backend/project/project";
-import { updateEdge } from "src/backend/project/graph";
 import { getMeta } from "src/backend/project/meta";
 import { getFolder } from "src/backend/project/folder";
-
-const componentName = "MetaInfoTab";
+import { useProjectStore } from "src/stores/projectStore";
+const projectStore = useProjectStore();
 
 const props = defineProps({ project: Object as PropType<Project> });
-const bus = inject("bus") as EventBus;
 const tab = ref("meta");
 const name = ref(""); // author name
 const tag = ref(""); // project tag
@@ -422,26 +418,7 @@ async function getCategories() {
  */
 async function modifyInfo(updateEdgeData?: boolean) {
   if (meta.value === undefined) return;
-  // update db and also update rev in this.project
-  let newMeta = (await updateProject(meta.value as Project)) as Project;
-  meta.value._rev = newMeta._rev;
-
-  bus.emit("updateProject", {
-    source: componentName,
-    data: meta.value,
-  });
-
-  if (updateEdgeData) {
-    let sourceNode = {
-      id: meta.value._id,
-      label: meta.value.title,
-      type: "project",
-    };
-    await updateEdge(
-      meta.value._id as string,
-      { sourceNode: sourceNode } as Edge
-    );
-  }
+  projectStore.updateProject(meta.value._id, meta.value);
 }
 
 async function addAuthor() {

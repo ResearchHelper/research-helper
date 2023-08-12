@@ -28,7 +28,7 @@
         v-if="stateStore.selected.length == 1"
         clickable
         v-close-popup
-        @click="onAddNote(NoteType.MARKDOWN)"
+        @click="addNote(NoteType.MARKDOWN)"
       >
         <q-item-section> {{ $t("add-markdown-note") }} </q-item-section>
       </q-item>
@@ -36,7 +36,7 @@
         v-if="stateStore.selected.length == 1"
         clickable
         v-close-popup
-        @click="onAddNote(NoteType.EXCALIDRAW)"
+        @click="addNote(NoteType.EXCALIDRAW)"
       >
         <q-item-section> {{ $t("add-excalidraw") }} </q-item-section>
       </q-item>
@@ -131,16 +131,13 @@
 import { inject, nextTick } from "vue";
 import { NoteType, Project } from "src/backend/database";
 import { QMenu } from "quasar";
-import {
-  KEY_metaDialog,
-  KEY_deleteDialog,
-  KEY_addNote,
-  KEY_attachFile,
-} from "./injectKeys";
+import { KEY_metaDialog, KEY_deleteDialog } from "./injectKeys";
 // db
 import { copyToClipboard } from "quasar";
 import { useStateStore } from "src/stores/appState";
+import { useProjectStore } from "src/stores/projectStore";
 const stateStore = useStateStore();
+const projectStore = useProjectStore();
 
 const emit = defineEmits(["expandRow"]);
 
@@ -150,26 +147,16 @@ const showDeleteDialog = inject(KEY_deleteDialog) as (
   deleteProjects: Project[],
   deleteFromDB: boolean
 ) => void;
-// note
-const addNote = inject(KEY_addNote) as (
-  projectId: string,
-  type: NoteType,
-  index?: number
-) => void;
-const attachFile = inject(KEY_attachFile) as (
-  replace: boolean,
-  projectId: string,
-  index?: number
-) => void;
-
-function onAddNote(type: NoteType) {
-  let project = stateStore.selected[0];
-  addNote(project._id, type);
-  expandRow(true);
-}
 
 function expandRow(isExpand: boolean) {
   emit("expandRow", isExpand);
+}
+
+async function addNote(type: NoteType) {
+  let project = stateStore.selected[0];
+  let note = projectStore.createNote(project._id, type);
+  await projectStore.addNote(note);
+  expandRow(true);
 }
 
 async function openProject() {
@@ -209,8 +196,8 @@ function searchMeta() {
  * Attach PDF to a project
  * @param replaceStoredCopy - replace the copy in storage?
  */
-function onAttachFile(replaceStoredCopy: boolean) {
-  attachFile(replaceStoredCopy, stateStore.selected[0]._id);
+async function onAttachFile(replaceStoredCopy: boolean) {
+  await projectStore.attachPDF(stateStore.selected[0]._id, replaceStoredCopy);
   expandRow(true);
 }
 </script>

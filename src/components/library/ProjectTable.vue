@@ -94,7 +94,7 @@
         :class="{
           'bg-primary': props.key === stateStore.selectedItemId,
         }"
-        :width="($refs.table as QTable).$el.getBoundingClientRect().width * 0.8"
+        :width="searchRowWidth"
         :text="expansionText[props.rowIndex]"
       />
     </template>
@@ -103,7 +103,7 @@
 
 <script setup lang="ts">
 // types
-import { computed, nextTick, PropType, ref, toRaw } from "vue";
+import { computed, nextTick, onMounted, PropType, ref, toRaw } from "vue";
 import { Project, Note, Author } from "src/backend/database";
 import { QTable, QTableColumn, QTr } from "quasar";
 // components
@@ -129,7 +129,8 @@ const isClickingPDF = ref(false);
 const showExpansion = ref(false);
 const expansionText = ref<string[]>([]);
 const loading = ref(false); // is table filtering data
-const tableRef = ref();
+const table = ref();
+const searchRowWidth = ref(0);
 const headers = [
   {
     name: "title",
@@ -146,6 +147,10 @@ const headers = [
     sortable: true,
   },
 ] as QTableColumn[];
+
+onMounted(() => {
+  searchRowWidth.value = table.value.$el.getBoundingClientRect().width * 0.8;
+});
 
 function handleSelection(rows: Project[], added: boolean, evt: KeyboardEvent) {
   // ignore selection change from header of not from a direct click event
@@ -164,7 +169,7 @@ function handleSelection(rows: Project[], added: boolean, evt: KeyboardEvent) {
   // wait for the default selection to be performed
   nextTick(() => {
     if (shiftKey === true) {
-      const tableRows = tableRef.value.filteredSortedRows;
+      const tableRows = table.value.filteredSortedRows;
       let firstIndex = tableRows.indexOf(oldSelectedRow);
       let lastIndex = tableRows.indexOf(newSelectedRow);
 

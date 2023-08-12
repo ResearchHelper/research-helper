@@ -1,6 +1,6 @@
 import Cite from "citation-js";
 import "@citation-js/plugin-isbn"; // must import this so we can use isbn as identifier
-import { getProjectsByFolderId } from "./project";
+import { getProjects } from "./project";
 import { exportFile } from "quasar";
 
 import { Folder, Meta, Project } from "../database";
@@ -43,7 +43,7 @@ async function exportMeta(
   options: { format?: string; template?: string }
 ) {
   try {
-    let projects: Project[] = await getProjectsByFolderId(folder._id);
+    let projects: Project[] = await getProjects(folder._id);
     console.log("projects", projects);
     let meta = await getMeta(projects, format, options);
     if (format === "json") {
