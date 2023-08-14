@@ -56,12 +56,8 @@ import { useStateStore } from "src/stores/appState";
 import cytoscape from "cytoscape";
 import cola from "cytoscape-cola";
 import { EventBus } from "quasar";
-import {
-  getItem,
-  getBackLinks,
-  getLinks,
-  getParents,
-} from "src/backend/project/graph";
+import { getItem, getLinks, getParents } from "src/backend/project/graph";
+import { getNotes } from "src/backend/project/note";
 cytoscape.use(cola);
 
 const props = defineProps({
@@ -73,8 +69,6 @@ const stateStore = useStateStore();
 const bus = inject("bus") as EventBus;
 
 const specialPages = ref(["library", "settings"]);
-const nodes = ref<NodeUI[]>([]);
-const edges = ref<EdgeUI[]>([]);
 
 watch(
   () => props.itemId,
@@ -96,25 +90,36 @@ onBeforeUnmount(() => {
 
 async function reload() {
   if (!!!props.itemId || specialPages.value.includes(props.itemId)) return;
-  await getGraph();
-  await drawGraph();
+  let elements = await getGraph();
+  await drawGraph(elements);
 }
 
 /**
  * Note centered local graph
  */
 async function getGraph() {
-  // get background color
+  let elements = { nodes: [] as NodeUI[], edges: [] as EdgeUI[] };
+  let item = await getItem(props.itemId);
+  if (!item) return elements;
+
+  // if the item is project, also its notes' links and their parents
+  if (item.dataType === "project") {
+    let notes = await getNotes(item._id);
+    for (let note of notes) {
+      let { nodes, edges } = await getLinks(note);
+      nodes = nodes.concat(nodes, await getParents(nodes));
+      elements.nodes = elements.nodes.concat(nodes);
+      elements.edges = elements.edges.concat(edges);
+    }
+  }
+  // get the links and parents of the item itself
+  let { nodes, edges } = await getLinks(item);
+  nodes = nodes.concat(nodes, await getParents(nodes));
+  elements.nodes = elements.nodes.concat(nodes);
+  elements.edges = elements.edges.concat(edges);
+
+  // set styles to nodes
   let color = getComputedStyle(document.body).getPropertyValue("--color-text");
-
-  // clear array
-  nodes.value = [] as NodeUI[];
-  edges.value = [] as EdgeUI[];
-
-  let elements = await getLinks(props.itemId);
-  let parentNodes = await getParents(elements.nodes);
-  elements.nodes = elements.nodes.concat(parentNodes);
-  console.log("elements", elements);
   for (let node of elements.nodes) {
     let type = node.data.type;
     if (type === "project") node.data.shape = "rectangle";
@@ -123,11 +128,10 @@ async function getGraph() {
     node.data.bg = props.itemId === node.data.id ? "#1976d2" : color;
   }
 
-  nodes.value = elements.nodes;
-  edges.value = elements.edges;
+  return elements;
 }
 
-async function drawGraph() {
+async function drawGraph(elements: { nodes: NodeUI[]; edges: EdgeUI[] }) {
   let cy = cytoscape({
     container: document.getElementById("cy"),
 
@@ -168,7 +172,7 @@ async function drawGraph() {
       },
     ] as cytoscape.Stylesheet[],
 
-    elements: { nodes: nodes.value, edges: edges.value },
+    elements: elements,
 
     layout: {
       name: "cola" as any, // cytoscape's type is not good

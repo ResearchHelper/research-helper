@@ -1,3 +1,4 @@
+import { uid } from "quasar";
 import { db, Project, SpecialFolder } from "../database";
 import {
   copyFile,
@@ -5,6 +6,28 @@ import {
   deleteProjectFolder,
   renameFile,
 } from "./file";
+
+/**
+ * Create a project data
+ * @param folderId
+ */
+export function createProject(folderId: string) {
+  // create empty project entry
+  let project = {
+    _id: uid(),
+    _rev: "",
+    timestampAdded: Date.now(),
+    timestampModified: Date.now(),
+    dataType: "project",
+    label: "New Project",
+    title: "New Project",
+    path: "",
+    tags: [] as string[],
+    folderIds: ["library"],
+  } as Project;
+  if (folderId != "library") project.folderIds.push(folderId);
+  return project;
+}
 
 /**
  * Add empty projet to database, creates project folder and returns the project

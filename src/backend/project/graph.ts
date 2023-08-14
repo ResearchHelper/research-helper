@@ -14,17 +14,16 @@ export async function getItem(
 }
 
 /**
- * Get nodes and edges that are conected to given noteId
+ * Get nodes and edges that are conected to given item
  * Styles are set yet
  * @param noteId
  * @returns elements
  */
-export async function getLinks(noteId: string) {
+export async function getLinks(item: Project | Note) {
   try {
-    // get the note first
-    let note = (await getItem(noteId)) as Note;
-    let forwardIds = note.links.map((link) => link.id);
+    let forwardIds = item.links ? item.links.map((link: Node) => link.id) : [];
 
+    // query removes non-existing docs and duplicated docs
     let result = await db.query(function (doc: Project | Note, emit) {
       if (emit) {
         // forward links
@@ -33,20 +32,20 @@ export async function getLinks(noteId: string) {
         // backward links
         if (
           doc.links &&
-          doc.links.map((link: Node) => link.id).includes(noteId)
+          doc.links.map((link: Node) => link.id).includes(item._id)
         )
           emit("backward", doc);
       }
     });
 
-    let pushedIds = [note._id];
+    let pushedIds = [item._id];
     let nodes = [
       {
         data: {
-          id: note._id,
-          label: note.label,
-          type: "note",
-          parent: note.projectId,
+          id: item._id,
+          label: item.label,
+          type: item.dataType,
+          parent: item.projectId,
         },
       },
     ] as NodeUI[];
@@ -62,23 +61,25 @@ export async function getLinks(noteId: string) {
       // add to edges
       edges.push({
         data: {
-          source: row.key === "forward" ? note._id : row.id,
-          target: row.key === "forward" ? row.id : note._id,
+          source: row.key === "forward" ? item._id : row.id,
+          target: row.key === "forward" ? row.id : item._id,
         },
       });
     }
 
     // add missing nodes as well
-    for (let link of note.links) {
-      if (!pushedIds.includes(link.id)) {
-        // link.type is default to undefined (missing) already
-        nodes.push({ data: link });
-        edges.push({
-          data: {
-            source: note._id,
-            target: link.id,
-          },
-        });
+    if (item.links) {
+      for (let link of item.links) {
+        if (!pushedIds.includes(link.id)) {
+          // link.type is default to undefined (missing) already
+          nodes.push({ data: link });
+          edges.push({
+            data: {
+              source: item._id,
+              target: link.id,
+            },
+          });
+        }
       }
     }
     return { nodes, edges };
@@ -88,9 +89,14 @@ export async function getLinks(noteId: string) {
   }
 }
 
+/**
+ * Given nodes, get each's parent project as node
+ * @param nodes
+ * @returns parentNodes
+ */
 export async function getParents(nodes: NodeUI[]) {
   let parentIds = nodes.map((node) => node.data.parent);
-  console.log("parentIds", parentIds);
+  // query removes non-existing docs and duplicated docs
   let result = await db.query(function (doc: Project, emit) {
     if (emit) {
       if (parentIds.includes(doc._id)) {
@@ -100,11 +106,5 @@ export async function getParents(nodes: NodeUI[]) {
     }
   });
 
-  console.log(
-    "parentNodes",
-    result.rows.map((row) => row.value)
-  );
   return result.rows.map((row) => row.value);
 }
-window.getLinks = getLinks;
-window.getParents = getParents;

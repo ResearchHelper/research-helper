@@ -7,6 +7,26 @@ const fs = window.fs;
 const path = window.path;
 
 /**
+ * Create a note
+ * @param projectId
+ * @param type
+ */
+export function createNote(projectId: string, type: NoteType) {
+  return {
+    _id: uid(),
+    _rev: "",
+    timestampAdded: Date.now(),
+    timestampModified: Date.now(),
+    dataType: "note",
+    projectId: projectId,
+    label: "New Note",
+    path: "",
+    type: type,
+    links: [],
+  } as Note;
+}
+
+/**
  * Add a note to database
  * and creates the actual markdown file in project folder
  * @param note
@@ -14,13 +34,11 @@ const path = window.path;
  */
 export async function addNote(note: Note): Promise<Note | undefined> {
   try {
-    let noteId: string = uid();
-
     // create actual file
     let extension = note.type === NoteType.EXCALIDRAW ? ".excalidraw" : ".md";
     note.path = (await createFile(
       note.projectId,
-      noteId + extension
+      note._id + extension
     )) as string;
 
     // add to db

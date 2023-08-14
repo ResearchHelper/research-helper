@@ -1,67 +1,59 @@
 import { describe, it, expect } from "vitest";
 import { db, Meta, Project } from "src/backend/database";
 import {
+  createProject,
   addProject,
   deleteProject,
   updateProject,
-  updateProjectByMeta,
-  getProjectsByFolderId,
   getProject,
+  getProjects,
 } from "src/backend/project/project";
 import { uid } from "quasar";
 
 describe("project.ts", () => {
-  it("addProject", async () => {
+  it("createProject", async () => {
     let folderId = uid();
-    let project = (await addProject(folderId)) as Project;
+    let project = createProject(folderId);
     expect(project.dataType).toBe("project");
     expect(project.folderIds).toContain(folderId);
   });
 
   it("deleteProject from table", async () => {
     let folderId = uid();
-    let p = (await addProject(folderId)) as Project;
-    await deleteProject(p._id, false, folderId);
-    let project = (await getProject(p._id)) as Project;
+    let project = createProject(folderId);
+    project = (await addProject(project)) as Project;
+    await deleteProject(project._id, false, folderId);
+    project = (await getProject(project._id)) as Project;
     expect(project.folderIds).not.toContain(folderId);
   });
 
   it("deleteProject from db", async () => {
     let folderId = uid();
-    let p = (await addProject(folderId)) as Project;
-    await deleteProject(p._id, true);
+    let project = createProject(folderId);
+    project = (await addProject(project)) as Project;
+    await deleteProject(project._id, true);
 
-    let results = await db.find({
-      selector: {
-        _id: p._id,
-      },
-    });
-    expect(results.docs.length).toBe(0);
+    let p = await getProject(project._id);
+    expect(p).toBe(undefined);
   });
 
   it("updateProject", async () => {
     let folderId = uid();
-    let p = (await addProject(folderId)) as Project;
-    p.title = "test title";
-    let project = await updateProject(p);
-    expect(project?.title).toBe(p.title);
+    let project = createProject(folderId);
+    project = (await addProject(project)) as Project;
+    project.title = "test title";
+    let p = (await updateProject(project._id, project)) as Project;
+    expect(p.title).toBe(project.title);
   });
 
   it("getProjectsByFolderId", async () => {
     let folderId = uid();
     let n = 10;
-    for (let i = 0; i < n; i++) await addProject(folderId);
-    let projects = (await getProjectsByFolderId(folderId)) as Project[];
+    for (let i = 0; i < n; i++) {
+      let project = createProject(folderId);
+      await addProject(project);
+    }
+    let projects = (await getProjects(folderId)) as Project[];
     expect(projects.length).toBe(n);
-  });
-
-  it("updateProjectByMeta", async () => {
-    let folderId = uid();
-    let p = (await addProject(folderId)) as Project;
-    let title = "test title";
-    let project = (await updateProjectByMeta(p, {
-      title: "test title",
-    } as Meta)) as Project;
-    expect(project.title).toBe(title);
   });
 });
