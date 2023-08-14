@@ -70,6 +70,7 @@ export interface Note {
   path: string; // path to actual markdown file
   label: string; // markdown file name
   type: NoteType;
+  links: Node[]; // array of forward linked Ids
 }
 
 /**
@@ -122,15 +123,12 @@ export interface Node {
   type: "project" | "note" | undefined;
 }
 
-export interface Edge {
-  _id: string; // handled by db
-  _rev: string; // handled by db
-  dataType: "edge"; // for database search
-  type: "link" | "reference"; //
-  source: string; // source id
-  targets: string[]; // array of target ids
-  sourceNode: Node; // source node
-  targetNodes: Node[]; // array of target Nodes
+export interface NodeUI {
+  data: Node & { bg?: string; shape?: string; parent?: string };
+}
+
+export interface EdgeUI {
+  data: { source: string; target: string };
 }
 
 /****************************************

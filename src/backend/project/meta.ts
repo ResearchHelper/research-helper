@@ -3,7 +3,7 @@ import "@citation-js/plugin-isbn"; // must import this so we can use isbn as ide
 import { getProjects } from "./project";
 import { exportFile } from "quasar";
 
-import { Folder, Meta, Project } from "../database";
+import { Folder, Project } from "../database";
 
 /**
  * Get artible/book info given an identifier using citation.js

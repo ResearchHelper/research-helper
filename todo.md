@@ -23,6 +23,12 @@
 
 TODO: refactor project related stuff
 
-- [ ] simplify openProject and closeProject, try to make it to some global control in stateStore.
+- [ ] simplify openProject, closeProject, openPage, and closePage logics and try to make some of them to some global control in stateStore.
+- [ ] make a citation id generator that can generate different format
+- [ ] the label appear on top of the graph node is better to be a citation id
 
-- [ ] Graphview
+FIXME:
+
+- [ ] graphview nodes, parent attribute becomes undefined
+- [ ] getBackLinks didn't get anything, since we are finding data by matching noteId to deep array value in [{id, label}]
+- [ ] by letting forward links run, item other than current node has the parent property ....

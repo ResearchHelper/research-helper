@@ -83,7 +83,7 @@
             <q-item
               clickable
               v-close-popup
-              @click="setRenameNote(prop.node)"
+              @click="setRenameNote(prop.node._id)"
             >
               <q-item-section> {{ $t("rename") }} </q-item-section>
             </q-item>

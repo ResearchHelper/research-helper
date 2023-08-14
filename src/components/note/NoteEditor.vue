@@ -7,7 +7,7 @@
 <script setup lang="ts">
 // types
 import { inject, nextTick, onMounted, ref, watch } from "vue";
-import { Edge, Note, NoteType, Project } from "src/backend/database";
+import { Note, NoteType, Project, Node } from "src/backend/database";
 // vditor
 import Vditor from "vditor";
 import "src/css/vditor/index.css";
@@ -21,13 +21,14 @@ import {
   getAllNotes,
   getNote,
   uploadImage,
+  updateNote,
 } from "src/backend/project/note";
 
-import { updateEdge } from "src/backend/project/graph";
 import { getAllProjects } from "src/backend/project/project";
 // util
 import { EventBus, debounce } from "quasar";
 import { useI18n } from "vue-i18n";
+import _ from "lodash";
 
 const stateStore = useStateStore();
 const { t } = useI18n({ useScope: "global" });
@@ -236,12 +237,7 @@ const saveContent = debounce(_saveContent, 100) as () => void;
 
 async function saveLinks() {
   if (!vditor.value || !currentNote.value) return;
-  let sourceNode = {
-    id: currentNote.value._id,
-    label: currentNote.value.label,
-    type: currentNote.value.dataType,
-  };
-  let targetNodes = [];
+  let targetNodes = [] as Node[]; // target ids
 
   let parser = new DOMParser();
   let html = parser.parseFromString(vditor.value.getHTML(), "text/html");
@@ -254,25 +250,30 @@ async function saveLinks() {
       // this is a valid url, do nothing
     } catch (error) {
       // this is an invalid url, might be an id
-      if (!href.includes(".")) {
-        let item = await getNote(href);
+      if (!href.includes("."))
         targetNodes.push({
           id: href,
           label: node.innerText,
-          type: item?.dataType,
+          type: undefined,
         });
-      }
+      // default type to undefined for easier determination of missing node
     }
   }
 
-  let data = {
-    source: sourceNode.id,
-    targets: targetNodes.map((node) => node.id),
-    sourceNode: sourceNode,
-    targetNodes: targetNodes,
-  } as Edge;
-  await updateEdge(props.noteId, data);
-  bus.emit("updateGraph", { source: "NoteEditor", data: data });
+  // compare to links of currentNote, only save when different
+  let linkIds = currentNote.value.links.map((n) => n.id);
+  let newLinkIds = targetNodes.map((n) => n.id);
+  if (!_.isEqual(linkIds, newLinkIds)) {
+    currentNote.value.links = targetNodes;
+    currentNote.value = await updateNote(
+      currentNote.value._id,
+      currentNote.value
+    );
+
+    console.log("update graph");
+    // notify graphview to update
+    bus.emit("updateGraph");
+  }
 }
 
 /*****************************************
@@ -386,11 +387,12 @@ const addImgResizer = debounce(_addImgResizer, 50) as () => void;
  * Return a filtered list of projects / notes according to key
  * @param key - keywords to filter
  */
+// TODO: better item.dataType and item.label using citation id
 function filterHints(key: string) {
   hints.value = [];
   let items: (Project | Note)[] = projects.value.concat(notes.value as any);
   for (let item of items) {
-    let label = item.dataType === "project" ? item.title : (item as Note).label;
+    let label = item.label;
     if (label.toLocaleLowerCase().indexOf(key) > -1) {
       hints.value.push({
         value: `[${label}](${item._id})`,

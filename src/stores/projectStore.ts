@@ -176,6 +176,7 @@ export const useProjectStore = defineStore("projectStore", {
         label: "New Note",
         path: "",
         type: type,
+        links: [],
       } as Note;
     },
 

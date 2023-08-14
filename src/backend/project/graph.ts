@@ -1,173 +1,110 @@
 /**
  * For drawing the graphs in cytoscape.
- *
- * An Edge object has one source and multiple targets
  */
+import { EdgeUI, NodeUI, Node, Note, Project, db } from "../database";
 
-import { db, Project, Note, Node, Edge } from "../database";
-
-/**
- * Create outward edges
- * @param item - project / note
- */
-async function createEdge(item: Project | Note) {
+export async function getItem(
+  itemId: string
+): Promise<Project | Note | undefined> {
   try {
-    let sourceNode: Node = {
-      id: item._id,
-      type: item.dataType,
-      label: item.dataType === "project" ? item.title : item.label,
-    };
-    let edge = {
-      dataType: "edge",
-      source: sourceNode.id,
-      targets: [],
-      sourceNode: sourceNode,
-      targetNodes: [],
-    };
-    await db.post(edge);
+    return await db.get(itemId);
   } catch (error) {
     console.log(error);
   }
 }
 
 /**
- * Delete outward edges
- * @param nodeId - id of current node
+ * Get nodes and edges that are conected to given noteId
+ * Styles are set yet
+ * @param noteId
+ * @returns elements
  */
-async function deleteEdge(nodeId: string) {
+export async function getLinks(noteId: string) {
   try {
-    let outEdge = (await getOutEdge(nodeId)) as Edge;
-    await db.remove(outEdge as PouchDB.Core.RemoveDocument);
-  } catch (error) {
-    console.log(error);
-  }
-}
+    // get the note first
+    let note = (await getItem(noteId)) as Note;
+    let forwardIds = note.links.map((link) => link.id);
 
-/**
- * Update properties of edge
- * @param nodeId - id of current node
- * @param props - properties to be changed
- */
-async function updateEdge(nodeId: string, props: Edge) {
-  try {
-    let outEdge = (await getOutEdge(nodeId)) as Edge;
-    props._rev = outEdge._rev;
-    Object.assign(outEdge, props);
-    await db.put(outEdge);
-  } catch (error) {
-    console.log(error);
-  }
-}
+    let result = await db.query(function (doc: Project | Note, emit) {
+      if (emit) {
+        // forward links
+        if (forwardIds.includes(doc._id)) emit("forward", doc);
 
-/**
- * Append a new target to the existing edge
- * @param nodeId
- * @param item
- */
-async function appendEdgeTarget(nodeId: string, item: Project | Note) {
-  try {
-    let edge = (await getOutEdge(nodeId)) as Edge;
-    edge.targets.push(item._id);
-    edge.targetNodes.push({
-      id: item._id,
-      type: item.dataType,
-      label: item.dataType === "project" ? item.title : item.label,
+        // backward links
+        if (
+          doc.links &&
+          doc.links.map((link: Node) => link.id).includes(noteId)
+        )
+          emit("backward", doc);
+      }
     });
-    return await db.put(edge);
-  } catch (error) {
-    console.log(error);
-  }
-}
 
-/**
- * Update an existing targetNode in edge
- * @param nodeId
- * @param item
- */
-async function updateEdgeTarget(nodeId: string, item: Project | Note) {
-  try {
-    let edge = (await getOutEdge(nodeId)) as Edge;
-    for (let i in edge.targets) {
-      if (edge.targets[i] === item._id) {
-        edge.targetNodes[i] = {
-          id: item._id,
-          type: item.dataType,
-          label: item.dataType === "project" ? item.title : item.label,
-        };
-        return await db.put(edge);
+    let pushedIds = [note._id];
+    let nodes = [
+      {
+        data: {
+          id: note._id,
+          label: note.label,
+          type: "note",
+          parent: note.projectId,
+        },
+      },
+    ] as NodeUI[];
+    let edges = [] as EdgeUI[];
+    for (let row of result.rows) {
+      // add to nodes
+      if (!pushedIds.includes(row.id)) {
+        let { _id: id, label, dataType: type, projectId: parent } = row.value;
+        nodes.push({ data: { id, label, type, parent } });
+        pushedIds.push(row.id);
+      }
+
+      // add to edges
+      edges.push({
+        data: {
+          source: row.key === "forward" ? note._id : row.id,
+          target: row.key === "forward" ? row.id : note._id,
+        },
+      });
+    }
+
+    // add missing nodes as well
+    for (let link of note.links) {
+      if (!pushedIds.includes(link.id)) {
+        // link.type is default to undefined (missing) already
+        nodes.push({ data: link });
+        edges.push({
+          data: {
+            source: note._id,
+            target: link.id,
+          },
+        });
       }
     }
+    return { nodes, edges };
   } catch (error) {
     console.log(error);
+    return { nodes: [], edges: [] };
   }
 }
 
-/**
- * Delete specific target from an edge
- * @param nodeId
- * @param itemId
- * @returns
- */
-async function deleteEdgeTarget(nodeId: string, itemId: string) {
-  try {
-    let edge = (await getOutEdge(nodeId)) as Edge;
-    edge.targets = edge.targets.filter((targetId) => targetId != itemId);
-    edge.targetNodes = edge.targetNodes.filter(
-      (targetNode) => targetNode.id != itemId
-    );
-    return await db.put(edge);
-  } catch (error) {
-    console.log(error);
-  }
-}
+export async function getParents(nodes: NodeUI[]) {
+  let parentIds = nodes.map((node) => node.data.parent);
+  console.log("parentIds", parentIds);
+  let result = await db.query(function (doc: Project, emit) {
+    if (emit) {
+      if (parentIds.includes(doc._id)) {
+        let { _id: id, label, dataType: type } = doc;
+        emit("parent", { data: { id, label, type } });
+      }
+    }
+  });
 
-/**
- * Get both outward edges (forward links)
- * @param nodeId
- * @returns edge with source=nodeId
- */
-async function getOutEdge(nodeId: string): Promise<Edge | undefined> {
-  try {
-    let result = await db.find({
-      selector: {
-        dataType: "edge",
-        source: nodeId,
-      },
-    });
-    // each source corresponds to exactly 1 edge data
-    return result.docs[0] as Edge;
-  } catch (error) {
-    console.log(error);
-  }
+  console.log(
+    "parentNodes",
+    result.rows.map((row) => row.value)
+  );
+  return result.rows.map((row) => row.value);
 }
-
-/**
- * Get both inward edges (backward links)
- * @param nodeId
- * @returns edges with targets containing nodeId
- */
-async function getInEdges(nodeId: string): Promise<Edge[] | undefined> {
-  try {
-    let result = await db.find({
-      selector: {
-        dataType: "edge",
-        targets: { $in: [nodeId] },
-      },
-    });
-    // there maybe many nodes connecting to this node
-    return result.docs as Edge[];
-  } catch (error) {
-    console.log(error);
-  }
-}
-
-export {
-  getInEdges,
-  getOutEdge,
-  createEdge,
-  deleteEdge,
-  updateEdge,
-  appendEdgeTarget,
-  updateEdgeTarget,
-  deleteEdgeTarget,
-};
+window.getLinks = getLinks;
+window.getParents = getParents;
