@@ -202,9 +202,7 @@ async function drawGraph(elements: { nodes: NodeUI[]; edges: EdgeUI[] }) {
   });
 }
 
-defineExpose({
-  reload,
-});
+defineExpose({ reload });
 </script>
 <style scoped>
 .square {

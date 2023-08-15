@@ -1,12 +1,12 @@
 import { defineStore } from "pinia";
-import { uid } from "quasar";
-import { Note, NoteType, Project } from "src/backend/database";
+import { Note, NoteType, Project, AppState } from "src/backend/database";
 import {
   getNotes,
   getNote,
   addNote,
   deleteNote,
   updateNote,
+  createNote,
 } from "src/backend/project/note";
 import {
   getProjects,
@@ -16,17 +16,18 @@ import {
   updateProject,
   renamePDF,
   attachPDF,
+  createProject,
 } from "src/backend/project/project";
+import { sortTree } from "src/backend/project/utils";
 
 export const useProjectStore = defineStore("projectStore", {
   state: () => ({
     ready: false, // is project loaded
-    clicked: "", // clicked itemId, can be noteId or projectId
-    selected: [] as string[], // projectIds selected by checkbox
-    opened: [] as string[], // opened projectIds
-
+    selected: [] as (Project | Note)[], // projectIds selected by checkbox
     projects: [] as Project[], // array of projects
     openedProjects: [] as Project[], // array of opened projects
+
+    updatedProject: {} as Project, // for updating window tab name
   }),
 
   actions: {
@@ -49,7 +50,9 @@ export const useProjectStore = defineStore("projectStore", {
       let pushedIds = this.openedProjects.map((p) => p._id);
       for (let projectId of openedProjectIds) {
         if (pushedIds.includes(projectId)) continue;
-        this.openedProjects.push(await this.getProjectFromDB(projectId));
+        let project = (await this.getProjectFromDB(projectId)) as Project;
+        sortTree(project); // sort notes by alphabet
+        this.openedProjects.push(project);
         pushedIds.push(projectId);
       }
     },
@@ -65,21 +68,7 @@ export const useProjectStore = defineStore("projectStore", {
      * @param folderId
      */
     createProject(folderId: string) {
-      // create empty project entry
-      let project = {
-        _id: uid(),
-        _rev: "",
-        timestampAdded: Date.now(),
-        timestampModified: Date.now(),
-        dataType: "project",
-        label: "New Project",
-        title: "New Project",
-        path: "",
-        tags: [] as string[],
-        folderIds: ["library"],
-      } as Project;
-      if (folderId != "library") project.folderIds.push(folderId);
-      return project;
+      return createProject(folderId);
     },
 
     /**
@@ -118,6 +107,8 @@ export const useProjectStore = defineStore("projectStore", {
         // project exists in openedProjects only
         Object.assign(projectInOpened, newProject);
       }
+
+      this.updatedProject = newProject;
     },
 
     async deleteProject(
@@ -166,18 +157,7 @@ export const useProjectStore = defineStore("projectStore", {
      * @param type
      */
     createNote(projectId: string, type: NoteType) {
-      return {
-        _id: uid(),
-        _rev: "",
-        timestampAdded: Date.now(),
-        timestampModified: Date.now(),
-        dataType: "note",
-        projectId: projectId,
-        label: "New Note",
-        path: "",
-        type: type,
-        links: [],
-      } as Note;
+      return createNote(projectId, type);
     },
 
     /**

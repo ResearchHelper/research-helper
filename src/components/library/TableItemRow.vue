@@ -181,7 +181,7 @@ function showInExplorer() {
 }
 
 function clickItem() {
-  stateStore.selectedItemId = props.item._id;
+  projectStore.selected = [props.item];
 }
 
 function openItem() {

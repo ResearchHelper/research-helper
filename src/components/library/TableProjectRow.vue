@@ -9,6 +9,18 @@
         @mousedown.stop
       />
     </q-th>
+    <q-th auto-width>
+      <q-checkbox
+        dense
+        size="sm"
+        color="yellow"
+        checked-icon="star"
+        unchecked-icon="star_border"
+        :model-value="!!tableProps.row.favorite"
+        @update:model-value="(isFavorite: boolean) => menu?.setFavorite(isFavorite)"
+        @mousedown.stop
+      />
+    </q-th>
     <q-td auto-width>
       <q-icon
         v-if="!!tableProps.row.path || (tableProps.row.children?.length as typeof NaN) > 0"
@@ -38,14 +50,20 @@
       </div>
     </q-td>
 
-    <TableProjectMenu @expandRow="expandRow" />
+    <TableProjectMenu
+      :projectId="tableProps.key"
+      @expandRow="expandRow"
+      ref="menu"
+    />
   </q-tr>
 </template>
 
 <script setup lang="ts">
-import { PropType } from "vue";
+import { PropType, ref } from "vue";
 import { Project, Author } from "src/backend/database";
 import TableProjectMenu from "./TableProjectMenu.vue";
+
+const menu = ref<InstanceType<typeof TableProjectMenu>>();
 
 const props = defineProps({
   tableProps: {
@@ -60,7 +78,7 @@ const props = defineProps({
     required: true,
   },
 });
-const emit = defineEmits(["expandRow"]);
+const emit = defineEmits(["expandRow", "setFavorite"]);
 
 function expandRow(isExpand: boolean) {
   emit("expandRow", isExpand);

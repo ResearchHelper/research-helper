@@ -15,7 +15,7 @@
     :filter-method="(searchProject as any)"
     :loading="loading"
     selection="multiple"
-    v-model:selected="stateStore.selected"
+    v-model:selected="projectStore.selected"
     @selection="
       (details) => handleSelection(details.rows as Project[], details.added, details.evt as KeyboardEvent)
     "
@@ -33,6 +33,7 @@
             v-model="props.selected"
           />
         </q-th>
+        <q-th auto-width></q-th>
         <q-th auto-width></q-th>
         <q-th
           v-for="col in (props.cols as Array<{name: string, label:string}>)"
@@ -53,7 +54,8 @@
         class="tableview-row"
         :class="{
           'bg-primary':
-            props.key === stateStore.selectedItemId && !isClickingPDF,
+            projectStore.selected.map((item) => item._id).includes(props.key) &&
+            !isClickingPDF,
           selected: props.selected,
         }"
         draggable="true"
@@ -62,8 +64,8 @@
         @expandRow="(isExpand: boolean) => props.expand=isExpand"
         @mousedown="(e: PointerEvent) => clickProject(props, e)"
         @dblclick="dblclickProject(props.row)"
-        @contextmenu="(e:Event) => toggleContextMenu(props, e)"
-      ></TableProjectRow>
+        @contextmenu="(e:PointerEvent) => toggleContextMenu(props, e)"
+      />
 
       <!-- Expanded Rows -->
 
@@ -73,7 +75,8 @@
         :item="props.row"
         :class="{
           'bg-primary':
-            props.key === stateStore.selectedItemId && isClickingPDF,
+            projectStore.selected.map((item) => item._id).includes(props.key) &&
+            isClickingPDF,
         }"
         @click="isClickingPDF = true"
       />
@@ -84,7 +87,9 @@
         :key="note._id"
         :item="note"
         :class="{
-          'bg-primary': note._id === stateStore.selectedItemId,
+          'bg-primary': projectStore.selected
+            .map((item) => item._id)
+            .includes(note._id),
         }"
       />
 
@@ -92,7 +97,9 @@
       <TableSearchRow
         v-show="!!searchString"
         :class="{
-          'bg-primary': props.key === stateStore.selectedItemId,
+          'bg-primary': projectStore.selected
+            .map((item) => item._id)
+            .includes(props.key),
         }"
         :width="searchRowWidth"
         :text="expansionText[props.rowIndex]"
@@ -103,7 +110,7 @@
 
 <script setup lang="ts">
 // types
-import { computed, nextTick, onMounted, PropType, ref, toRaw } from "vue";
+import { nextTick, onMounted, PropType, ref, toRaw } from "vue";
 import { Project, Note, Author } from "src/backend/database";
 import { QTable, QTableColumn, QTr } from "quasar";
 // components
@@ -112,9 +119,11 @@ import TableSearchRow from "./TableSearchRow.vue";
 import TableProjectRow from "./TableProjectRow.vue";
 // db
 import { useStateStore } from "src/stores/appState";
+import { useProjectStore } from "src/stores/projectStore";
+const stateStore = useStateStore();
+const projectStore = useProjectStore();
 // utils
 import { useI18n } from "vue-i18n";
-const stateStore = useStateStore();
 const { t } = useI18n({ useScope: "global" });
 
 const props = defineProps({
@@ -183,9 +192,9 @@ function handleSelection(rows: Project[], added: boolean, evt: KeyboardEvent) {
 
       const rangeRows = tableRows.slice(firstIndex, lastIndex + 1);
       // we need the original row object so we can match them against the rows in range
-      const selectedRows = stateStore.selected.map(toRaw);
+      const selectedRows = projectStore.selected.map(toRaw);
 
-      stateStore.selected =
+      projectStore.selected =
         added === true
           ? selectedRows.concat(
               rangeRows.filter(
@@ -194,7 +203,7 @@ function handleSelection(rows: Project[], added: boolean, evt: KeyboardEvent) {
             )
           : selectedRows.filter((row) => rangeRows.includes(row) === false);
     } else if (ctrlKey !== true && added === true) {
-      stateStore.selected = [newSelectedRow];
+      projectStore.selected = [newSelectedRow];
     }
   });
 }
@@ -228,6 +237,7 @@ function clickProject(
   },
   e: PointerEvent
 ) {
+  if (e.button !== 0) return; // return if not left click
   // row: Project, rowIndex: number
   let row = props.row;
   let descriptor = Object.getOwnPropertyDescriptor(props, "selected");
@@ -235,7 +245,6 @@ function clickProject(
     (descriptor.set as (adding: boolean, e: Event) => void)(true, e);
 
   console.log(row);
-  stateStore.selectedItemId = row._id;
   // ditinguish clicking project row or pdf row
   isClickingPDF.value = false;
 }
@@ -251,11 +260,18 @@ function dblclickProject(row: Project) {
   stateStore.openPage({ id, type, label });
 }
 
-function toggleContextMenu(props: { selected: boolean }, e: Event) {
+function toggleContextMenu(
+  props: { selected: boolean; row: Project },
+  e: PointerEvent
+) {
+  // change nothing when right clicked on selected item
   if (props.selected) return;
-  let descriptor = Object.getOwnPropertyDescriptor(props, "selected");
-  if (descriptor)
-    (descriptor.set as (adding: boolean, e: Event) => void)(true, e);
+
+  // only change the selected items when user right click on a not selected item
+  if (
+    !projectStore.selected.map((project) => project._id).includes(props.row._id)
+  )
+    projectStore.selected = [props.row];
 }
 
 /**
@@ -277,7 +293,7 @@ function onDragStart(e: DragEvent) {
   e.dataTransfer?.setDragImage(div, 0, 0);
   e.dataTransfer?.setData(
     "draggedProjects",
-    JSON.stringify(stateStore.selected)
+    JSON.stringify(projectStore.selected)
   );
 }
 

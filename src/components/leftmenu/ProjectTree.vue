@@ -156,7 +156,6 @@ import { Note, NoteType, Page, Project } from "src/backend/database";
 // db
 import { useStateStore } from "src/stores/appState";
 import { useProjectStore } from "src/stores/projectStore";
-import { sortTree } from "src/backend/project/utils";
 import { getProject } from "src/backend/project/project";
 
 const stateStore = useStateStore();
@@ -171,10 +170,9 @@ const expanded = ref<string[]>([]);
 const showProjectMenu = ref(true);
 
 onMounted(async () => {
-  await getProjects();
-
+  console.log("openedProjects", projectStore.openedProjects);
   // expand all projects
-  expanded.value = Array.from(stateStore.openedProjectIds);
+  expanded.value = Array.from(projectStore.openedProjects.map((p) => p._id));
 
   // select the item associated with current window
   let selected = stateStore.currentPageId;
@@ -194,13 +192,11 @@ watch(
 
     let item = (await getProject(page.id)) as Project | Note;
     if (item?.dataType == "project") {
-      stateStore.openedProjectIds.add(page.id);
       await projectStore.openProject(page.id);
       expanded.value.push(page.id);
     } else if (item?.dataType == "note") {
       // some notes are independent of project, like memo
       if (!item.projectId) return;
-      stateStore.openedProjectIds.add(item.projectId);
       await projectStore.openProject(item.projectId);
     }
   },
@@ -214,14 +210,6 @@ function menuSwitch(node: Project | Note) {
   } else {
     // show context menu for project
     showProjectMenu.value = true;
-  }
-}
-
-async function getProjects() {
-  projectStore.loadOpenedProjects(stateStore.openedProjectIds);
-  // sort notes in each project
-  for (let project of projectStore.openedProjects) {
-    sortTree(project);
   }
 }
 
@@ -272,15 +260,9 @@ async function closeProject(projectId: string) {
   );
 
   // if no page left, open library page
-  let selected = stateStore.currentPageId;
-  if (stateStore.currentPageId == projectId) {
-    selected = stateStore.openedProjectIds.has(projectId)
-      ? projectId
-      : "library";
-  }
-  stateStore.openedProjectIds.delete(projectId);
   setTimeout(() => {
-    stateStore.currentPageId = selected;
+    if (projectStore.openedProjects.length === 0)
+      stateStore.currentPageId = "library";
   }, 50);
 }
 
@@ -295,11 +277,10 @@ async function addNote(project: Project, type: NoteType) {
 }
 
 async function deleteNote(note: Note) {
-  let selectedItemId = stateStore.selectedItemId;
   stateStore.closePage(note._id);
   await projectStore.deleteNote(note._id);
   // select something else if the selectedItem is deleted
-  if (note._id === selectedItemId) {
+  if (note._id === projectStore.selected[0]._id) {
     let project = projectStore.openedProjects.find(
       (p) => p._id === note.projectId
     );

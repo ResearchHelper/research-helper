@@ -24,6 +24,7 @@ export function createProject(folderId: string) {
     path: "",
     tags: [] as string[],
     folderIds: ["library"],
+    favorite: false,
   } as Project;
   if (folderId != "library") project.folderIds.push(folderId);
   return project;
@@ -187,11 +188,12 @@ export async function getProjects(folderId: string): Promise<Project[]> {
         projects = (
           await db.find({
             selector: {
-              dateType: "project",
+              dataType: "project",
               favorite: true,
             },
           })
         ).docs as Project[];
+        console.log("here", projects);
         break;
       default:
         projects = (

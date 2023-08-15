@@ -100,7 +100,7 @@
             >
               <MetaInfoTab
                 v-if="!!rightMenuSize"
-                :project="stateStore.selected[0]"
+                :project="(projectStore.selected[0] as Project)"
               />
             </q-tab-panel>
           </q-tab-panels>
@@ -170,7 +170,7 @@ const collectionPath = ref<string>("");
 watch(
   () => stateStore.selectedFolderId,
   async (folderId: string) => {
-    stateStore.selected = [];
+    projectStore.selected = [];
     projectStore.loadProjects(folderId);
   }
 );
@@ -179,7 +179,6 @@ watch(
 const onLayoutChanged = inject("onLayoutChanged") as () => void;
 watch(
   [
-    () => stateStore.selectedItemId,
     () => stateStore.showLibraryRightMenu,
     () => stateStore.libraryRightMenuSize,
   ],
@@ -297,7 +296,7 @@ async function addProjectsByFiles(filePaths: string[]) {
         }
       }
 
-      projectStore.updateProject(project._id, props as Project);
+      await projectStore.updateProject(project._id, props as Project);
     } catch (error) {
       console.log(error);
     }
@@ -347,7 +346,7 @@ async function processIdentifier(identifier: string) {
     await projectStore.updateProject(project._id, meta);
   } else {
     // update existing project
-    await projectStore.updateProject(stateStore.selectedItemId, meta);
+    await projectStore.updateProject(projectStore.selected[0]._id, meta);
   }
 }
 
@@ -357,7 +356,7 @@ async function processIdentifier(identifier: string) {
  */
 async function deleteProject() {
   // delete projects
-  let deleteIds = stateStore.selected.map((p) => p._id);
+  let deleteIds = projectStore.selected.map((p) => p._id);
 
   for (let projectId of deleteIds) {
     let project = projectStore.openedProjects.find((p) => p._id === projectId);
@@ -374,15 +373,9 @@ async function deleteProject() {
       );
 
       // if no page left, open library page
-      let selected = stateStore.currentPageId;
-      if (stateStore.currentPageId == projectId) {
-        selected = stateStore.openedProjectIds.has(projectId)
-          ? projectId
-          : "library";
-      }
-      stateStore.openedProjectIds.delete(projectId);
       setTimeout(() => {
-        stateStore.currentPageId = selected;
+        if (projectStore.openedProjects.length === 0)
+          stateStore.currentPageId = "library";
       }, 50);
     }
     // delete from db

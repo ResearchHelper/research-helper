@@ -7,7 +7,7 @@
   >
     <q-list dense>
       <q-item
-        v-if="stateStore.selected.length <= 1"
+        v-if="projectStore.selected.length <= 1"
         clickable
         v-close-popup
         @click="copyProjectId"
@@ -22,10 +22,10 @@
         <q-item-section>{{ $t("show-in-explorer") }}</q-item-section>
       </q-item>
 
-      <q-separator v-if="stateStore.selected.length == 1" />
+      <q-separator v-if="projectStore.selected.length == 1" />
 
       <q-item
-        v-if="stateStore.selected.length == 1"
+        v-if="projectStore.selected.length == 1"
         clickable
         v-close-popup
         @click="addNote(NoteType.MARKDOWN)"
@@ -33,7 +33,7 @@
         <q-item-section> {{ $t("add-markdown-note") }} </q-item-section>
       </q-item>
       <q-item
-        v-if="stateStore.selected.length == 1"
+        v-if="projectStore.selected.length == 1"
         clickable
         v-close-popup
         @click="addNote(NoteType.EXCALIDRAW)"
@@ -41,13 +41,13 @@
         <q-item-section> {{ $t("add-excalidraw") }} </q-item-section>
       </q-item>
       <q-item
-        v-if="stateStore.selected.length == 1"
+        v-if="projectStore.selected.length == 1"
         clickable
         @mouseover="($refs.submenu as QMenu).show()"
       >
         <q-item-section>
           {{
-            !!stateStore.selected[0].path
+            !!projectStore.selected[0].path
               ? $t("replace-file")
               : $t("attach-file")
           }}
@@ -68,7 +68,7 @@
             >
               <q-item-section @click="onAttachFile(true)">
                 {{
-                  !!stateStore.selected[0].path
+                  !!projectStore.selected[0].path
                     ? $t("replace-stored-copy-of-file")
                     : $t("attach-stored-copy-of-file")
                 }}
@@ -80,7 +80,7 @@
             >
               <q-item-section @click="onAttachFile(false)">
                 {{
-                  !!stateStore.selected[0].path
+                  !!projectStore.selected[0].path
                     ? $t("replace-path-to-file")
                     : $t("attach-path-to-file")
                 }}
@@ -100,7 +100,7 @@
       </q-item>
 
       <q-item
-        v-if="stateStore.selected.length == 1"
+        v-if="projectStore.selected.length == 1"
         clickable
         v-close-popup
         @click="searchMeta"
@@ -139,6 +139,9 @@ import { useProjectStore } from "src/stores/projectStore";
 const stateStore = useStateStore();
 const projectStore = useProjectStore();
 
+const props = defineProps({
+  projectId: { type: String, required: true },
+});
 const emit = defineEmits(["expandRow"]);
 
 // dialogs
@@ -153,14 +156,14 @@ function expandRow(isExpand: boolean) {
 }
 
 async function addNote(type: NoteType) {
-  let project = stateStore.selected[0];
+  let project = projectStore.selected[0];
   let note = projectStore.createNote(project._id, type);
   await projectStore.addNote(note);
   expandRow(true);
 }
 
 async function openProject() {
-  for (let project of stateStore.selected) {
+  for (let project of projectStore.selected) {
     let id = project._id;
     let label = project.label;
     let type = "ReaderPage";
@@ -170,19 +173,19 @@ async function openProject() {
 }
 
 function copyProjectId() {
-  copyToClipboard(stateStore.selected[0]._id);
+  copyToClipboard(projectStore.selected[0]._id);
 }
 
 function showInExplorer() {
   // don't use project.path because it might not exists
-  for (let project of stateStore.selected) {
+  for (let project of projectStore.selected) {
     let path = window.path.join(stateStore.settings.storagePath, project._id);
     window.fileBrowser.showFileInFolder(path);
   }
 }
 
 function deleteProject(deleteFromDB: boolean) {
-  showDeleteDialog(stateStore.selected, deleteFromDB);
+  showDeleteDialog(projectStore.selected, deleteFromDB);
 }
 
 /**
@@ -197,7 +200,15 @@ function searchMeta() {
  * @param replaceStoredCopy - replace the copy in storage?
  */
 async function onAttachFile(replaceStoredCopy: boolean) {
-  await projectStore.attachPDF(stateStore.selected[0]._id, replaceStoredCopy);
+  await projectStore.attachPDF(props.projectId, replaceStoredCopy);
   expandRow(true);
 }
+
+async function setFavorite(isFavorite: boolean) {
+  await projectStore.updateProject(props.projectId, {
+    favorite: isFavorite,
+  } as Project);
+}
+
+defineExpose({ setFavorite });
 </script>

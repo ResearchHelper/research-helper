@@ -255,9 +255,9 @@ export interface AppState {
   showPDFRightMenu: boolean;
   libraryRightMenuSize: number;
   showLibraryRightMenu: boolean;
-  selectedItemId: string;
+  selectedItemId?: string;
   selectedFolderId: string;
-  currentPageId: string;
+  currentPageId?: string;
   openedProjectIds: string[];
   settings: Settings;
 }

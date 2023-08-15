@@ -26,7 +26,7 @@
           class="col-8 input"
           type="text"
           v-model="meta.type"
-          @blur="modifyInfo(true)"
+          @blur="modifyInfo()"
         />
       </div>
 
@@ -44,7 +44,7 @@
           class="col input"
           type="text"
           v-model="title"
-          @blur="modifyInfo(true)"
+          @blur="modifyInfo()"
           data-cy="title"
         ></textarea>
       </div>
@@ -138,7 +138,7 @@
           style="min-height: 10rem"
           class="col input"
           v-model="meta.abstract"
-          @blur="modifyInfo(false)"
+          @blur="modifyInfo()"
         ></textarea>
       </div>
 
@@ -153,7 +153,7 @@
           class="col-8 input"
           type="text"
           v-model.trim="meta.DOI"
-          @blur="modifyInfo(false)"
+          @blur="modifyInfo()"
         />
       </div>
 
@@ -168,7 +168,7 @@
           class="col-8 input"
           type="text"
           v-model.trim="meta.ISBN"
-          @blur="modifyInfo(false)"
+          @blur="modifyInfo()"
         />
       </div>
 
@@ -197,7 +197,7 @@
           type="url"
           placeholder="https://..."
           v-model.trim="meta.URL"
-          @blur="modifyInfo(false)"
+          @blur="modifyInfo()"
         />
       </div>
 
@@ -212,7 +212,7 @@
           class="col-8 input"
           type="text"
           v-model="meta.path"
-          @blur="modifyInfo(false)"
+          @blur="modifyInfo()"
         />
       </div>
 
@@ -416,7 +416,7 @@ async function getCategories() {
  * Update project info
  * @param updateEdgeData - if true, also modify the edge data
  */
-async function modifyInfo(updateEdgeData?: boolean) {
+async function modifyInfo() {
   if (meta.value === undefined) return;
   projectStore.updateProject(meta.value._id, meta.value);
 }
@@ -448,7 +448,7 @@ async function addAuthor() {
   name.value = "";
 
   // update db
-  modifyInfo(false);
+  modifyInfo();
 }
 
 async function removeAuthor(index: number) {
@@ -459,7 +459,7 @@ async function removeAuthor(index: number) {
   meta.value.author.splice(index, 1);
 
   // update db
-  modifyInfo(false);
+  modifyInfo();
 }
 
 async function addTag() {
@@ -470,7 +470,7 @@ async function addTag() {
   tag.value = ""; // remove text in input
 
   // update db
-  modifyInfo(false);
+  modifyInfo();
 }
 
 async function removeTag(tag: string) {
@@ -480,7 +480,7 @@ async function removeTag(tag: string) {
   meta.value.tags = meta.value.tags.filter((t) => t != tag);
 
   // update db
-  modifyInfo(false);
+  modifyInfo();
 }
 
 async function getReferences() {
@@ -527,7 +527,7 @@ async function updateMeta() {
   }
   metas = await getMeta(identifier);
   Object.assign(meta.value as Project, metas[0]);
-  modifyInfo(true);
+  modifyInfo();
 }
 
 function openURL(url: string | undefined) {
