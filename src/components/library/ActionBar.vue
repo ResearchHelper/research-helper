@@ -48,18 +48,6 @@
       </q-menu>
     </q-btn>
 
-    <q-btn
-      flat
-      dense
-      square
-      icon="refresh"
-      size="0.8rem"
-      padding="none"
-      @click="$emit('refreshTable')"
-    >
-      <q-tooltip>{{ $t("refresh") }}</q-tooltip>
-    </q-btn>
-
     <q-space />
 
     <q-input
@@ -114,7 +102,6 @@ const emit = defineEmits([
   "addByFiles",
   "addByCollection",
   "showIdentifierDialog",
-  "refreshTable",
 ]);
 
 const searchText = computed({

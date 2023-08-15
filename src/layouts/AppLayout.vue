@@ -23,21 +23,27 @@
   <WelcomeCarousel
     v-else-if="showWelcomeCarousel"
     v-model="showWelcomeCarousel"
+    @updateAppState="saveAppState"
   />
-  <MainLayout v-else />
+  <MainLayout
+    v-else
+    @updateAppState="saveAppState"
+  />
 </template>
 <script setup lang="ts">
 import WelcomeCarousel from "src/components/WelcomeCarousel.vue";
 import MainLayout from "./MainLayout.vue";
 
 import { useQuasar } from "quasar";
-import { getAppState } from "src/backend/appState";
+import { getAppState, updateAppState } from "src/backend/appState";
 import { useStateStore } from "src/stores/appState";
+import { useProjectStore } from "src/stores/projectStore";
 import { onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 const $q = useQuasar();
 const { locale } = useI18n({ useScope: "global" });
 const stateStore = useStateStore();
+const projectStore = useProjectStore();
 // must determine the existence of storagePath before heading to MainLayout
 const showWelcomeCarousel = ref(true);
 const loading = ref(true);
@@ -49,6 +55,7 @@ onMounted(async () => {
   }, 500);
   let state = await getAppState();
   stateStore.loadState(state);
+  projectStore.loadOpenedProjects(state.openedProjectIds);
 
   // if there is no path, show welcome carousel
   if (!stateStore.settings.storagePath) {
@@ -84,5 +91,13 @@ function changeLanguage(language: string) {
 
 function changeFontSize(fontSize: string) {
   document.documentElement.style.fontSize = fontSize;
+}
+
+async function saveAppState() {
+  let state = stateStore.saveState();
+  state.openedProjectIds = projectStore.openedProjects.map(
+    (project) => project._id
+  );
+  await updateAppState(state);
 }
 </script>

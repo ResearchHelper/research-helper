@@ -313,6 +313,8 @@ onMounted(async () => {
             let annotData = {
               _id: uid(),
               _rev: "",
+              timestampAdded: Date.now(),
+              timestampModified: Date.now(),
               dataType: "pdfAnnotation",
               projectId: props.projectId,
               pageNumber: e.pageNumber,
@@ -419,6 +421,8 @@ onMounted(async () => {
               let annotData = {
                 _id: uid(),
                 _rev: "",
+                timestampAdded: Date.now(),
+                timestampModified: Date.now(),
                 type: AnnotationType.RECTANGLE,
                 rects: rects,
                 color: pdfApp.state.color,
@@ -457,6 +461,8 @@ onMounted(async () => {
               let annotData = {
                 _id: uid(),
                 _rev: "",
+                timestampAdded: Date.now(),
+                timestampModified: Date.now(),
                 type: AnnotationType.COMMENT,
                 rects: rects,
                 color: pdfApp.state.color,

@@ -1,66 +1,62 @@
 import { describe, it, expect, beforeAll } from "vitest";
-import {
-  getInEdges,
-  getOutEdge,
-  createEdge,
-  deleteEdge,
-  updateEdge,
-  appendEdgeTarget,
-  updateEdgeTarget,
-  deleteEdgeTarget,
-} from "src/backend/project/graph";
-import { addProject } from "src/backend/project/project";
-import { addNote, getNote } from "src/backend/project/note";
-import { uid } from "quasar";
-import { Edge, Node, Note, Project } from "../database";
-
-let projectId = "";
-let noteId = "";
+import { createNote, addNote, getNote } from "./note";
+import { createProject, addProject } from "./project";
+import { Note, NoteType, Project } from "../database";
+import { getLinks, getParents } from "./graph";
 
 describe("graph.ts", () => {
+  /**
+   * The graph here is
+   * note0 -> note1 -> note2
+   */
   beforeAll(async () => {
-    let folderId = uid();
-    let project = (await addProject(folderId)) as Project;
-    await createEdge(project);
+    let projects = [] as Project[];
+    for (let i = 0; i < 3; i++) {
+      let project = createProject("testFolder");
+      project.title = `project${i}`;
+      project.label = `project${i}`;
+      projects.push((await addProject(project)) as Project);
+    }
+    let note2 = createNote(projects[2]._id, NoteType.MARKDOWN);
+    note2._id = "note2";
+    note2.label = "note2";
+    await addNote(note2);
 
-    let note = (await addNote(project._id)) as Note;
-    await createEdge(note);
-    await appendEdgeTarget(project._id, note);
+    let note1 = createNote(projects[1]._id, NoteType.MARKDOWN);
+    note1._id = "note1";
+    note1.label = "note1";
+    note1.links.push({
+      id: note2._id,
+      label: note2.label,
+      type: undefined,
+    });
+    await addNote(note1);
 
-    projectId = project._id;
-    noteId = note._id;
+    let note0 = createNote(projects[0]._id, NoteType.MARKDOWN);
+    note0._id = "note0";
+    note0.label = "note0";
+    note0.links.push({
+      id: note1._id,
+      label: note1.label,
+      type: undefined,
+    });
+    await addNote(note0);
   });
 
-  it("getEdges", async () => {
-    let edges = (await getInEdges(noteId)) as Edge[];
-    expect(edges.length).toBe(1);
-    expect(edges[0].targets).toContain(noteId);
-
-    let edge = (await getOutEdge(projectId)) as Edge;
-    expect(edge.targets).toContain(noteId);
+  it("getLinks", async () => {
+    let note = (await getNote("note1")) as Note;
+    let elements = await getLinks(note);
+    console.log(elements.nodes);
+    console.log(elements.edges);
+    expect(elements.nodes).toHaveLength(3);
+    expect(elements.edges).toHaveLength(2);
   });
 
-  it("updateEdge", async () => {
-    let note = (await getNote(noteId)) as Note;
-    note.label = "test label";
-    let sourceNode = {
-      id: noteId,
-      label: note.label,
-      type: "note",
-    } as Node;
-    await updateEdge(noteId, { sourceNode } as Edge);
-    await updateEdgeTarget(projectId, note);
+  it("getParents", async () => {
+    let note = (await getNote("note1")) as Note;
+    let elements = await getLinks(note);
 
-    let edge = (await getOutEdge(projectId)) as Edge;
-    expect(edge.targetNodes.length).toBe(1);
-    expect(edge.targetNodes[0].label).toBe(note.label);
-  });
-
-  it("deleteEdge", async () => {
-    await deleteEdge(noteId);
-    await deleteEdgeTarget(projectId, noteId);
-
-    let edge = (await getOutEdge(projectId)) as Edge;
-    expect(edge.targets).not.toContain(noteId);
+    let parentNodes = await getParents(elements.nodes);
+    expect(parentNodes).toHaveLength(3);
   });
 });

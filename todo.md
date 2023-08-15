@@ -1,27 +1,30 @@
-FIXME:
+### Fixes:
 
-- [x] macos white screen: storage path is empty when initially booted, the app is trying to create `.research-helper` out of nowhere. To fix this, initialize plugin manager after storage path is set.
-  - [x] when there is no storagePath in db
-  - [x] when there is storagePath in db
-  - [x] show progress bar during the retrival of appState
+- [ ] Project opened repeatedly
+- [x] update window name when project/ note is updated
+- [ ] things in layout need to simplified
 
-TODO:
+### Features:
 
-- [ ] timestamps on necessary data
-- [ ] new special folder, recently added
-- [ ] change attachFile to attachPDF
-- [ ] set attachFile to adding new file into the project folder
-- [ ] put pdf annotations to markdown as a link. we can click to jump to the specific annotation
+- [x] Add time stamp to data with type `Folder, Project, Note, AnnotationData`
+- [x] Add new category `Recently added` to library page
+- [x] MetaInfoTab shows timestamps
+- [x] Add favorites to library page
+  - [x] folder UI
+  - [x] add `favorite` (boolean) to `Project` data
+  - [x] display favorite in `ProjectTableRow` as a star-shape checkbox
+  - [x] update project data when clicked
+  - [x] query all favorite projects when clicked on folder
+- [ ] Add meta data to folders
+- [ ] Able to add notes to folders as well ??
 
-IMPROVE:
+### Improvements:
 
-- [ ] compactification of db
+- [x] Compactification of database
+- [x] better table interactions
 
-LONG-TERM TODO:
+TODO: refactor project related stuff
 
-- [ ] reduce memory usage #55 by changing backend to tauri
-- [ ] change product name from 'Research Helper' to other
-- [ ] Terminology library
-- [ ] cloud sync
-- [ ] ai read paper
-- [ ] documentations
+- [ ] simplify openProject, closeProject, openPage, and closePage logics and try to make some of them to some global control in stateStore.
+- [ ] make a citation id generator that can generate different format
+- [ ] the label appear on top of the graph node is better to be a citation id

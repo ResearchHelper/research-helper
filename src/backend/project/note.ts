@@ -7,34 +7,44 @@ const fs = window.fs;
 const path = window.path;
 
 /**
+ * Create a note
+ * @param projectId
+ * @param type
+ */
+export function createNote(projectId: string, type: NoteType) {
+  return {
+    _id: uid(),
+    _rev: "",
+    timestampAdded: Date.now(),
+    timestampModified: Date.now(),
+    dataType: "note",
+    projectId: projectId,
+    label: "New Note",
+    path: "",
+    type: type,
+    links: [],
+  } as Note;
+}
+
+/**
  * Add a note to database
  * and creates the actual markdown file in project folder
- * @param {string} projectId
- * @returns {Note} note
+ * @param note
+ * @returns updated note
  */
-async function addNote(
-  projectId: string,
-  type: NoteType
-): Promise<Note | undefined> {
+export async function addNote(note: Note): Promise<Note | undefined> {
   try {
-    let noteId: string = uid();
-
     // create actual file
-    let extension = type === NoteType.EXCALIDRAW ? ".excalidraw" : ".md";
-    let filePath = (await createFile(projectId, noteId + extension)) as string;
+    let extension = note.type === NoteType.EXCALIDRAW ? ".excalidraw" : ".md";
+    note.path = (await createFile(
+      note.projectId,
+      note._id + extension
+    )) as string;
 
     // add to db
-    let note = {
-      _id: noteId,
-      dataType: "note",
-      projectId: projectId,
-      label: "New Note",
-      path: filePath,
-      type: type,
-    };
-    await db.put(note);
-
-    return await db.get(noteId);
+    let result = await db.put(note);
+    note._rev = result.rev;
+    return note;
   } catch (error) {
     console.log(error);
   }
@@ -42,13 +52,13 @@ async function addNote(
 
 /**
  * Delete a note from database and from disk
- * @param {string} noteId
+ * @param noteId
  */
-async function deleteNote(noteId: string) {
+export async function deleteNote(noteId: string) {
   try {
     // delete note entry from db
-    let note: Note = await db.get(noteId);
-    await db.remove(note as PouchDB.Core.RemoveDocument);
+    let note = (await db.get(noteId)) as Note;
+    await db.remove(note);
 
     // delete actual file
     await deleteFile(note.path);
@@ -59,15 +69,18 @@ async function deleteNote(noteId: string) {
 
 /**
  * Update information of a note in database
- * @param {Note} note
+ * @param noteId
+ * @param props - update properties
  */
-async function updateNote(newNote: Note): Promise<Note | undefined> {
+export async function updateNote(noteId: string, props: Note) {
   try {
-    let note: Note = await db.get(newNote._id);
-    newNote._rev = note._rev;
-    let result = await db.put(newNote);
-    newNote._rev = result.rev;
-    return newNote;
+    let note = (await db.get(noteId)) as Note;
+    props._rev = note._rev;
+    props.timestampModified = Date.now();
+    Object.assign(note, props);
+    let result = await db.put(note);
+    note._rev = result.rev;
+    return note;
   } catch (error) {
     console.log(error);
   }
@@ -78,7 +91,7 @@ async function updateNote(newNote: Note): Promise<Note | undefined> {
  * @param {string} noteId
  * @returns {Note} note
  */
-async function getNote(noteId: string): Promise<Note | undefined> {
+export async function getNote(noteId: string): Promise<Note | undefined> {
   try {
     return await db.get(noteId);
   } catch (error) {
@@ -88,19 +101,37 @@ async function getNote(noteId: string): Promise<Note | undefined> {
 
 /**
  * Get all notes belong to specific project
- * @param {string} projectId
- * @returns {Note[]} array of notes
+ * @param projectId
+ * @returns array of notes
  */
-async function getNotes(projectId: string): Promise<Note[]> {
+export async function getNotes(projectId: string): Promise<Note[]> {
   try {
-    let result = await db.find({
-      selector: {
-        dataType: "note",
-        projectId: projectId,
-      },
-    });
+    let notes = (
+      await db.find({
+        selector: {
+          dataType: "note",
+          projectId: projectId,
+        },
+      })
+    ).docs as Note[];
 
-    return result.docs as Note[];
+    // TODO: remove this few more versions later
+    let flag = false;
+    for (let note of notes)
+      if (!note.timestampAdded) {
+        note.timestampAdded = Date.now();
+        note.timestampModified = Date.now();
+        flag = true;
+      }
+    if (flag) {
+      let responses = await db.bulkDocs(notes);
+      for (let i in responses) {
+        let rev = responses[i].rev;
+        if (rev) notes[i]._rev = rev;
+      }
+    }
+
+    return notes as Note[];
   } catch (error) {
     console.log(error);
     return [];
@@ -111,7 +142,7 @@ async function getNotes(projectId: string): Promise<Note[]> {
  * Get all notes in database
  * @returns {Note[]} array of notes
  */
-async function getAllNotes(): Promise<Note[]> {
+export async function getAllNotes(): Promise<Note[]> {
   let result = await db.find({
     selector: {
       dataType: "note",
@@ -126,7 +157,10 @@ async function getAllNotes(): Promise<Note[]> {
  * @param {string} noteId
  * @returns {string} content
  */
-async function loadNote(noteId: string, notePath?: string): Promise<string> {
+export async function loadNote(
+  noteId: string,
+  notePath?: string
+): Promise<string> {
   try {
     let note: Note = await db.get(noteId);
     if (fs.existsSync(note.path)) return fs.readFileSync(note.path, "utf8");
@@ -148,7 +182,11 @@ async function loadNote(noteId: string, notePath?: string): Promise<string> {
  * @param {string} noteId
  * @param {string} content
  */
-async function saveNote(noteId: string, content: string, notePath?: string) {
+export async function saveNote(
+  noteId: string,
+  content: string,
+  notePath?: string
+) {
   try {
     let note: Note = await db.get(noteId);
     fs.writeFileSync(note.path, content);
@@ -167,7 +205,7 @@ async function saveNote(noteId: string, content: string, notePath?: string) {
  * @param {string} noteId
  * @param {File} file
  */
-async function uploadImage(
+export async function uploadImage(
   noteId: string,
   file: File
 ): Promise<{ imgName: string; imgPath: string } | undefined> {
@@ -188,15 +226,3 @@ async function uploadImage(
     console.log(error);
   }
 }
-
-export {
-  addNote,
-  deleteNote,
-  updateNote,
-  getNote,
-  getNotes,
-  getAllNotes,
-  loadNote,
-  saveNote,
-  uploadImage,
-};

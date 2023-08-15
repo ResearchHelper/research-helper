@@ -16,11 +16,7 @@ export const useStateStore = defineStore("stateStore", {
     // tree view
     selectedFolderId: "library",
 
-    // table view (batchMode)
-    selected: [] as Project[],
-
     // projects
-    selectedItemId: "", // select from tableview
     openedProjectIds: new Set<string>(), // for projectTree
 
     // settings
@@ -80,7 +76,6 @@ export const useStateStore = defineStore("stateStore", {
     openPage(page: Page | null) {
       if (!page?.id) return;
       this.openedPage = page;
-      if (page.type === "ReaderPage") this.openedProjectIds.add(page.id);
     },
 
     closePage(pageId: string) {

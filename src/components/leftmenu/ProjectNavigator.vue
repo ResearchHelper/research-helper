@@ -116,13 +116,6 @@ import { useQuasar } from "quasar";
 const stateStore = useStateStore();
 const $q = useQuasar();
 
-const emit = defineEmits([
-  "addNode",
-  "renameNode",
-  "closeProject",
-  "openProject",
-]);
-
 const root = ref<QSplitter | null>(null);
 const maxHeight = ref(36);
 const maxWidth = ref(0);

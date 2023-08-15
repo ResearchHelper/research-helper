@@ -5,7 +5,7 @@
     no-transition
     no-selection-unset
     no-nodes-label="No working projects"
-    :nodes="projects"
+    :nodes="projectStore.openedProjects"
     node-key="_id"
     selected-color="primary"
     v-model:selected="stateStore.currentPageId"
@@ -83,7 +83,7 @@
             <q-item
               clickable
               v-close-popup
-              @click="setRenameNote(prop.node)"
+              @click="setRenameNote(prop.node._id)"
             >
               <q-item-section> {{ $t("rename") }} </q-item-section>
             </q-item>
@@ -119,7 +119,7 @@
         <!-- note icon has 1rem width -->
         <!-- input must have keypress.space.stop since space is default to expand row rather than space in text -->
         <input
-          v-if="prop.node == renamingNote"
+          v-if="prop.node._id == renamingNoteId"
           style="width: calc(100% - 1.2rem)"
           v-model="prop.node.label"
           @keydown.enter="renameNote"
@@ -150,55 +150,31 @@
   </q-tree>
 </template>
 <script setup lang="ts">
-import { inject, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
-import { EventBus, QTree, QTreeNode } from "quasar";
-import {
-  BusEvent,
-  Edge,
-  Note,
-  NoteType,
-  Page,
-  Project,
-} from "src/backend/database";
+import { nextTick, onMounted, ref, watch } from "vue";
+import { QTree } from "quasar";
+import { Note, NoteType, Page, Project } from "src/backend/database";
 // db
 import { useStateStore } from "src/stores/appState";
-import {
-  getNotes as getNotesDB,
-  addNote as addNoteDB,
-  deleteNote as deleteNoteDB,
-  updateNote as updateNoteDB,
-  getNotes,
-} from "src/backend/project/note";
-import { sortTree } from "src/backend/project/utils";
+import { useProjectStore } from "src/stores/projectStore";
 import { getProject } from "src/backend/project/project";
-import {
-  createEdge,
-  deleteEdge,
-  updateEdge,
-  appendEdgeTarget,
-  deleteEdgeTarget,
-  updateEdgeTarget,
-} from "src/backend/project/graph";
-
-const componentName = "ProjectTree";
 
 const stateStore = useStateStore();
-const bus = inject("bus") as EventBus;
+const projectStore = useProjectStore();
 
 const tree = ref<QTree | null>(null);
 const renameInput = ref<HTMLInputElement | null>(null);
-const renamingNote = ref<QTreeNode | null>(null);
+// const renamingNote = ref<QTreeNode | null>(null);
+const renamingNoteId = ref("");
 const addingNote = ref(false);
-const projects = ref<Project[]>([]);
 const expanded = ref<string[]>([]);
 const showProjectMenu = ref(true);
 
 onMounted(async () => {
-  // events emited from other components (TableView.vue)
-  bus.on("updateProject", (e: BusEvent) => updateProject(e));
-  bus.on("deleteProject", (e: BusEvent) => closeProject(e.data));
+  console.log("openedProjects", projectStore.openedProjects);
+  // expand all projects
+  expanded.value = Array.from(projectStore.openedProjects.map((p) => p._id));
 
-  await getProjectTree();
+  // select the item associated with current window
   let selected = stateStore.currentPageId;
   if (!tree.value) return;
   let selectedNode = tree.value.getNodeByKey(selected);
@@ -206,30 +182,22 @@ onMounted(async () => {
     expanded.value.push(selected);
 });
 
-onBeforeUnmount(() => {
-  // not necessary for this component, but a good habit
-  bus.off("updateProject", (e: BusEvent) => updateProject(e));
-  bus.off("deleteProject", (e: BusEvent) => closeProject(e.data));
-});
-
 watch(
   () => stateStore.openedPage,
   async (page: Page) => {
     if (page.type.indexOf("Plugin") > -1) return;
-    let id = page.id;
-    if (!!!id || !tree.value) return;
-    let node = tree.value.getNodeByKey(id);
+    if (!!!page.id || !tree.value) return;
+    let node = tree.value.getNodeByKey(page.id);
     if (!!node) return; // if project is active already, return
 
-    let item = (await getProject(id)) as Project | Note;
+    let item = (await getProject(page.id)) as Project | Note;
     if (item?.dataType == "project") {
-      stateStore.openedProjectIds.add(id);
-      pushProjectNode(id);
+      await projectStore.openProject(page.id);
+      expanded.value.push(page.id);
     } else if (item?.dataType == "note") {
       // some notes are independent of project, like memo
       if (!item.projectId) return;
-      stateStore.openedProjectIds.add(item.projectId);
-      pushProjectNode(item.projectId);
+      await projectStore.openProject(item.projectId);
     }
   },
   { deep: true }
@@ -243,47 +211,6 @@ function menuSwitch(node: Project | Note) {
     // show context menu for project
     showProjectMenu.value = true;
   }
-}
-
-async function getProjectTree() {
-  projects.value = [] as Project[];
-  console.log("opened projects?:", stateStore.openedProjectIds);
-  for (let projectId of stateStore.openedProjectIds) {
-    await pushProjectNode(projectId);
-  }
-
-  // sort notes in each project
-  for (let i in projects.value) {
-    sortTree(projects.value[i]);
-  }
-}
-
-async function pushProjectNode(projectId: string) {
-  let project = await getProject(projectId);
-  if (project === undefined) return;
-  let notes = await getNotesDB(projectId);
-  project.children = notes;
-  projects.value.push(project);
-  expanded.value.push(projectId);
-}
-
-/**
- * Receive updated project from other component and update the projectTree
- * @param project
- */
-function updateProject(event: BusEvent) {
-  let source = event.source;
-  let project = event.data;
-  if (!project) return;
-  let idx = projects.value.findIndex((p) => p._id == project._id);
-  if (idx === -1) return;
-
-  // when updating project, be careful whether children property is undefined
-  // the updateProject event emit from PDFReader has empty children property
-  let children = projects.value[idx].children;
-  if (source === "ProjectBrowser") children = project.children;
-  project.children = children;
-  projects.value[idx] = project;
 }
 
 function selectItem(node: Project | Note) {
@@ -317,65 +244,60 @@ function showInExplorer(node: Project | Note) {
 }
 
 async function closeProject(projectId: string) {
-  stateStore.closePage(projectId);
-  let notes = await getNotes(projectId);
-  for (let note of notes) {
-    await nextTick(); // do it slowly one by one
-    stateStore.closePage(note._id);
+  // close all pages
+  let project = projectStore.openedProjects.find((p) => p._id === projectId);
+  if (project) {
+    stateStore.closePage(project._id);
+    for (let note of project.children as Note[]) {
+      await nextTick(); // do it slowly one by one
+      stateStore.closePage(note._id);
+    }
   }
 
-  let selected = stateStore.currentPageId;
-  if (stateStore.currentPageId == projectId) {
-    selected = stateStore.openedProjectIds.has(projectId)
-      ? projectId
-      : "library";
-  }
-  stateStore.openedProjectIds.delete(projectId);
-  projects.value = projects.value.filter((p) => p._id != projectId);
+  // remove project from openedProjects
+  projectStore.openedProjects = projectStore.openedProjects.filter(
+    (p) => p._id !== projectId
+  );
 
+  // if no page left, open library page
   setTimeout(() => {
-    stateStore.currentPageId = selected;
+    if (projectStore.openedProjects.length === 0)
+      stateStore.currentPageId = "library";
   }, 50);
 }
 
-async function addNote(node: Project, type: NoteType) {
-  // update db
-  let note = (await addNoteDB(node._id, type)) as Note;
-  await createEdge(note);
-  await appendEdgeTarget(note.projectId, note);
-
-  // update ui
-  node.children?.push(note);
+async function addNote(project: Project, type: NoteType) {
+  let note = projectStore.createNote(project._id, type);
+  await projectStore.addNote(note);
+  expanded.value.push(project._id);
   addingNote.value = true;
+  // rename note
   await nextTick(); // wait until ui updates
-  setRenameNote(note);
+  setRenameNote(note._id);
 }
 
-async function deleteNote(node: Note) {
-  // update db
-  await deleteNoteDB(node._id);
-  await deleteEdge(node._id); // delete edge of note
-  await deleteEdgeTarget(node.projectId, node._id); // delete target from project's edge
+async function deleteNote(note: Note) {
+  stateStore.closePage(note._id);
+  await projectStore.deleteNote(note._id);
+  // select something else if the selectedItem is deleted
+  if (note._id === projectStore.selected[0]._id) {
+    let project = projectStore.openedProjects.find(
+      (p) => p._id === note.projectId
+    );
 
-  // update ui
-  let index = projects.value.findIndex(
-    (p) => (p.children as Note[]).indexOf(node) > -1
-  );
-  let project = projects.value[index];
-
-  project.children = (project.children as Note[]).filter(
-    (child) => child._id != node._id
-  );
-  if (project.children.length == 0) {
-    selectItem(project);
-  } else {
-    selectItem(project.children[0]);
+    if (project && project.children) {
+      if (project.children.length == 0) {
+        selectItem(project);
+      } else {
+        selectItem(project.children[0]);
+      }
+    }
   }
 }
 
-function setRenameNote(node: Note) {
+function setRenameNote(noteId: string) {
   // set renaming note and show input
-  renamingNote.value = node;
+  renamingNoteId.value = noteId;
 
   setTimeout(() => {
     // wait till input appears
@@ -388,29 +310,12 @@ function setRenameNote(node: Note) {
 }
 
 async function renameNote() {
-  let note = renamingNote.value as Note;
+  let note = tree.value?.getNodeByKey(renamingNoteId.value) as Note;
   if (!!!note) return;
-  // update db
-  await updateNoteDB(note);
-  let sourceNode = {
-    id: note._id,
-    label: note.label,
-    type: note.dataType,
-  };
-  await updateEdge(note._id, { sourceNode: sourceNode } as Edge);
-  await updateEdgeTarget(note.projectId, note);
-
-  // update ui
-  let project = projects.value.find((p) => p._id === note.projectId);
-  sortTree(project as any);
-  await nextTick();
-  bus.emit("updateProject", {
-    source: componentName,
-    data: project,
-  });
+  projectStore.updateNote(note._id, note);
 
   if (addingNote.value) selectItem(note); // open the note
   addingNote.value = false;
-  renamingNote.value = null;
+  renamingNoteId.value = "";
 }
 </script>

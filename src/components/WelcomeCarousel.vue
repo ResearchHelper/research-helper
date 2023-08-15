@@ -63,13 +63,12 @@
 </template>
 <script setup lang="ts">
 import { ref, computed } from "vue";
-import { updateAppState } from "src/backend/appState";
 import { useStateStore } from "src/stores/appState";
 import { useI18n } from "vue-i18n";
 const { t, locale } = useI18n({ useScope: "global" });
 
 const props = defineProps({ modelValue: { type: Boolean, required: true } });
-const emit = defineEmits(["update:modelValue"]);
+const emit = defineEmits(["update:modelValue", "updateAppState"]);
 
 const stateStore = useStateStore();
 
@@ -95,14 +94,9 @@ const language = computed({
   },
 });
 
-async function saveAppState() {
-  let state = stateStore.saveState();
-  await updateAppState(state);
-}
-
 function changeLanguage(language: "en_US" | "zh_CN") {
   locale.value = language;
-  saveAppState();
+  emit("updateAppState");
 }
 
 function changeStoragePath() {
@@ -110,7 +104,7 @@ function changeStoragePath() {
   if (result !== undefined && !!result[0]) {
     path.value = result[0];
     stateStore.settings.storagePath = path.value;
-    saveAppState();
+    emit("updateAppState");
   }
 }
 

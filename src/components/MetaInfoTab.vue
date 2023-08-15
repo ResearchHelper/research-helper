@@ -26,7 +26,7 @@
           class="col-8 input"
           type="text"
           v-model="meta.type"
-          @blur="modifyInfo(true)"
+          @blur="modifyInfo()"
         />
       </div>
 
@@ -44,7 +44,7 @@
           class="col input"
           type="text"
           v-model="title"
-          @blur="modifyInfo(true)"
+          @blur="modifyInfo()"
           data-cy="title"
         ></textarea>
       </div>
@@ -138,7 +138,7 @@
           style="min-height: 10rem"
           class="col input"
           v-model="meta.abstract"
-          @blur="modifyInfo(false)"
+          @blur="modifyInfo()"
         ></textarea>
       </div>
 
@@ -153,7 +153,7 @@
           class="col-8 input"
           type="text"
           v-model.trim="meta.DOI"
-          @blur="modifyInfo(false)"
+          @blur="modifyInfo()"
         />
       </div>
 
@@ -168,7 +168,7 @@
           class="col-8 input"
           type="text"
           v-model.trim="meta.ISBN"
-          @blur="modifyInfo(false)"
+          @blur="modifyInfo()"
         />
       </div>
 
@@ -197,7 +197,7 @@
           type="url"
           placeholder="https://..."
           v-model.trim="meta.URL"
-          @blur="modifyInfo(false)"
+          @blur="modifyInfo()"
         />
       </div>
 
@@ -212,7 +212,7 @@
           class="col-8 input"
           type="text"
           v-model="meta.path"
-          @blur="modifyInfo(false)"
+          @blur="modifyInfo()"
         />
       </div>
 
@@ -263,6 +263,26 @@
         />
       </div>
 
+      <div class="row justify-between q-mt-sm">
+        <div
+          class="col"
+          style="font-size: 1rem"
+        >
+          {{ $t("date-added") }}
+        </div>
+        <div>{{ new Date(meta.timestampAdded).toLocaleString() }}</div>
+      </div>
+
+      <div class="row justify-between q-mt-sm">
+        <div
+          class="col"
+          style="font-size: 1rem"
+        >
+          {{ $t("date-modified") }}
+        </div>
+        <div>{{ new Date(meta.timestampModified).toLocaleString() }}</div>
+      </div>
+
       <div>
         <q-btn
           class="full-width"
@@ -306,20 +326,16 @@
 
 <script setup lang="ts">
 // types
-import { ref, watch, computed, inject, onMounted } from "vue";
+import { ref, watch, computed, onMounted } from "vue";
 import type { PropType } from "vue";
-import { EventBus } from "quasar";
-import { Author, Edge, Folder, Meta, Project } from "src/backend/database";
+import { Author, Folder, Meta, Project } from "src/backend/database";
 // backend stuff
-import { updateProject } from "src/backend/project/project";
-import { updateEdge } from "src/backend/project/graph";
 import { getMeta } from "src/backend/project/meta";
 import { getFolder } from "src/backend/project/folder";
-
-const componentName = "MetaInfoTab";
+import { useProjectStore } from "src/stores/projectStore";
+const projectStore = useProjectStore();
 
 const props = defineProps({ project: Object as PropType<Project> });
-const bus = inject("bus") as EventBus;
 const tab = ref("meta");
 const name = ref(""); // author name
 const tag = ref(""); // project tag
@@ -400,28 +416,9 @@ async function getCategories() {
  * Update project info
  * @param updateEdgeData - if true, also modify the edge data
  */
-async function modifyInfo(updateEdgeData?: boolean) {
+async function modifyInfo() {
   if (meta.value === undefined) return;
-  // update db and also update rev in this.project
-  let newMeta = (await updateProject(meta.value as Project)) as Project;
-  meta.value._rev = newMeta._rev;
-
-  bus.emit("updateProject", {
-    source: componentName,
-    data: meta.value,
-  });
-
-  if (updateEdgeData) {
-    let sourceNode = {
-      id: meta.value._id,
-      label: meta.value.title,
-      type: "project",
-    };
-    await updateEdge(
-      meta.value._id as string,
-      { sourceNode: sourceNode } as Edge
-    );
-  }
+  projectStore.updateProject(meta.value._id, meta.value);
 }
 
 async function addAuthor() {
@@ -451,7 +448,7 @@ async function addAuthor() {
   name.value = "";
 
   // update db
-  modifyInfo(false);
+  modifyInfo();
 }
 
 async function removeAuthor(index: number) {
@@ -462,7 +459,7 @@ async function removeAuthor(index: number) {
   meta.value.author.splice(index, 1);
 
   // update db
-  modifyInfo(false);
+  modifyInfo();
 }
 
 async function addTag() {
@@ -473,7 +470,7 @@ async function addTag() {
   tag.value = ""; // remove text in input
 
   // update db
-  modifyInfo(false);
+  modifyInfo();
 }
 
 async function removeTag(tag: string) {
@@ -483,7 +480,7 @@ async function removeTag(tag: string) {
   meta.value.tags = meta.value.tags.filter((t) => t != tag);
 
   // update db
-  modifyInfo(false);
+  modifyInfo();
 }
 
 async function getReferences() {
@@ -530,7 +527,7 @@ async function updateMeta() {
   }
   metas = await getMeta(identifier);
   Object.assign(meta.value as Project, metas[0]);
-  modifyInfo(true);
+  modifyInfo();
 }
 
 function openURL(url: string | undefined) {

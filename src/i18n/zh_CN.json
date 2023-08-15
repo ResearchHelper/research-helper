@@ -139,5 +139,10 @@
   "opacity": "不透明度",
   "strok-eraser": "线条橡皮擦",
   "pixel-eraser": "像素橡皮擦",
-  "loading": "加载中"
+  "loading": "加载中",
+  "added": "添加",
+  "favorites": "收藏",
+  "date-added": "添加日期",
+  "date-modified": "修改日期",
+  "set-favorite": "收藏"
 }

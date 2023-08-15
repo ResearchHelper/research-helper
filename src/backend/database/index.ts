@@ -7,15 +7,27 @@ db.createIndex({
   index: {
     fields: [
       "dataType",
+      "timestampAdded",
       "projectId",
       "pageNumber",
       "folderIds",
       "children",
       "source",
       "targets",
+      "favorite",
     ],
   },
 });
+
+// compacting the database
+// for details, see https://pouchdb.com/guides/compact-and-destroy.html
+db.compact()
+  .then((info) => {
+    console.log(info);
+  })
+  .catch((error) => {
+    console.log(error);
+  });
 
 if ((process.env.DEV || process.env.DEBUGGING) && !process.env.TEST) {
   // for debug use

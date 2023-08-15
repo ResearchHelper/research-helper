@@ -136,21 +136,18 @@
 </template>
 <script setup lang="ts">
 // types
-import { computed, inject, PropType, ref } from "vue";
+import { computed, PropType, ref } from "vue";
 import { Project, Note, NoteType } from "src/backend/database";
-import {
-  KEY_deleteNote,
-  KEY_renameFromMeta,
-  KEY_renameNote,
-} from "./injectKeys";
 // db
 import { useStateStore } from "src/stores/appState";
+import { useProjectStore } from "src/stores/projectStore";
 import { copyToClipboard } from "quasar";
 
 const props = defineProps({
   item: { type: Object as PropType<Project | Note>, required: true },
 });
 const stateStore = useStateStore();
+const projectStore = useProjectStore();
 
 const newLabel = ref("");
 const renaming = ref(false);
@@ -174,19 +171,6 @@ const label = computed({
   },
 });
 
-const renameNote = inject(KEY_renameNote) as (
-  note: Note,
-  index?: number
-) => void;
-const deleteNote = inject(KEY_deleteNote) as (
-  note: Note,
-  index?: number
-) => void;
-const renameFromMeta = inject(KEY_renameFromMeta) as (
-  project: Project,
-  index?: number
-) => void;
-
 function copyID() {
   copyToClipboard(props.item._id);
 }
@@ -197,7 +181,7 @@ function showInExplorer() {
 }
 
 function clickItem() {
-  stateStore.selectedItemId = props.item._id;
+  projectStore.selected = [props.item];
 }
 
 function openItem() {
@@ -223,19 +207,20 @@ function setRenaming() {
   }, 100);
 }
 
-function onRenameNote() {
-  let note = props.item as Note;
-  note.label = newLabel.value;
-  renameNote(note);
-
+async function onRenameNote() {
+  // let note = props.item as Note;
+  // note.label = newLabel.value;
+  await projectStore.updateNote(props.item._id, {
+    label: newLabel.value,
+  } as Note);
   renaming.value = false;
 }
 
 async function deleteItem() {
-  deleteNote(props.item as Note);
+  await projectStore.deleteNote(props.item._id);
 }
 
-async function renameFile() {
-  renameFromMeta(props.item as Project);
+function renameFile() {
+  projectStore.renamePDF(props.item._id);
 }
 </script>

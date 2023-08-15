@@ -153,6 +153,7 @@ export abstract class Annotation {
     try {
       let annot = (await db.get(this.data._id)) as AnnotationData;
       props._rev = annot._rev;
+      props.timestampModified = Date.now();
       Object.assign(annot, props);
       let result = await db.put(annot);
       annot._rev = result.rev;

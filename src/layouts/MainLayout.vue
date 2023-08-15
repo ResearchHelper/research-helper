@@ -54,26 +54,12 @@ import "src/css/goldenlayout/base.scss";
 import "src/css/goldenlayout/theme.scss";
 // db
 import { useStateStore } from "src/stores/appState";
+import { useProjectStore } from "src/stores/projectStore";
 import { getNote } from "src/backend/project/note";
-import {
-  getLayout,
-  updateLayout,
-  getAppState,
-  updateAppState,
-} from "src/backend/appState";
+import { getLayout, updateLayout } from "src/backend/appState";
 // utils
-import {
-  computed,
-  inject,
-  nextTick,
-  onBeforeUnmount,
-  onMounted,
-  provide,
-  ref,
-  watch,
-} from "vue";
+import { nextTick, onMounted, provide, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
-import { EventBus } from "quasar";
 import pluginManager from "src/backend/plugin";
 
 interface PageItem {
@@ -81,9 +67,11 @@ interface PageItem {
   label: string;
 }
 
+const emit = defineEmits(["updateAppState"]);
+
 const stateStore = useStateStore();
+const projectStore = useProjectStore();
 const { t } = useI18n({ useScope: "global" });
-const bus = inject("bus") as EventBus;
 
 /*************************************************
  * Component refs, data, computed values
@@ -113,7 +101,7 @@ watch(
     nextTick(() => {
       if (layout.value) layout.value.resize();
       saveLayout();
-      saveAppState();
+      emit("updateAppState");
     });
   }
 );
@@ -121,6 +109,7 @@ watch(
 watch(
   () => stateStore.openedPage,
   (page: Page) => {
+    if (page.type === "ReaderPage") projectStore.openProject(page.id);
     setComponent(page);
   }
 );
@@ -138,14 +127,8 @@ watch(
     } else removeComponent(id);
     // clear this so we can reclose a reopened item
     stateStore.closedPageId = "";
-  }
-);
 
-// must convert Set to Array first
-watch(
-  () => [...stateStore.openedProjectIds],
-  () => {
-    saveAppState();
+    emit("updateAppState");
   }
 );
 
@@ -155,6 +138,20 @@ watch(
   () => {
     for (let id of ["library", "settings", "help"])
       editComponentState({ _id: id, label: t(id) });
+  }
+);
+
+/**
+ * update window tab names when items are updated
+ */
+watch(
+  () => projectStore.updatedProject,
+  (project: Project) => {
+    editComponentState(project);
+    if (!project.children) return;
+    for (let note of project.children) {
+      editComponentState(note);
+    }
   }
 );
 
@@ -179,7 +176,7 @@ async function setComponent(page: Page) {
       page.data
     );
   await saveLayout();
-  await saveAppState();
+  emit("updateAppState");
 }
 
 /**
@@ -214,7 +211,7 @@ async function resizeLeftMenu(size: number) {
   }
   stateStore.leftMenuSize = size > 10 ? size : 20;
   saveLayout();
-  saveAppState();
+  emit("updateAppState");
 }
 
 /**
@@ -238,7 +235,7 @@ async function onLayoutChanged() {
 
   // save layouts and appstate
   await saveLayout();
-  await saveAppState();
+  emit("updateAppState");
 }
 
 async function saveLayout() {
@@ -247,49 +244,19 @@ async function saveLayout() {
   await updateLayout(config);
 }
 
-async function saveAppState() {
-  // if folders are not created yet
-  // selectedFolderId is ""
-  if (!!!stateStore.selectedFolderId) {
-    stateStore.selectedFolderId = "library";
-  }
-  let state = stateStore.saveState();
-  await updateAppState(state);
-}
-
-/**
- *
- */
-function onUpdateProject(project: Project) {
-  editComponentState(project);
-  if (!project.children) return;
-  for (let note of project.children) {
-    editComponentState(note);
-  }
-}
-
 /*************************************************
  * onMounted
  *************************************************/
 onMounted(async () => {
-  let state = await getAppState();
-  stateStore.loadState(state);
   pluginManager.init(); // initialize pluginManager after storagePath is set
 
   // apply layout related settings
-  if (stateStore.showLeftMenu) leftMenuSize.value = state.leftMenuSize;
+  if (stateStore.showLeftMenu) leftMenuSize.value = stateStore.leftMenuSize;
   let _layout = await getLayout();
   if (layout.value) await layout.value.loadGLLayout(_layout.config);
 
   // the openItemIds are ready
   // we can load the projectTree
   ready.value = true;
-
-  // event bus
-  bus.on("updateProject", (e: BusEvent) => onUpdateProject(e.data));
-});
-
-onBeforeUnmount(() => {
-  bus.off("updateProject", (e: BusEvent) => onUpdateProject(e.data));
 });
 </script>

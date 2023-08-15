@@ -1,46 +1,47 @@
 import { describe, it, expect } from "vitest";
-import { db, Note } from "src/backend/database";
+import { Note, NoteType } from "src/backend/database";
 import {
+  createNote,
   addNote,
   deleteNote,
   updateNote,
   getNote,
   getNotes,
 } from "src/backend/project/note";
-import { uid } from "quasar";
 
 describe("note.ts", () => {
-  it("addNote", async () => {
-    let projectId = "projectId";
-    let note = (await addNote(projectId)) as Note;
-    expect(note.dataType).toBe("note");
+  it("createNote", async () => {
+    let type = NoteType.MARKDOWN;
+    let projectId = "test-id";
+    let note = createNote(projectId, type);
+    expect(note.type).toBe(type);
     expect(note.projectId).toBe(projectId);
   });
 
   it("deleteNote", async () => {
-    let note = (await addNote("projectId")) as Note;
+    let note = createNote("", NoteType.MARKDOWN);
+    await addNote(note);
     await deleteNote(note._id);
 
-    let results = await db.find({
-      selector: {
-        _id: note._id,
-      },
-    });
-    expect(results.docs.length).toBe(0);
+    let result = await getNote(note._id);
+    expect(result).toBe(undefined);
   });
 
   it("updateNote", async () => {
-    let n = (await addNote("projectId")) as Note;
+    let note = createNote("", NoteType.MARKDOWN);
+    let n = (await addNote(note)) as Note;
     n.label = "test note";
-    let note = (await updateNote(n)) as Note;
-    expect(note.label).toBe(n.label);
+    let nn = (await updateNote(n._id, n)) as Note;
+    expect(nn.label).toBe(n.label);
   });
 
   it("getNotes", async () => {
-    let projectId = uid();
     let n = 10;
-    for (let i = 0; i < n; i++) await addNote(projectId);
-    let notes = (await getNotes(projectId)) as Note[];
+    for (let i = 0; i < n; i++) {
+      let note = createNote("projectId", NoteType.MARKDOWN);
+      await addNote(note);
+    }
+    let notes = (await getNotes("projectId")) as Note[];
     expect(notes.length).toBe(n);
   });
 });

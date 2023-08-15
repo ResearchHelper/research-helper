@@ -63,11 +63,14 @@ export enum NoteType {
 export interface Note {
   _id: string; // unique id handled by database
   _rev: string; // rev handled by database
+  timestampAdded: number; // timestamp when data is saved
+  timestampModified: number; // timestamp when data is updated
   dataType: "note"; // for database search
   projectId: string; // the project it belongs to
   path: string; // path to actual markdown file
   label: string; // markdown file name
   type: NoteType;
+  links: Node[]; // array of forward linked Ids
 }
 
 /**
@@ -76,12 +79,15 @@ export interface Note {
 export interface Project extends Meta {
   _id: string; // unique id
   _rev: string; // data version handled by database
+  timestampAdded: number; // timestamp when data is saved
+  timestampModified: number; // timestamp when data is updated
   dataType: "project"; // for database search
   label: string;
   children?: Note[];
   path: undefined | string; // attached file path
   tags: string[]; // user defined keywords for easier search
   folderIds: string[]; // array of folderIDs containing this project
+  favorite?: boolean;
   // index signature, so we can access property like this project[key]
   [k: string]: any;
 }
@@ -94,10 +100,18 @@ export interface Project extends Meta {
 export interface Folder {
   _id: string; // uid managed by db
   _rev: string; // rev handled by database
+  timestampAdded: number; // timestamp when data is saved
+  timestampModified: number; // timestamp when data is updated
   dataType: "folder"; // for database search
   label: string; // folder name
   icon: string; // folder icon in treeview
   children: (string | Folder)[]; // folderId list or Folder object list
+}
+
+export enum SpecialFolder {
+  LIBRARY = "library",
+  ADDED = "added",
+  FAVORITES = "favorites",
 }
 
 /******************************************
@@ -109,15 +123,12 @@ export interface Node {
   type: "project" | "note" | undefined;
 }
 
-export interface Edge {
-  _id: string; // handled by db
-  _rev: string; // handled by db
-  dataType: "edge"; // for database search
-  type: "link" | "reference"; //
-  source: string; // source id
-  targets: string[]; // array of target ids
-  sourceNode: Node; // source node
-  targetNodes: Node[]; // array of target Nodes
+export interface NodeUI {
+  data: Node & { bg?: string; shape?: string; parent?: string };
+}
+
+export interface EdgeUI {
+  data: { source: string; target: string };
 }
 
 /****************************************
@@ -179,6 +190,8 @@ export enum SpreadMode {
 export interface AnnotationData {
   _id: string; // handled by db
   _rev: string; // handled by db
+  timestampAdded: number; // timestamp when data is saved
+  timestampModified: number; // timestamp when data is updated
   dataType: "pdfAnnotation"; // for database search
   projectId: string; // which project (pdf)
   pageNumber: number; // on which page
@@ -242,9 +255,9 @@ export interface AppState {
   showPDFRightMenu: boolean;
   libraryRightMenuSize: number;
   showLibraryRightMenu: boolean;
-  selectedItemId: string;
+  selectedItemId?: string;
   selectedFolderId: string;
-  currentPageId: string;
+  currentPageId?: string;
   openedProjectIds: string[];
   settings: Settings;
 }
