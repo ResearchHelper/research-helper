@@ -1,5 +1,7 @@
 import PouchDB from "pouchdb";
 import Find from "pouchdb-find";
+import { generateCiteKey } from "../project/meta";
+import { Project } from "./models";
 PouchDB.plugin(Find);
 const db = new PouchDB("mydb");
 
@@ -29,8 +31,50 @@ db.compact()
     console.log(error);
   });
 
+// TODO: remove this few more versions later
+// add timestamps to data
+// remove all edge data
+// add citation-key to project
+db.allDocs({ include_docs: true })
+  .then((result) => {
+    let docs = [];
+    for (let row of result.rows as { doc: any }[]) {
+      let flag = false;
+      let doc = row.doc as {
+        dataType: string;
+        timestampAdded?: number;
+        timestampModified?: number;
+        _deleted?: boolean;
+      };
+      switch (doc.dataType) {
+        case "project":
+          (doc as Project)["citation-key"] = generateCiteKey(doc as Project);
+          flag = true;
+        case "folder":
+        case "note":
+        case "pdfAnnotation":
+          if (!doc.timestampAdded) {
+            doc.timestampAdded = Date.now();
+            doc.timestampModified = Date.now();
+            flag = true;
+          }
+          break;
+        case "edge":
+          doc._deleted = true;
+          flag = true;
+        default:
+          break;
+      }
+      if (flag) docs.push(doc);
+    }
+    db.bulkDocs(docs);
+  })
+  .catch((err) => {
+    console.log(err);
+  });
+
+// for debug use
 if ((process.env.DEV || process.env.DEBUGGING) && !process.env.TEST) {
-  // for debug use
   const remotedb = new PouchDB("http://localhost:3000/mydb");
   PouchDB.sync("mydb", "http://localhost:3000/mydb", {
     live: true,

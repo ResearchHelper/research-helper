@@ -72,22 +72,6 @@ export default class AnnotationStore {
         })
       ).docs as AnnotationData[];
 
-      // TODO: remove this few more versions later
-      let flag = false;
-      for (let annotData of annotDatas)
-        if (!annotData.timestampAdded) {
-          annotData.timestampAdded = Date.now();
-          annotData.timestampModified = Date.now();
-          flag = true;
-        }
-      if (flag) {
-        let responses = await db.bulkDocs(annotDatas);
-        for (let i in responses) {
-          let rev = responses[i].rev;
-          if (rev) annotDatas[i]._rev = rev;
-        }
-      }
-
       return annotDatas;
     } catch (err) {
       console.log(err);

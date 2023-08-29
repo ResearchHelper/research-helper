@@ -30,7 +30,7 @@ $highlightStripHeight: 3px;
   position: relative;
 }
 
-.lm_row > .lm_item {
+.lm_row>.lm_item {
   float: left;
 }
 
@@ -100,19 +100,22 @@ $highlightStripHeight: 3px;
     box-sizing: content-box !important;
   }
 
-  // Pane controls (popout, maximize, minimize, close)
+  // Pane controls (popout, maximize, minimize, close, dropdown)
   .lm_controls {
-    visibility: hidden; // we don't need this
     position: absolute;
     right: 3px;
     display: flex;
 
-    > * {
+    >* {
       cursor: pointer;
       float: left;
       width: $width4;
       height: $height5;
       text-align: center;
+    }
+
+    .lm_close {
+      visibility: hidden;
     }
   }
 
@@ -179,37 +182,39 @@ $highlightStripHeight: 3px;
 .lm_stack {
   position: relative;
 
-  > .lm_items {
+  >.lm_items {
     overflow: hidden;
   }
 
   &.lm_left {
-    > .lm_items {
+    >.lm_items {
       position: absolute;
       left: 20px;
       top: 0;
     }
   }
+
   &.lm_right {
-    > .lm_items {
+    >.lm_items {
       position: absolute;
       right: 20px;
       top: 0;
     }
 
-    > .lm_header {
+    >.lm_header {
       position: absolute;
       right: 0;
       top: 0;
     }
   }
+
   &.lm_bottom {
-    > .lm_items {
+    >.lm_items {
       position: absolute;
       bottom: 20px;
     }
 
-    > .lm_header {
+    >.lm_header {
       position: absolute;
       bottom: 0;
     }
@@ -226,6 +231,7 @@ $highlightStripHeight: 3px;
   }
 
   &.lm_dragProxy {
+
     .lm_header,
     .lm_items {
       float: left;
@@ -241,7 +247,8 @@ $highlightStripHeight: 3px;
       .lm_tabs {
         transform-origin: left top;
         top: 0;
-        width: 1000px; /*hack*/
+        width: 1000px;
+        /*hack*/
       }
 
       .lm_controls {
@@ -258,6 +265,7 @@ $highlightStripHeight: 3px;
     .lm_tabs {
       transform: rotate(-90deg) scaleX(-1);
       left: 0;
+
       .lm_tab {
         transform: scaleX(-1);
         margin-top: 1px;
@@ -300,6 +308,7 @@ $highlightStripHeight: 3px;
 .lm_stack.lm_bottom {
   .lm_header {
     width: 100%;
+
     .lm_tab {
       margin-top: 0;
       border-top: none;
@@ -416,7 +425,7 @@ $highlightStripHeight: 3px;
   right: 0;
   z-index: 9999;
 
-  > * {
+  >* {
     width: $width0;
     height: $height0;
     position: absolute;
@@ -424,11 +433,11 @@ $highlightStripHeight: 3px;
     left: 0;
   }
 
-  > .lm_bg {
+  >.lm_bg {
     z-index: 10;
   }
 
-  > .lm_icon {
+  >.lm_icon {
     z-index: 20;
   }
 }

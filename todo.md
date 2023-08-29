@@ -1,30 +1,24 @@
-### Fixes:
+## v3.3.0-beta
 
-- [ ] Project opened repeatedly
-- [x] update window name when project/ note is updated
-- [ ] things in layout need to simplified
+### TODO
+
+- [x] Delete all edge datas
+- [x] Put the code for modifying all timestamps to `db.ts`
 
 ### Features:
 
-- [x] Add time stamp to data with type `Folder, Project, Note, AnnotationData`
-- [x] Add new category `Recently added` to library page
-- [x] MetaInfoTab shows timestamps
-- [x] Add favorites to library page
-  - [x] folder UI
-  - [x] add `favorite` (boolean) to `Project` data
-  - [x] display favorite in `ProjectTableRow` as a star-shape checkbox
-  - [x] update project data when clicked
-  - [x] query all favorite projects when clicked on folder
-- [ ] Add meta data to folders
-- [ ] Able to add notes to folders as well ??
+- [ ] Able to import zotero, mendeley, and endnote file
+  - [x] import collection of references
+  - [ ] import the corresponding files too
+- [ ] custom citation key
+  - [ ] create citation key when project meta is available
+  - [ ] user is able to change citation key
+  - [ ] settings for auto generate citation key
+  - [x] function to generate citation key
 
 ### Improvements:
 
-- [x] Compactification of database
-- [x] better table interactions
-
-TODO: refactor project related stuff
-
-- [ ] simplify openProject, closeProject, openPage, and closePage logics and try to make some of them to some global control in stateStore.
-- [ ] make a citation id generator that can generate different format
+- [x] tabs overflow
+  - [x] dropdown list to switch tabs
+  - [x] note toolbar covers up the dropdown list
 - [ ] the label appear on top of the graph node is better to be a citation id

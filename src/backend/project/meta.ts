@@ -3,20 +3,20 @@ import "@citation-js/plugin-isbn"; // must import this so we can use isbn as ide
 import { getProjects } from "./project";
 import { exportFile } from "quasar";
 
-import { Folder, Project } from "../database";
+import { Author, Folder, Meta, Project } from "../database";
 
 /**
  * Get artible/book info given an identifier using citation.js
  * @param identifier - identifier(s)
  * @param format - json, bib, bibliography, ris, ...
  * @param options - e.g. {format: "html"}, {template: "vancouver"}
- * @returns {any} citation data
+ * @returns citation data
  */
-async function getMeta(
+export async function getMeta(
   identifier: string | string[] | object[],
   format?: string,
   options?: { format?: string; template?: string }
-): Promise<any> {
+): Promise<Meta | undefined> {
   try {
     const data = await Cite.async(identifier);
     if (!format || format === "json") {
@@ -34,10 +34,11 @@ async function getMeta(
 
 /**
  * Export a folder of references to a specific format
- * @param {import("./folder").Folder} folder
- * @param {string} format
+ * @param folder
+ * @param format
+ * @param options
  */
-async function exportMeta(
+export async function exportMeta(
   folder: Folder,
   format: string,
   options: { format?: string; template?: string }
@@ -67,12 +68,75 @@ async function exportMeta(
 
 /**
  *
- * @param {string} filePath
- * @returns {any} citation data
+ * @param filePath
+ * @returns citation data
  */
-async function importMeta(filePath: string): Promise<any> {
+export async function importMeta(filePath: string): Promise<Meta | undefined> {
   let data = window.fs.readFileSync(filePath, "utf8");
   return await getMeta(data, "json");
 }
 
-export { getMeta, exportMeta, importMeta };
+/**
+ * Generate citation-key according to given meta
+ * @param meta
+ */
+export function generateCiteKey(
+  meta: Meta,
+  rule: {
+    connector1: "_";
+    connector2: "_";
+    nameConnector: "_";
+    part1: "name";
+    part2: "title";
+    part3: "year";
+  }
+): string {
+  let parts = { name: "", year: "", title: "" };
+  // author
+  let lastNames = "unknown";
+  if (meta.author.length > 0) {
+    let familyNames = [];
+    for (let author of meta.author as Author[]) {
+      if (familyNames.length === 2) {
+        // the third author and other will be briviated as etal
+        familyNames.push("etal");
+        break;
+      }
+
+      let family = author?.family;
+      let literal = author?.literal;
+      if (family) familyNames.push(family);
+      else if (literal) {
+        // split the name by two ways "first last" and "last, feng"
+        literal = literal.trim();
+        let split1 = literal.split(" ");
+        let split2 = literal.split(",");
+        if (split1.length > 1) familyNames.push(split1[1].trim());
+        else if (split2.length > 1) familyNames.push(split2[0].trim());
+        else familyNames.push(literal);
+      }
+    }
+
+    lastNames = familyNames.join(rule.nameConnector);
+  }
+  parts["name"] = lastNames;
+
+  // year
+  let year = "unknown";
+  if (meta.issued) year = meta.issued["date-parts"][0][0].toString();
+  parts.year = year;
+
+  // title's first word
+  let word = meta.title
+    .split(" ")
+    .filter((w) => !["a", "an", "the"].includes(w.toLowerCase()))[0];
+  parts.title = word;
+
+  let key =
+    parts[rule.part1] +
+    rule.connector1 +
+    parts[rule.part2] +
+    rule.connector2 +
+    parts[rule.part3];
+  return key;
+}

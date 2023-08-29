@@ -1,8 +1,5 @@
 <template>
-  <div
-    v-show="showEditor"
-    ref="vditorDiv"
-  ></div>
+  <div v-show="showEditor" ref="vditorDiv"></div>
 </template>
 <script setup lang="ts">
 // types
@@ -82,10 +79,10 @@ onMounted(async () => {
 function initEditor() {
   let toolbar = [] as (
     | {
-        name: string;
-        tipPosition?: string;
-        tip?: string;
-      }
+      name: string;
+      tipPosition?: string;
+      tip?: string;
+    }
     | "|"
   )[];
   if (props.hasToolbar)
@@ -403,9 +400,14 @@ function filterHints(key: string) {
   return hints.value;
 }
 </script>
-<style>
+<style lang="scss">
 pre.vditor-reset {
   /* do not change padding after resizing */
   padding: 10px 35px !important;
+}
+
+.vditor-toolbar--pin {
+  /* do this so that the toolbar does not block the golden dropdown tab lists*/
+  z-index: 0;
 }
 </style>

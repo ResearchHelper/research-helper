@@ -29,12 +29,12 @@ interface Reference {
  */
 export interface Meta {
   id: string; // citation id
-  "citation-label": string; // citatin label
+  "citation-label"?: string; // citatin label
+  "citation-key"?: string;
   type?: string; // article / book / conference-paper ...
   title: string; // article / book title
-  author?: Author[]; // array of authors [{family: "Feng", given: "Feng"}, {literal: "John"}]
+  author: Author[]; // array of authors [{family: "Feng", given: "Feng"}, {literal: "John"}]
   abstract?: string; // article abstract
-  year?: string;
   issued?: { "date-parts": Array<any> }; // issued date
   DOI?: string; // Digital Object Identity
   ISBN?: string; // ISBN of a book
@@ -380,4 +380,4 @@ export interface PluginStatus {
   updatable: boolean;
 }
 
-export interface PluginStatusMap extends Map<string, PluginStatus> {}
+export interface PluginStatusMap extends Map<string, PluginStatus> { }

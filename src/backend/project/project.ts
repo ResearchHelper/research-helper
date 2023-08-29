@@ -6,6 +6,7 @@ import {
   deleteProjectFolder,
   renameFile,
 } from "./file";
+import { generateCiteKey } from "./meta";
 
 /**
  * Create a project data
@@ -205,21 +206,6 @@ export async function getProjects(folderId: string): Promise<Project[]> {
           })
         ).docs as Project[];
         break;
-    }
-    // TODO: remove this few more versions later
-    let flag = false;
-    for (let project of projects)
-      if (!project.timestampAdded) {
-        project.timestampAdded = Date.now();
-        project.timestampModified = Date.now();
-        flag = true;
-      }
-    if (flag) {
-      let responses = await db.bulkDocs(projects);
-      for (let i in responses) {
-        let rev = responses[i].rev;
-        if (rev) projects[i]._rev = rev;
-      }
     }
     return projects;
   } catch (error) {
