@@ -93,12 +93,83 @@
         </q-input>
       </q-card-section>
     </q-card>
+
+    <q-card
+      square
+      bordered
+      flat
+      class="q-my-md card"
+    >
+      <q-card-section>
+        <div class="row">
+          <div class="text-h6">{{ $t("citation-key") }}</div>
+          <q-btn
+            class="q-ml-sm"
+            unelevated
+            square
+            no-caps
+            color="primary"
+            :ripple="false"
+            :label="$t('update-references')"
+            @click="updateCiteKeys"
+          ></q-btn>
+        </div>
+      </q-card-section>
+      <q-card-section class="q-pt-none">
+        <div
+          v-for="(meta, index) in exampleMetas"
+          :key="index"
+        >
+          {{ `Example${index + 1} -- ${citeKeyExample(meta)}` }}
+        </div>
+        <div class="row">
+          <q-select
+            dense
+            outlined
+            :options="citeKeyPartKeyOptions"
+            :display-value="$t(citeKeyPartKeys[0])"
+            v-model="citeKeyPartKeys[0]"
+            @update:model-value="updateCiteKeyRule"
+          />
+          <q-select
+            dense
+            outlined
+            :options="citeKeyConnectorOptions"
+            v-model="citeKeyConnector"
+            @update:model-value="updateCiteKeyRule"
+          />
+          <q-select
+            dense
+            outlined
+            :options="citeKeyPartKeyOptions"
+            :display-value="$t(citeKeyPartKeys[1])"
+            v-model="citeKeyPartKeys[1]"
+            @update:model-value="updateCiteKeyRule"
+          />
+          <q-select
+            dense
+            outlined
+            :options="citeKeyConnectorOptions"
+            v-model="citeKeyConnector"
+            @update:model-value="updateCiteKeyRule"
+          />
+          <q-select
+            dense
+            outlined
+            :options="citeKeyPartKeyOptions"
+            :display-value="$t(citeKeyPartKeys[2])"
+            v-model="citeKeyPartKeys[2]"
+            @update:model-value="updateCiteKeyRule"
+          />
+        </div>
+      </q-card-section>
+    </q-card>
   </div>
 </template>
 <script setup lang="ts">
 // types
-import { computed, ref, watch } from "vue";
-import { Project, Note } from "src/backend/database";
+import { computed, reactive, ref, watch } from "vue";
+import { Project, Note, Meta } from "src/backend/database";
 import ProgressDialog from "./ProgressDialog.vue";
 // db
 import { useStateStore } from "src/stores/appState";
@@ -106,6 +177,7 @@ import { updateAppState } from "src/backend/appState";
 import { changePath } from "src/backend/project/file";
 import { getAllProjects } from "src/backend/project/project";
 import { getAllNotes } from "src/backend/project/note";
+import { generateCiteKey } from "src/backend/project/meta";
 import { db } from "src/backend/database";
 import { useI18n } from "vue-i18n";
 import { useQuasar } from "quasar";
@@ -129,6 +201,34 @@ const themeOptions = ref<{ value: "dark" | "light"; label: string }[]>([
   { value: "dark", label: t("dark") },
   { value: "light", label: t("light") },
 ]);
+const citeKeyPartKeyOptions = ["author", "title", "year"];
+const citeKeyConnectorOptions = [" ", "_", "-", "."];
+
+// example metas
+const exampleMetas = [
+  {
+    title: "A Long Title",
+    author: [{ family: "Last", given: "First" }],
+    issued: { "date-parts": [[2023]] },
+  },
+  {
+    title: "A Long Title",
+    author: [
+      { family: "Last1", given: "First1" },
+      { family: "Last2", given: "First2" },
+    ],
+    issued: { "date-parts": [[2023]] },
+  },
+  {
+    title: "A Long Title",
+    author: [
+      { family: "Last1", given: "First1" },
+      { family: "Last2", given: "First2" },
+      { family: "Last3", given: "First3" },
+    ],
+    issued: { "date-parts": [[2023]] },
+  },
+] as Meta[];
 
 watch(
   () => locale.value,
@@ -180,6 +280,16 @@ const fontSize = computed({
     changeFontSize(size);
   },
 });
+
+// citeKeyRule = "author<connector>title<connector>year"
+// stateStore.settings.citeKeyRule.split(/[^a-z]/) => ["author", "title", "year"]
+const citeKeyPartKeys = reactive(
+  stateStore.settings.citeKeyRule.split(/[^a-z]/)
+);
+// stateStore.settings.citeKeyRule.split(/[a-z]/).filter((s) => s) => [ connector, connector ]
+const citeKeyConnector = ref(
+  stateStore.settings.citeKeyRule.split(/[a-z]/).filter((s) => s)[0]
+);
 
 /*********************
  * Methods
@@ -271,6 +381,31 @@ async function moveFiles(oldPath: string, newPath: string) {
   } catch (error) {
     errors.value.push(error as Error);
   }
+}
+
+function citeKeyExample(meta: Meta) {
+  return `title: ${meta.title}, year: ${
+    (meta.issued as { "date-parts": any })["date-parts"][0][0]
+  }, authors: ${meta.author
+    .map((name) => name.given + " " + name.family)
+    .join(", ")} => ${generateCiteKey(meta, stateStore.settings.citeKeyRule)}`;
+}
+
+function updateCiteKeyRule() {
+  stateStore.settings.citeKeyRule = citeKeyPartKeys.join(
+    citeKeyConnector.value
+  );
+  saveAppState();
+}
+
+async function updateCiteKeys() {
+  let projects = await getAllProjects();
+  for (let project of projects)
+    project["citation-key"] = generateCiteKey(
+      project,
+      stateStore.settings.citeKeyRule
+    );
+  await db.bulkDocs(projects);
 }
 
 async function saveAppState() {

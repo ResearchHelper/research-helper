@@ -16,7 +16,7 @@ export async function getMeta(
   identifier: string | string[] | object[],
   format?: string,
   options?: { format?: string; template?: string }
-): Promise<Meta | undefined> {
+): Promise<Meta[] | string> {
   try {
     const data = await Cite.async(identifier);
     if (!format || format === "json") {
@@ -27,6 +27,7 @@ export async function getMeta(
     else return data.format(format, options);
   } catch (error) {
     console.log(error);
+    return [] as Meta[];
   }
 }
 
@@ -46,9 +47,9 @@ export async function exportMeta(
   try {
     let projects: Project[] = await getProjects(folder._id);
     console.log("projects", projects);
-    let meta = await getMeta(projects, format, options);
+    let metas = await getMeta(projects, format, options);
     if (format === "json") {
-      exportFile(`${folder.label}.json`, JSON.stringify(meta), {
+      exportFile(`${folder.label}.json`, JSON.stringify(metas), {
         mimeType: "application/json",
       });
     } else {
@@ -56,7 +57,7 @@ export async function exportMeta(
       if (["bibtex", "biblatex"].includes(format)) extension = "bib";
       else if (format === "bibliography") extension = "txt";
       else if (format === "ris") extension = "ris";
-      exportFile(`${folder.label}.${extension}`, meta, {
+      exportFile(`${folder.label}.${extension}`, metas as string, {
         mimeType: "text/plain",
       });
     }
@@ -67,34 +68,36 @@ export async function exportMeta(
 }
 
 /**
- *
+ * Read a reference file (such as .bib) and return the containing metas
  * @param filePath
  * @returns citation data
  */
-export async function importMeta(filePath: string): Promise<Meta | undefined> {
+export async function importMeta(filePath: string): Promise<Meta[]> {
   let data = window.fs.readFileSync(filePath, "utf8");
-  return await getMeta(data, "json");
+  return (await getMeta(data, "json")) as Meta[];
 }
 
 /**
  * Generate citation-key according to given meta
  * @param meta
+ * @param rule - example: "author_title_year", "author year title" (space means no connector in between) ...
  */
-export function generateCiteKey(
-  meta: Meta,
-  rule: {
-    connector1: "_";
-    connector2: "_";
-    nameConnector: "_";
-    part1: "name";
-    part2: "title";
-    part3: "year";
+export function generateCiteKey(meta: Meta, rule: string): string {
+  // parsing the rule
+  let connector = "";
+  let keys = ["author", "title", "year"];
+  for (let symbol of [" ", "-", "_", "."]) {
+    keys = rule.split(symbol);
+    if (keys[0] && keys[1] && keys[2]) {
+      connector = symbol;
+      break;
+    }
   }
-): string {
-  let parts = { name: "", year: "", title: "" };
+
+  let parts = { author: "", year: "", title: "" };
   // author
   let lastNames = "unknown";
-  if (meta.author.length > 0) {
+  if (meta.author && meta.author.length > 0) {
     let familyNames = [];
     for (let author of meta.author as Author[]) {
       if (familyNames.length === 2) {
@@ -105,21 +108,22 @@ export function generateCiteKey(
 
       let family = author?.family;
       let literal = author?.literal;
-      if (family) familyNames.push(family);
+      if (family) familyNames.push(family.toLowerCase());
       else if (literal) {
         // split the name by two ways "first last" and "last, feng"
         literal = literal.trim();
         let split1 = literal.split(" ");
         let split2 = literal.split(",");
-        if (split1.length > 1) familyNames.push(split1[1].trim());
-        else if (split2.length > 1) familyNames.push(split2[0].trim());
-        else familyNames.push(literal);
+        if (split1.length > 1) familyNames.push(split1[1].trim().toLowerCase());
+        else if (split2.length > 1)
+          familyNames.push(split2[0].trim().toLowerCase());
+        else familyNames.push(literal.toLowerCase());
       }
     }
 
-    lastNames = familyNames.join(rule.nameConnector);
+    lastNames = familyNames.join(connector);
   }
-  parts["name"] = lastNames;
+  parts.author = lastNames;
 
   // year
   let year = "unknown";
@@ -127,16 +131,24 @@ export function generateCiteKey(
   parts.year = year;
 
   // title's first word
-  let word = meta.title
+  let title = meta.title
     .split(" ")
-    .filter((w) => !["a", "an", "the"].includes(w.toLowerCase()))[0];
-  parts.title = word;
+    .filter((w) => !["a", "an", "the", "on"].includes(w.toLowerCase()))[0];
+  parts.title = title.toLowerCase();
 
-  let key =
-    parts[rule.part1] +
-    rule.connector1 +
-    parts[rule.part2] +
-    rule.connector2 +
-    parts[rule.part3];
-  return key;
+  let citeKey = keys
+    .map((key) => parts[key as "year" | "author" | "title"])
+    .join(connector);
+
+  // if connector is " ", it means no connector in between
+  // connect all parts to a Pascal Case string
+  if (connector === " ") {
+    citeKey = citeKey
+      .replace(
+        /(\w)(\w*)/g,
+        (_, g1: string, g2: string) => g1.toUpperCase() + g2
+      )
+      .replaceAll(" ", "");
+  }
+  return citeKey;
 }

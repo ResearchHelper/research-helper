@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import { AppState, Page, Project, Settings } from "src/backend/database";
+import { AppState, Page, Settings } from "src/backend/database";
 
 export const useStateStore = defineStore("stateStore", {
   state: () => ({
@@ -25,7 +25,8 @@ export const useStateStore = defineStore("stateStore", {
       language: "en_US",
       storagePath: "",
       fontSize: "16px",
-    },
+      citeKeyRule: "author_title_year",
+    } as Settings,
 
     // page
     openedPage: { id: "", type: "", label: "" },
@@ -35,6 +36,7 @@ export const useStateStore = defineStore("stateStore", {
 
   actions: {
     async loadState(state: AppState) {
+      console.log("loading state", state.settings);
       this.leftMenuSize = state.leftMenuSize || this.leftMenuSize;
       this.showLeftMenu = state.showLeftMenu || this.showLeftMenu;
       this.showPDFMenuView = state.showPDFMenuView || this.showPDFMenuView;
@@ -47,7 +49,7 @@ export const useStateStore = defineStore("stateStore", {
       this.selectedFolderId = state.selectedFolderId || this.selectedFolderId;
       this.currentPageId = state.currentPageId || this.currentPageId;
       this.openedProjectIds = new Set(state.openedProjectIds); // convert to Set after loading
-      this.settings = state.settings || this.settings;
+      this.settings = Object.assign(this.settings, state.settings); // if state.settings is missing anything, this won't hurt!
 
       this.ready = true;
     },

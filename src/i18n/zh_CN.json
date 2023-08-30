@@ -144,5 +144,7 @@
   "favorites": "收藏",
   "date-added": "添加日期",
   "date-modified": "修改日期",
-  "set-favorite": "收藏"
+  "set-favorite": "收藏",
+  "citation-key": "引用键",
+  "update-references": "更新所有文献"
 }

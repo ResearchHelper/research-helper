@@ -10,11 +10,19 @@
 - [ ] Able to import zotero, mendeley, and endnote file
   - [x] import collection of references
   - [ ] import the corresponding files too
-- [ ] custom citation key
-  - [ ] create citation key when project meta is available
-  - [ ] user is able to change citation key
-  - [ ] settings for auto generate citation key
+- [x] custom citation key
+  - [x] create citation key when importing project
+  - [x] create citation key when meta is retrived
+  - [x] display citation key in metaInfoTab
+  - [x] user is able to change citation key
   - [x] function to generate citation key
+  - [x] update citation key as user changing title, author, or year ...
+  - [x] settings for auto generate citation key
+    - [x] display some examples so user understand what's going on
+    - [x] implement options for setting the rule
+    - [x] add this rule to stateStore
+    - [x] components using the rule must load from stateStore
+    - [x] update all references when rule is updated
 
 ### Improvements:
 

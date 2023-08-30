@@ -30,6 +30,21 @@
         />
       </div>
 
+      <div class="row justify-between q-mt-sm">
+        <div
+          class="col"
+          style="font-size: 1rem"
+        >
+          {{ $t("citation-key") }}
+        </div>
+        <input
+          class="col-8 input"
+          type="text"
+          v-model="meta['citation-key']"
+          @blur="modifyInfo()"
+        />
+      </div>
+
       <div class="row q-mt-sm">
         <div
           class="col"
@@ -330,10 +345,12 @@ import { ref, watch, computed, onMounted } from "vue";
 import type { PropType } from "vue";
 import { Author, Folder, Meta, Project } from "src/backend/database";
 // backend stuff
-import { getMeta } from "src/backend/project/meta";
+import { generateCiteKey, getMeta } from "src/backend/project/meta";
 import { getFolder } from "src/backend/project/folder";
 import { useProjectStore } from "src/stores/projectStore";
+import { useStateStore } from "src/stores/appState";
 const projectStore = useProjectStore();
+const stateStore = useStateStore();
 
 const props = defineProps({ project: Object as PropType<Project> });
 const tab = ref("meta");
@@ -418,6 +435,10 @@ async function getCategories() {
  */
 async function modifyInfo() {
   if (meta.value === undefined) return;
+  meta.value["citation-key"] = generateCiteKey(
+    meta.value,
+    stateStore.settings.citeKeyRule
+  );
   projectStore.updateProject(meta.value._id, meta.value);
 }
 
@@ -494,11 +515,11 @@ async function getReferences() {
     try {
       getMeta(ref.DOI || ref.key, "bibliography", {
         format: "html",
-      }).then((text) => {
-        references.value[i].link = text.match(
-          /(https[a-zA-Z0-9:\.\/\-\_]+)/g
-        )[0];
-        references.value[i].text = text.replace(
+      }).then((text: string | Meta[]) => {
+        if (text === null) return;
+        let match = (text as string).match(/(https[a-zA-Z0-9:\.\/\-\_]+)/g);
+        references.value[i].link = match ? match[0] : "";
+        references.value[i].text = (text as string).replace(
           /(https[a-zA-Z0-9:\.\/\-\_]+)/g,
           ""
         );
@@ -525,7 +546,7 @@ async function updateMeta() {
   } else {
     identifier = meta.value?.URL as string;
   }
-  metas = await getMeta(identifier);
+  metas = (await getMeta(identifier)) as Meta[];
   Object.assign(meta.value as Project, metas[0]);
   modifyInfo();
 }
@@ -541,6 +562,7 @@ function openURL(url: string | undefined) {
   background: var(--color-rightmenu-tab-panel-bkgd);
   border: 1px solid grey;
   font-size: 1rem;
+
   &:focus-visible {
     outline: none !important;
     border: 2px solid $primary;
@@ -550,6 +572,7 @@ function openURL(url: string | undefined) {
 .link {
   color: $primary;
   text-decoration: underline;
+
   &:hover {
     cursor: pointer;
   }

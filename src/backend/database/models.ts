@@ -30,7 +30,7 @@ interface Reference {
 export interface Meta {
   id: string; // citation id
   "citation-label"?: string; // citatin label
-  "citation-key"?: string;
+  "citation-key": string; // used to cite for bibtex
   type?: string; // article / book / conference-paper ...
   title: string; // article / book title
   author: Author[]; // array of authors [{family: "Feng", given: "Feng"}, {literal: "John"}]
@@ -241,6 +241,7 @@ export interface Settings {
   language: "en_US" | "zh_CN"; // en_US by default
   storagePath: string; // select by user
   fontSize: string; // 16px by default
+  citeKeyRule: string; // "author_title_year" by default
 }
 
 export interface AppState {
@@ -380,4 +381,4 @@ export interface PluginStatus {
   updatable: boolean;
 }
 
-export interface PluginStatusMap extends Map<string, PluginStatus> { }
+export interface PluginStatusMap extends Map<string, PluginStatus> {}
