@@ -100,6 +100,18 @@
             }}</q-tooltip>
           </q-btn>
         </q-item>
+
+        <q-separator />
+        <q-item class="justify-center">
+          <q-toggle
+            dense
+            :model-value="darkMode"
+            @update:model-value="$emit('toggleDarkMode')"
+            unchecked-icon="light_mode"
+            checked-icon="dark_mode"
+            size="xl"
+          />
+        </q-item>
       </q-list>
     </q-menu>
   </q-btn>
@@ -109,10 +121,12 @@ const props = defineProps({
   currentScale: { type: Number, required: true },
   spreadMode: { type: Number, required: true },
   isFullscreen: { type: Boolean, required: true },
+  darkMode: { type: Boolean, required: true },
 });
 const emit = defineEmits([
   "changeScale",
   "changeSpreadMode",
   "toggleFullscreen",
+  "toggleDarkMode",
 ]);
 </script>

@@ -120,6 +120,7 @@ export default class PDFApplication {
       this.changeSpreadMode(this.state.spreadMode);
       this.changeScale({ scale: this.state.currentScale });
       this.changeTool(this.state.tool);
+      this.changeViewMode(this.state.darkMode);
       if (this.pdfViewer) this.state.pagesCount = this.pdfViewer.pagesCount;
       this.ready.value = true;
     });
@@ -248,25 +249,27 @@ export default class PDFApplication {
         selector: { dataType: "pdfState", projectId: projectId },
       });
 
-      let state = result.docs[0] as PDFState;
-      if (!!!state) {
-        // default state
-        state = {
-          dataType: "pdfState",
-          projectId: projectId,
-          pagesCount: 0,
-          currentPageNumber: 1,
-          currentScale: 1,
-          currentScaleValue: "1",
-          spreadMode: 0,
-          tool: "cursor",
-          color: "#FFFF00",
-          inkThickness: 5,
-          inkOpacity: 100,
-          scrollLeft: 0,
-          scrollTop: 0,
-        } as PDFState;
-      }
+      // default state
+      let state = {
+        _id: "",
+        _rev: "",
+        dataType: "pdfState",
+        projectId: projectId,
+        pagesCount: 0,
+        currentPageNumber: 1,
+        currentScale: 1,
+        currentScaleValue: "1",
+        spreadMode: 0,
+        darkMode: false,
+        tool: "cursor",
+        color: "#FFFF00",
+        inkThickness: 5,
+        inkOpacity: 100,
+        scrollLeft: 0,
+        scrollTop: 0,
+      } as PDFState;
+      // doing this we can make sure if anything missing from db, the default values are there
+      Object.assign(state, result.docs[0] as PDFState);
       Object.assign(this.state, state);
       return state;
     } catch (error) {
@@ -339,6 +342,19 @@ export default class PDFApplication {
 
   changeColor(color: string) {
     this.state.color = color;
+  }
+
+  changeViewMode(darkMode: boolean) {
+    this.state.darkMode = darkMode;
+    if (this.state.darkMode)
+      (
+        document.getElementsByClassName("pdfViewer")[0] as HTMLElement
+      ).style.filter =
+        "invert(64%) contrast(228%) brightness(80%) hue-rotate(180deg)";
+    else
+      (
+        document.getElementsByClassName("pdfViewer")[0] as HTMLElement
+      ).style.filter = "unset";
   }
 
   changeInkThickness(thickness: number) {

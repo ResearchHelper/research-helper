@@ -24,9 +24,11 @@
       :currentScale="pdfApp.state.currentScale"
       :spreadMode="pdfApp.state.spreadMode"
       :isFullscreen="isFullscreen"
+      :darkMode="pdfApp.state.darkMode"
       @changeScale="(params) => pdfApp.changeScale(params)"
       @changeSpreadMode="(mode) => pdfApp.changeSpreadMode(mode)"
       @toggleFullscreen="toggleFullscreen"
+      @toggleDarkMode="toggleDarkMode"
     />
 
     <q-space />
@@ -222,5 +224,9 @@ async function toggleFullscreen() {
   isFullscreen.value = !isFullscreen.value;
 }
 
-defineExpose({ changePage });
+async function toggleDarkMode() {
+  pdfApp.changeViewMode(!pdfApp.state.darkMode);
+}
+
+defineExpose({ changePage, toggleDarkMode });
 </script>

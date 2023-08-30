@@ -146,6 +146,7 @@ export interface PDFState {
   currentScaleValue: "page-width" | "page-height" | string;
   spreadMode: SpreadMode; // 0: no spread, 1: odd spread, 2: even spread
   tool: AnnotationType;
+  darkMode: boolean;
   color: string; // hex value
   scrollLeft: number; // current scrollLeft position
   scrollTop: number; // current scrollTop position
