@@ -237,8 +237,8 @@ export interface RenderEvt {
  * App global settings
  **************************************************/
 export interface Settings {
-  theme: "dark" | "light"; // dark by default
-  language: "en_US" | "zh_CN"; // en_US by default
+  theme: string; // dark by default
+  language: string; // en_US by default
   storagePath: string; // select by user
   fontSize: string; // 16px by default
   citeKeyRule: string; // "author_title_year" by default

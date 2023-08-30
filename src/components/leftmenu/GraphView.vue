@@ -41,7 +41,7 @@
 
 <script setup lang="ts">
 // types
-import { inject, onBeforeUnmount, onMounted, reactive, ref, watch } from "vue";
+import { inject, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import {
   NodeUI,
   EdgeUI,

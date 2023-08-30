@@ -19,9 +19,21 @@
         <q-select
           dense
           outlined
+          square
           :options="themeOptions"
+          :display-value="theme[0].toUpperCase() + theme.slice(1)"
           v-model="theme"
-        />
+        >
+          <template v-slot:option="scope">
+            <q-item v-bind="scope.itemProps">
+              <q-item-section>
+                <q-item-label>
+                  {{ scope.opt[0].toUpperCase() + scope.opt.slice(1) }}
+                </q-item-label>
+              </q-item-section>
+            </q-item>
+          </template>
+        </q-select>
       </q-card-section>
     </q-card>
 
@@ -62,6 +74,7 @@
         <q-select
           dense
           outlined
+          square
           v-model="language"
           :options="languageOptions"
         />
@@ -126,38 +139,48 @@
           <q-select
             dense
             outlined
+            square
             :options="citeKeyPartKeyOptions"
             :display-value="$t(citeKeyPartKeys[0])"
+            :option-label="(opt) => $t(opt)"
             v-model="citeKeyPartKeys[0]"
             @update:model-value="updateCiteKeyRule"
           />
           <q-select
             dense
             outlined
+            square
             :options="citeKeyConnectorOptions"
             v-model="citeKeyConnector"
+            :option-label="(opt) => $t(opt)"
             @update:model-value="updateCiteKeyRule"
           />
           <q-select
             dense
             outlined
+            square
             :options="citeKeyPartKeyOptions"
             :display-value="$t(citeKeyPartKeys[1])"
+            :option-label="(opt) => $t(opt)"
             v-model="citeKeyPartKeys[1]"
             @update:model-value="updateCiteKeyRule"
           />
           <q-select
             dense
             outlined
+            square
             :options="citeKeyConnectorOptions"
             v-model="citeKeyConnector"
+            :option-label="(opt) => $t(opt)"
             @update:model-value="updateCiteKeyRule"
           />
           <q-select
             dense
             outlined
+            square
             :options="citeKeyPartKeyOptions"
             :display-value="$t(citeKeyPartKeys[2])"
+            :option-label="(opt) => $t(opt)"
             v-model="citeKeyPartKeys[2]"
             @update:model-value="updateCiteKeyRule"
           />
@@ -168,7 +191,7 @@
 </template>
 <script setup lang="ts">
 // types
-import { computed, reactive, ref, watch } from "vue";
+import { computed, reactive, ref } from "vue";
 import { Project, Note, Meta } from "src/backend/database";
 import ProgressDialog from "./ProgressDialog.vue";
 // db
@@ -184,7 +207,7 @@ import { useQuasar } from "quasar";
 import pluginManager from "src/backend/plugin";
 
 const stateStore = useStateStore();
-const { t, locale } = useI18n({ useScope: "global" });
+const { locale } = useI18n({ useScope: "global" });
 const $q = useQuasar();
 
 // progressDialog
@@ -193,14 +216,11 @@ const errors = ref<Error[]>([]);
 const progress = ref(0.0);
 
 // options
-const languageOptions = ref<{ value: "en_US" | "zh_CN"; label: string }[]>([
+const languageOptions = [
   { value: "en_US", label: "English (en_US)" },
   { value: "zh_CN", label: "中文 (zh_CN)" },
-]);
-const themeOptions = ref<{ value: "dark" | "light"; label: string }[]>([
-  { value: "dark", label: t("dark") },
-  { value: "light", label: t("light") },
-]);
+];
+const themeOptions = ["dark", "light"];
 const citeKeyPartKeyOptions = ["author", "title", "year"];
 const citeKeyConnectorOptions = [" ", "_", "-", "."];
 
@@ -230,26 +250,17 @@ const exampleMetas = [
   },
 ] as Meta[];
 
-watch(
-  () => locale.value,
-  () => {
-    for (let option of themeOptions.value) {
-      option.label = t(option.value);
-    }
-  }
-);
-
 const language = computed({
   get() {
-    let result = languageOptions.value[0];
-    for (let option of languageOptions.value) {
+    let result = languageOptions[0];
+    for (let option of languageOptions) {
       if (option.value === stateStore.settings.language) {
         result = option;
       }
     }
     return result;
   },
-  set(option: { value: "en_US" | "zh_CN"; label: string }) {
+  set(option: { value: string; label: string }) {
     stateStore.settings.language = option.value;
     changeLanguage(option.value);
   },
@@ -257,17 +268,11 @@ const language = computed({
 
 const theme = computed({
   get() {
-    let result = themeOptions.value[0];
-    for (let option of themeOptions.value) {
-      if (option.value === stateStore.settings.theme) {
-        result = option;
-      }
-    }
-    return result;
+    return stateStore.settings.theme;
   },
-  set(option: { value: "dark" | "light"; label: string }) {
-    stateStore.settings.theme = option.value;
-    changeTheme(option.value);
+  set(option: string) {
+    stateStore.settings.theme = option;
+    changeTheme(option);
   },
 });
 
@@ -300,12 +305,12 @@ function changeFontSize(size: number) {
   saveAppState();
 }
 
-function changeLanguage(_locale: "en_US" | "zh_CN") {
+function changeLanguage(_locale: string) {
   locale.value = _locale;
   saveAppState();
 }
 
-function changeTheme(theme: "dark" | "light") {
+function changeTheme(theme: string) {
   switch (theme) {
     case "dark":
       $q.dark.set(true);

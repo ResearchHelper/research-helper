@@ -58,6 +58,7 @@
     "@quasar/quasar-app-extension-testing-unit-vitest": "^0.1.0",
     "@types/cytoscape": "^3.19.9",
     "@types/katex": "^0.16.0",
+    "@types/lodash": "^4.14.197",
     "@types/node": "^12.20.21",
     "@types/pouchdb": "^6.4.0",
     "@types/react": "^18.2.0",

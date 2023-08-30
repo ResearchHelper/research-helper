@@ -1,5 +1,8 @@
 <template>
-  <div v-show="showEditor" ref="vditorDiv"></div>
+  <div
+    v-show="showEditor"
+    ref="vditorDiv"
+  ></div>
 </template>
 <script setup lang="ts">
 // types
@@ -79,10 +82,10 @@ onMounted(async () => {
 function initEditor() {
   let toolbar = [] as (
     | {
-      name: string;
-      tipPosition?: string;
-      tip?: string;
-    }
+        name: string;
+        tipPosition?: string;
+        tip?: string;
+      }
     | "|"
   )[];
   if (props.hasToolbar)
@@ -384,13 +387,12 @@ const addImgResizer = debounce(_addImgResizer, 50) as () => void;
  * Return a filtered list of projects / notes according to key
  * @param key - keywords to filter
  */
-// TODO: better item.dataType and item.label using citation id
 function filterHints(key: string) {
   hints.value = [];
   let items: (Project | Note)[] = projects.value.concat(notes.value as any);
   for (let item of items) {
     let label = item.label;
-    if (label.toLocaleLowerCase().indexOf(key) > -1) {
+    if (label.toLowerCase().indexOf(key) > -1) {
       hints.value.push({
         value: `[${label}](${item._id})`,
         html: `<p class="ellipsis"><strong>${item.dataType}</strong>: ${item.label}</p>`,
