@@ -34,6 +34,11 @@
   - [x] set color when pdf is loaded
   - [x] correctly set dark mode when multiple pdfs opened
   - [x] also set dark mode for pdf peeker
+- [ ] pin pdf peeker
+  - [x] add a frame with pin button
+  - [ ] make the pin button work
+  - [ ] need to generate the PeekContainer in real time, we can't move the single container anymore
+  - [ ] enable drag to move the frame
 
 ### Improvements:
 

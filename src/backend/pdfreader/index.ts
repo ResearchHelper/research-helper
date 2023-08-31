@@ -24,7 +24,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc =
 
 export default class PDFApplication {
   container: HTMLDivElement | undefined;
-  peekContainer: HTMLDivElement | undefined;
+  peekCard: HTMLDivElement | undefined;
   eventBus: pdfjsViewer.EventBus | undefined;
   pdfLinkService: pdfjsViewer.PDFLinkService | undefined;
   pdfFindController: pdfjsViewer.PDFFindController | undefined;
@@ -72,7 +72,7 @@ export default class PDFApplication {
     } as PDFState);
   }
 
-  init(container: HTMLDivElement, peekContainer: HTMLDivElement) {
+  init(container: HTMLDivElement, peekCard: HTMLDivElement) {
     const eventBus = new pdfjsViewer.EventBus();
     const pdfLinkService = new pdfjsViewer.PDFLinkService({
       eventBus,
@@ -102,12 +102,12 @@ export default class PDFApplication {
     pdfLinkService.setViewer(pdfViewer);
 
     this.container = container;
-    this.peekContainer = peekContainer;
+    this.peekCard = peekCard;
     this.eventBus = eventBus;
     this.pdfLinkService = pdfLinkService;
     this.pdfFindController = pdfFindController;
     this.pdfViewer = pdfViewer;
-    this.peekManager = new PeekManager(container, peekContainer);
+    this.peekManager = new PeekManager(container, peekCard);
     this.pdfDocument = undefined; // initialize in loadPDF
 
     // install internal event listener

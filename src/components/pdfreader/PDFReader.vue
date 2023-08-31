@@ -44,13 +44,7 @@
         />
       </div>
 
-      <!-- <div -->
-      <!--   ref="peekContainer" -->
-      <!--   class="peekContainer" -->
-      <!-- > -->
-      <!--   <div class="pdfViewer"></div> -->
-      <!-- </div> -->
-      <PeekContainer ref="peekContainer" />
+      <PeekCard ref="peekCard" />
     </template>
     <template v-slot:after>
       <RightMenu />
@@ -74,7 +68,7 @@ import PDFToolBar from "./PDFToolBar.vue";
 import RightMenu from "./RightMenu.vue";
 import AnnotCard from "./AnnotCard.vue";
 import FloatingMenu from "./FloatingMenu.vue";
-import PeekContainer from "./PeekContainer.vue";
+import PeekCard from "./PeekCard.vue";
 
 import { getProject } from "src/backend/project/project";
 import PDFApplication from "src/backend/pdfreader";
@@ -89,8 +83,7 @@ const props = defineProps({ projectId: { type: String, required: true } });
 
 // viewer containers
 const viewerContainer = ref<HTMLDivElement>();
-// const peekContainer = ref<HTMLDivElement>();
-const peekContainer = ref();
+const peekCard = ref();
 
 // ready to save data
 const project = ref<Project>();
@@ -270,12 +263,10 @@ watch(pdfApp.state, (state) => {
  * Implement eventhandlers and init PDFApplication
  **************************************************/
 onMounted(async () => {
-  // if (!viewerContainer.value || !peekContainer.value) return;
-  if (!viewerContainer.value || !peekContainer.value?.viewer) return;
+  if (!viewerContainer.value || !peekCard.value.card) return;
   pdfApp.init(
     viewerContainer.value as HTMLDivElement,
-    // peekContainer.value as HTMLDivElement
-    peekContainer.value.viewer as HTMLDivElement
+    peekCard.value.card.$el as HTMLDivElement
   );
 
   pdfApp.eventBus?.on(
@@ -504,13 +495,6 @@ onMounted(async () => {
   margin-right: 10px;
   background-color: var(--color-pdfreader-viewer-bkgd);
 }
-
-// .peekContainer {
-//   position: absolute;
-//   overflow: auto;
-//   background: var(--color-pdfreader-viewer-bkgd);
-//   border: solid $primary 3px;
-// }
 
 .page {
   // fix no gap between pages

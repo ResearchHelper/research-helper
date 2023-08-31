@@ -7,19 +7,20 @@ import { GrabToPan } from "./grabToPan";
 
 export class PeekManager {
   handtool: GrabToPan;
-  peekContainer: HTMLElement;
-  viewerContainer: HTMLElement;
+  viewerContainer: HTMLElement; // the main viewer container
+  peekCard: HTMLElement; // the card containing peeked page within viewer container
   pdfViewer: pdfjsViewer.PDFSinglePageViewer;
   linkService: pdfjsViewer.PDFLinkService;
 
-  constructor(viewerContainer: HTMLDivElement, peekContainer: HTMLDivElement) {
+  constructor(viewerContainer: HTMLDivElement, peekCard: HTMLDivElement) {
     const eventBus = new pdfjsViewer.EventBus();
     const pdfLinkService = new pdfjsViewer.PDFLinkService({
       eventBus,
     });
 
-    console.log("peekContainer", peekContainer);
-    // console.log("container", container);
+    const peekContainer = peekCard.querySelector(
+      ".peekContainer"
+    ) as HTMLDivElement;
 
     const pdfSinglePageViewer = new pdfjsViewer.PDFSinglePageViewer({
       container: peekContainer,
@@ -31,11 +32,11 @@ export class PeekManager {
     });
     pdfLinkService.setViewer(pdfSinglePageViewer);
 
-    peekContainer.addEventListener("mousewheel", (e) =>
+    peekCard.addEventListener("mousewheel", (e) =>
       this._handleZoom(e as WheelEvent)
     );
     this.handtool = new GrabToPan({ element: peekContainer });
-    this.peekContainer = peekContainer;
+    this.peekCard = peekCard;
     this.viewerContainer = viewerContainer;
     this.pdfViewer = pdfSinglePageViewer;
     this.linkService = pdfLinkService;
@@ -84,8 +85,8 @@ export class PeekManager {
 
       link.onmouseleave = () => clearTimeout(timeoutId);
     };
-    this.peekContainer.onmouseleave = () => {
-      this.peekContainer.style.display = "none";
+    this.peekCard.onmouseleave = () => {
+      this.closeContainer();
     };
   }
 
@@ -93,7 +94,7 @@ export class PeekManager {
     let annotRect = annot.getBoundingClientRect();
     let viewerRect = this.viewerContainer.getBoundingClientRect();
 
-    // peekContainer dimension (in px)
+    // peekCard dimension (in px)
     let vw = viewerRect.width;
     let vh = viewerRect.height;
 
@@ -125,25 +126,25 @@ export class PeekManager {
     }
 
     // position relative to viewerContainer
-    this.peekContainer.style.position = "relative";
-    this.peekContainer.style.top = top + "px";
-    this.peekContainer.style.left = left + "px";
-    this.peekContainer.style.width = w + "px";
-    this.peekContainer.style.height = h + "px";
-    this.peekContainer.style.display = "block";
-    this.peekContainer.style.zIndex = "1000";
+    this.peekCard.style.position = "relative";
+    this.peekCard.style.top = top + "px";
+    this.peekCard.style.left = left + "px";
+    this.peekCard.style.width = w + "px";
+    this.peekCard.style.height = h + "px";
+    this.peekCard.style.display = "block";
+    this.peekCard.style.zIndex = "1000";
   }
 
   closeContainer() {
-    this.peekContainer.style.display = "none";
+    // this.peekCard.style.display = "none";
   }
 
   changeViewMode(isDarkMode: boolean) {
-    if (!this.peekContainer) return;
+    if (!this.peekCard) return;
     if (isDarkMode)
-      this.peekContainer.style.filter =
+      this.peekCard.style.filter =
         "invert(64%) contrast(228%) brightness(80%) hue-rotate(180deg)";
-    else this.peekContainer.style.filter = "unset";
+    else this.peekCard.style.filter = "unset";
   }
 
   private _handleZoom(e: WheelEvent) {
