@@ -32,6 +32,8 @@
   - [x] save state to pdfState
   - [x] load colors from db to pdfState
   - [x] set color when pdf is loaded
+  - [x] correctly set dark mode when multiple pdfs opened
+  - [x] also set dark mode for pdf peeker
 
 ### Improvements:
 

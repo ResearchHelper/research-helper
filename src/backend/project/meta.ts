@@ -82,7 +82,10 @@ export async function importMeta(filePath: string): Promise<Meta[]> {
  * @param meta
  * @param rule - example: "author_title_year", "author year title" (space means no connector in between) ...
  */
-export function generateCiteKey(meta: Meta, rule: string): string {
+export function generateCiteKey(
+  meta: Meta,
+  rule = "author_title_year"
+): string {
   // parsing the rule
   let connector = "";
   let keys = ["author", "title", "year"];

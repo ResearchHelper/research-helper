@@ -36,7 +36,6 @@ export const useStateStore = defineStore("stateStore", {
 
   actions: {
     async loadState(state: AppState) {
-      console.log("loading state", state.settings);
       this.leftMenuSize = state.leftMenuSize || this.leftMenuSize;
       this.showLeftMenu = state.showLeftMenu || this.showLeftMenu;
       this.showPDFMenuView = state.showPDFMenuView || this.showPDFMenuView;

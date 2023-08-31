@@ -5,23 +5,25 @@ pdfjsLib.GlobalWorkerOptions.workerSrc =
 
 import { GrabToPan } from "./grabToPan";
 
-class PeekManager {
+export class PeekManager {
   handtool: GrabToPan;
-  container: HTMLElement;
+  peekContainer: HTMLElement;
   viewerContainer: HTMLElement;
   pdfViewer: pdfjsViewer.PDFSinglePageViewer;
   linkService: pdfjsViewer.PDFLinkService;
 
-  constructor(viewerContainer: HTMLDivElement, container: HTMLDivElement) {
-    // IMPORTANT: DO NOT CHANGE container to peekContainer, otherwise it breaks
+  constructor(viewerContainer: HTMLDivElement, peekContainer: HTMLDivElement) {
     const eventBus = new pdfjsViewer.EventBus();
     const pdfLinkService = new pdfjsViewer.PDFLinkService({
       eventBus,
     });
 
+    console.log("peekContainer", peekContainer);
+    // console.log("container", container);
+
     const pdfSinglePageViewer = new pdfjsViewer.PDFSinglePageViewer({
-      container,
-      eventBus,
+      container: peekContainer,
+      eventBus: eventBus,
       linkService: pdfLinkService,
       textLayerMode: 0, // DISABLE: 0, ENABLE: 1
       annotationMode: pdfjsLib.AnnotationMode.DISABLE,
@@ -29,11 +31,11 @@ class PeekManager {
     });
     pdfLinkService.setViewer(pdfSinglePageViewer);
 
-    container.addEventListener("mousewheel", (e) =>
+    peekContainer.addEventListener("mousewheel", (e) =>
       this._handleZoom(e as WheelEvent)
     );
-    this.handtool = new GrabToPan({ element: container });
-    this.container = container;
+    this.handtool = new GrabToPan({ element: peekContainer });
+    this.peekContainer = peekContainer;
     this.viewerContainer = viewerContainer;
     this.pdfViewer = pdfSinglePageViewer;
     this.linkService = pdfLinkService;
@@ -82,8 +84,8 @@ class PeekManager {
 
       link.onmouseleave = () => clearTimeout(timeoutId);
     };
-    this.container.onmouseleave = () => {
-      this.container.style.display = "none";
+    this.peekContainer.onmouseleave = () => {
+      this.peekContainer.style.display = "none";
     };
   }
 
@@ -91,7 +93,7 @@ class PeekManager {
     let annotRect = annot.getBoundingClientRect();
     let viewerRect = this.viewerContainer.getBoundingClientRect();
 
-    // container dimension (in px)
+    // peekContainer dimension (in px)
     let vw = viewerRect.width;
     let vh = viewerRect.height;
 
@@ -123,17 +125,25 @@ class PeekManager {
     }
 
     // position relative to viewerContainer
-    this.container.style.position = "relative";
-    this.container.style.top = top + "px";
-    this.container.style.left = left + "px";
-    this.container.style.width = w + "px";
-    this.container.style.height = h + "px";
-    this.container.style.display = "block";
-    this.container.style.zIndex = "1000";
+    this.peekContainer.style.position = "relative";
+    this.peekContainer.style.top = top + "px";
+    this.peekContainer.style.left = left + "px";
+    this.peekContainer.style.width = w + "px";
+    this.peekContainer.style.height = h + "px";
+    this.peekContainer.style.display = "block";
+    this.peekContainer.style.zIndex = "1000";
   }
 
   closeContainer() {
-    this.container.style.display = "none";
+    this.peekContainer.style.display = "none";
+  }
+
+  changeViewMode(isDarkMode: boolean) {
+    if (!this.peekContainer) return;
+    if (isDarkMode)
+      this.peekContainer.style.filter =
+        "invert(64%) contrast(228%) brightness(80%) hue-rotate(180deg)";
+    else this.peekContainer.style.filter = "unset";
   }
 
   private _handleZoom(e: WheelEvent) {
@@ -141,5 +151,3 @@ class PeekManager {
     this.pdfViewer.currentScale += e.deltaY < 0 ? 0.1 : -0.1;
   }
 }
-
-export { PeekManager };

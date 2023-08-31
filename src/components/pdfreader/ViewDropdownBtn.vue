@@ -118,10 +118,10 @@
 </template>
 <script setup lang="ts">
 const props = defineProps({
-  currentScale: { type: Number, required: true },
-  spreadMode: { type: Number, required: true },
-  isFullscreen: { type: Boolean, required: true },
-  darkMode: { type: Boolean, required: true },
+  currentScale: { type: Number, required: true, default: 1 },
+  spreadMode: { type: Number, required: true, default: 0 },
+  isFullscreen: { type: Boolean, required: true, default: false },
+  darkMode: { type: Boolean, required: true, default: false },
 });
 const emit = defineEmits([
   "changeScale",

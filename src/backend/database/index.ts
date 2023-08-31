@@ -48,7 +48,8 @@ db.allDocs({ include_docs: true })
       };
       switch (doc.dataType) {
         case "project":
-          (doc as Project)["citation-key"] = generateCiteKey(doc as Project);
+          if (!(doc as Project)["citation-key"])
+            (doc as Project)["citation-key"] = generateCiteKey(doc as Project);
           flag = true;
         case "folder":
         case "note":
