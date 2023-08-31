@@ -49,6 +49,7 @@
         :key="link.id"
         :link="link"
         :peekManager="pdfApp.peekManager"
+        :darkMode="pdfApp.state.darkMode"
       />
     </template>
     <template v-slot:after>

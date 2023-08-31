@@ -36,7 +36,7 @@
         </div>
       </div>
     </q-card-section>
-    <q-card-section style="height: calc(100% - 28px)">
+    <q-card-section style="height: calc(100% - 32px)">
       <div
         class="peekContainer"
         ref="peekContainer"
@@ -47,7 +47,7 @@
   </q-card>
 </template>
 <script setup lang="ts">
-import { nextTick, onMounted, ref, PropType } from "vue";
+import { nextTick, onMounted, ref, PropType, watch } from "vue";
 
 import * as pdfjsLib from "pdfjs-dist";
 import * as pdfjsViewer from "pdfjs-dist/web/pdf_viewer";
@@ -60,10 +60,16 @@ import { PeekManager } from "src/backend/pdfreader/peekManager";
 const props = defineProps({
   link: { type: HTMLAnchorElement, required: true },
   peekManager: { type: Object as PropType<PeekManager>, required: true },
+  darkMode: { type: Boolean, required: true },
 });
 const card = ref();
 const peekContainer = ref();
 const pinned = ref(false);
+
+watch(
+  () => props.darkMode,
+  (darkMode) => setViewMode(darkMode)
+);
 
 onMounted(() => {
   if (!peekContainer.value || !props.peekManager.pdfDocument) return;
@@ -103,14 +109,8 @@ onMounted(() => {
     pdfSinglePageViewer.currentScale += e.deltaY < 0 ? 0.1 : -0.1;
   });
 
-  // handle mouseover
-  card.value.$el.addEventListener("mouseover", (e: MouseEvent) => {
-    setActive(true);
-    console.log("zindex", card.value.$el.style.zIndex);
-  });
   // handle mouseleave
   card.value.$el.addEventListener("mouseleave", (e: MouseEvent) => {
-    setActive(false);
     close();
   });
 
@@ -119,6 +119,9 @@ onMounted(() => {
 
   // show peeker
   show();
+
+  // set view mode
+  setViewMode(props.darkMode);
 });
 
 /**
@@ -192,11 +195,6 @@ function close(force?: boolean) {
   if (!!force || !pinned.value) props.peekManager.destroy(props.link.id);
 }
 
-function setActive(isActive: boolean) {
-  if (!card.value) return;
-  card.value.$el.style.zIndex = isActive ? 1001 : 1000;
-}
-
 function enableDragToMove() {
   let dom = card.value.$el;
   let annotLayerRect: DOMRect;
@@ -220,6 +218,9 @@ function enableDragToMove() {
     // no ghost image when dragging
     if (e.dataTransfer)
       e.dataTransfer.setDragImage(document.createElement("img"), 0, 0);
+
+    // when dragging, automatically set pinned for better interaction
+    pinned.value = true;
   };
 
   dom.ondrag = (e: DragEvent) => {
@@ -235,16 +236,31 @@ function enableDragToMove() {
     dom.style.top = `${top}px`;
   };
 }
+
+function setViewMode(darkMode: boolean) {
+  if (!peekContainer.value) return;
+  let viewer = peekContainer.value.querySelector(".pdfViewer") as HTMLElement;
+  if (!viewer) return;
+  if (darkMode)
+    peekContainer.value.style.filter =
+      "invert(64%) contrast(228%) brightness(80%) hue-rotate(180deg)";
+  else peekContainer.value.style.filter = "unset";
+}
 </script>
 <style lang="scss">
 .peekCard {
   position: absolute !important;
   background: var(--color-pdfreader-viewer-bkgd);
   display: none;
-  border: solid $primary 3px;
   max-height: 40vh;
   max-width: 40vw;
   cursor: grab;
+  z-index: 1000;
+
+  &:hover {
+    border: solid $primary 2px;
+    z-index: 1001 !important;
+  }
 }
 .peekContainer {
   position: absolute;

@@ -7,11 +7,6 @@
 
 ### Features:
 
-- [ ] Able to import zotero, mendeley, and endnote file
-  - [x] import collection of references
-  - [ ] import the corresponding files too
-    - [ ] parse the collection file to get the file path before citation.js process the meta
-    - [ ] transfer data through zotero api might be a better idea since there are notes and stuff
 - [x] custom citation key
 - [x] PDF dark mode
 - [x] pin pdf peeker
