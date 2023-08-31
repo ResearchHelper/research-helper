@@ -346,15 +346,14 @@ export default class PDFApplication {
 
   changeViewMode(darkMode: boolean) {
     this.state.darkMode = darkMode;
+    let viewer = this.container?.querySelector(
+      ".pdfViewer"
+    ) as HTMLElement | null;
+    if (!viewer) return;
     if (this.state.darkMode)
-      (
-        document.getElementsByClassName("pdfViewer")[0] as HTMLElement
-      ).style.filter =
+      viewer.style.filter =
         "invert(64%) contrast(228%) brightness(80%) hue-rotate(180deg)";
-    else
-      (
-        document.getElementsByClassName("pdfViewer")[0] as HTMLElement
-      ).style.filter = "unset";
+    else viewer.style.filter = "unset";
   }
 
   changeInkThickness(thickness: number) {
