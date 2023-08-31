@@ -44,7 +44,12 @@
         />
       </div>
 
-      <PeekCard ref="peekCard" />
+      <PeekCard
+        v-for="link in pdfApp.peekManager.links"
+        :key="link.id"
+        :link="link"
+        :peekManager="pdfApp.peekManager"
+      />
     </template>
     <template v-slot:after>
       <RightMenu />
@@ -83,7 +88,6 @@ const props = defineProps({ projectId: { type: String, required: true } });
 
 // viewer containers
 const viewerContainer = ref<HTMLDivElement>();
-const peekCard = ref();
 
 // ready to save data
 const project = ref<Project>();
@@ -263,11 +267,9 @@ watch(pdfApp.state, (state) => {
  * Implement eventhandlers and init PDFApplication
  **************************************************/
 onMounted(async () => {
-  if (!viewerContainer.value || !peekCard.value.card) return;
-  pdfApp.init(
-    viewerContainer.value as HTMLDivElement,
-    peekCard.value.card.$el as HTMLDivElement
-  );
+  if (!viewerContainer.value) return;
+  pdfApp.init(viewerContainer.value as HTMLDivElement);
+  window.pdfApp = pdfApp;
 
   pdfApp.eventBus?.on(
     "annotationeditorlayerrendered",

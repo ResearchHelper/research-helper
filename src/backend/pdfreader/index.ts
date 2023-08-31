@@ -10,7 +10,7 @@ import {
 import { debounce } from "quasar";
 import { nextTick, reactive, ref } from "vue";
 import { AnnotationStore, AnnotationFactory } from "../pdfannotation";
-import { PeekManager } from "./pdfpeek";
+import { PeekManager } from "./peekManager";
 import {
   PDFFindController,
   PDFPageView,
@@ -24,13 +24,13 @@ pdfjsLib.GlobalWorkerOptions.workerSrc =
 
 export default class PDFApplication {
   container: HTMLDivElement | undefined;
-  peekCard: HTMLDivElement | undefined;
   eventBus: pdfjsViewer.EventBus | undefined;
   pdfLinkService: pdfjsViewer.PDFLinkService | undefined;
   pdfFindController: pdfjsViewer.PDFFindController | undefined;
   pdfViewer: pdfjsViewer.PDFViewer | undefined;
-  peekManager: PeekManager | undefined;
+  peekManager: PeekManager;
   pdfDocument: pdfjsLib.PDFDocumentProxy | undefined;
+
   annotStore: AnnotationStore;
   annotFactory: AnnotationFactory;
 
@@ -50,6 +50,7 @@ export default class PDFApplication {
     this.projectId = projectId;
     this.annotStore = new AnnotationStore(projectId);
     this.annotFactory = new AnnotationFactory(projectId);
+    this.peekManager = new PeekManager();
     // make saveState a debounce function
     // it ignores the signals 500ms after each call
     this.saveState = debounce(this._saveState, 500);
@@ -72,7 +73,7 @@ export default class PDFApplication {
     } as PDFState);
   }
 
-  init(container: HTMLDivElement, peekCard: HTMLDivElement) {
+  init(container: HTMLDivElement) {
     const eventBus = new pdfjsViewer.EventBus();
     const pdfLinkService = new pdfjsViewer.PDFLinkService({
       eventBus,
@@ -102,12 +103,10 @@ export default class PDFApplication {
     pdfLinkService.setViewer(pdfViewer);
 
     this.container = container;
-    this.peekCard = peekCard;
     this.eventBus = eventBus;
     this.pdfLinkService = pdfLinkService;
     this.pdfFindController = pdfFindController;
     this.pdfViewer = pdfViewer;
-    this.peekManager = new PeekManager(container, peekCard);
     this.pdfDocument = undefined; // initialize in loadPDF
 
     // install internal event listener
@@ -133,7 +132,15 @@ export default class PDFApplication {
           if (!link) return;
           if (section.hasAttribute("data-internal-link")) {
             // peek internal links
-            if (this.peekManager) this.peekManager.peek(link);
+            link.onmouseover = () => {
+              if (!link) return;
+              let timeoutId = setTimeout(() => {
+                if (!link) return;
+                if (this.peekManager) this.peekManager.create(link);
+              }, 500);
+
+              link.onmouseleave = () => clearTimeout(timeoutId);
+            };
           } else {
             // external links must open using default browser
             let href = link.href;
@@ -238,7 +245,7 @@ export default class PDFApplication {
     if (this.pdfFindController)
       this.pdfFindController.setDocument(this.pdfDocument);
     if (this.pdfViewer) this.pdfViewer.setDocument(this.pdfDocument);
-    if (this.peekManager) this.peekManager.loadPDF(filePath);
+    this.peekManager.setDocument(this.pdfDocument);
     this.getTOC();
     this.getPageLabels();
   }
@@ -354,8 +361,6 @@ export default class PDFApplication {
       viewer.style.filter =
         "invert(64%) contrast(228%) brightness(80%) hue-rotate(180deg)";
     else viewer.style.filter = "unset";
-
-    this.peekManager?.changeViewMode(darkMode);
   }
 
   changeInkThickness(thickness: number) {
