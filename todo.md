@@ -5,6 +5,7 @@
 - [x] click link behavior in note
 - [x] openProjectIds are not saved properly, the projectStore.openedProject is updated after the saving.
   - [x] when opening a note, also open its project
+- [x] drag multiple documents at the same time
 
 ### TODO
 
