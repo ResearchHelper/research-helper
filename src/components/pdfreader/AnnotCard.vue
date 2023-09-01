@@ -105,6 +105,7 @@ const annotContent = computed({
           lineNumber: true,
           style: stateStore.settings.theme === "dark" ? "native" : "emacs",
         },
+        after: changeLinks,
       });
     pdfApp.annotStore?.update(props.annot.data._id, {
       content: text,
@@ -121,6 +122,7 @@ onMounted(() => {
         lineNumber: true,
         style: stateStore.settings.theme === "dark" ? "native" : "emacs",
       },
+      after: changeLinks,
     });
 });
 
@@ -133,4 +135,24 @@ const changeColor = (color: string) => {
 const deleteAnnot = () => {
   pdfApp.annotStore?.delete(props.annot.data._id);
 };
+
+function changeLinks() {
+  if (!mdContentDiv.value) return;
+  let linkNodes = mdContentDiv.value.querySelectorAll(
+    "a"
+  ) as NodeListOf<HTMLAnchorElement>;
+  for (let linkNode of linkNodes) {
+    console.log(linkNode);
+    linkNode.onclick = (e) => {
+      e.preventDefault();
+      try {
+        // valid external url, open it externally
+        new URL(linkNode.href);
+        window.browser.openURL(linkNode.href);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+  }
+}
 </script>

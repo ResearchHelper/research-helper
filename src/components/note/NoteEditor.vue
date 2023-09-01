@@ -153,19 +153,17 @@ function initEditor() {
       if (showEditor.value) {
         setContent();
         setTheme(stateStore.settings.theme);
+        changeLinks();
         addImgResizer();
       }
     },
     blur: () => {
       saveContent();
-      addImgResizer();
     },
     input: () => {
       saveContent();
+      changeLinks();
       addImgResizer();
-    },
-    link: {
-      click: clickLink,
     },
     upload: {
       accept: "image/*",
@@ -268,8 +266,8 @@ function _changeLinks() {
     "[data-type='a']"
   ) as NodeListOf<HTMLElement>;
   for (let linkNode of linkNodes) {
-    linkNode.onclick = (e) => clickLink(e, linkNode);
-    linkNode.onmouseover = (e) => hoverLink(e, linkNode);
+    linkNode.onclick = () => clickLink(linkNode);
+    linkNode.onmouseover = () => hoverLink(linkNode);
   }
 }
 const changeLinks = debounce(_changeLinks, 50) as () => void;
@@ -302,7 +300,7 @@ async function clickLink(linkNode: HTMLElement) {
   }
 }
 
-async function hoverLink(e: MouseEvent, linkNode: HTMLElement) {
+async function hoverLink(linkNode: HTMLElement) {
   if (!hoverPane.value) return;
   let link = (
     linkNode.querySelector("span.vditor-ir__marker--link") as HTMLElement
@@ -310,7 +308,6 @@ async function hoverLink(e: MouseEvent, linkNode: HTMLElement) {
   try {
     // valid external url, open it externally
     new URL(link);
-    window.browser.openURL(link);
   } catch (error) {
     // we just want the document, both getProject or getNote are good
     try {
