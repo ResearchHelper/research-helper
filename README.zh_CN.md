@@ -56,7 +56,6 @@ yarn build # 编译测试版
 - citation-js
 - cytoscape
 - golden-layout
-- katex
 - pdf.js
 - vditor
 - Pouchdb

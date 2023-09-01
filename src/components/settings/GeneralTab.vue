@@ -209,6 +209,9 @@ import pluginManager from "src/backend/plugin";
 const stateStore = useStateStore();
 const { locale } = useI18n({ useScope: "global" });
 const $q = useQuasar();
+// set vditor styles so everything vditor can share the same styles
+import darkContent from "src/css/vditor/dark.css?raw";
+import lightContent from "src/css/vditor/light.css?raw";
 
 // progressDialog
 const showProgressDialog = ref(false);
@@ -319,6 +322,27 @@ function changeTheme(theme: string) {
       $q.dark.set(false);
       break;
   }
+
+  // must append editorStyle before contentStyle
+  // otherwise the texts are dark
+  let contentStyle = document.getElementById(
+    "vditor-content-style"
+  ) as HTMLStyleElement;
+  if (contentStyle === null) {
+    contentStyle = document.createElement("style") as HTMLStyleElement;
+    contentStyle.id = "vditor-content-style";
+    contentStyle.type = "text/css";
+    document.head.append(contentStyle);
+  }
+  switch (theme) {
+    case "dark":
+      contentStyle.innerHTML = darkContent;
+      break;
+    case "light":
+      contentStyle.innerHTML = lightContent;
+      break;
+  }
+
   saveAppState();
 }
 

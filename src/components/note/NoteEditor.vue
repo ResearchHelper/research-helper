@@ -4,8 +4,7 @@
     ref="vditorDiv"
   ></div>
   <HoverPane
-    :project="hoverProject"
-    :note="hoverNote"
+    :content="hoverContent"
     ref="hoverPane"
   />
 </template>
@@ -16,8 +15,6 @@ import { Note, NoteType, Project, Node } from "src/backend/database";
 // vditor
 import Vditor from "vditor";
 import "src/css/vditor/index.css";
-import darkContent from "src/css/vditor/dark.css?raw";
-import lightContent from "src/css/vditor/light.css?raw";
 // db related
 import { useStateStore } from "src/stores/appState";
 import {
@@ -54,9 +51,8 @@ const vditor = ref<Vditor | null>(null);
 const vditorDiv = ref<HTMLElement | null>(null);
 const showEditor = ref(false);
 const linkBase = ref("");
-const hoverProject = ref<Project>();
-const hoverNote = ref<{ label: string; content: string }>();
 const hoverPane = ref();
+const hoverContent = ref("");
 
 watch(
   () => stateStore.settings.theme,
@@ -136,6 +132,7 @@ function initEditor() {
       hljs: {
         // enable line number in code block
         lineNumber: true,
+        style: "native",
       },
     },
     placeholder: t("live-markdown-editor-latex-supported"),
@@ -193,26 +190,8 @@ function setTheme(theme: string) {
       theme === "dark" ? "native" : "emacs"
     );
   }
-  // must append editorStyle before contentStyle
-  // otherwise the texts are dark
-  let contentStyle = document.getElementById(
-    "vditor-content-style"
-  ) as HTMLStyleElement;
-  if (contentStyle === null) {
-    contentStyle = document.createElement("style") as HTMLStyleElement;
-    contentStyle.id = "vditor-content-style";
-    contentStyle.type = "text/css";
-    document.head.append(contentStyle);
-  }
 
-  switch (theme) {
-    case "dark":
-      contentStyle.innerHTML = darkContent;
-      break;
-    case "light":
-      contentStyle.innerHTML = lightContent;
-      break;
-  }
+  stateStore.changeTheme(theme);
 }
 
 /*****************************************
@@ -338,12 +317,28 @@ async function hoverLink(e: MouseEvent, linkNode: HTMLElement) {
     try {
       let item = (await getNote(link)) as Note | Project;
       if (item.dataType === "project") {
-        hoverNote.value = undefined;
-        hoverProject.value = item;
+        let lines = [
+          `# ${item.title}`,
+          `Author(s): ${authorToString(item.author)}`,
+          "\n",
+          `Abstract: ${item.abstract}`,
+        ];
+        hoverContent.value = lines.join("\n");
       } else if (item.dataType === "note") {
-        let content = await loadNote(item._id);
-        hoverProject.value = undefined;
-        hoverNote.value = { label: item.label, content: content };
+        if (item.type === "excalidraw") {
+          let lines = [
+            "# Excalidraw note",
+            `Belongs to: ${generateCiteKey(
+              (await getProject(item.projectId)) as Project,
+              "author-year-title",
+              true
+            )}`,
+          ];
+          hoverContent.value = lines.join("\n");
+        } else {
+          let content = await loadNote(item._id);
+          hoverContent.value = content;
+        }
       }
 
       // set position for hoverpane

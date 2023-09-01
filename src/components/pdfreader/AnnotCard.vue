@@ -52,8 +52,8 @@
         v-model="annotContent"
         @blur="editing = false"
       />
-      <pre
-        ref="preTag"
+      <div
+        ref="mdContentDiv"
         style="
           font-size: 1rem;
           min-height: 5em;
@@ -65,25 +65,24 @@
         "
         class="q-ma-xs"
         data-cy="annot-content"
-        >{{ annotContent }}</pre
-      >
+      ></div>
     </div>
   </q-card>
 </template>
 <script setup lang="ts">
-import { ref, inject, nextTick, PropType, computed } from "vue";
+import { ref, inject, PropType, computed, onMounted } from "vue";
 import { Annotation } from "src/backend/pdfannotation/annotations";
 
 import AnnotMenu from "./AnnotMenu.vue";
 
-import { debounce, copyToClipboard, colors } from "quasar";
-import renderMathInElement from "katex/dist/contrib/auto-render";
-import "katex/dist/katex.min.css";
+import { copyToClipboard, colors } from "quasar";
 import { AnnotationData } from "src/backend/database";
 import PDFApplication from "src/backend/pdfreader";
 import { KEY_pdfApp } from "./injectKeys";
-
+import Vditor from "vditor/dist/method.min";
+import { useStateStore } from "src/stores/appState";
 const { luminosity } = colors;
+const stateStore = useStateStore();
 
 const props = defineProps({
   annot: { type: Object as PropType<Annotation>, required: true },
@@ -92,19 +91,37 @@ const props = defineProps({
 const pdfApp = inject(KEY_pdfApp) as PDFApplication;
 
 const editing = ref(false);
-const preTag = ref<HTMLElement>(); // ref to the <pre> tag
-const content = ref(props.annot.data.content || "");
+const mdContentDiv = ref();
 const annotContent = computed({
   get() {
-    liveRender(); // render immediately after get content
-    return content.value;
+    return props.annot.data.content;
   },
-  set(text) {
-    content.value = text;
+  set(text: string) {
+    if (mdContentDiv.value)
+      Vditor.preview(mdContentDiv.value, text, {
+        theme: stateStore.settings.theme === "dark" ? "dark" : "classic",
+        mode: stateStore.settings.theme,
+        hljs: {
+          lineNumber: true,
+          style: stateStore.settings.theme === "dark" ? "native" : "emacs",
+        },
+      });
     pdfApp.annotStore?.update(props.annot.data._id, {
-      content: content.value,
+      content: text,
     } as AnnotationData);
   },
+});
+
+onMounted(() => {
+  if (mdContentDiv.value)
+    Vditor.preview(mdContentDiv.value, props.annot.data.content, {
+      theme: stateStore.settings.theme === "dark" ? "dark" : "classic",
+      mode: stateStore.settings.theme,
+      hljs: {
+        lineNumber: true,
+        style: stateStore.settings.theme === "dark" ? "native" : "emacs",
+      },
+    });
 });
 
 const changeColor = (color: string) => {
@@ -115,28 +132,5 @@ const changeColor = (color: string) => {
 
 const deleteAnnot = () => {
   pdfApp.annotStore?.delete(props.annot.data._id);
-};
-
-const liveRender = async () => {
-  await nextTick();
-  if (!preTag.value) return;
-  renderMathInElement(preTag.value, {
-    delimiters: [
-      { left: "$$", right: "$$", display: true },
-      { left: "$", right: "$", display: false },
-      { left: "\\(", right: "\\)", display: false },
-      { left: "\\[", right: "\\]", display: true },
-    ],
-    ignoredTags: [
-      "script",
-      "noscript",
-      "style",
-      "textarea",
-      "code",
-      "option",
-      "img",
-    ],
-    throwOnError: false,
-  });
 };
 </script>

@@ -1,5 +1,9 @@
 import { defineStore } from "pinia";
+import { Dark } from "quasar";
+import { updateAppState } from "src/backend/appState";
 import { AppState, Page, Settings } from "src/backend/database";
+import darkContent from "src/css/vditor/dark.css?raw";
+import lightContent from "src/css/vditor/light.css?raw";
 
 export const useStateStore = defineStore("stateStore", {
   state: () => ({
@@ -108,6 +112,45 @@ export const useStateStore = defineStore("stateStore", {
       } else {
         this.showPDFMenuView = visible;
       }
+    },
+
+    changeTheme(theme: string) {
+      switch (theme) {
+        case "dark":
+          Dark.set(true);
+          break;
+        case "light":
+          Dark.set(false);
+          break;
+      }
+
+      // set the vditor style so all vditors in the app can share this
+      // must append editorStyle before contentStyle
+      // otherwise the texts are dark
+      let contentStyle = document.getElementById(
+        "vditor-content-style"
+      ) as HTMLStyleElement;
+      if (contentStyle === null) {
+        contentStyle = document.createElement("style") as HTMLStyleElement;
+        contentStyle.id = "vditor-content-style";
+        contentStyle.type = "text/css";
+        document.head.append(contentStyle);
+      }
+      switch (theme) {
+        case "dark":
+          contentStyle.innerHTML = darkContent;
+          break;
+        case "light":
+          contentStyle.innerHTML = lightContent;
+          break;
+      }
+
+      this.saveAppState();
+    },
+
+    async saveAppState() {
+      let state = this.saveState();
+      await updateAppState(state);
     },
   },
 });
