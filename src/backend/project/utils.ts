@@ -1,10 +1,10 @@
-import { Folder, Project } from "../database";
+import { Author, Folder, Project } from "../database";
 type TreeNode = Folder | Project;
 /**
  * Sort children of a tree node by labels
  * @param root - the root treenode
  */
-function sortTree(root: TreeNode) {
+export function sortTree(root: TreeNode) {
   if (root.children === undefined) return;
 
   if (root.children.length > 1) {
@@ -19,4 +19,18 @@ function sortTree(root: TreeNode) {
   }
 }
 
-export { sortTree };
+/**
+ * Convert array of author objects to string
+ * @param authors
+ */
+export function authorToString(authors: Author[] | undefined) {
+  if (!!!authors?.length) return "";
+
+  let names = [];
+  for (let author of authors) {
+    if (!!!author) continue;
+    if (!!author.literal) names.push(author.literal);
+    else names.push(`${author.given} ${author.family}`);
+  }
+  return names.join(", ");
+}

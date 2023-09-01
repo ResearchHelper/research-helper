@@ -16,4 +16,5 @@
 - [x] improved table search
 - [x] show dropdown list when tabs overflow
 - [x] further optimize the database storage
+- [x] better hint list in markdown note editor
 - [ ] the label appear on top of the graph node is better to be a citation id

@@ -2,6 +2,7 @@
  * For drawing the graphs in cytoscape.
  */
 import { EdgeUI, NodeUI, Node, Note, Project, db } from "../database";
+import { generateCiteKey } from "./meta";
 
 export async function getItem(
   itemId: string
@@ -43,7 +44,8 @@ export async function getLinks(item: Project | Note) {
       {
         data: {
           id: item._id,
-          label: item.label,
+          label:
+            item.dataType === "project" ? generateCiteKey(item) : item.label,
           type: item.dataType,
           parent: item.projectId,
         },
@@ -54,6 +56,7 @@ export async function getLinks(item: Project | Note) {
       // add to nodes
       if (!pushedIds.includes(row.id)) {
         let { _id: id, label, dataType: type, projectId: parent } = row.value;
+        if (type === "project") label = generateCiteKey(row.value);
         nodes.push({ data: { id, label, type, parent } });
         pushedIds.push(row.id);
       }
@@ -101,6 +104,7 @@ export async function getParents(nodes: NodeUI[]) {
     if (emit) {
       if (parentIds.includes(doc._id)) {
         let { _id: id, label, dataType: type } = doc;
+        if (type === "project") label = generateCiteKey(doc);
         emit("parent", { data: { id, label, type } });
       }
     }

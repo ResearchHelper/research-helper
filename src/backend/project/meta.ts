@@ -83,7 +83,8 @@ export async function importMeta(filePath: string): Promise<Meta[]> {
  */
 export function generateCiteKey(
   meta: Meta,
-  rule = "author_title_year"
+  rule = "author-title-year",
+  longTitle = false
 ): string {
   // parsing the rule
   let connector = "";
@@ -132,11 +133,15 @@ export function generateCiteKey(
   if (meta.issued) year = meta.issued["date-parts"][0][0].toString();
   parts.year = year;
 
-  // title's first word
-  let title = meta.title
-    .split(" ")
-    .filter((w) => !["a", "an", "the", "on"].includes(w.toLowerCase()))[0];
-  parts.title = title.toLowerCase();
+  if (longTitle) {
+    parts.title = meta.title.toLowerCase().split(" ").join(connector);
+  } else {
+    // title's first word
+    let title = meta.title
+      .split(" ")
+      .filter((w) => !["a", "an", "the", "on"].includes(w.toLowerCase()))[0];
+    parts.title = title.toLowerCase();
+  }
 
   let citeKey = keys
     .map((key) => parts[key as "year" | "author" | "title"])

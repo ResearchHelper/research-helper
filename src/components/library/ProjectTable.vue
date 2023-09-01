@@ -124,6 +124,7 @@ const stateStore = useStateStore();
 const projectStore = useProjectStore();
 // utils
 import { useI18n } from "vue-i18n";
+import { authorToString } from "src/backend/project/utils";
 const { t } = useI18n({ useScope: "global" });
 
 const props = defineProps({
@@ -206,22 +207,6 @@ function handleSelection(rows: Project[], added: boolean, evt: KeyboardEvent) {
       projectStore.selected = [newSelectedRow];
     }
   });
-}
-
-/**
- * Convert array of author objects to string
- * @param authors
- */
-function authorString(authors: Author[] | undefined) {
-  if (!!!authors?.length) return "";
-
-  let names = [];
-  for (let author of authors) {
-    if (!!!author) continue;
-    if (!!author.literal) names.push(author.literal);
-    else names.push(`${author.given} ${author.family}`);
-  }
-  return names.join(", ");
 }
 
 /**
@@ -356,7 +341,7 @@ function searchProject(
     }
 
     // search authors
-    let authors = authorString(row.author);
+    let authors = authorToString(row.author);
     if (authors.search(re) != -1) {
       text = authors.replace(re, `<span class="bg-primary">${terms}</span>`);
       expansionText.value.push(`Authors: ${text}`);

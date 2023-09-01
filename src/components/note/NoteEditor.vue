@@ -3,6 +3,11 @@
     v-show="showEditor"
     ref="vditorDiv"
   ></div>
+  <HoverPane
+    :project="hoverProject"
+    :note="hoverNote"
+    ref="hoverPane"
+  />
 </template>
 <script setup lang="ts">
 // types
@@ -24,11 +29,15 @@ import {
   updateNote,
 } from "src/backend/project/note";
 
-import { getAllProjects } from "src/backend/project/project";
+import { getAllProjects, getProject } from "src/backend/project/project";
 // util
 import { EventBus, debounce } from "quasar";
 import { useI18n } from "vue-i18n";
 import _ from "lodash";
+import { authorToString } from "src/backend/project/utils";
+import { generateCiteKey } from "src/backend/project/meta";
+
+import HoverPane from "./HoverPane.vue";
 
 const stateStore = useStateStore();
 const { t } = useI18n({ useScope: "global" });
@@ -45,10 +54,9 @@ const vditor = ref<Vditor | null>(null);
 const vditorDiv = ref<HTMLElement | null>(null);
 const showEditor = ref(false);
 const linkBase = ref("");
-
-const notes = ref<Note[]>([]);
-const projects = ref<Project[]>([]);
-const hints = ref<{ value: string; html: string }[]>([]);
+const hoverProject = ref<Project>();
+const hoverNote = ref<{ label: string; content: string }>();
+const hoverPane = ref();
 
 watch(
   () => stateStore.settings.theme,
@@ -149,11 +157,6 @@ function initEditor() {
         setContent();
         setTheme(stateStore.settings.theme);
       }
-    },
-    focus: () => {
-      // used to filter stuff
-      getAllProjects().then((_projects) => (projects.value = _projects));
-      getAllNotes().then((_notes) => (notes.value = _notes));
     },
     blur: () => {
       saveContent();
@@ -285,6 +288,7 @@ function _changeLinks() {
   ) as NodeListOf<HTMLElement>;
   for (let linkNode of linkNodes) {
     linkNode.onclick = (e) => clickLink(e, linkNode);
+    linkNode.onmouseover = (e) => hoverLink(e, linkNode);
   }
 }
 const changeLinks = debounce(_changeLinks, 50) as () => void;
@@ -314,6 +318,41 @@ async function clickLink(e: MouseEvent, linkNode: HTMLElement) {
         else type = "NotePage";
       }
       stateStore.openPage({ id, type, label });
+    } catch (error) {
+      console.log(error);
+    }
+  }
+}
+
+async function hoverLink(e: MouseEvent, linkNode: HTMLElement) {
+  if (!hoverPane.value) return;
+  let link = (
+    linkNode.querySelector("span.vditor-ir__marker--link") as HTMLElement
+  ).innerText;
+  try {
+    // valid external url, open it externally
+    new URL(link);
+    window.browser.openURL(link);
+  } catch (error) {
+    // we just want the document, both getProject or getNote are good
+    try {
+      let item = (await getNote(link)) as Note | Project;
+      if (item.dataType === "project") {
+        hoverNote.value = undefined;
+        hoverProject.value = item;
+      } else if (item.dataType === "note") {
+        let content = await loadNote(item._id);
+        hoverProject.value = undefined;
+        hoverNote.value = { label: item.label, content: content };
+      }
+
+      // set position for hoverpane
+      if (!vditorDiv.value) return;
+      let rect = linkNode.getBoundingClientRect();
+      let parentRect = vditorDiv.value.getBoundingClientRect();
+      hoverPane.value.card.$el.style.left = `${rect.left - parentRect.left}px`;
+      hoverPane.value.card.$el.style.top = `${rect.bottom - parentRect.top}px`;
+      hoverPane.value.card.$el.hidden = false;
     } catch (error) {
       console.log(error);
     }
@@ -386,19 +425,50 @@ const addImgResizer = debounce(_addImgResizer, 50) as () => void;
  * Return a filtered list of projects / notes according to key
  * @param key - keywords to filter
  */
-function filterHints(key: string) {
-  hints.value = [];
-  let items: (Project | Note)[] = projects.value.concat(notes.value as any);
-  for (let item of items) {
-    let label = item.label;
-    if (label.toLowerCase().indexOf(key) > -1) {
-      hints.value.push({
-        value: `[${label}](${item._id})`,
-        html: `<p class="ellipsis"><strong>${item.dataType}</strong>: ${item.label}</p>`,
+async function filterHints(key: string) {
+  let hints = [];
+  let projects = (await getAllProjects()) as Project[];
+  let notes = (await getAllNotes()) as Note[];
+
+  for (let project of projects) {
+    if (project.title.toLowerCase().indexOf(key) > -1) {
+      hints.push({
+        value: `[${generateCiteKey(project, "author-year-title")}](${
+          project._id
+        })`,
+        html: `
+          <p style="font-size: 1rem" class="ellipsis q-my-none">
+            <strong>Title</strong>: ${project.title}
+          </p>
+          <p class="ellipsis q-my-none">
+            Author(s): ${authorToString(project.author)}
+          </p>
+          `,
       });
     }
   }
-  return hints.value;
+
+  for (let note of notes) {
+    if (note.label.toLowerCase().indexOf(key) > -1) {
+      let parentProject = await getProject(note.projectId);
+      let citeKey = note.projectId;
+      if (parentProject)
+        citeKey = generateCiteKey(parentProject, "author-year-title", true);
+      hints.push({
+        value: `[${note.label}](${note._id})`,
+        html: `
+          <p style="font-size: 1rem" class="ellipsis q-my-none">
+            <strong>Note</strong>: ${note.label}
+          </p>
+          <p class="ellipsis q-my-none">
+            Belongs to: ${citeKey}
+          </p>
+          `,
+      });
+    }
+  }
+  console.log("hints", hints);
+  return hints;
 }
 </script>
 <style lang="scss">
@@ -410,5 +480,9 @@ pre.vditor-reset {
 .vditor-toolbar--pin {
   /* do this so that the toolbar does not block the golden dropdown tab lists*/
   z-index: 0;
+}
+
+.vditor-hint {
+  max-width: 50%;
 }
 </style>
