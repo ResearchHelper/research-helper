@@ -150,57 +150,27 @@
   </q-tree>
 </template>
 <script setup lang="ts">
-import { nextTick, onMounted, ref, watch } from "vue";
+import { nextTick, ref, watchEffect } from "vue";
 import { QTree } from "quasar";
-import { Note, NoteType, Page, Project } from "src/backend/database";
+import { Note, NoteType, Project } from "src/backend/database";
 // db
 import { useStateStore } from "src/stores/appState";
 import { useProjectStore } from "src/stores/projectStore";
-import { getProject } from "src/backend/project/project";
 
 const stateStore = useStateStore();
 const projectStore = useProjectStore();
 
 const tree = ref<QTree | null>(null);
 const renameInput = ref<HTMLInputElement | null>(null);
-// const renamingNote = ref<QTreeNode | null>(null);
 const renamingNoteId = ref("");
 const addingNote = ref(false);
 const expanded = ref<string[]>([]);
 const showProjectMenu = ref(true);
 
-onMounted(async () => {
+watchEffect(() => {
   // expand all projects
-  expanded.value = Array.from(projectStore.openedProjects.map((p) => p._id));
-
-  // select the item associated with current window
-  let selected = stateStore.currentPageId;
-  if (!tree.value) return;
-  let selectedNode = tree.value.getNodeByKey(selected);
-  if (!!selectedNode && selectedNode?.children?.length > 0)
-    expanded.value.push(selected);
+  expanded.value = projectStore.openedProjects.map((p) => p._id);
 });
-
-watch(
-  () => stateStore.openedPage,
-  async (page: Page) => {
-    if (page.type.indexOf("Plugin") > -1) return;
-    if (!!!page.id || !tree.value) return;
-    let node = tree.value.getNodeByKey(page.id);
-    if (!!node) return; // if project is active already, return
-
-    let item = (await getProject(page.id)) as Project | Note;
-    if (item?.dataType == "project") {
-      await projectStore.openProject(page.id);
-      expanded.value.push(page.id);
-    } else if (item?.dataType == "note") {
-      // some notes are independent of project, like memo
-      if (!item.projectId) return;
-      await projectStore.openProject(item.projectId);
-    }
-  },
-  { deep: true }
-);
 
 function menuSwitch(node: Project | Note) {
   if (node.dataType == "note") {
@@ -214,10 +184,6 @@ function menuSwitch(node: Project | Note) {
 
 function selectItem(node: Project | Note) {
   console.log(node);
-  stateStore.currentPageId = node._id;
-  if (node.dataType === "project" && (node.children?.length as number) > 0)
-    expanded.value.push(node._id);
-
   // open item
   let id = node._id;
   let type = "";

@@ -63,10 +63,10 @@
         @dragend="onDragEnd"
         @expandRow="(isExpand: boolean) => props.expand=isExpand"
         @mousedown="(e: PointerEvent) => clickProject(props, e)"
+        @mouseup="(e: PointerEvent) => clickProject(props, e)"
         @dblclick="dblclickProject(props.row)"
         @contextmenu="(e:PointerEvent) => toggleContextMenu(props, e)"
       />
-
       <!-- Expanded Rows -->
 
       <!-- PDF -->
@@ -223,6 +223,13 @@ function clickProject(
   e: PointerEvent
 ) {
   if (e.button !== 0) return; // return if not left click
+  if (e.type === "mousedown" && props.selected) return; // return if clicking on a selected project
+  if (
+    e.type === "mouseup" &&
+    (e.target as HTMLInputElement)?.type === "checkbox"
+  )
+    return; // return if clicking on the checkbox, the checkbox will take care of selection for us
+
   // row: Project, rowIndex: number
   let row = props.row;
   let descriptor = Object.getOwnPropertyDescriptor(props, "selected");
