@@ -6,6 +6,9 @@
 - [x] put the code for modifying all timestamps to `db.ts`
 - [x] move the vditor css styles change to a global function, so everything using vditor can share the style
   - [x] move all setting related stuff to appState.ts
+- [ ] refactor note editor using the new link / image interface in vditor
+  - [ ] link
+  - [ ] image
 
 ### Features:
 

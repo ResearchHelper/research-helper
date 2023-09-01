@@ -153,15 +153,19 @@ function initEditor() {
       if (showEditor.value) {
         setContent();
         setTheme(stateStore.settings.theme);
+        addImgResizer();
       }
     },
     blur: () => {
       saveContent();
+      addImgResizer();
     },
     input: () => {
       saveContent();
-      changeLinks();
       addImgResizer();
+    },
+    link: {
+      click: clickLink,
     },
     upload: {
       accept: "image/*",
@@ -202,8 +206,6 @@ async function setContent() {
   if (!vditor.value) return;
   let content = await loadNote(props.noteId, props.data?.notePath);
   vditor.value.setValue(content);
-  changeLinks();
-  addImgResizer();
 }
 
 async function _saveContent() {
@@ -272,14 +274,11 @@ function _changeLinks() {
 }
 const changeLinks = debounce(_changeLinks, 50) as () => void;
 
-async function clickLink(e: MouseEvent, linkNode: HTMLElement) {
+async function clickLink(linkNode: HTMLElement) {
   if (!vditor.value) return;
-  e.stopImmediatePropagation(); // stop propagating the click event
   vditor.value.blur(); // save the content before jumping
 
-  let link = (
-    linkNode.querySelector("span.vditor-ir__marker--link") as HTMLElement
-  ).innerText;
+  let link = linkNode.innerText;
   try {
     // valid external url, open it externally
     new URL(link);
@@ -462,7 +461,6 @@ async function filterHints(key: string) {
       });
     }
   }
-  console.log("hints", hints);
   return hints;
 }
 </script>
@@ -479,5 +477,9 @@ pre.vditor-reset {
 
 .vditor-hint {
   max-width: 50%;
+}
+
+.vditor-reset img {
+  max-width: 80%;
 }
 </style>
