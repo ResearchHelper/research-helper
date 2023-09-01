@@ -270,7 +270,6 @@ async function saveLinks() {
       currentNote.value
     );
 
-    console.log("update graph");
     // notify graphview to update
     bus.emit("updateGraph");
   }

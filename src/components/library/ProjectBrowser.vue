@@ -297,7 +297,6 @@ async function addProjectsByFiles(filePaths: string[]) {
 
           // update project meta
           if (!!identifier) {
-            console.log(identifier);
             let metas = (await getMeta(identifier, "json")) as Meta[];
             let meta = metas[0];
             meta["citation-key"] = generateCiteKey(

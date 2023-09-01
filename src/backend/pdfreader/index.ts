@@ -231,7 +231,6 @@ export default class PDFApplication {
     if (process.env.DEV)
       cMapUrl = new URL("../../../cmaps/", import.meta.url).href;
     else {
-      console.log("url?", import.meta.url);
       cMapUrl = new URL("cmaps/", import.meta.url).href;
     }
     let buffer = window.fs.readFileSync(filePath);

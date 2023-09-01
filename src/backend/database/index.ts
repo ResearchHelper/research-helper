@@ -3,7 +3,9 @@ import Find from "pouchdb-find";
 import { generateCiteKey } from "../project/meta";
 import { Project } from "./models";
 PouchDB.plugin(Find);
-const db = new PouchDB("mydb");
+
+// for details of compacting database, see https://pouchdb.com/guides/compact-and-destroy.html
+const db = new PouchDB("mydb", { auto_compaction: true, revs_limit: 10 });
 
 db.createIndex({
   index: {
@@ -20,16 +22,6 @@ db.createIndex({
     ],
   },
 });
-
-// compacting the database
-// for details, see https://pouchdb.com/guides/compact-and-destroy.html
-db.compact()
-  .then((info) => {
-    console.log(info);
-  })
-  .catch((error) => {
-    console.log(error);
-  });
 
 // TODO: remove this few more versions later
 // add timestamps to data

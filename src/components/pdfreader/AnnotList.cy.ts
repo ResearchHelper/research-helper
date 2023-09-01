@@ -30,7 +30,6 @@ describe("<AnnotList />", () => {
   it("changeActive", function () {
     let annotFactory = new AnnotationFactory("projectId");
     let annots = [] as Annotation[];
-    console.log("datas", this.annotDatas);
     for (let data of this.annotDatas) {
       annots.push(annotFactory.build(data) as Annotation);
     }

@@ -270,7 +270,6 @@ watch(pdfApp.state, (state) => {
 onMounted(async () => {
   if (!viewerContainer.value) return;
   pdfApp.init(viewerContainer.value as HTMLDivElement);
-  window.pdfApp = pdfApp;
 
   pdfApp.eventBus?.on(
     "annotationeditorlayerrendered",

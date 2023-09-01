@@ -24,7 +24,6 @@ describe("<ExportDialog />", () => {
     cy.dataCy("btn-confirm").click();
     vue.then(({ wrapper }) => {
       expect(wrapper.emitted("update:show")).to.eql([[false]]);
-      console.log(wrapper.emitted("confirm"));
       expect(wrapper.emitted("confirm")).to.eql([[randomFormat.value, null]]);
     });
   });

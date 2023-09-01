@@ -46,7 +46,6 @@ export async function exportMeta(
 ) {
   try {
     let projects: Project[] = await getProjects(folder._id);
-    console.log("projects", projects);
     let metas = await getMeta(projects, format, options);
     if (format === "json") {
       exportFile(`${folder.label}.json`, JSON.stringify(metas), {
