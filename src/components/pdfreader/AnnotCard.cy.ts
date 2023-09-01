@@ -15,7 +15,7 @@ describe("<AnnotCard />", () => {
       },
     });
 
-    cy.dataCy("annot-content").should("have.text", "∫f\\int f∫f");
+    cy.dataCy("annot-content").should("have.text", "∫f\n");
   });
 
   it("open menu", function () {
