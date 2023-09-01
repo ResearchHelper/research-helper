@@ -19,9 +19,21 @@
         <q-select
           dense
           outlined
+          square
           :options="themeOptions"
+          :display-value="theme[0].toUpperCase() + theme.slice(1)"
           v-model="theme"
-        />
+        >
+          <template v-slot:option="scope">
+            <q-item v-bind="scope.itemProps">
+              <q-item-section>
+                <q-item-label>
+                  {{ scope.opt[0].toUpperCase() + scope.opt.slice(1) }}
+                </q-item-label>
+              </q-item-section>
+            </q-item>
+          </template>
+        </q-select>
       </q-card-section>
     </q-card>
 
@@ -62,6 +74,7 @@
         <q-select
           dense
           outlined
+          square
           v-model="language"
           :options="languageOptions"
         />
@@ -93,12 +106,93 @@
         </q-input>
       </q-card-section>
     </q-card>
+
+    <q-card
+      square
+      bordered
+      flat
+      class="q-my-md card"
+    >
+      <q-card-section>
+        <div class="row">
+          <div class="text-h6">{{ $t("citation-key") }}</div>
+          <q-btn
+            class="q-ml-sm"
+            unelevated
+            square
+            no-caps
+            color="primary"
+            :ripple="false"
+            :label="$t('update-references')"
+            @click="updateCiteKeys"
+          ></q-btn>
+        </div>
+      </q-card-section>
+      <q-card-section class="q-pt-none">
+        <div
+          v-for="(meta, index) in exampleMetas"
+          :key="index"
+        >
+          {{ `Example${index + 1} -- ${citeKeyExample(meta)}` }}
+        </div>
+        <div class="row">
+          <q-select
+            dense
+            outlined
+            square
+            :options="citeKeyPartKeyOptions"
+            :display-value="$t(citeKeyPartKeys[0])"
+            :option-label="(opt) => $t(opt)"
+            v-model="citeKeyPartKeys[0]"
+            @update:model-value="updateCiteKeyRule"
+          />
+          <q-select
+            dense
+            outlined
+            square
+            :options="citeKeyConnectorOptions"
+            v-model="citeKeyConnector"
+            :option-label="(opt) => $t(opt)"
+            @update:model-value="updateCiteKeyRule"
+          />
+          <q-select
+            dense
+            outlined
+            square
+            :options="citeKeyPartKeyOptions"
+            :display-value="$t(citeKeyPartKeys[1])"
+            :option-label="(opt) => $t(opt)"
+            v-model="citeKeyPartKeys[1]"
+            @update:model-value="updateCiteKeyRule"
+          />
+          <q-select
+            dense
+            outlined
+            square
+            :options="citeKeyConnectorOptions"
+            v-model="citeKeyConnector"
+            :option-label="(opt) => $t(opt)"
+            @update:model-value="updateCiteKeyRule"
+          />
+          <q-select
+            dense
+            outlined
+            square
+            :options="citeKeyPartKeyOptions"
+            :display-value="$t(citeKeyPartKeys[2])"
+            :option-label="(opt) => $t(opt)"
+            v-model="citeKeyPartKeys[2]"
+            @update:model-value="updateCiteKeyRule"
+          />
+        </div>
+      </q-card-section>
+    </q-card>
   </div>
 </template>
 <script setup lang="ts">
 // types
-import { computed, ref, watch } from "vue";
-import { Project, Note } from "src/backend/database";
+import { computed, reactive, ref } from "vue";
+import { Project, Note, Meta } from "src/backend/database";
 import ProgressDialog from "./ProgressDialog.vue";
 // db
 import { useStateStore } from "src/stores/appState";
@@ -106,14 +200,13 @@ import { updateAppState } from "src/backend/appState";
 import { changePath } from "src/backend/project/file";
 import { getAllProjects } from "src/backend/project/project";
 import { getAllNotes } from "src/backend/project/note";
+import { generateCiteKey } from "src/backend/project/meta";
 import { db } from "src/backend/database";
 import { useI18n } from "vue-i18n";
-import { useQuasar } from "quasar";
 import pluginManager from "src/backend/plugin";
 
 const stateStore = useStateStore();
-const { t, locale } = useI18n({ useScope: "global" });
-const $q = useQuasar();
+const { locale } = useI18n({ useScope: "global" });
 
 // progressDialog
 const showProgressDialog = ref(false);
@@ -121,53 +214,62 @@ const errors = ref<Error[]>([]);
 const progress = ref(0.0);
 
 // options
-const languageOptions = ref<{ value: "en_US" | "zh_CN"; label: string }[]>([
+const languageOptions = [
   { value: "en_US", label: "English (en_US)" },
   { value: "zh_CN", label: "中文 (zh_CN)" },
-]);
-const themeOptions = ref<{ value: "dark" | "light"; label: string }[]>([
-  { value: "dark", label: t("dark") },
-  { value: "light", label: t("light") },
-]);
+];
+const themeOptions = ["dark", "light"];
+const citeKeyPartKeyOptions = ["author", "title", "year"];
+const citeKeyConnectorOptions = [" ", "_", "-", "."];
 
-watch(
-  () => locale.value,
-  () => {
-    for (let option of themeOptions.value) {
-      option.label = t(option.value);
-    }
-  }
-);
+// example metas
+const exampleMetas = [
+  {
+    title: "A Long Title",
+    author: [{ family: "Last", given: "First" }],
+    issued: { "date-parts": [[2023]] },
+  },
+  {
+    title: "A Long Title",
+    author: [
+      { family: "Last1", given: "First1" },
+      { family: "Last2", given: "First2" },
+    ],
+    issued: { "date-parts": [[2023]] },
+  },
+  {
+    title: "A Long Title",
+    author: [
+      { family: "Last1", given: "First1" },
+      { family: "Last2", given: "First2" },
+      { family: "Last3", given: "First3" },
+    ],
+    issued: { "date-parts": [[2023]] },
+  },
+] as Meta[];
 
 const language = computed({
   get() {
-    let result = languageOptions.value[0];
-    for (let option of languageOptions.value) {
+    let result = languageOptions[0];
+    for (let option of languageOptions) {
       if (option.value === stateStore.settings.language) {
         result = option;
       }
     }
     return result;
   },
-  set(option: { value: "en_US" | "zh_CN"; label: string }) {
-    stateStore.settings.language = option.value;
-    changeLanguage(option.value);
+  set(option: { value: string; label: string }) {
+    locale.value = option.value;
+    stateStore.changeLanguage(option.value);
   },
 });
 
 const theme = computed({
   get() {
-    let result = themeOptions.value[0];
-    for (let option of themeOptions.value) {
-      if (option.value === stateStore.settings.theme) {
-        result = option;
-      }
-    }
-    return result;
+    return stateStore.settings.theme;
   },
-  set(option: { value: "dark" | "light"; label: string }) {
-    stateStore.settings.theme = option.value;
-    changeTheme(option.value);
+  set(option: string) {
+    stateStore.changeTheme(option);
   },
 });
 
@@ -176,37 +278,23 @@ const fontSize = computed({
     return parseFloat(stateStore.settings.fontSize);
   },
   set(size: number) {
-    stateStore.settings.fontSize = `${size}px`;
-    changeFontSize(size);
+    stateStore.changeFontSize(size);
   },
 });
+
+// citeKeyRule = "author<connector>title<connector>year"
+// stateStore.settings.citeKeyRule.split(/[^a-z]/) => ["author", "title", "year"]
+const citeKeyPartKeys = reactive(
+  stateStore.settings.citeKeyRule.split(/[^a-z]/)
+);
+// stateStore.settings.citeKeyRule.split(/[a-z]/).filter((s) => s) => [ connector, connector ]
+const citeKeyConnector = ref(
+  stateStore.settings.citeKeyRule.split(/[a-z]/).filter((s) => s)[0]
+);
 
 /*********************
  * Methods
  *********************/
-
-function changeFontSize(size: number) {
-  document.documentElement.style.fontSize = `${size}px`;
-  saveAppState();
-}
-
-function changeLanguage(_locale: "en_US" | "zh_CN") {
-  locale.value = _locale;
-  saveAppState();
-}
-
-function changeTheme(theme: "dark" | "light") {
-  switch (theme) {
-    case "dark":
-      $q.dark.set(true);
-      break;
-    case "light":
-      $q.dark.set(false);
-      break;
-  }
-  saveAppState();
-}
-
 async function showFolderPicker() {
   let result = window.fileBrowser.showFolderPicker();
   if (result !== undefined && !!result[0]) {
@@ -271,6 +359,31 @@ async function moveFiles(oldPath: string, newPath: string) {
   } catch (error) {
     errors.value.push(error as Error);
   }
+}
+
+function citeKeyExample(meta: Meta) {
+  return `title: ${meta.title}, year: ${
+    (meta.issued as { "date-parts": any })["date-parts"][0][0]
+  }, authors: ${meta.author
+    .map((name) => name.given + " " + name.family)
+    .join(", ")} => ${generateCiteKey(meta, stateStore.settings.citeKeyRule)}`;
+}
+
+function updateCiteKeyRule() {
+  stateStore.settings.citeKeyRule = citeKeyPartKeys.join(
+    citeKeyConnector.value
+  );
+  saveAppState();
+}
+
+async function updateCiteKeys() {
+  let projects = await getAllProjects();
+  for (let project of projects)
+    project["citation-key"] = generateCiteKey(
+      project,
+      stateStore.settings.citeKeyRule
+    );
+  await db.bulkDocs(projects);
 }
 
 async function saveAppState() {

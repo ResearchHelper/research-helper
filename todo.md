@@ -1,30 +1,23 @@
-### Fixes:
+## v3.3.0-beta
 
-- [ ] Project opened repeatedly
-- [x] update window name when project/ note is updated
-- [ ] things in layout need to simplified
+### TODO
+
+- [x] delete all edge datas
+- [x] put the code for modifying all timestamps to `db.ts`
+- [x] move the vditor css styles change to a global function, so everything using vditor can share the style
+  - [x] move all setting related stuff to appState.ts
 
 ### Features:
 
-- [x] Add time stamp to data with type `Folder, Project, Note, AnnotationData`
-- [x] Add new category `Recently added` to library page
-- [x] MetaInfoTab shows timestamps
-- [x] Add favorites to library page
-  - [x] folder UI
-  - [x] add `favorite` (boolean) to `Project` data
-  - [x] display favorite in `ProjectTableRow` as a star-shape checkbox
-  - [x] update project data when clicked
-  - [x] query all favorite projects when clicked on folder
-- [ ] Add meta data to folders
-- [ ] Able to add notes to folders as well ??
+- [x] custom citation key
+- [x] PDF dark mode
+- [x] pin pdf peeker
+- [x] HoverPane for internal links in markdown notes
 
 ### Improvements:
 
-- [x] Compactification of database
-- [x] better table interactions
-
-TODO: refactor project related stuff
-
-- [ ] simplify openProject, closeProject, openPage, and closePage logics and try to make some of them to some global control in stateStore.
-- [ ] make a citation id generator that can generate different format
-- [ ] the label appear on top of the graph node is better to be a citation id
+- [x] improved table search
+- [x] show dropdown list when tabs overflow
+- [x] further optimize the database storage
+- [x] better hint list in markdown note editor
+- [x] the label appear on top of the graph node is better to be a citation id

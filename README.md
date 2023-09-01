@@ -55,7 +55,6 @@ This project is made possible by the following open source projects.
 - citation-js
 - cytoscape
 - golden-layout
-- katex
 - pdf.js
 - vditor
 - Pouchdb

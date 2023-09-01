@@ -144,5 +144,7 @@
   "favorites": "Favorites",
   "date-added": "Added",
   "date-modified": "Modified",
-  "set-favorite": "Set as favorite"
+  "set-favorite": "Set as favorite",
+  "citation-key": "Citation key",
+  "update-references": "Update references"
 }

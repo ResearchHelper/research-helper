@@ -6,7 +6,7 @@
 </template>
 
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, onUnmounted, ref, watch } from "vue";
+import { onMounted, ref, watch } from "vue";
 import { applyPureReactInVue } from "veaury";
 import CustomExcalidraw from "src/components/note/CustomExcalidraw";
 import { useStateStore } from "src/stores/appState";
@@ -29,14 +29,6 @@ watch(
     if (id === props.itemId) show.value = false;
   }
 );
-
-onBeforeUnmount(() => {
-  console.log("before unmount");
-});
-
-onUnmounted(() => {
-  console.log("unmounted");
-});
 
 onMounted(() => {
   // MUST STOP render the react component before this vue component is unmounted

@@ -10,7 +10,7 @@ import {
 import { debounce } from "quasar";
 import { nextTick, reactive, ref } from "vue";
 import { AnnotationStore, AnnotationFactory } from "../pdfannotation";
-import { PeekManager } from "./pdfpeek";
+import { PeekManager } from "./peekManager";
 import {
   PDFFindController,
   PDFPageView,
@@ -24,13 +24,13 @@ pdfjsLib.GlobalWorkerOptions.workerSrc =
 
 export default class PDFApplication {
   container: HTMLDivElement | undefined;
-  peekContainer: HTMLDivElement | undefined;
   eventBus: pdfjsViewer.EventBus | undefined;
   pdfLinkService: pdfjsViewer.PDFLinkService | undefined;
   pdfFindController: pdfjsViewer.PDFFindController | undefined;
   pdfViewer: pdfjsViewer.PDFViewer | undefined;
-  peekManager: PeekManager | undefined;
+  peekManager: PeekManager;
   pdfDocument: pdfjsLib.PDFDocumentProxy | undefined;
+
   annotStore: AnnotationStore;
   annotFactory: AnnotationFactory;
 
@@ -50,6 +50,7 @@ export default class PDFApplication {
     this.projectId = projectId;
     this.annotStore = new AnnotationStore(projectId);
     this.annotFactory = new AnnotationFactory(projectId);
+    this.peekManager = new PeekManager();
     // make saveState a debounce function
     // it ignores the signals 500ms after each call
     this.saveState = debounce(this._saveState, 500);
@@ -72,7 +73,7 @@ export default class PDFApplication {
     } as PDFState);
   }
 
-  init(container: HTMLDivElement, peekContainer: HTMLDivElement) {
+  init(container: HTMLDivElement) {
     const eventBus = new pdfjsViewer.EventBus();
     const pdfLinkService = new pdfjsViewer.PDFLinkService({
       eventBus,
@@ -102,12 +103,10 @@ export default class PDFApplication {
     pdfLinkService.setViewer(pdfViewer);
 
     this.container = container;
-    this.peekContainer = peekContainer;
     this.eventBus = eventBus;
     this.pdfLinkService = pdfLinkService;
     this.pdfFindController = pdfFindController;
     this.pdfViewer = pdfViewer;
-    this.peekManager = new PeekManager(container, peekContainer);
     this.pdfDocument = undefined; // initialize in loadPDF
 
     // install internal event listener
@@ -120,6 +119,7 @@ export default class PDFApplication {
       this.changeSpreadMode(this.state.spreadMode);
       this.changeScale({ scale: this.state.currentScale });
       this.changeTool(this.state.tool);
+      this.changeViewMode(this.state.darkMode);
       if (this.pdfViewer) this.state.pagesCount = this.pdfViewer.pagesCount;
       this.ready.value = true;
     });
@@ -132,7 +132,15 @@ export default class PDFApplication {
           if (!link) return;
           if (section.hasAttribute("data-internal-link")) {
             // peek internal links
-            if (this.peekManager) this.peekManager.peek(link);
+            link.onmouseover = () => {
+              if (!link) return;
+              let timeoutId = setTimeout(() => {
+                if (!link) return;
+                if (this.peekManager) this.peekManager.create(link);
+              }, 500);
+
+              link.onmouseleave = () => clearTimeout(timeoutId);
+            };
           } else {
             // external links must open using default browser
             let href = link.href;
@@ -223,7 +231,6 @@ export default class PDFApplication {
     if (process.env.DEV)
       cMapUrl = new URL("../../../cmaps/", import.meta.url).href;
     else {
-      console.log("url?", import.meta.url);
       cMapUrl = new URL("cmaps/", import.meta.url).href;
     }
     let buffer = window.fs.readFileSync(filePath);
@@ -237,7 +244,7 @@ export default class PDFApplication {
     if (this.pdfFindController)
       this.pdfFindController.setDocument(this.pdfDocument);
     if (this.pdfViewer) this.pdfViewer.setDocument(this.pdfDocument);
-    if (this.peekManager) this.peekManager.loadPDF(filePath);
+    this.peekManager.setDocument(this.pdfDocument);
     this.getTOC();
     this.getPageLabels();
   }
@@ -248,25 +255,27 @@ export default class PDFApplication {
         selector: { dataType: "pdfState", projectId: projectId },
       });
 
-      let state = result.docs[0] as PDFState;
-      if (!!!state) {
-        // default state
-        state = {
-          dataType: "pdfState",
-          projectId: projectId,
-          pagesCount: 0,
-          currentPageNumber: 1,
-          currentScale: 1,
-          currentScaleValue: "1",
-          spreadMode: 0,
-          tool: "cursor",
-          color: "#FFFF00",
-          inkThickness: 5,
-          inkOpacity: 100,
-          scrollLeft: 0,
-          scrollTop: 0,
-        } as PDFState;
-      }
+      // default state
+      let state = {
+        _id: "",
+        _rev: "",
+        dataType: "pdfState",
+        projectId: projectId,
+        pagesCount: 0,
+        currentPageNumber: 1,
+        currentScale: 1,
+        currentScaleValue: "1",
+        spreadMode: 0,
+        darkMode: false,
+        tool: "cursor",
+        color: "#FFFF00",
+        inkThickness: 5,
+        inkOpacity: 100,
+        scrollLeft: 0,
+        scrollTop: 0,
+      } as PDFState;
+      // doing this we can make sure if anything missing from db, the default values are there
+      Object.assign(state, result.docs[0] as PDFState);
       Object.assign(this.state, state);
       return state;
     } catch (error) {
@@ -339,6 +348,18 @@ export default class PDFApplication {
 
   changeColor(color: string) {
     this.state.color = color;
+  }
+
+  changeViewMode(darkMode: boolean) {
+    this.state.darkMode = darkMode;
+    let viewer = this.container?.querySelector(
+      ".pdfViewer"
+    ) as HTMLElement | null;
+    if (!viewer) return;
+    if (darkMode)
+      viewer.style.filter =
+        "invert(64%) contrast(228%) brightness(80%) hue-rotate(180deg)";
+    else viewer.style.filter = "unset";
   }
 
   changeInkThickness(thickness: number) {

@@ -29,12 +29,12 @@ interface Reference {
  */
 export interface Meta {
   id: string; // citation id
-  "citation-label": string; // citatin label
+  "citation-label"?: string; // citatin label
+  "citation-key": string; // used to cite for bibtex
   type?: string; // article / book / conference-paper ...
   title: string; // article / book title
-  author?: Author[]; // array of authors [{family: "Feng", given: "Feng"}, {literal: "John"}]
+  author: Author[]; // array of authors [{family: "Feng", given: "Feng"}, {literal: "John"}]
   abstract?: string; // article abstract
-  year?: string;
   issued?: { "date-parts": Array<any> }; // issued date
   DOI?: string; // Digital Object Identity
   ISBN?: string; // ISBN of a book
@@ -146,6 +146,7 @@ export interface PDFState {
   currentScaleValue: "page-width" | "page-height" | string;
   spreadMode: SpreadMode; // 0: no spread, 1: odd spread, 2: even spread
   tool: AnnotationType;
+  darkMode: boolean;
   color: string; // hex value
   scrollLeft: number; // current scrollLeft position
   scrollTop: number; // current scrollTop position
@@ -237,10 +238,11 @@ export interface RenderEvt {
  * App global settings
  **************************************************/
 export interface Settings {
-  theme: "dark" | "light"; // dark by default
-  language: "en_US" | "zh_CN"; // en_US by default
+  theme: string; // dark by default
+  language: string; // en_US by default
   storagePath: string; // select by user
   fontSize: string; // 16px by default
+  citeKeyRule: string; // "author_title_year" by default
 }
 
 export interface AppState {

@@ -44,12 +44,13 @@
         />
       </div>
 
-      <div
-        ref="peekContainer"
-        class="peekContainer"
-      >
-        <div class="pdfViewer"></div>
-      </div>
+      <PeekCard
+        v-for="link in pdfApp.peekManager.links"
+        :key="link.id"
+        :link="link"
+        :peekManager="pdfApp.peekManager"
+        :darkMode="pdfApp.state.darkMode"
+      />
     </template>
     <template v-slot:after>
       <RightMenu />
@@ -73,6 +74,7 @@ import PDFToolBar from "./PDFToolBar.vue";
 import RightMenu from "./RightMenu.vue";
 import AnnotCard from "./AnnotCard.vue";
 import FloatingMenu from "./FloatingMenu.vue";
+import PeekCard from "./PeekCard.vue";
 
 import { getProject } from "src/backend/project/project";
 import PDFApplication from "src/backend/pdfreader";
@@ -87,7 +89,6 @@ const props = defineProps({ projectId: { type: String, required: true } });
 
 // viewer containers
 const viewerContainer = ref<HTMLDivElement>();
-const peekContainer = ref<HTMLDivElement>();
 
 // ready to save data
 const project = ref<Project>();
@@ -267,11 +268,8 @@ watch(pdfApp.state, (state) => {
  * Implement eventhandlers and init PDFApplication
  **************************************************/
 onMounted(async () => {
-  if (!viewerContainer.value || !peekContainer.value) return;
-  pdfApp.init(
-    viewerContainer.value as HTMLDivElement,
-    peekContainer.value as HTMLDivElement
-  );
+  if (!viewerContainer.value) return;
+  pdfApp.init(viewerContainer.value as HTMLDivElement);
 
   pdfApp.eventBus?.on(
     "annotationeditorlayerrendered",
@@ -498,13 +496,6 @@ onMounted(async () => {
   width: 100%; // so the right scroll bar does not touch right edge
   margin-right: 10px;
   background-color: var(--color-pdfreader-viewer-bkgd);
-}
-
-.peekContainer {
-  position: absolute;
-  overflow: auto;
-  background: var(--color-pdfreader-viewer-bkgd);
-  border: solid $primary 3px;
 }
 
 .page {

@@ -1,5 +1,9 @@
 import { defineStore } from "pinia";
-import { AppState, Page, Project, Settings } from "src/backend/database";
+import { Dark, Quasar } from "quasar";
+import { updateAppState } from "src/backend/appState";
+import { AppState, Page, Settings } from "src/backend/database";
+import darkContent from "src/css/vditor/dark.css?raw";
+import lightContent from "src/css/vditor/light.css?raw";
 
 export const useStateStore = defineStore("stateStore", {
   state: () => ({
@@ -25,7 +29,8 @@ export const useStateStore = defineStore("stateStore", {
       language: "en_US",
       storagePath: "",
       fontSize: "16px",
-    },
+      citeKeyRule: "author_title_year",
+    } as Settings,
 
     // page
     openedPage: { id: "", type: "", label: "" },
@@ -47,7 +52,7 @@ export const useStateStore = defineStore("stateStore", {
       this.selectedFolderId = state.selectedFolderId || this.selectedFolderId;
       this.currentPageId = state.currentPageId || this.currentPageId;
       this.openedProjectIds = new Set(state.openedProjectIds); // convert to Set after loading
-      this.settings = state.settings || this.settings;
+      this.settings = Object.assign(this.settings, state.settings); // if state.settings is missing anything, this won't hurt!
 
       this.ready = true;
     },
@@ -107,6 +112,65 @@ export const useStateStore = defineStore("stateStore", {
       } else {
         this.showPDFMenuView = visible;
       }
+    },
+
+    changeTheme(theme: string) {
+      // ui
+      switch (theme) {
+        case "dark":
+          Dark.set(true);
+          break;
+        case "light":
+          Dark.set(false);
+          break;
+      }
+
+      // set the vditor style so all vditors in the app can share this
+      // must append editorStyle before contentStyle
+      // otherwise the texts are dark
+      let contentStyle = document.getElementById(
+        "vditor-content-style"
+      ) as HTMLStyleElement;
+      if (contentStyle === null) {
+        contentStyle = document.createElement("style") as HTMLStyleElement;
+        contentStyle.id = "vditor-content-style";
+        contentStyle.type = "text/css";
+        document.head.append(contentStyle);
+      }
+      switch (theme) {
+        case "dark":
+          contentStyle.innerHTML = darkContent;
+          break;
+        case "light":
+          contentStyle.innerHTML = lightContent;
+          break;
+      }
+
+      // db
+      this.settings.theme = theme;
+      this.saveAppState();
+    },
+
+    changeFontSize(size: number) {
+      // ui
+      document.documentElement.style.fontSize = `${size}px`;
+
+      // db
+      this.settings.fontSize = `${size}px`;
+      this.saveAppState();
+    },
+
+    changeLanguage(language: string) {
+      // the vue-i18n can only be used in vue, not pinia
+
+      // db
+      this.settings.language = language;
+      this.saveAppState();
+    },
+
+    async saveAppState() {
+      let state = this.saveState();
+      await updateAppState(state);
     },
   },
 });

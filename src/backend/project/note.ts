@@ -115,22 +115,6 @@ export async function getNotes(projectId: string): Promise<Note[]> {
       })
     ).docs as Note[];
 
-    // TODO: remove this few more versions later
-    let flag = false;
-    for (let note of notes)
-      if (!note.timestampAdded) {
-        note.timestampAdded = Date.now();
-        note.timestampModified = Date.now();
-        flag = true;
-      }
-    if (flag) {
-      let responses = await db.bulkDocs(notes);
-      for (let i in responses) {
-        let rev = responses[i].rev;
-        if (rev) notes[i]._rev = rev;
-      }
-    }
-
     return notes as Note[];
   } catch (error) {
     console.log(error);

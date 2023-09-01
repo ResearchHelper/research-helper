@@ -180,8 +180,6 @@ export default class AnnotationFactory {
       content: "",
     } as AnnotationData;
 
-    console.log("annotData", annotData);
-
     return this.build(annotData);
   }
 }

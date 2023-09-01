@@ -170,7 +170,6 @@ const expanded = ref<string[]>([]);
 const showProjectMenu = ref(true);
 
 onMounted(async () => {
-  console.log("openedProjects", projectStore.openedProjects);
   // expand all projects
   expanded.value = Array.from(projectStore.openedProjects.map((p) => p._id));
 

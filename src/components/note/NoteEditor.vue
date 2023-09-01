@@ -3,6 +3,10 @@
     v-show="showEditor"
     ref="vditorDiv"
   ></div>
+  <HoverPane
+    :content="hoverContent"
+    ref="hoverPane"
+  />
 </template>
 <script setup lang="ts">
 // types
@@ -11,8 +15,6 @@ import { Note, NoteType, Project, Node } from "src/backend/database";
 // vditor
 import Vditor from "vditor";
 import "src/css/vditor/index.css";
-import darkContent from "src/css/vditor/dark.css?raw";
-import lightContent from "src/css/vditor/light.css?raw";
 // db related
 import { useStateStore } from "src/stores/appState";
 import {
@@ -24,11 +26,15 @@ import {
   updateNote,
 } from "src/backend/project/note";
 
-import { getAllProjects } from "src/backend/project/project";
+import { getAllProjects, getProject } from "src/backend/project/project";
 // util
 import { EventBus, debounce } from "quasar";
 import { useI18n } from "vue-i18n";
 import _ from "lodash";
+import { authorToString } from "src/backend/project/utils";
+import { generateCiteKey } from "src/backend/project/meta";
+
+import HoverPane from "./HoverPane.vue";
 
 const stateStore = useStateStore();
 const { t } = useI18n({ useScope: "global" });
@@ -45,10 +51,8 @@ const vditor = ref<Vditor | null>(null);
 const vditorDiv = ref<HTMLElement | null>(null);
 const showEditor = ref(false);
 const linkBase = ref("");
-
-const notes = ref<Note[]>([]);
-const projects = ref<Project[]>([]);
-const hints = ref<{ value: string; html: string }[]>([]);
+const hoverPane = ref();
+const hoverContent = ref("");
 
 watch(
   () => stateStore.settings.theme,
@@ -128,6 +132,7 @@ function initEditor() {
       hljs: {
         // enable line number in code block
         lineNumber: true,
+        style: "native",
       },
     },
     placeholder: t("live-markdown-editor-latex-supported"),
@@ -148,12 +153,9 @@ function initEditor() {
       if (showEditor.value) {
         setContent();
         setTheme(stateStore.settings.theme);
+        changeLinks();
+        addImgResizer();
       }
-    },
-    focus: () => {
-      // used to filter stuff
-      getAllProjects().then((_projects) => (projects.value = _projects));
-      getAllNotes().then((_notes) => (notes.value = _notes));
     },
     blur: () => {
       saveContent();
@@ -190,26 +192,8 @@ function setTheme(theme: string) {
       theme === "dark" ? "native" : "emacs"
     );
   }
-  // must append editorStyle before contentStyle
-  // otherwise the texts are dark
-  let contentStyle = document.getElementById(
-    "vditor-content-style"
-  ) as HTMLStyleElement;
-  if (contentStyle === null) {
-    contentStyle = document.createElement("style") as HTMLStyleElement;
-    contentStyle.id = "vditor-content-style";
-    contentStyle.type = "text/css";
-    document.head.append(contentStyle);
-  }
 
-  switch (theme) {
-    case "dark":
-      contentStyle.innerHTML = darkContent;
-      break;
-    case "light":
-      contentStyle.innerHTML = lightContent;
-      break;
-  }
+  stateStore.changeTheme(theme);
 }
 
 /*****************************************
@@ -220,8 +204,6 @@ async function setContent() {
   if (!vditor.value) return;
   let content = await loadNote(props.noteId, props.data?.notePath);
   vditor.value.setValue(content);
-  changeLinks();
-  addImgResizer();
 }
 
 async function _saveContent() {
@@ -270,7 +252,6 @@ async function saveLinks() {
       currentNote.value
     );
 
-    console.log("update graph");
     // notify graphview to update
     bus.emit("updateGraph");
   }
@@ -285,19 +266,17 @@ function _changeLinks() {
     "[data-type='a']"
   ) as NodeListOf<HTMLElement>;
   for (let linkNode of linkNodes) {
-    linkNode.onclick = (e) => clickLink(e, linkNode);
+    linkNode.onclick = () => clickLink(linkNode);
+    linkNode.onmouseover = () => hoverLink(linkNode);
   }
 }
 const changeLinks = debounce(_changeLinks, 50) as () => void;
 
-async function clickLink(e: MouseEvent, linkNode: HTMLElement) {
+async function clickLink(linkNode: HTMLElement) {
   if (!vditor.value) return;
-  e.stopImmediatePropagation(); // stop propagating the click event
   vditor.value.blur(); // save the content before jumping
 
-  let link = (
-    linkNode.querySelector("span.vditor-ir__marker--link") as HTMLElement
-  ).innerText;
+  let link = linkNode.innerText;
   try {
     // valid external url, open it externally
     new URL(link);
@@ -315,6 +294,56 @@ async function clickLink(e: MouseEvent, linkNode: HTMLElement) {
         else type = "NotePage";
       }
       stateStore.openPage({ id, type, label });
+    } catch (error) {
+      console.log(error);
+    }
+  }
+}
+
+async function hoverLink(linkNode: HTMLElement) {
+  if (!hoverPane.value) return;
+  let link = (
+    linkNode.querySelector("span.vditor-ir__marker--link") as HTMLElement
+  ).innerText;
+  try {
+    // valid external url, open it externally
+    new URL(link);
+  } catch (error) {
+    // we just want the document, both getProject or getNote are good
+    try {
+      let item = (await getNote(link)) as Note | Project;
+      if (item.dataType === "project") {
+        let lines = [
+          `# ${item.title}`,
+          `Author(s): ${authorToString(item.author)}`,
+          "\n",
+          `Abstract: ${item.abstract}`,
+        ];
+        hoverContent.value = lines.join("\n");
+      } else if (item.dataType === "note") {
+        if (item.type === "excalidraw") {
+          let lines = [
+            "# Excalidraw note",
+            `Belongs to: ${generateCiteKey(
+              (await getProject(item.projectId)) as Project,
+              "author-year-title",
+              true
+            )}`,
+          ];
+          hoverContent.value = lines.join("\n");
+        } else {
+          let content = await loadNote(item._id);
+          hoverContent.value = content;
+        }
+      }
+
+      // set position for hoverpane
+      if (!vditorDiv.value) return;
+      let rect = linkNode.getBoundingClientRect();
+      let parentRect = vditorDiv.value.getBoundingClientRect();
+      hoverPane.value.card.$el.style.left = `${rect.left - parentRect.left}px`;
+      hoverPane.value.card.$el.style.top = `${rect.bottom - parentRect.top}px`;
+      hoverPane.value.card.$el.hidden = false;
     } catch (error) {
       console.log(error);
     }
@@ -387,25 +416,67 @@ const addImgResizer = debounce(_addImgResizer, 50) as () => void;
  * Return a filtered list of projects / notes according to key
  * @param key - keywords to filter
  */
-// TODO: better item.dataType and item.label using citation id
-function filterHints(key: string) {
-  hints.value = [];
-  let items: (Project | Note)[] = projects.value.concat(notes.value as any);
-  for (let item of items) {
-    let label = item.label;
-    if (label.toLocaleLowerCase().indexOf(key) > -1) {
-      hints.value.push({
-        value: `[${label}](${item._id})`,
-        html: `<p class="ellipsis"><strong>${item.dataType}</strong>: ${item.label}</p>`,
+async function filterHints(key: string) {
+  let hints = [];
+  let projects = (await getAllProjects()) as Project[];
+  let notes = (await getAllNotes()) as Note[];
+
+  for (let project of projects) {
+    if (project.title.toLowerCase().indexOf(key) > -1) {
+      hints.push({
+        value: `[${generateCiteKey(project, "author-year-title")}](${
+          project._id
+        })`,
+        html: `
+          <p style="font-size: 1rem" class="ellipsis q-my-none">
+            <strong>Title</strong>: ${project.title}
+          </p>
+          <p class="ellipsis q-my-none">
+            Author(s): ${authorToString(project.author)}
+          </p>
+          `,
       });
     }
   }
-  return hints.value;
+
+  for (let note of notes) {
+    if (note.label.toLowerCase().indexOf(key) > -1) {
+      let parentProject = await getProject(note.projectId);
+      let citeKey = note.projectId;
+      if (parentProject)
+        citeKey = generateCiteKey(parentProject, "author-year-title", true);
+      hints.push({
+        value: `[${note.label}](${note._id})`,
+        html: `
+          <p style="font-size: 1rem" class="ellipsis q-my-none">
+            <strong>Note</strong>: ${note.label}
+          </p>
+          <p class="ellipsis q-my-none">
+            Belongs to: ${citeKey}
+          </p>
+          `,
+      });
+    }
+  }
+  return hints;
 }
 </script>
-<style>
+<style lang="scss">
 pre.vditor-reset {
   /* do not change padding after resizing */
   padding: 10px 35px !important;
+}
+
+.vditor-toolbar--pin {
+  /* do this so that the toolbar does not block the golden dropdown tab lists*/
+  z-index: 0;
+}
+
+.vditor-hint {
+  max-width: 50%;
+}
+
+.vditor-reset img {
+  max-width: 80%;
 }
 </style>

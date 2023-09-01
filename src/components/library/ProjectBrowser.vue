@@ -113,7 +113,7 @@
 <script setup lang="ts">
 import { ref, watch, provide, onMounted, inject, nextTick } from "vue";
 // types
-import { Folder, Note, Project } from "src/backend/database";
+import { Folder, Meta, Note, Project } from "src/backend/database";
 import { KEY_metaDialog, KEY_deleteDialog } from "./injectKeys";
 import { TextItem } from "pdfjs-dist/types/src/display/api";
 // components
@@ -128,17 +128,18 @@ import ImportDialog from "src/components/library/ImportDialog.vue";
 // db
 import { useStateStore } from "src/stores/appState";
 import { useProjectStore } from "src/stores/projectStore";
-import { getMeta, exportMeta, importMeta } from "src/backend/project/meta";
+import {
+  getMeta,
+  exportMeta,
+  importMeta,
+  generateCiteKey,
+} from "src/backend/project/meta";
 import { copyFile } from "src/backend/project/file";
 // util (to scan identifier in PDF)
 import * as pdfjsLib from "pdfjs-dist";
 pdfjsLib.GlobalWorkerOptions.workerSrc =
   "node_modules/pdfjs-dist/build/pdf.worker.min.js";
 
-import { useI18n } from "vue-i18n";
-const { t } = useI18n({ useScope: "global" });
-
-const componentName = "ProjectBrowser";
 const stateStore = useStateStore();
 const projectStore = useProjectStore();
 
@@ -190,7 +191,16 @@ provide(KEY_deleteDialog, showDeleteDialog);
 provide(KEY_metaDialog, showSearchMetaDialog);
 
 onMounted(async () => {
-  projectStore.loadProjects(stateStore.selectedFolderId);
+  // fetch the newest version of project from database
+  // and also update the selected projects
+  await projectStore.loadProjects(stateStore.selectedFolderId);
+  let selectedIds = projectStore.selected.map((project) => project._id);
+  projectStore.selected = [];
+  for (let selectedId of selectedIds) {
+    let project = projectStore.getProject(selectedId);
+    if (project) projectStore.selected.push(project);
+  }
+
   // rightmenu
   if (stateStore.showLibraryRightMenu)
     rightMenuSize.value = stateStore.libraryRightMenuSize;
@@ -287,9 +297,12 @@ async function addProjectsByFiles(filePaths: string[]) {
 
           // update project meta
           if (!!identifier) {
-            console.log(identifier);
-            let metas = await getMeta(identifier, "json");
+            let metas = (await getMeta(identifier, "json")) as Meta[];
             let meta = metas[0];
+            meta["citation-key"] = generateCiteKey(
+              meta,
+              stateStore.settings.citeKeyRule
+            );
             Object.assign(props, meta);
             break;
           }
@@ -326,7 +339,7 @@ async function addProjectsByCollection(isCreateFolder: boolean) {
     // add a new project to db and update it with meta
     let project = projectStore.createProject(stateStore.selectedFolderId);
     await projectStore.addProject(project, true);
-    await projectStore.updateProject(project._id, meta);
+    await projectStore.updateProject(project._id, meta as Project);
   }
 
   importDialog.value = false;
@@ -336,17 +349,20 @@ async function addProjectsByCollection(isCreateFolder: boolean) {
 async function processIdentifier(identifier: string) {
   if (!identifier) return;
 
-  let metas = await getMeta(identifier, "json");
+  let metas = (await getMeta(identifier, "json")) as Meta[];
   let meta = metas[0];
 
   if (createProject.value) {
     // add a new project to db and update it with meta
     let project = projectStore.createProject(stateStore.selectedFolderId);
     await projectStore.addProject(project, true);
-    await projectStore.updateProject(project._id, meta);
+    await projectStore.updateProject(project._id, meta as Project);
   } else {
     // update existing project
-    await projectStore.updateProject(projectStore.selected[0]._id, meta);
+    await projectStore.updateProject(
+      projectStore.selected[0]._id,
+      meta as Project
+    );
   }
 }
 

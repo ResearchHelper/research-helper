@@ -124,6 +124,7 @@ const stateStore = useStateStore();
 const projectStore = useProjectStore();
 // utils
 import { useI18n } from "vue-i18n";
+import { authorToString } from "src/backend/project/utils";
 const { t } = useI18n({ useScope: "global" });
 
 const props = defineProps({
@@ -206,22 +207,6 @@ function handleSelection(rows: Project[], added: boolean, evt: KeyboardEvent) {
       projectStore.selected = [newSelectedRow];
     }
   });
-}
-
-/**
- * Convert array of author objects to string
- * @param authors
- */
-function authorString(authors: Author[] | undefined) {
-  if (!!!authors?.length) return "";
-
-  let names = [];
-  for (let author of authors) {
-    if (!!!author) continue;
-    if (!!author.literal) names.push(author.literal);
-    else names.push(`${author.given} ${author.family}`);
-  }
-  return names.join(", ");
 }
 
 /**
@@ -322,8 +307,17 @@ function searchProject(
   let text = "";
   let re = RegExp(terms, "i"); // case insensitive
   let filtered = rows.filter((row) => {
-    // search title, abstract, and year
-    for (let prop of ["title", "abstract", "DOI", "publisher"]) {
+    // search in the following props
+    for (let prop of [
+      "type",
+      "title",
+      "abstract",
+      "DOI",
+      "publisher",
+      "container-title",
+      "path",
+      "citation-key",
+    ]) {
       if (row[prop] === undefined) continue;
       if (row[prop].search(re) != -1) {
         text = row[prop].replace(
@@ -347,10 +341,20 @@ function searchProject(
     }
 
     // search authors
-    let authors = authorString(row.author);
+    let authors = authorToString(row.author);
     if (authors.search(re) != -1) {
       text = authors.replace(re, `<span class="bg-primary">${terms}</span>`);
       expansionText.value.push(`Authors: ${text}`);
+      return true;
+    }
+
+    // search issued year
+    let date = row.issued?.["date-parts"];
+    if (date) {
+      text = date[0][0]
+        .toString()
+        .replace(re, `<span class="bg-primary">${terms}</span>`);
+      expansionText.value.push(`Year: ${text}`);
       return true;
     }
 
