@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import { Dark } from "quasar";
+import { Dark, Quasar } from "quasar";
 import { updateAppState } from "src/backend/appState";
 import { AppState, Page, Settings } from "src/backend/database";
 import darkContent from "src/css/vditor/dark.css?raw";
@@ -115,6 +115,7 @@ export const useStateStore = defineStore("stateStore", {
     },
 
     changeTheme(theme: string) {
+      // ui
       switch (theme) {
         case "dark":
           Dark.set(true);
@@ -145,6 +146,25 @@ export const useStateStore = defineStore("stateStore", {
           break;
       }
 
+      // db
+      this.settings.theme = theme;
+      this.saveAppState();
+    },
+
+    changeFontSize(size: number) {
+      // ui
+      document.documentElement.style.fontSize = `${size}px`;
+
+      // db
+      this.settings.fontSize = `${size}px`;
+      this.saveAppState();
+    },
+
+    changeLanguage(language: string) {
+      // the vue-i18n can only be used in vue, not pinia
+
+      // db
+      this.settings.language = language;
       this.saveAppState();
     },
 

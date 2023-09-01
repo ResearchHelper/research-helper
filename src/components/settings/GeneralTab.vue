@@ -203,15 +203,10 @@ import { getAllNotes } from "src/backend/project/note";
 import { generateCiteKey } from "src/backend/project/meta";
 import { db } from "src/backend/database";
 import { useI18n } from "vue-i18n";
-import { useQuasar } from "quasar";
 import pluginManager from "src/backend/plugin";
 
 const stateStore = useStateStore();
 const { locale } = useI18n({ useScope: "global" });
-const $q = useQuasar();
-// set vditor styles so everything vditor can share the same styles
-import darkContent from "src/css/vditor/dark.css?raw";
-import lightContent from "src/css/vditor/light.css?raw";
 
 // progressDialog
 const showProgressDialog = ref(false);
@@ -264,8 +259,8 @@ const language = computed({
     return result;
   },
   set(option: { value: string; label: string }) {
-    stateStore.settings.language = option.value;
-    changeLanguage(option.value);
+    locale.value = option.value;
+    stateStore.changeLanguage(option.value);
   },
 });
 
@@ -274,8 +269,7 @@ const theme = computed({
     return stateStore.settings.theme;
   },
   set(option: string) {
-    stateStore.settings.theme = option;
-    changeTheme(option);
+    stateStore.changeTheme(option);
   },
 });
 
@@ -284,8 +278,7 @@ const fontSize = computed({
     return parseFloat(stateStore.settings.fontSize);
   },
   set(size: number) {
-    stateStore.settings.fontSize = `${size}px`;
-    changeFontSize(size);
+    stateStore.changeFontSize(size);
   },
 });
 
@@ -302,50 +295,6 @@ const citeKeyConnector = ref(
 /*********************
  * Methods
  *********************/
-
-function changeFontSize(size: number) {
-  document.documentElement.style.fontSize = `${size}px`;
-  saveAppState();
-}
-
-function changeLanguage(_locale: string) {
-  locale.value = _locale;
-  saveAppState();
-}
-
-function changeTheme(theme: string) {
-  switch (theme) {
-    case "dark":
-      $q.dark.set(true);
-      break;
-    case "light":
-      $q.dark.set(false);
-      break;
-  }
-
-  // must append editorStyle before contentStyle
-  // otherwise the texts are dark
-  let contentStyle = document.getElementById(
-    "vditor-content-style"
-  ) as HTMLStyleElement;
-  if (contentStyle === null) {
-    contentStyle = document.createElement("style") as HTMLStyleElement;
-    contentStyle.id = "vditor-content-style";
-    contentStyle.type = "text/css";
-    document.head.append(contentStyle);
-  }
-  switch (theme) {
-    case "dark":
-      contentStyle.innerHTML = darkContent;
-      break;
-    case "light":
-      contentStyle.innerHTML = lightContent;
-      break;
-  }
-
-  saveAppState();
-}
-
 async function showFolderPicker() {
   let result = window.fileBrowser.showFolderPicker();
   if (result !== undefined && !!result[0]) {

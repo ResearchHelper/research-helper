@@ -5,7 +5,7 @@
 - [x] delete all edge datas
 - [x] put the code for modifying all timestamps to `db.ts`
 - [x] move the vditor css styles change to a global function, so everything using vditor can share the style
-  - [ ] move all setting related stuff to appState.ts
+  - [x] move all setting related stuff to appState.ts
 
 ### Features:
 

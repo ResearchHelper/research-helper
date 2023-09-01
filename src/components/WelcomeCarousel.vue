@@ -89,15 +89,10 @@ const language = computed({
     return result as { value: "en_US" | "zh_CN"; label: string };
   },
   set(option: { value: "en_US" | "zh_CN"; label: string }) {
-    stateStore.settings.language = option.value;
-    changeLanguage(option.value);
+    locale.value = option.value;
+    stateStore.changeLanguage(option.value);
   },
 });
-
-function changeLanguage(language: "en_US" | "zh_CN") {
-  locale.value = language;
-  emit("updateAppState");
-}
 
 function changeStoragePath() {
   let result = window.fileBrowser.showFolderPicker();
