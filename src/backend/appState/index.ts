@@ -32,6 +32,7 @@ async function getAppState(): Promise<AppState> {
         language: "en_US",
         storagePath: "",
         fontSize: "16px",
+        citeKeyRule: "author-title-year",
       },
     };
     await db.put(state);

@@ -1,5 +1,11 @@
 ## v3.3.0-beta
 
+### Fix
+
+- [x] click link behavior in note
+- [x] openProjectIds are not saved properly, the projectStore.openedProject is updated after the saving.
+  - [x] when opening a note, also open its project
+
 ### TODO
 
 - [x] delete all edge datas

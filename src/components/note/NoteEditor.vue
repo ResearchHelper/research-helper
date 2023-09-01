@@ -266,17 +266,20 @@ function _changeLinks() {
     "[data-type='a']"
   ) as NodeListOf<HTMLElement>;
   for (let linkNode of linkNodes) {
-    linkNode.onclick = () => clickLink(linkNode);
+    linkNode.onclick = (e) => clickLink(e, linkNode);
     linkNode.onmouseover = () => hoverLink(linkNode);
   }
 }
 const changeLinks = debounce(_changeLinks, 50) as () => void;
 
-async function clickLink(linkNode: HTMLElement) {
+async function clickLink(e: MouseEvent, linkNode: HTMLElement) {
   if (!vditor.value) return;
+  e.stopImmediatePropagation(); // stop propagating the click event
   vditor.value.blur(); // save the content before jumping
 
-  let link = linkNode.innerText;
+  let link = (
+    linkNode.querySelector("span.vditor-ir__marker--link") as HTMLElement
+  ).innerText;
   try {
     // valid external url, open it externally
     new URL(link);

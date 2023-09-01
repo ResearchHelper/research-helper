@@ -1,7 +1,8 @@
 import { defineStore } from "pinia";
-import { Dark, Quasar } from "quasar";
+import { Dark } from "quasar";
 import { updateAppState } from "src/backend/appState";
 import { AppState, Page, Settings } from "src/backend/database";
+import { useProjectStore } from "./projectStore";
 import darkContent from "src/css/vditor/dark.css?raw";
 import lightContent from "src/css/vditor/light.css?raw";
 
@@ -78,8 +79,15 @@ export const useStateStore = defineStore("stateStore", {
      * Layout Control
      */
 
-    openPage(page: Page | null) {
+    async openPage(page: Page | null) {
       if (!page?.id) return;
+      const projectStore = useProjectStore();
+      if (page.type === "ReaderPage") await projectStore.openProject(page.id);
+      else if (page.type === "NotePage" || page.type === "ExcalidrawPage") {
+        let note = await projectStore.getNoteFromDB(page.id);
+        if (note && note.projectId)
+          await projectStore.openProject(note.projectId);
+      }
       this.openedPage = page;
     },
 
@@ -169,7 +177,11 @@ export const useStateStore = defineStore("stateStore", {
     },
 
     async saveAppState() {
+      const projectStore = useProjectStore();
       let state = this.saveState();
+      state.openedProjectIds = projectStore.openedProjects.map(
+        (project) => project._id
+      );
       await updateAppState(state);
     },
   },

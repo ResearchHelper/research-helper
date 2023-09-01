@@ -44,7 +44,7 @@
 
 <script setup lang="ts">
 // types
-import { Project, Note, BusEvent, Page, NoteType } from "src/backend/database";
+import { Project, Note, Page, NoteType } from "src/backend/database";
 // components
 import LeftRibbon from "./LeftRibbon.vue";
 import LeftMenu from "src/components/leftmenu/LeftMenu.vue";
@@ -66,8 +66,6 @@ interface PageItem {
   _id: string;
   label: string;
 }
-
-const emit = defineEmits(["updateAppState"]);
 
 const stateStore = useStateStore();
 const projectStore = useProjectStore();
@@ -101,7 +99,7 @@ watch(
     nextTick(() => {
       if (layout.value) layout.value.resize();
       saveLayout();
-      emit("updateAppState");
+      stateStore.saveAppState();
     });
   }
 );
@@ -109,7 +107,6 @@ watch(
 watch(
   () => stateStore.openedPage,
   (page: Page) => {
-    if (page.type === "ReaderPage") projectStore.openProject(page.id);
     setComponent(page);
   }
 );
@@ -128,7 +125,7 @@ watch(
     // clear this so we can reclose a reopened item
     stateStore.closedPageId = "";
 
-    emit("updateAppState");
+    stateStore.saveAppState();
   }
 );
 
@@ -176,7 +173,7 @@ async function setComponent(page: Page) {
       page.data
     );
   await saveLayout();
-  emit("updateAppState");
+  stateStore.saveAppState();
 }
 
 /**
@@ -211,7 +208,7 @@ async function resizeLeftMenu(size: number) {
   }
   stateStore.leftMenuSize = size > 10 ? size : 20;
   saveLayout();
-  emit("updateAppState");
+  stateStore.saveAppState();
 }
 
 /**
@@ -235,7 +232,7 @@ async function onLayoutChanged() {
 
   // save layouts and appstate
   await saveLayout();
-  emit("updateAppState");
+  stateStore.saveAppState();
 }
 
 async function saveLayout() {

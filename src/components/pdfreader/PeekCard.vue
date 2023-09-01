@@ -47,7 +47,7 @@
   </q-card>
 </template>
 <script setup lang="ts">
-import { nextTick, onMounted, ref, PropType, watch } from "vue";
+import { nextTick, onMounted, ref, PropType, watch, watchEffect } from "vue";
 
 import * as pdfjsLib from "pdfjs-dist";
 import * as pdfjsViewer from "pdfjs-dist/web/pdf_viewer";
@@ -66,10 +66,9 @@ const card = ref();
 const peekContainer = ref();
 const pinned = ref(false);
 
-watch(
-  () => props.darkMode,
-  (darkMode) => setViewMode(darkMode)
-);
+watchEffect(() => {
+  setViewMode(props.darkMode);
+});
 
 onMounted(() => {
   if (!peekContainer.value || !props.peekManager.pdfDocument) return;
@@ -119,9 +118,6 @@ onMounted(() => {
 
   // show peeker
   show();
-
-  // set view mode
-  setViewMode(props.darkMode);
 });
 
 /**

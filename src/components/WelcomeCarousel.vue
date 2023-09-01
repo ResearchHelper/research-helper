@@ -65,10 +65,10 @@
 import { ref, computed } from "vue";
 import { useStateStore } from "src/stores/appState";
 import { useI18n } from "vue-i18n";
-const { t, locale } = useI18n({ useScope: "global" });
+const { locale } = useI18n({ useScope: "global" });
 
 const props = defineProps({ modelValue: { type: Boolean, required: true } });
-const emit = defineEmits(["update:modelValue", "updateAppState"]);
+const emit = defineEmits(["update:modelValue"]);
 
 const stateStore = useStateStore();
 
@@ -99,7 +99,7 @@ function changeStoragePath() {
   if (result !== undefined && !!result[0]) {
     path.value = result[0];
     stateStore.settings.storagePath = path.value;
-    emit("updateAppState");
+    stateStore.saveAppState();
   }
 }
 
