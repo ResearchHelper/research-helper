@@ -6,6 +6,9 @@
 - [x] openProjectIds are not saved properly, the projectStore.openedProject is updated after the saving.
   - [x] when opening a note, also open its project
 - [x] drag multiple documents at the same time
+- [x] correctly render image and link in hoverPane
+- [x] ChangeLinks get empty links before content is set
+- [x] correctly render link in AnnotCard
 
 ### TODO
 

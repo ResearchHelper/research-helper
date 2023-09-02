@@ -5,6 +5,8 @@
   ></div>
   <HoverPane
     :content="hoverContent"
+    :data="hoverData"
+    @clickLink="(e:MouseEvent, link:string) => clickLink(e,link)"
     ref="hoverPane"
   />
 </template>
@@ -53,6 +55,8 @@ const showEditor = ref(false);
 const linkBase = ref("");
 const hoverPane = ref();
 const hoverContent = ref("");
+// tells HoverPane the hovered project path prefix and the content to show
+const hoverData = ref({ linkBase: "", content: "" });
 
 watch(
   () => stateStore.settings.theme,
@@ -149,13 +153,12 @@ function initEditor() {
         },
       ],
     },
-    after: () => {
-      if (showEditor.value) {
-        setContent();
-        setTheme(stateStore.settings.theme);
-        changeLinks();
-        addImgResizer();
-      }
+    after: async () => {
+      if (!showEditor.value) return;
+      await setContent();
+      setTheme(stateStore.settings.theme);
+      changeLinks();
+      addImgResizer();
     },
     blur: () => {
       saveContent();
@@ -262,24 +265,28 @@ async function saveLinks() {
  *****************************************/
 function _changeLinks() {
   if (!vditorDiv.value) return;
+  console.log("change link", currentNote.value.label);
+
   let linkNodes = vditorDiv.value.querySelectorAll(
     "[data-type='a']"
   ) as NodeListOf<HTMLElement>;
+  console.log("linkNodes", linkNodes);
   for (let linkNode of linkNodes) {
-    linkNode.onclick = (e) => clickLink(e, linkNode);
+    console.log("linkNode", linkNode);
+    let link = (
+      linkNode.querySelector("span.vditor-ir__marker--link") as HTMLSpanElement
+    ).innerText;
+    linkNode.onclick = (e) => clickLink(e, link);
     linkNode.onmouseover = () => hoverLink(linkNode);
   }
 }
 const changeLinks = debounce(_changeLinks, 50) as () => void;
 
-async function clickLink(e: MouseEvent, linkNode: HTMLElement) {
+async function clickLink(e: MouseEvent, link: string) {
   if (!vditor.value) return;
   e.stopImmediatePropagation(); // stop propagating the click event
   vditor.value.blur(); // save the content before jumping
 
-  let link = (
-    linkNode.querySelector("span.vditor-ir__marker--link") as HTMLElement
-  ).innerText;
   try {
     // valid external url, open it externally
     new URL(link);
@@ -304,7 +311,7 @@ async function clickLink(e: MouseEvent, linkNode: HTMLElement) {
 }
 
 async function hoverLink(linkNode: HTMLElement) {
-  if (!hoverPane.value) return;
+  if (!hoverPane.value || !currentNote.value) return;
   let link = (
     linkNode.querySelector("span.vditor-ir__marker--link") as HTMLElement
   ).innerText;
@@ -323,7 +330,16 @@ async function hoverLink(linkNode: HTMLElement) {
           `Abstract: ${item.abstract}`,
         ];
         hoverContent.value = lines.join("\n");
+        hoverData.value.linkBase = linkBase.value.replace(
+          currentNote.value.projectId,
+          item._id
+        );
+        hoverData.value.content = lines.join("\n");
       } else if (item.dataType === "note") {
+        hoverData.value.linkBase = linkBase.value.replace(
+          currentNote.value.projectId,
+          item.projectId
+        );
         if (item.type === "excalidraw") {
           let lines = [
             "# Excalidraw note",
@@ -334,9 +350,11 @@ async function hoverLink(linkNode: HTMLElement) {
             )}`,
           ];
           hoverContent.value = lines.join("\n");
+          hoverData.value.content = lines.join("\n");
         } else {
           let content = await loadNote(item._id);
           hoverContent.value = content;
+          hoverData.value.content = content;
         }
       }
 
