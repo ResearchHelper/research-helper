@@ -10,26 +10,31 @@
 </template>
 <script setup lang="ts">
 import Vditor from "vditor/dist/method.min";
-import { onMounted, ref, watchEffect } from "vue";
+import { onMounted, PropType, ref, watchEffect } from "vue";
 import { useStateStore } from "src/stores/appState";
 const stateStore = useStateStore();
 
 const props = defineProps({
   content: { type: String },
+  data: {
+    type: Object as PropType<{ linkBase: string; content: string }>,
+    required: true,
+  },
 });
-
+const emit = defineEmits(["clickLink"]);
 const card = ref();
 const mdContentDiv = ref();
 
 watchEffect(() => {
-  if (props.content && mdContentDiv.value)
-    Vditor.preview(mdContentDiv.value, props.content, {
+  if (props.data.content && mdContentDiv.value)
+    Vditor.preview(mdContentDiv.value, props.data.content, {
       theme: stateStore.settings.theme === "dark" ? "dark" : "classic",
       mode: stateStore.settings.theme,
       hljs: {
         lineNumber: true,
         style: stateStore.settings.theme === "dark" ? "native" : "emacs",
       },
+      after: changeLinks,
     });
 });
 
@@ -41,6 +46,33 @@ onMounted(async () => {
     };
   };
 });
+
+function changeLinks() {
+  if (!mdContentDiv.value) return;
+
+  let linkNodes = mdContentDiv.value.querySelectorAll(
+    "a"
+  ) as NodeListOf<HTMLAnchorElement>;
+  for (let linkNode of linkNodes) {
+    linkNode.onclick = (e: MouseEvent) => {
+      // do not open link winthin app
+      e.preventDefault();
+      let link = linkNode.href
+        .replace("http://localhost:9300/", "") // in dev mode
+        .replace(/^file:.*app\.asar\//, ""); // in production mode
+      emit("clickLink", e, link);
+    };
+  }
+
+  let imageNodes = mdContentDiv.value.querySelectorAll(
+    "img"
+  ) as NodeListOf<HTMLImageElement>;
+  for (let imageNode of imageNodes) {
+    imageNode.src = imageNode.src
+      .replace("http://localhost:9300", props.data.linkBase) // in dev mode
+      .replace(/^file:.*app\.asar/, props.data.linkBase); // in production mode
+  }
+}
 
 defineExpose({ card });
 </script>
