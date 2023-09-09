@@ -357,7 +357,7 @@ function searchProject(
 
     // search issued year
     let date = row.issued?.["date-parts"];
-    if (date) {
+    if (date && date[0][0].toString().search(re) != -1) {
       text = date[0][0]
         .toString()
         .replace(re, `<span class="bg-primary">${terms}</span>`);
