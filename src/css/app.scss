@@ -141,3 +141,8 @@ html {
 ::-webkit-scrollbar-corner {
   color: transparent;
 }
+
+/* link */
+a:link {
+  color: $primary
+}

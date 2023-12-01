@@ -146,5 +146,8 @@
   "date-modified": "Modified",
   "set-favorite": "Set as favorite",
   "citation-key": "Citation key",
-  "update-references": "Update references"
+  "update-references": "Update references",
+  "export-database": "Export database",
+  "export-database-explain": "Create a hidden folder .sophosia and export current database in the storage path for Sophosia",
+  "what-is-sophosia": "What is Sophosia?"
 }

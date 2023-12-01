@@ -113,6 +113,35 @@
       flat
       class="q-my-md card"
     >
+      <q-card-section class="row">
+        <div class="text-h6">{{ $t("export-database") }}</div>
+        <q-btn
+          class="q-ml-sm"
+          unelevated
+          square
+          no-caps
+          color="primary"
+          :ripple="false"
+          :label="$t('export-database')"
+        />
+      </q-card-section>
+      <q-card-section class="q-pt-none">
+        <p v-html="$t('export-database-explain')"></p>
+        <a
+          href="https://sophosia.app"
+          target="_blank"
+          @click.prevent="openURL('https://sophosia.app')"
+          >{{ $t("what-is-sophosia") }}</a
+        >
+      </q-card-section>
+    </q-card>
+
+    <q-card
+      square
+      bordered
+      flat
+      class="q-my-md card"
+    >
       <q-card-section>
         <div class="row">
           <div class="text-h6">{{ $t("citation-key") }}</div>
@@ -204,6 +233,7 @@ import { generateCiteKey } from "src/backend/project/meta";
 import { db } from "src/backend/database";
 import { useI18n } from "vue-i18n";
 import pluginManager from "src/backend/plugin";
+import { openURL } from "quasar";
 
 const stateStore = useStateStore();
 const { locale } = useI18n({ useScope: "global" });
@@ -389,6 +419,10 @@ async function updateCiteKeys() {
 async function saveAppState() {
   let state = stateStore.saveState();
   await updateAppState(state);
+}
+
+function openURL(url: string) {
+  window.browser.openURL(url);
 }
 </script>
 

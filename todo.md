@@ -1,5 +1,4 @@
-## v3.3.0-beta
-
-### Fix
-
-- [x] search not working properly
+- [ ] export database for sophosia
+  - [x] button in generalTab.vue
+  - [ ] implement the actual export
+- [ ] remove citekey connector -
