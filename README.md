@@ -20,6 +20,21 @@
 <a href="https://github.com/ResearchHelper/research-helper/blob/main/README.zh_CN.md">中文</a>
 </p>
 
+# [Sophosia](https://github.com/sophosia/sophosia) Has Been Released！
+
+Thank you all for supporting Reasearch Helper. In the year of 2023, I received many useful suggestions, and the beta version of the Research Helper had accomplished its goal, there will be no feature updates in the future. The new version, [Sophosia](https://github.com/sophosia/sophosia), will be the version with continuous support and updates. The main differences between the new version and the beta version are:
+
+1. The new version removes the PouchDB database, all data is text-centric.
+2. The new version uses Tauri instead of Electron.
+
+There will be a few benefits:
+
+1. By removing PouchDB, users can choose their favorite tools for cloud syncing.
+2. Being text-centric allows users to choose their preferred text editor for note-taking, without worrying about data consistency between different softwares.
+3. The new version becomes very lightweight (~15MB).
+
+I hope everyone continues to support Sophosia!
+
 # Research Helper
 
 Research helper is a paper/book management tool. It is a reference management tool with various useful functionalities such as: built-in PDF reader, live markdown note and excalidraw note.
@@ -27,13 +42,15 @@ Research helper is a paper/book management tool. It is a reference management to
 ## Reference Management
 
 References can be managed in library page.
+
 - Favorites, folders, tags, search, etc. All essential functions are there
 - Able to one-click-retrieve meta information and related reference by providing identifier such as DOI
   ![library-page.png](./galleries/library-page.png)
 
 ## PDF Reader
 
-Research helper has a built-in PDF reader.  
+Research helper has a built-in PDF reader.
+
 - Able to adjust page layout, light/dark mode and more
 - Support markdown comment (also latex) in annotations
 - Able to preview internal links in hover windows
@@ -42,9 +59,10 @@ Research helper has a built-in PDF reader.
 ## Note-taking System
 
 Due to the flexible multi-window layout, it is never this easy to take notes while reading.
+
 - Support WYSIWYG markdown note and excalidraw note
 - Able to cite other references/notes in markdown note
-- Support math(latex), code block, mindmap and more in markdown down 
+- Support math(latex), code block, mindmap and more in markdown down
   ![note-page.png](./galleries/note-page.png)
 
 # Contribute to Research-Helper
@@ -66,13 +84,15 @@ yarn dev # start electron app in development mode
 ```
 
 ## To build the app
+
 ```bash
 yarn build # build the app
-# or 
-yarn debug # build the app with debugger 
+# or
+yarn debug # build the app with debugger
 ```
 
 ## Tests
+
 ```bash
 yarn test:unit:ci # backend unit test
 yarn test:component:ci # vue component test

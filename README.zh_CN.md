@@ -16,10 +16,25 @@ style="width: 100px; vertical-align:middle">
 </p>
 
 <p align="center">
-<a href="https://github.com/ResearchHelper/research-helper/README.md">English</a>
+<a href="https://github.com/ResearchHelper/research-helper/blob/main/README.md">English</a>
 |
-<a href="https://github.com/ResearchHelper/research-helper/README.zh_CN.md">中文</a>
+<a href="https://github.com/ResearchHelper/research-helper/blob/main/README.zh_CN.md">中文</a>
 </p>
+
+# 小助手正式版 [Sophosia](https://github.com/sophosia/sophosia) 已经发布了哦！
+
+感谢大家对小助手的支持，在 2023 这一年里，我收到了很多有用的建议，研究小助手的 beta 版已经完成了它的使命，今后不会再有新功能的发布了。小助手正式版[Sophosia](https://github.com/sophosia/sophosia)将会是我以后持续更新的版本。正式版与测试版最大的不同有两点是：
+
+1. 正式版去掉了 PouchDB 数据库，所有的数据都是以文本为中心的。
+2. 正式版采用了 Tauri 而非 Electron。
+
+这样做的好处有几点：
+
+1. 无数据库使得用户可以使用自己喜欢的同步工具进行同步了。
+2. 以文本为中心使得用户可以选择使用自己喜欢的文本编辑器写笔记，不用担心不同软件之间的数据一致性问题了。
+3. 正式版变得非常轻量(~15MB)。
+
+希望大家能继续支持小助手哦！
 
 # 研究小助手
 
@@ -69,16 +84,18 @@ npm install
 yarn dev # electron 开发模式
 ```
 
-## 编译 
+## 编译
+
 ```bash
-yarn build # 编译发行版 
-# 或者 
-yarn debug # 编译带着debugger的测试版  
+yarn build # 编译发行版
+# 或者
+yarn debug # 编译带着debugger的测试版
 ```
 
 ## 测试
+
 ```bash
-yarn test:unit:ci # 后端单元测试 
+yarn test:unit:ci # 后端单元测试
 yarn test:component:ci # 前端Vue Component测试
 ```
 
