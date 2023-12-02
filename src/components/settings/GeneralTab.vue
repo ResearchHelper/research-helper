@@ -273,7 +273,7 @@ const languageOptions = [
 ];
 const themeOptions = ["dark", "light"];
 const citeKeyPartKeyOptions = ["author", "title", "year"];
-const citeKeyConnectorOptions = [" ", "_", "-", "."];
+const citeKeyConnectorOptions = [" ", "-"];
 
 // example metas
 const exampleMetas = [

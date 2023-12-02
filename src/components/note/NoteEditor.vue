@@ -345,7 +345,7 @@ async function hoverLink(linkNode: HTMLElement) {
             "# Excalidraw note",
             `Belongs to: ${generateCiteKey(
               (await getProject(item.projectId)) as Project,
-              "author-year-title",
+              "author_year_title",
               true
             )}`,
           ];
@@ -445,9 +445,7 @@ async function filterHints(key: string) {
   for (let project of projects) {
     if (project.title.toLowerCase().indexOf(key) > -1) {
       hints.push({
-        value: `[${generateCiteKey(project, "author-year-title")}](${
-          project._id
-        })`,
+        value: `[${generateCiteKey(project)}](${project._id})`,
         html: `
           <p style="font-size: 1rem" class="ellipsis q-my-none">
             <strong>Title</strong>: ${project.title}
@@ -465,7 +463,7 @@ async function filterHints(key: string) {
       let parentProject = await getProject(note.projectId);
       let citeKey = note.projectId;
       if (parentProject)
-        citeKey = generateCiteKey(parentProject, "author-year-title", true);
+        citeKey = generateCiteKey(parentProject, undefined, true);
       hints.push({
         value: `[${note.label}](${note._id})`,
         html: `
