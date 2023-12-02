@@ -42,4 +42,4 @@ yarn-error.log*
 .nyc_output
 coverage/
 
-test-storage/
+*storage*/

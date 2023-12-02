@@ -1,4 +1,15 @@
-- [ ] export database for sophosia
+- [x] export database for sophosia
   - [x] button in generalTab.vue
-  - [ ] implement the actual export
-- [ ] remove citekey connector -
+  - [x] implement the actual export
+    - [x] remove \_rev, change to shorter ID
+    - [x] appState
+    - [x] layout
+    - [x] folder
+    - [x] project
+    - [x] note
+    - [x] pdfState
+    - [x] pdfAnnotaiton
+    - [x] image
+    - [x] update links in the notes
+      - [x] trying to edit note that are not there already? the note should be copied instead of move ...
+      - [x] process note after all notes are moved to new places

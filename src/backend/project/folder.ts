@@ -10,6 +10,20 @@ async function getFolder(folderId: string): Promise<Folder | undefined> {
   }
 }
 
+async function getFolders(): Promise<Folder[]> {
+  try {
+    let result = await db.find({
+      selector: {
+        dataType: "folder",
+      },
+    });
+    return result.docs as Folder[];
+  } catch (error) {
+    console.log(error);
+    return [];
+  }
+}
+
 /**
  * Get the folder tree
  * @returns tree
@@ -202,6 +216,7 @@ async function moveFolderInto(dragFolderId: string, dropFolderId: string) {
 
 export {
   getFolder,
+  getFolders,
   getFolderTree,
   addFolder,
   updateFolder,
