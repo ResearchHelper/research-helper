@@ -146,5 +146,11 @@
   "date-modified": "修改日期",
   "set-favorite": "收藏",
   "citation-key": "引用键",
-  "update-references": "更新所有文献"
+  "update-references": "更新所有文献",
+  "export-database": "导出数据库",
+  "export-database-explain": "在新存储路径下创建一个隐藏文件夹.sophosia以及导出数据库以便Sophosia接管。",
+  "what-is-sophosia": "什么是Sophosia?",
+  "note-is-auto-manged": "> 该笔记是自动产生的，**请勿更改笔记名或更改笔记内容**。",
+  "new-storage-path": "新储存路径",
+  "select-new-path": "选择一个新路径用于导出"
 }

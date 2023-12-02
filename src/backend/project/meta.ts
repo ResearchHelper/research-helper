@@ -83,13 +83,13 @@ export async function importMeta(filePath: string): Promise<Meta[]> {
  */
 export function generateCiteKey(
   meta: Meta,
-  rule = "author-title-year",
+  rule = "author_title_year",
   longTitle = false
 ): string {
   // parsing the rule
   let connector = "";
   let keys = ["author", "title", "year"];
-  for (let symbol of [" ", "-", "_", "."]) {
+  for (let symbol of [" ", "_"]) {
     keys = rule.split(symbol);
     if (keys[0] && keys[1] && keys[2]) {
       connector = symbol;

@@ -146,5 +146,11 @@
   "date-modified": "Modified",
   "set-favorite": "Set as favorite",
   "citation-key": "Citation key",
-  "update-references": "Update references"
+  "update-references": "Update references",
+  "export-database": "Export database",
+  "export-database-explain": "Create a hidden folder .sophosia and export current database in the new storage path for Sophosia.",
+  "what-is-sophosia": "What is Sophosia?",
+  "note-is-auto-manged": "> This note is auto managed, **DO NOT change its file name or write anything here**.",
+  "new-storage-path": "New storage path",
+  "select-new-path": "Select a new path to export"
 }

@@ -98,10 +98,58 @@
           readonly
           input-style="cursor: pointer; font-size: 1rem"
           v-model="stateStore.settings.storagePath"
-          @click="showFolderPicker"
+          @click="showFolderPicker(true)"
         >
           <template v-slot:before>
             <div style="font-size: 1rem">{{ $t("storage-path") }}</div>
+          </template>
+        </q-input>
+      </q-card-section>
+    </q-card>
+
+    <q-card
+      square
+      bordered
+      flat
+      class="q-my-md card"
+    >
+      <q-card-section class="row">
+        <div class="text-h6">{{ $t("export-database") }}</div>
+        <q-btn
+          class="q-ml-sm"
+          unelevated
+          square
+          no-caps
+          color="primary"
+          :ripple="false"
+          :label="$t('export-database')"
+          :disable="disableExportBtn"
+          @click="() => exportAsSophosiaDB()"
+        >
+        </q-btn>
+      </q-card-section>
+      <q-card-section class="q-pt-none">
+        <p>
+          <span v-html="$t('export-database-explain')"></span>
+          <a
+            href="https://sophosia.app"
+            target="_blank"
+            @click.prevent="openURL('https://sophosia.app')"
+            >{{ " " + $t("what-is-sophosia") }}</a
+          >
+        </p>
+        <q-input
+          dense
+          outlined
+          square
+          readonly
+          input-style="cursor: pointer; font-size: 1rem"
+          v-model="newStoragePath"
+          :placeholder="$t('select-new-path')"
+          @click="showFolderPicker(false)"
+        >
+          <template v-slot:before>
+            <div style="font-size: 1rem">{{ $t("new-storage-path") }}</div>
           </template>
         </q-input>
       </q-card-section>
@@ -203,6 +251,7 @@ import { getAllNotes } from "src/backend/project/note";
 import { generateCiteKey } from "src/backend/project/meta";
 import { db } from "src/backend/database";
 import { useI18n } from "vue-i18n";
+import { exportDB } from "src/backend/export/sophosiadb";
 import pluginManager from "src/backend/plugin";
 
 const stateStore = useStateStore();
@@ -213,6 +262,10 @@ const showProgressDialog = ref(false);
 const errors = ref<Error[]>([]);
 const progress = ref(0.0);
 
+// export sophosia db
+const newStoragePath = ref("");
+const disableExportBtn = ref(false);
+
 // options
 const languageOptions = [
   { value: "en_US", label: "English (en_US)" },
@@ -220,7 +273,7 @@ const languageOptions = [
 ];
 const themeOptions = ["dark", "light"];
 const citeKeyPartKeyOptions = ["author", "title", "year"];
-const citeKeyConnectorOptions = [" ", "_", "-", "."];
+const citeKeyConnectorOptions = [" ", "-"];
 
 // example metas
 const exampleMetas = [
@@ -295,11 +348,22 @@ const citeKeyConnector = ref(
 /*********************
  * Methods
  *********************/
-async function showFolderPicker() {
+/**
+ * Show folder picker so user can select a new folder
+ * only change the path when changePath=true
+ * other only set newStoragePath.value
+ * so that the newStoragePath select can be used in exportDB section
+ * @param changePath
+ */
+async function showFolderPicker(changePath: boolean) {
   let result = window.fileBrowser.showFolderPicker();
   if (result !== undefined && !!result[0]) {
     let storagePath = result[0]; // do not update texts in label yet
-    await changeStoragePath(storagePath);
+    if (changePath) await changeStoragePath(storagePath);
+    else {
+      newStoragePath.value = storagePath;
+      disableExportBtn.value = false;
+    }
   }
 }
 
@@ -361,6 +425,15 @@ async function moveFiles(oldPath: string, newPath: string) {
   }
 }
 
+async function exportAsSophosiaDB() {
+  if (!newStoragePath.value) return;
+  showProgressDialog.value = true;
+  await exportDB(newStoragePath.value, (prog) => {
+    progress.value = prog;
+  });
+  disableExportBtn.value = true;
+}
+
 function citeKeyExample(meta: Meta) {
   return `title: ${meta.title}, year: ${
     (meta.issued as { "date-parts": any })["date-parts"][0][0]
@@ -389,6 +462,10 @@ async function updateCiteKeys() {
 async function saveAppState() {
   let state = stateStore.saveState();
   await updateAppState(state);
+}
+
+function openURL(url: string) {
+  window.browser.openURL(url);
 }
 </script>
 
