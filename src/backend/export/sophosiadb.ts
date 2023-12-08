@@ -111,8 +111,15 @@ export async function exportDB(
     for (const folder of folders) {
       delete (folder as { _rev?: string })._rev;
       const oldFolderId = folder._id;
-      folder._id = "SF" + nanoid();
+      folder._id = "SF" + (folder._id === "library" ? "library" : nanoid());
+      folder.icon = folder._id === "SFlibrary" ? "mdi-bookshelf" : "mdi-folder";
       old2new.set(oldFolderId, folder._id);
+    }
+
+    // update folderIds in the children
+    for (const folder of folders) {
+      for (const [ind, oldId] of folder.children.entries())
+        folder.children[ind] = old2new.get(oldId as string) as string;
       jsonPath = path.join(folderPaths.folder, folder._id + ".json");
       fs.writeFileSync(jsonPath, JSON.stringify(folder));
 
@@ -133,6 +140,15 @@ export async function exportDB(
       const oldProjectFolder = path.join(oldStoragePath, oldProjectId);
       const projectFolder = path.join(storagePath, project._id);
       fs.mkdirSync(projectFolder);
+      // process the pdf, image files and notes
+      // copy the pdf file into new folder regardless the pdf is linked or in the project folder
+      if (project.path) {
+        const oldPDFPath = project.path;
+        const newPDFPath = path.join(projectFolder, path.basename(oldPDFPath));
+        fs.copyFileSync(oldPDFPath, newPDFPath);
+        delete project.path;
+        project.pdf = path.basename(newPDFPath);
+      }
       const entries = fs.readdirSync(oldProjectFolder);
       for (const entry of entries) {
         if (entry === "img") {
@@ -147,10 +163,7 @@ export async function exportDB(
             fs.copyFileSync(oldPath, newPath);
           }
         } else if (path.extname(entry) === ".pdf") {
-          const oldFilePath = path.join(oldProjectFolder, entry);
-          const newFilePath = path.join(projectFolder, entry);
-          fs.copyFileSync(oldFilePath, newFilePath);
-          project.pdf = path.basename(newFilePath);
+          // no need to do anything
         } else {
           // notes: md, and excalidraw
           const ext = path.extname(entry); // ext has the .
@@ -219,7 +232,7 @@ ${t("note-is-auto-manged")}`;
       delete (pdfState as { _rev?: string })._rev;
       pdfState._id = "SS" + old2new.get(pdfState.projectId)!.slice(2);
       jsonPath = path.join(
-        folderPaths.project,
+        folderPaths.pdfState,
         old2new.get(pdfState.projectId) + ".json"
       );
       fs.writeFileSync(jsonPath, JSON.stringify(pdfState));
@@ -231,7 +244,9 @@ ${t("note-is-auto-manged")}`;
     // pdfAnnotation
     for (const annotData of annotDatas) {
       delete (annotData as { _rev?: string })._rev;
-      annotData._id = "SA" + nanoid;
+      annotData._id = "SA" + nanoid();
+      annotData.projectId = old2new.get(annotData.projectId) as string;
+      jsonPath = path.join(folderPaths.pdfAnnotation, annotData._id + ".json");
       fs.writeFileSync(jsonPath, JSON.stringify(annotData));
 
       currentStep++;
