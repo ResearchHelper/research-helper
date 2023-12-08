@@ -150,7 +150,7 @@ export async function exportDB(
           const oldFilePath = path.join(oldProjectFolder, entry);
           const newFilePath = path.join(projectFolder, entry);
           fs.copyFileSync(oldFilePath, newFilePath);
-          project.path = newFilePath;
+          project.pdf = path.basename(newFilePath);
         } else {
           // notes: md, and excalidraw
           const ext = path.extname(entry); // ext has the .
