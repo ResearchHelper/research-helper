@@ -247,6 +247,10 @@ const showProgressDialog = ref(false);
 const errors = ref<Error[]>([]);
 const progress = ref(0.0);
 
+// export sophosia db
+const newStoragePath = ref("");
+const disableExportBtn = ref(false);
+
 // options
 const languageOptions = [
   { value: "en_US", label: "English (en_US)" },
