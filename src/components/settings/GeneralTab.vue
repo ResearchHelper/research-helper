@@ -98,7 +98,7 @@
           readonly
           input-style="cursor: pointer; font-size: 1rem"
           v-model="stateStore.settings.storagePath"
-          @click="showFolderPicker(true)"
+          @click="showFolderPicker()"
         >
           <template v-slot:before>
             <div style="font-size: 1rem">{{ $t("storage-path") }}</div>
@@ -123,7 +123,6 @@
           color="primary"
           :ripple="false"
           :label="$t('export-database')"
-          :disable="disableExportBtn"
           @click="() => exportAsSophosiaDB()"
         >
         </q-btn>
@@ -138,20 +137,6 @@
             >{{ " " + $t("what-is-sophosia") }}</a
           >
         </p>
-        <q-input
-          dense
-          outlined
-          square
-          readonly
-          input-style="cursor: pointer; font-size: 1rem"
-          v-model="newStoragePath"
-          :placeholder="$t('select-new-path')"
-          @click="showFolderPicker(false)"
-        >
-          <template v-slot:before>
-            <div style="font-size: 1rem">{{ $t("new-storage-path") }}</div>
-          </template>
-        </q-input>
       </q-card-section>
     </q-card>
 
@@ -355,15 +340,11 @@ const citeKeyConnector = ref(
  * so that the newStoragePath select can be used in exportDB section
  * @param changePath
  */
-async function showFolderPicker(changePath: boolean) {
+async function showFolderPicker() {
   let result = window.fileBrowser.showFolderPicker();
   if (result !== undefined && !!result[0]) {
     let storagePath = result[0]; // do not update texts in label yet
-    if (changePath) await changeStoragePath(storagePath);
-    else {
-      newStoragePath.value = storagePath;
-      disableExportBtn.value = false;
-    }
+    await changeStoragePath(storagePath);
   }
 }
 
@@ -426,12 +407,14 @@ async function moveFiles(oldPath: string, newPath: string) {
 }
 
 async function exportAsSophosiaDB() {
-  if (!newStoragePath.value) return;
+  let result = window.fileBrowser.showFolderPicker();
+  if (!result || !result[0]) return;
+  const newStoragePath = result[0]; // do not update texts in label yet
+  if (!newStoragePath) return;
   showProgressDialog.value = true;
-  await exportDB(newStoragePath.value, (prog) => {
+  await exportDB(newStoragePath, (prog) => {
     progress.value = prog;
   });
-  disableExportBtn.value = true;
 }
 
 function citeKeyExample(meta: Meta) {
